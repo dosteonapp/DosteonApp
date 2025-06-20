@@ -1,5 +1,5 @@
 export interface UserContextType {}
 
 export interface User {
-  id: string;
+  _id: string;
 }
