@@ -1,17 +1,41 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Menu, UserPlus, Mail, Phone, MoreHorizontal, Shield, Settings, Trash2, Edit } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Menu,
+  UserPlus,
+  Mail,
+  Phone,
+  MoreHorizontal,
+  Shield,
+  Settings,
+  Trash2,
+  Edit,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -20,15 +44,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const supplierRoles = [
   {
     id: "owner",
     name: "Supplier Owner/Manager",
-    description: "Primary administrator with complete control over operations and team management (Default Role)",
+    description:
+      "Primary administrator with complete control over operations and team management (Default Role)",
     permissions: [
       "full_access",
       "user_management",
@@ -61,31 +98,52 @@ const supplierRoles = [
     id: "sales",
     name: "Sales Representative",
     description: "Handles customer relations, order processing, and updates",
-    permissions: ["order_management", "customer_chat", "invoice_generation", "product_updates"],
+    permissions: [
+      "order_management",
+      "customer_chat",
+      "invoice_generation",
+      "product_updates",
+    ],
     color: "bg-blue-100 text-blue-800",
   },
   {
     id: "warehouse",
     name: "Warehouse Staff",
     description: "Manages stock and handles order fulfillment",
-    permissions: ["inventory_management", "order_fulfillment", "stock_alerts", "batch_updates"],
+    permissions: [
+      "inventory_management",
+      "order_fulfillment",
+      "stock_alerts",
+      "batch_updates",
+    ],
     color: "bg-green-100 text-green-800",
   },
   {
     id: "finance",
     name: "Accounts/Finance",
     description: "Manages invoices, payments, and financial reporting",
-    permissions: ["financial_management", "invoice_generation", "payment_tracking", "financial_reports"],
+    permissions: [
+      "financial_management",
+      "invoice_generation",
+      "payment_tracking",
+      "financial_reports",
+    ],
     color: "bg-yellow-100 text-yellow-800",
   },
   {
     id: "support",
     name: "Customer Support",
-    description: "Assists with order issues, customer inquiries, and resolution tracking",
-    permissions: ["customer_support", "order_history", "issue_tracking", "customer_chat"],
+    description:
+      "Assists with order issues, customer inquiries, and resolution tracking",
+    permissions: [
+      "customer_support",
+      "order_history",
+      "issue_tracking",
+      "customer_chat",
+    ],
     color: "bg-purple-100 text-purple-800",
   },
-]
+];
 
 const teamMembers = [
   {
@@ -138,25 +196,50 @@ const teamMembers = [
     lastActive: "2 days ago",
     avatar: "/placeholder.svg?height=40&width=40",
   },
-]
+];
 
 const permissionCategories = {
-  Orders: ["order_management", "order_fulfillment", "order_history", "order_confirmation"],
-  Inventory: ["inventory_management", "stock_alerts", "batch_updates", "product_updates"],
+  Orders: [
+    "order_management",
+    "order_fulfillment",
+    "order_history",
+    "order_confirmation",
+  ],
+  Inventory: [
+    "inventory_management",
+    "stock_alerts",
+    "batch_updates",
+    "product_updates",
+  ],
   Messaging: ["customer_chat", "customer_support", "internal_messaging"],
-  Payments: ["financial_management", "invoice_generation", "payment_tracking", "financial_reports"],
-  Reports: ["sales_reports", "financial_reports", "analytics", "performance_metrics"],
-  Administration: ["user_management", "role_assignment", "full_access", "issue_tracking"],
-}
+  Payments: [
+    "financial_management",
+    "invoice_generation",
+    "payment_tracking",
+    "financial_reports",
+  ],
+  Reports: [
+    "sales_reports",
+    "financial_reports",
+    "analytics",
+    "performance_metrics",
+  ],
+  Administration: [
+    "user_management",
+    "role_assignment",
+    "full_access",
+    "issue_tracking",
+  ],
+};
 
 export default function SupplierSettingsPage() {
-  const [isInviteOpen, setIsInviteOpen] = useState(false)
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false)
-  const [selectedMember, setSelectedMember] = useState(null)
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
 
   const getRoleInfo = (roleId: string) => {
-    return supplierRoles.find((role) => role.id === roleId)
-  }
+    return supplierRoles.find((role) => role.id === roleId);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -185,7 +268,9 @@ export default function SupplierSettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Account Information</CardTitle>
-                <CardDescription>Update your supplier account details</CardDescription>
+                <CardDescription>
+                  Update your supplier account details
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -195,15 +280,26 @@ export default function SupplierSettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue="contact@freshfarms.com" />
+                    <Input
+                      id="email"
+                      type="email"
+                      defaultValue="contact@freshfarms.com"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" type="tel" defaultValue="+1 (555) 987-6543" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      defaultValue="+1 (555) 987-6543"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="address">Address</Label>
-                    <Input id="address" defaultValue="456 Farm Rd, Countryside, CA 54321" />
+                    <Input
+                      id="address"
+                      defaultValue="456 Farm Rd, Countryside, CA 54321"
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -220,15 +316,15 @@ export default function SupplierSettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="current-password">Current Password</Label>
-                  <Input id="current-password" type="password" />
+                  <PasswordInput id="current-password" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="new-password">New Password</Label>
-                  <Input id="new-password" type="password" />
+                  <PasswordInput id="new-password" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm New Password</Label>
-                  <Input id="confirm-password" type="password" />
+                  <PasswordInput id="confirm-password" />
                 </div>
               </CardContent>
               <CardFooter>
@@ -240,8 +336,12 @@ export default function SupplierSettingsPage() {
           <TabsContent value="team" className="space-y-4 mt-4">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold tracking-tight">Team Management</h2>
-                <p className="text-muted-foreground">Manage your supplier team members and their permissions</p>
+                <h2 className="text-xl font-bold tracking-tight">
+                  Team Management
+                </h2>
+                <p className="text-muted-foreground">
+                  Manage your supplier team members and their permissions
+                </p>
               </div>
               <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                 <DialogTrigger asChild>
@@ -254,13 +354,18 @@ export default function SupplierSettingsPage() {
                   <DialogHeader>
                     <DialogTitle>Invite New Team Member</DialogTitle>
                     <DialogDescription>
-                      Send an invitation to a new team member to join your supplier organization.
+                      Send an invitation to a new team member to join your
+                      supplier organization.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="invite-email">Email Address</Label>
-                      <Input id="invite-email" type="email" placeholder="Enter email address" />
+                      <Input
+                        id="invite-email"
+                        type="email"
+                        placeholder="Enter email address"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="invite-role">Role</Label>
@@ -278,15 +383,25 @@ export default function SupplierSettingsPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="invite-message">Personal Message (Optional)</Label>
-                      <Input id="invite-message" placeholder="Welcome to our supplier team!" />
+                      <Label htmlFor="invite-message">
+                        Personal Message (Optional)
+                      </Label>
+                      <Input
+                        id="invite-message"
+                        placeholder="Welcome to our supplier team!"
+                      />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsInviteOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsInviteOpen(false)}
+                    >
                       Cancel
                     </Button>
-                    <Button onClick={() => setIsInviteOpen(false)}>Send Invitation</Button>
+                    <Button onClick={() => setIsInviteOpen(false)}>
+                      Send Invitation
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -303,7 +418,9 @@ export default function SupplierSettingsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Team Members ({teamMembers.length})</CardTitle>
-                    <CardDescription>Manage your supplier team members and their access levels</CardDescription>
+                    <CardDescription>
+                      Manage your supplier team members and their access levels
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Table>
@@ -318,13 +435,15 @@ export default function SupplierSettingsPage() {
                       </TableHeader>
                       <TableBody>
                         {teamMembers.map((member) => {
-                          const roleInfo = getRoleInfo(member.role)
+                          const roleInfo = getRoleInfo(member.role);
                           return (
                             <TableRow key={member.id}>
                               <TableCell>
                                 <div className="flex items-center space-x-3">
                                   <Avatar>
-                                    <AvatarImage src={member.avatar || "/placeholder.svg"} />
+                                    <AvatarImage
+                                      src={member.avatar || "/placeholder.svg"}
+                                    />
                                     <AvatarFallback>
                                       {member.name
                                         .split(" ")
@@ -333,7 +452,9 @@ export default function SupplierSettingsPage() {
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
-                                    <div className="font-medium">{member.name}</div>
+                                    <div className="font-medium">
+                                      {member.name}
+                                    </div>
                                     <div className="text-sm text-muted-foreground flex items-center gap-2">
                                       <Mail className="h-3 w-3" />
                                       {member.email}
@@ -346,14 +467,24 @@ export default function SupplierSettingsPage() {
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <Badge className={roleInfo?.color}>{roleInfo?.name}</Badge>
+                                <Badge className={roleInfo?.color}>
+                                  {roleInfo?.name}
+                                </Badge>
                               </TableCell>
                               <TableCell>
-                                <Badge variant={member.status === "active" ? "default" : "secondary"}>
+                                <Badge
+                                  variant={
+                                    member.status === "active"
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                >
                                   {member.status}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="text-muted-foreground">{member.lastActive}</TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {member.lastActive}
+                              </TableCell>
                               <TableCell className="text-right">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
@@ -364,8 +495,8 @@ export default function SupplierSettingsPage() {
                                   <DropdownMenuContent align="end">
                                     <DropdownMenuItem
                                       onClick={() => {
-                                        setSelectedMember(member)
-                                        setIsRoleModalOpen(true)
+                                        setSelectedMember(member);
+                                        setIsRoleModalOpen(true);
                                       }}
                                     >
                                       <Edit className="mr-2 h-4 w-4" />
@@ -383,7 +514,7 @@ export default function SupplierSettingsPage() {
                                 </DropdownMenu>
                               </TableCell>
                             </TableRow>
-                          )
+                          );
                         })}
                       </TableBody>
                     </Table>
@@ -400,12 +531,20 @@ export default function SupplierSettingsPage() {
                           <div className="flex items-center space-x-3">
                             <Shield className="h-5 w-5 text-primary" />
                             <div>
-                              <CardTitle className="text-lg">{role.name}</CardTitle>
-                              <CardDescription>{role.description}</CardDescription>
+                              <CardTitle className="text-lg">
+                                {role.name}
+                              </CardTitle>
+                              <CardDescription>
+                                {role.description}
+                              </CardDescription>
                             </div>
                           </div>
                           <Badge className={role.color}>
-                            {teamMembers.filter((m) => m.role === role.id).length} members
+                            {
+                              teamMembers.filter((m) => m.role === role.id)
+                                .length
+                            }{" "}
+                            members
                           </Badge>
                         </div>
                       </CardHeader>
@@ -414,17 +553,32 @@ export default function SupplierSettingsPage() {
                           <div>
                             <h4 className="font-medium mb-2">Permissions</h4>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                              {Object.entries(permissionCategories).map(([category, permissions]) => (
-                                <div key={category} className="space-y-2">
-                                  <h5 className="text-sm font-medium text-muted-foreground">{category}</h5>
-                                  {permissions.map((permission) => (
-                                    <div key={permission} className="flex items-center space-x-2">
-                                      <Switch checked={role.permissions.includes(permission)} disabled size="sm" />
-                                      <span className="text-sm">{permission.replace(/_/g, " ")}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              ))}
+                              {Object.entries(permissionCategories).map(
+                                ([category, permissions]) => (
+                                  <div key={category} className="space-y-2">
+                                    <h5 className="text-sm font-medium text-muted-foreground">
+                                      {category}
+                                    </h5>
+                                    {permissions.map((permission) => (
+                                      <div
+                                        key={permission}
+                                        className="flex items-center space-x-2"
+                                      >
+                                        <Switch
+                                          checked={role.permissions.includes(
+                                            permission
+                                          )}
+                                          disabled
+                                          size="sm"
+                                        />
+                                        <span className="text-sm">
+                                          {permission.replace(/_/g, " ")}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
                         </div>
@@ -438,7 +592,9 @@ export default function SupplierSettingsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>Track team member actions and role changes</CardDescription>
+                    <CardDescription>
+                      Track team member actions and role changes
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -446,13 +602,15 @@ export default function SupplierSettingsPage() {
                         {
                           action: "Role Updated",
                           user: "David Wilson",
-                          details: "Changed Emma Thompson's permissions for customer chat access",
+                          details:
+                            "Changed Emma Thompson's permissions for customer chat access",
                           time: "1 hour ago",
                         },
                         {
                           action: "Member Invited",
                           user: "David Wilson",
-                          details: "Invited new team member: support@freshfarms.com",
+                          details:
+                            "Invited new team member: support@freshfarms.com",
                           time: "2 days ago",
                         },
                         {
@@ -464,19 +622,31 @@ export default function SupplierSettingsPage() {
                         {
                           action: "Member Activated",
                           user: "David Wilson",
-                          details: "Activated Carlos Martinez's warehouse access",
+                          details:
+                            "Activated Carlos Martinez's warehouse access",
                           time: "2 weeks ago",
                         },
                       ].map((activity, index) => (
-                        <div key={index} className="flex items-start space-x-3 p-3 rounded-lg border">
+                        <div
+                          key={index}
+                          className="flex items-start space-x-3 p-3 rounded-lg border"
+                        >
                           <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-medium">{activity.action}</span>
-                              <span className="text-sm text-muted-foreground">{activity.time}</span>
+                              <span className="font-medium">
+                                {activity.action}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                {activity.time}
+                              </span>
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1">{activity.details}</p>
-                            <p className="text-xs text-muted-foreground mt-1">by {activity.user}</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {activity.details}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              by {activity.user}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -491,7 +661,9 @@ export default function SupplierSettingsPage() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Change Role</DialogTitle>
-                  <DialogDescription>Update the role for {selectedMember?.name}</DialogDescription>
+                  <DialogDescription>
+                    Update the role for {selectedMember?.name}
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -517,10 +689,15 @@ export default function SupplierSettingsPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsRoleModalOpen(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsRoleModalOpen(false)}
+                  >
                     Cancel
                   </Button>
-                  <Button onClick={() => setIsRoleModalOpen(false)}>Update Role</Button>
+                  <Button onClick={() => setIsRoleModalOpen(false)}>
+                    Update Role
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -530,7 +707,9 @@ export default function SupplierSettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Product Settings</CardTitle>
-                <CardDescription>Configure your product preferences</CardDescription>
+                <CardDescription>
+                  Configure your product preferences
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -562,14 +741,22 @@ export default function SupplierSettingsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="low-stock-threshold">Low Stock Alert Threshold</Label>
-                  <Input id="low-stock-threshold" type="number" defaultValue="10" />
+                  <Label htmlFor="low-stock-threshold">
+                    Low Stock Alert Threshold
+                  </Label>
+                  <Input
+                    id="low-stock-threshold"
+                    type="number"
+                    defaultValue="10"
+                  />
                   <p className="text-sm text-muted-foreground">
                     You will be alerted when products fall below this quantity
                   </p>
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="auto-restock">Auto-Restock Notifications</Label>
+                  <Label htmlFor="auto-restock">
+                    Auto-Restock Notifications
+                  </Label>
                   <Switch id="auto-restock" defaultChecked />
                 </div>
               </CardContent>
@@ -583,7 +770,9 @@ export default function SupplierSettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Notification Preferences</CardTitle>
-                <CardDescription>Manage how you receive notifications</CardDescription>
+                <CardDescription>
+                  Manage how you receive notifications
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
@@ -603,14 +792,18 @@ export default function SupplierSettingsPage() {
                       <Switch id="email-payments" defaultChecked />
                     </div>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="email-promotions">Marketing & Promotions</Label>
+                      <Label htmlFor="email-promotions">
+                        Marketing & Promotions
+                      </Label>
                       <Switch id="email-promotions" />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">SMS/WhatsApp Notifications</h3>
+                  <h3 className="text-lg font-medium">
+                    SMS/WhatsApp Notifications
+                  </h3>
                   <Separator />
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -638,19 +831,27 @@ export default function SupplierSettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Payment Options</CardTitle>
-                <CardDescription>Manage your payment methods for receiving payments</CardDescription>
+                <CardDescription>
+                  Manage your payment methods for receiving payments
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Accepted Payment Methods</h3>
+                  <h3 className="text-lg font-medium">
+                    Accepted Payment Methods
+                  </h3>
                   <Separator />
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="accept-bank-transfer">Bank Transfer</Label>
+                      <Label htmlFor="accept-bank-transfer">
+                        Bank Transfer
+                      </Label>
                       <Switch id="accept-bank-transfer" defaultChecked />
                     </div>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="accept-credit-card">Credit/Debit Card</Label>
+                      <Label htmlFor="accept-credit-card">
+                        Credit/Debit Card
+                      </Label>
                       <Switch id="accept-credit-card" defaultChecked />
                     </div>
                     <div className="flex items-center justify-between">
@@ -665,7 +866,9 @@ export default function SupplierSettingsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Payment Account Details</h3>
+                  <h3 className="text-lg font-medium">
+                    Payment Account Details
+                  </h3>
                   <Separator />
                   <div className="space-y-3">
                     <div className="space-y-2">
@@ -678,7 +881,10 @@ export default function SupplierSettingsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="mobile-money">Mobile Money Number</Label>
-                      <Input id="mobile-money" defaultValue="+250 78 123 4567" />
+                      <Input
+                        id="mobile-money"
+                        defaultValue="+250 78 123 4567"
+                      />
                     </div>
                   </div>
                 </div>
@@ -688,7 +894,9 @@ export default function SupplierSettingsPage() {
                   <Separator />
                   <div className="space-y-3">
                     <div className="space-y-2">
-                      <Label htmlFor="payment-terms">Default Payment Terms</Label>
+                      <Label htmlFor="payment-terms">
+                        Default Payment Terms
+                      </Label>
                       <Select defaultValue="30">
                         <SelectTrigger id="payment-terms">
                           <SelectValue placeholder="Select payment terms" />
@@ -702,7 +910,9 @@ export default function SupplierSettingsPage() {
                       </Select>
                     </div>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="auto-reminders">Automatic Payment Reminders</Label>
+                      <Label htmlFor="auto-reminders">
+                        Automatic Payment Reminders
+                      </Label>
                       <Switch id="auto-reminders" defaultChecked />
                     </div>
                   </div>
@@ -718,7 +928,9 @@ export default function SupplierSettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Billing Information</CardTitle>
-                <CardDescription>Manage your billing details and subscription</CardDescription>
+                <CardDescription>
+                  Manage your billing details and subscription
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -727,7 +939,9 @@ export default function SupplierSettingsPage() {
                     <span className="font-medium">Business Plan</span>
                     <Badge>Active</Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">$99.99/month, billed monthly</p>
+                  <p className="text-sm text-muted-foreground">
+                    $99.99/month, billed monthly
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="payment-method">Payment Method</Label>
@@ -740,7 +954,10 @@ export default function SupplierSettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="billing-address">Billing Address</Label>
-                  <Input id="billing-address" defaultValue="456 Farm Rd, Countryside, CA 54321" />
+                  <Input
+                    id="billing-address"
+                    defaultValue="456 Farm Rd, Countryside, CA 54321"
+                  />
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
@@ -752,5 +969,5 @@ export default function SupplierSettingsPage() {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }

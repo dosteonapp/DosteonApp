@@ -19,3 +19,22 @@ export const SigninValidationSchema = Yup.object().shape({
   email: emailSchema,
   password: passwordSchema,
 });
+
+export const SignupValidationSchema = Yup.object().shape({
+  name: Yup.string()
+    .min(2, "Full name must be at least 2 characters")
+    .required("Full name is required"),
+  email: emailSchema,
+  password: passwordSchema,
+  confirmPassword: confirmPasswordSchema,
+});
+
+export const ForgotPasswordValidationSchema = Yup.object().shape({
+  email: emailSchema,
+});
+
+export const ResetPasswordValidationSchema = Yup.object().shape({
+  password: passwordSchema,
+  confirmPassword: confirmPasswordSchema,
+  code: Yup.string().required("Reset code is required"),
+});

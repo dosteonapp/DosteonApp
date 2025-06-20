@@ -28,45 +28,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authenticatingWithGoogle, setAuthenticatingWithGoogle] =
     React.useState<boolean>(false);
 
-  const googleLogin = useGoogleLogin({
-    flow: "auth-code",
-    scope: "openid email profile",
-    onSuccess: async ({ code }) => {
-      try {
-        const { data } = await axiosInstance.post("/auth/google-signin", {
-          code,
-        });
+  //   const googleLogin = useGoogleLogin({
+  //     flow: "auth-code",
+  //     scope: "openid email profile",
+  //     onSuccess: async ({ code }) => {
+  //       try {
+  //         const { data } = await axiosInstance.post("/auth/google-signin", {
+  //           code,
+  //         });
 
-        if (data.success) {
-          const returnUrl = searchParams.get("returnUrl");
-          window.location.href = returnUrl
-            ? decodeURIComponent(returnUrl)
-            : "/dashboard";
-        } else {
-          throw new Error(data.message || "Google login failed");
-        }
-      } catch (error) {
-        console.error("Google login error:", error);
-        toast.error(handleApiError(error).message || "Google login failed");
-      } finally {
-        setAuthenticatingWithGoogle(false);
-      }
-    },
-    onError: (error) => {
-      setAuthenticatingWithGoogle(false);
-      console.error("Google login failed:", error);
-      toast.error(error.error_description || "Google login failed");
-    },
-    onNonOAuthError: (error) => {
-      setAuthenticatingWithGoogle(false);
-      console.error("Google login non-OAuth error:", error);
-      toast.error(error.type || "Google login failed");
-    },
-  });
+  //         if (data.success) {
+  //           const returnUrl = searchParams.get("returnUrl");
+  //           window.location.href = returnUrl
+  //             ? decodeURIComponent(returnUrl)
+  //             : "/dashboard";
+  //         } else {
+  //           throw new Error(data.message || "Google login failed");
+  //         }
+  //       } catch (error) {
+  //         console.error("Google login error:", error);
+  //         toast.error(handleApiError(error).message || "Google login failed");
+  //       } finally {
+  //         setAuthenticatingWithGoogle(false);
+  //       }
+  //     },
+  //     onError: (error) => {
+  //       setAuthenticatingWithGoogle(false);
+  //       console.error("Google login failed:", error);
+  //       toast.error(error.error_description || "Google login failed");
+  //     },
+  //     onNonOAuthError: (error) => {
+  //       setAuthenticatingWithGoogle(false);
+  //       console.error("Google login non-OAuth error:", error);
+  //       toast.error(error.type || "Google login failed");
+  //     },
+  //   });
 
   const authenticateWithGoogle = async () => {
     setAuthenticatingWithGoogle(true);
-    googleLogin();
+    // googleLogin();
   };
 
   const [resetPasswordData, setResetPasswordData] = React.useState<{

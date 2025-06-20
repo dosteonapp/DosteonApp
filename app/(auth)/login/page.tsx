@@ -1,44 +1,58 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Formik, Form, Field, FormikHelpers } from "formik";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  FormikFormItem,
+  FormikFormLabel,
+  FormikFormControl,
+  FormikFormMessage,
+} from "@/components/ui/formik-form";
+import { SigninValidationSchema } from "@/schemas/auth";
+import { LoginValues } from "@/types/auth";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [selectedRole, setSelectedRole] = useState("restaurant")
+  const router = useRouter();
+  const { login } = useAuth();
+  const [selectedRole, setSelectedRole] = useState("restaurant");
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setIsLoading(true)
+  const initialValues: LoginValues = {
+    email: "",
+    password: "",
+  };
 
-    // Simulate authentication
-    setTimeout(() => {
-      setIsLoading(false)
-
-      // Use the state variable for role instead of querying the DOM
-      if (selectedRole === "restaurant") {
-        router.push("/restaurant/dashboard")
-      } else {
-        router.push("/supplier/dashboard")
-      }
-    }, 1000)
-  }
+  const handleSubmit = async (
+    values: LoginValues,
+    helpers: FormikHelpers<LoginValues>
+  ) => {
+    await login(values, helpers);
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Login to Dosteon</CardTitle>
-          <CardDescription>Enter your email and password to access your account</CardDescription>
+          <CardDescription>
+            Enter your email and password to access your account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="restaurant" onValueChange={setSelectedRole}>
@@ -47,38 +61,114 @@ export default function LoginPage() {
               <TabsTrigger value="supplier">Supplier</TabsTrigger>
             </TabsList>
             <TabsContent value="restaurant">
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email-restaurant">Email</Label>
-                    <Input id="email-restaurant" type="email" placeholder="restaurant@example.com" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password-restaurant">Password</Label>
-                    <Input id="password-restaurant" type="password" required />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Logging in..." : "Login as Restaurant"}
-                  </Button>
-                </div>
-              </form>
+              <Formik
+                initialValues={initialValues}
+                validationSchema={SigninValidationSchema}
+                onSubmit={handleSubmit}
+              >
+                {({ isSubmitting, status }) => (
+                  <Form>
+                    <div className="space-y-4">
+                      {status?.error && (
+                        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                          {status.error}
+                        </div>
+                      )}
+                      <FormikFormItem>
+                        <FormikFormLabel htmlFor="email-restaurant">
+                          Email
+                        </FormikFormLabel>
+                        <FormikFormControl>
+                          <Field
+                            as={Input}
+                            id="email-restaurant"
+                            name="email"
+                            type="email"
+                            placeholder="restaurant@example.com"
+                          />
+                        </FormikFormControl>
+                        <FormikFormMessage name="email" />
+                      </FormikFormItem>
+                      <FormikFormItem>
+                        <FormikFormLabel htmlFor="password-restaurant">
+                          Password
+                        </FormikFormLabel>
+                        <FormikFormControl>
+                          <Field
+                            as={PasswordInput}
+                            id="password-restaurant"
+                            name="password"
+                          />
+                        </FormikFormControl>
+                        <FormikFormMessage name="password" />
+                      </FormikFormItem>
+                      <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isSubmitting}
+                        loading={isSubmitting}
+                      >
+                        Login as Restaurant
+                      </Button>
+                    </div>
+                  </Form>
+                )}
+              </Formik>
             </TabsContent>
             <TabsContent value="supplier">
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email-supplier">Email</Label>
-                    <Input id="email-supplier" type="email" placeholder="supplier@example.com" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password-supplier">Password</Label>
-                    <Input id="password-supplier" type="password" required />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Logging in..." : "Login as Supplier"}
-                  </Button>
-                </div>
-              </form>
+              <Formik
+                initialValues={initialValues}
+                validationSchema={SigninValidationSchema}
+                onSubmit={handleSubmit}
+              >
+                {({ isSubmitting, status }) => (
+                  <Form>
+                    <div className="space-y-4">
+                      {status?.error && (
+                        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                          {status.error}
+                        </div>
+                      )}
+                      <FormikFormItem>
+                        <FormikFormLabel htmlFor="email-supplier">
+                          Email
+                        </FormikFormLabel>
+                        <FormikFormControl>
+                          <Field
+                            as={Input}
+                            id="email-supplier"
+                            name="email"
+                            type="email"
+                            placeholder="supplier@example.com"
+                          />
+                        </FormikFormControl>
+                        <FormikFormMessage name="email" />
+                      </FormikFormItem>
+                      <FormikFormItem>
+                        <FormikFormLabel htmlFor="password-supplier">
+                          Password
+                        </FormikFormLabel>
+                        <FormikFormControl>
+                          <Field
+                            as={PasswordInput}
+                            id="password-supplier"
+                            name="password"
+                          />
+                        </FormikFormControl>
+                        <FormikFormMessage name="password" />
+                      </FormikFormItem>
+                      <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isSubmitting}
+                        loading={isSubmitting}
+                      >
+                        Login as Supplier
+                      </Button>
+                    </div>
+                  </Form>
+                )}
+              </Formik>
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -92,5 +182,5 @@ export default function LoginPage() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

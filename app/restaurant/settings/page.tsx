@@ -1,13 +1,27 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Menu,
   CreditCard,
@@ -21,11 +35,18 @@ import {
   Shield,
   Settings,
   Edit,
-} from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -34,15 +55,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useState } from "react"
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
 
 const restaurantRoles = [
   {
     id: "owner",
     name: "Restaurant Owner/Manager",
-    description: "Top-level admin responsible for overall management and decision-making (Default Role)",
+    description:
+      "Top-level admin responsible for overall management and decision-making (Default Role)",
     permissions: [
       "full_access",
       "user_management",
@@ -73,31 +100,52 @@ const restaurantRoles = [
     id: "procurement",
     name: "Procurement Officer",
     description: "Handles ordering and maintaining supplier relationships",
-    permissions: ["create_orders", "supplier_access", "inventory_management", "partial_payments"],
+    permissions: [
+      "create_orders",
+      "supplier_access",
+      "inventory_management",
+      "partial_payments",
+    ],
     color: "bg-blue-100 text-blue-800",
   },
   {
     id: "kitchen",
     name: "Kitchen Staff",
     description: "Manages daily food production and stock usage",
-    permissions: ["view_inventory", "update_usage", "stock_requests", "delivery_notifications"],
+    permissions: [
+      "view_inventory",
+      "update_usage",
+      "stock_requests",
+      "delivery_notifications",
+    ],
     color: "bg-green-100 text-green-800",
   },
   {
     id: "cashier",
     name: "Cashier/Front-of-House",
-    description: "Handles sales transactions and updates inventory for sold items",
-    permissions: ["sales_transactions", "inventory_updates", "receipts", "low_stock_alerts"],
+    description:
+      "Handles sales transactions and updates inventory for sold items",
+    permissions: [
+      "sales_transactions",
+      "inventory_updates",
+      "receipts",
+      "low_stock_alerts",
+    ],
     color: "bg-yellow-100 text-yellow-800",
   },
   {
     id: "supervisor",
     name: "Shift Supervisor",
     description: "Oversees daily operations and monitors staff performance",
-    permissions: ["staff_monitoring", "inventory_adjustments", "basic_reports", "messaging"],
+    permissions: [
+      "staff_monitoring",
+      "inventory_adjustments",
+      "basic_reports",
+      "messaging",
+    ],
     color: "bg-purple-100 text-purple-800",
   },
-]
+];
 
 const teamMembers = [
   {
@@ -140,25 +188,35 @@ const teamMembers = [
     lastActive: "1 week ago",
     avatar: "/placeholder.svg?height=40&width=40",
   },
-]
+];
 
 const permissionCategories = {
   Orders: ["create_orders", "view_orders", "update_orders", "approve_orders"],
-  Inventory: ["view_inventory", "update_inventory", "inventory_management", "stock_requests"],
+  Inventory: [
+    "view_inventory",
+    "update_inventory",
+    "inventory_management",
+    "stock_requests",
+  ],
   Messaging: ["customer_chat", "internal_messaging", "notifications"],
-  Payments: ["view_payments", "process_payments", "financial_data", "partial_payments"],
+  Payments: [
+    "view_payments",
+    "process_payments",
+    "financial_data",
+    "partial_payments",
+  ],
   Reports: ["basic_reports", "financial_reports", "analytics"],
   Administration: ["user_management", "role_assignment", "full_access"],
-}
+};
 
 export default function SettingsPage() {
-  const [isInviteOpen, setIsInviteOpen] = useState(false)
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false)
-  const [selectedMember, setSelectedMember] = useState(null)
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
 
   const getRoleInfo = (roleId: string) => {
-    return restaurantRoles.find((role) => role.id === roleId)
-  }
+    return restaurantRoles.find((role) => role.id === roleId);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -197,15 +255,26 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue="contact@bistrobella.com" />
+                    <Input
+                      id="email"
+                      type="email"
+                      defaultValue="contact@bistrobella.com"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      defaultValue="+1 (555) 123-4567"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="address">Address</Label>
-                    <Input id="address" defaultValue="123 Main St, Anytown, CA 12345" />
+                    <Input
+                      id="address"
+                      defaultValue="123 Main St, Anytown, CA 12345"
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -222,15 +291,15 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="current-password">Current Password</Label>
-                  <Input id="current-password" type="password" />
+                  <PasswordInput id="current-password" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="new-password">New Password</Label>
-                  <Input id="new-password" type="password" />
+                  <PasswordInput id="new-password" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm New Password</Label>
-                  <Input id="confirm-password" type="password" />
+                  <PasswordInput id="confirm-password" />
                 </div>
               </CardContent>
               <CardFooter>
@@ -242,8 +311,12 @@ export default function SettingsPage() {
           <TabsContent value="team" className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold tracking-tight">Team Management</h2>
-                <p className="text-muted-foreground">Manage your restaurant team members and their permissions</p>
+                <h2 className="text-xl font-bold tracking-tight">
+                  Team Management
+                </h2>
+                <p className="text-muted-foreground">
+                  Manage your restaurant team members and their permissions
+                </p>
               </div>
               <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                 <DialogTrigger asChild>
@@ -256,13 +329,18 @@ export default function SettingsPage() {
                   <DialogHeader>
                     <DialogTitle>Invite New Team Member</DialogTitle>
                     <DialogDescription>
-                      Send an invitation to a new team member to join your restaurant.
+                      Send an invitation to a new team member to join your
+                      restaurant.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="invite-email">Email Address</Label>
-                      <Input id="invite-email" type="email" placeholder="Enter email address" />
+                      <Input
+                        id="invite-email"
+                        type="email"
+                        placeholder="Enter email address"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="invite-role">Role</Label>
@@ -280,15 +358,25 @@ export default function SettingsPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="invite-message">Personal Message (Optional)</Label>
-                      <Input id="invite-message" placeholder="Welcome to our team!" />
+                      <Label htmlFor="invite-message">
+                        Personal Message (Optional)
+                      </Label>
+                      <Input
+                        id="invite-message"
+                        placeholder="Welcome to our team!"
+                      />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsInviteOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsInviteOpen(false)}
+                    >
                       Cancel
                     </Button>
-                    <Button onClick={() => setIsInviteOpen(false)}>Send Invitation</Button>
+                    <Button onClick={() => setIsInviteOpen(false)}>
+                      Send Invitation
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -305,7 +393,10 @@ export default function SettingsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Team Members ({teamMembers.length})</CardTitle>
-                    <CardDescription>Manage your restaurant team members and their access levels</CardDescription>
+                    <CardDescription>
+                      Manage your restaurant team members and their access
+                      levels
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Table>
@@ -320,13 +411,15 @@ export default function SettingsPage() {
                       </TableHeader>
                       <TableBody>
                         {teamMembers.map((member) => {
-                          const roleInfo = getRoleInfo(member.role)
+                          const roleInfo = getRoleInfo(member.role);
                           return (
                             <TableRow key={member.id}>
                               <TableCell>
                                 <div className="flex items-center space-x-3">
                                   <Avatar>
-                                    <AvatarImage src={member.avatar || "/placeholder.svg"} />
+                                    <AvatarImage
+                                      src={member.avatar || "/placeholder.svg"}
+                                    />
                                     <AvatarFallback>
                                       {member.name
                                         .split(" ")
@@ -335,7 +428,9 @@ export default function SettingsPage() {
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
-                                    <div className="font-medium">{member.name}</div>
+                                    <div className="font-medium">
+                                      {member.name}
+                                    </div>
                                     <div className="text-sm text-muted-foreground flex items-center gap-2">
                                       <Mail className="h-3 w-3" />
                                       {member.email}
@@ -348,14 +443,24 @@ export default function SettingsPage() {
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <Badge className={roleInfo?.color}>{roleInfo?.name}</Badge>
+                                <Badge className={roleInfo?.color}>
+                                  {roleInfo?.name}
+                                </Badge>
                               </TableCell>
                               <TableCell>
-                                <Badge variant={member.status === "active" ? "default" : "secondary"}>
+                                <Badge
+                                  variant={
+                                    member.status === "active"
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                >
                                   {member.status}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="text-muted-foreground">{member.lastActive}</TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {member.lastActive}
+                              </TableCell>
                               <TableCell className="text-right">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
@@ -366,8 +471,8 @@ export default function SettingsPage() {
                                   <DropdownMenuContent align="end">
                                     <DropdownMenuItem
                                       onClick={() => {
-                                        setSelectedMember(member)
-                                        setIsRoleModalOpen(true)
+                                        setSelectedMember(member);
+                                        setIsRoleModalOpen(true);
                                       }}
                                     >
                                       <Edit className="mr-2 h-4 w-4" />
@@ -385,7 +490,7 @@ export default function SettingsPage() {
                                 </DropdownMenu>
                               </TableCell>
                             </TableRow>
-                          )
+                          );
                         })}
                       </TableBody>
                     </Table>
@@ -402,12 +507,20 @@ export default function SettingsPage() {
                           <div className="flex items-center space-x-3">
                             <Shield className="h-5 w-5 text-primary" />
                             <div>
-                              <CardTitle className="text-lg">{role.name}</CardTitle>
-                              <CardDescription>{role.description}</CardDescription>
+                              <CardTitle className="text-lg">
+                                {role.name}
+                              </CardTitle>
+                              <CardDescription>
+                                {role.description}
+                              </CardDescription>
                             </div>
                           </div>
                           <Badge className={role.color}>
-                            {teamMembers.filter((m) => m.role === role.id).length} members
+                            {
+                              teamMembers.filter((m) => m.role === role.id)
+                                .length
+                            }{" "}
+                            members
                           </Badge>
                         </div>
                       </CardHeader>
@@ -416,17 +529,32 @@ export default function SettingsPage() {
                           <div>
                             <h4 className="font-medium mb-2">Permissions</h4>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                              {Object.entries(permissionCategories).map(([category, permissions]) => (
-                                <div key={category} className="space-y-2">
-                                  <h5 className="text-sm font-medium text-muted-foreground">{category}</h5>
-                                  {permissions.map((permission) => (
-                                    <div key={permission} className="flex items-center space-x-2">
-                                      <Switch checked={role.permissions.includes(permission)} disabled size="sm" />
-                                      <span className="text-sm">{permission.replace(/_/g, " ")}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              ))}
+                              {Object.entries(permissionCategories).map(
+                                ([category, permissions]) => (
+                                  <div key={category} className="space-y-2">
+                                    <h5 className="text-sm font-medium text-muted-foreground">
+                                      {category}
+                                    </h5>
+                                    {permissions.map((permission) => (
+                                      <div
+                                        key={permission}
+                                        className="flex items-center space-x-2"
+                                      >
+                                        <Switch
+                                          checked={role.permissions.includes(
+                                            permission
+                                          )}
+                                          disabled
+                                          size="sm"
+                                        />
+                                        <span className="text-sm">
+                                          {permission.replace(/_/g, " ")}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
                         </div>
@@ -440,7 +568,9 @@ export default function SettingsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>Track team member actions and role changes</CardDescription>
+                    <CardDescription>
+                      Track team member actions and role changes
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -448,37 +578,52 @@ export default function SettingsPage() {
                         {
                           action: "Role Updated",
                           user: "John Smith",
-                          details: "Changed Sarah Johnson's role from Kitchen Staff to Procurement Officer",
+                          details:
+                            "Changed Sarah Johnson's role from Kitchen Staff to Procurement Officer",
                           time: "2 hours ago",
                         },
                         {
                           action: "Member Invited",
                           user: "John Smith",
-                          details: "Invited new team member: mike@bistrobella.com",
+                          details:
+                            "Invited new team member: mike@bistrobella.com",
                           time: "1 day ago",
                         },
                         {
                           action: "Permission Modified",
                           user: "John Smith",
-                          details: "Updated inventory permissions for Kitchen Staff role",
+                          details:
+                            "Updated inventory permissions for Kitchen Staff role",
                           time: "3 days ago",
                         },
                         {
                           action: "Member Removed",
                           user: "John Smith",
-                          details: "Removed inactive member: former@bistrobella.com",
+                          details:
+                            "Removed inactive member: former@bistrobella.com",
                           time: "1 week ago",
                         },
                       ].map((activity, index) => (
-                        <div key={index} className="flex items-start space-x-3 p-3 rounded-lg border">
+                        <div
+                          key={index}
+                          className="flex items-start space-x-3 p-3 rounded-lg border"
+                        >
                           <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-medium">{activity.action}</span>
-                              <span className="text-sm text-muted-foreground">{activity.time}</span>
+                              <span className="font-medium">
+                                {activity.action}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                {activity.time}
+                              </span>
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1">{activity.details}</p>
-                            <p className="text-xs text-muted-foreground mt-1">by {activity.user}</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {activity.details}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              by {activity.user}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -493,7 +638,9 @@ export default function SettingsPage() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Change Role</DialogTitle>
-                  <DialogDescription>Update the role for {selectedMember?.name}</DialogDescription>
+                  <DialogDescription>
+                    Update the role for {selectedMember?.name}
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -519,10 +666,15 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsRoleModalOpen(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsRoleModalOpen(false)}
+                  >
                     Cancel
                   </Button>
-                  <Button onClick={() => setIsRoleModalOpen(false)}>Update Role</Button>
+                  <Button onClick={() => setIsRoleModalOpen(false)}>
+                    Update Role
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -532,7 +684,9 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Notification Preferences</CardTitle>
-                <CardDescription>Manage how you receive notifications</CardDescription>
+                <CardDescription>
+                  Manage how you receive notifications
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
@@ -548,14 +702,18 @@ export default function SettingsPage() {
                       <Switch id="email-inventory" defaultChecked />
                     </div>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="email-promotions">Promotions and News</Label>
+                      <Label htmlFor="email-promotions">
+                        Promotions and News
+                      </Label>
                       <Switch id="email-promotions" />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">SMS/WhatsApp Notifications</h3>
+                  <h3 className="text-lg font-medium">
+                    SMS/WhatsApp Notifications
+                  </h3>
                   <Separator />
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -567,7 +725,9 @@ export default function SettingsPage() {
                       <Switch id="sms-inventory" defaultChecked />
                     </div>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="sms-promotions">Promotions and News</Label>
+                      <Label htmlFor="sms-promotions">
+                        Promotions and News
+                      </Label>
                       <Switch id="sms-promotions" />
                     </div>
                   </div>
@@ -583,21 +743,37 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Inventory Settings</CardTitle>
-                <CardDescription>Configure your inventory preferences</CardDescription>
+                <CardDescription>
+                  Configure your inventory preferences
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="low-stock-threshold">Low Stock Alert Threshold (%)</Label>
-                  <Input id="low-stock-threshold" type="number" defaultValue="20" />
+                  <Label htmlFor="low-stock-threshold">
+                    Low Stock Alert Threshold (%)
+                  </Label>
+                  <Input
+                    id="low-stock-threshold"
+                    type="number"
+                    defaultValue="20"
+                  />
                   <p className="text-sm text-muted-foreground">
-                    Items will be marked as low stock when they fall below this percentage of their minimum level
+                    Items will be marked as low stock when they fall below this
+                    percentage of their minimum level
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="critical-stock-threshold">Critical Stock Alert Threshold (%)</Label>
-                  <Input id="critical-stock-threshold" type="number" defaultValue="10" />
+                  <Label htmlFor="critical-stock-threshold">
+                    Critical Stock Alert Threshold (%)
+                  </Label>
+                  <Input
+                    id="critical-stock-threshold"
+                    type="number"
+                    defaultValue="10"
+                  />
                   <p className="text-sm text-muted-foreground">
-                    Items will be marked as critical when they fall below this percentage of their minimum level
+                    Items will be marked as critical when they fall below this
+                    percentage of their minimum level
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -626,45 +802,67 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Payment Options</CardTitle>
-                <CardDescription>Manage your payment methods for invoices and transactions</CardDescription>
+                <CardDescription>
+                  Manage your payment methods for invoices and transactions
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Default Payment Method</h3>
+                  <h3 className="text-lg font-medium">
+                    Default Payment Method
+                  </h3>
                   <Separator />
                   <RadioGroup defaultValue="bank-transfer">
                     <div className="flex items-center space-x-2 rounded-md border p-3">
-                      <RadioGroupItem value="bank-transfer" id="bank-transfer" />
-                      <Label htmlFor="bank-transfer" className="flex-1 cursor-pointer">
+                      <RadioGroupItem
+                        value="bank-transfer"
+                        id="bank-transfer"
+                      />
+                      <Label
+                        htmlFor="bank-transfer"
+                        className="flex-1 cursor-pointer"
+                      >
                         <div className="flex items-center gap-2">
                           <Building className="h-5 w-5 text-primary" />
                           <div>
                             <p className="font-medium">Bank Transfer</p>
-                            <p className="text-sm text-muted-foreground">Pay directly from your bank account</p>
+                            <p className="text-sm text-muted-foreground">
+                              Pay directly from your bank account
+                            </p>
                           </div>
                         </div>
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2 rounded-md border p-3">
                       <RadioGroupItem value="credit-card" id="credit-card" />
-                      <Label htmlFor="credit-card" className="flex-1 cursor-pointer">
+                      <Label
+                        htmlFor="credit-card"
+                        className="flex-1 cursor-pointer"
+                      >
                         <div className="flex items-center gap-2">
                           <CreditCard className="h-5 w-5 text-primary" />
                           <div>
                             <p className="font-medium">Credit/Debit Card</p>
-                            <p className="text-sm text-muted-foreground">Pay with Visa, Mastercard, or other cards</p>
+                            <p className="text-sm text-muted-foreground">
+                              Pay with Visa, Mastercard, or other cards
+                            </p>
                           </div>
                         </div>
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2 rounded-md border p-3">
                       <RadioGroupItem value="mobile-money" id="mobile-money" />
-                      <Label htmlFor="mobile-money" className="flex-1 cursor-pointer">
+                      <Label
+                        htmlFor="mobile-money"
+                        className="flex-1 cursor-pointer"
+                      >
                         <div className="flex items-center gap-2">
                           <Wallet className="h-5 w-5 text-primary" />
                           <div>
                             <p className="font-medium">Mobile Money</p>
-                            <p className="text-sm text-muted-foreground">Pay using MTN Mobile Money or Airtel Money</p>
+                            <p className="text-sm text-muted-foreground">
+                              Pay using MTN Mobile Money or Airtel Money
+                            </p>
                           </div>
                         </div>
                       </Label>
@@ -681,12 +879,18 @@ export default function SettingsPage() {
                         <CreditCard className="h-5 w-5 text-primary" />
                         <div>
                           <p className="font-medium">Visa ending in 4242</p>
-                          <p className="text-sm text-muted-foreground">Expires 12/2025</p>
+                          <p className="text-sm text-muted-foreground">
+                            Expires 12/2025
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">Default</Badge>
-                        <Button variant="ghost" size="icon" className="text-destructive">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -696,11 +900,17 @@ export default function SettingsPage() {
                         <Building className="h-5 w-5 text-primary" />
                         <div>
                           <p className="font-medium">Bank of Kigali</p>
-                          <p className="text-sm text-muted-foreground">Account ending in 7890</p>
+                          <p className="text-sm text-muted-foreground">
+                            Account ending in 7890
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="text-destructive">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -714,15 +924,21 @@ export default function SettingsPage() {
                   <Separator />
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="auto-pay">Automatic Payments for Recurring Invoices</Label>
+                      <Label htmlFor="auto-pay">
+                        Automatic Payments for Recurring Invoices
+                      </Label>
                       <Switch id="auto-pay" />
                     </div>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="payment-reminders">Payment Reminders</Label>
+                      <Label htmlFor="payment-reminders">
+                        Payment Reminders
+                      </Label>
                       <Switch id="payment-reminders" defaultChecked />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="reminder-days">Reminder Days Before Due Date</Label>
+                      <Label htmlFor="reminder-days">
+                        Reminder Days Before Due Date
+                      </Label>
                       <Select defaultValue="3">
                         <SelectTrigger id="reminder-days">
                           <SelectValue placeholder="Select days" />
@@ -748,7 +964,9 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Billing Information</CardTitle>
-                <CardDescription>Manage your billing details and subscription</CardDescription>
+                <CardDescription>
+                  Manage your billing details and subscription
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -757,7 +975,9 @@ export default function SettingsPage() {
                     <span className="font-medium">Professional Plan</span>
                     <Badge>Active</Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">$49.99/month, billed monthly</p>
+                  <p className="text-sm text-muted-foreground">
+                    $49.99/month, billed monthly
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="payment-method">Payment Method</Label>
@@ -770,7 +990,10 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="billing-address">Billing Address</Label>
-                  <Input id="billing-address" defaultValue="123 Main St, Anytown, CA 12345" />
+                  <Input
+                    id="billing-address"
+                    defaultValue="123 Main St, Anytown, CA 12345"
+                  />
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
@@ -782,5 +1005,5 @@ export default function SettingsPage() {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }

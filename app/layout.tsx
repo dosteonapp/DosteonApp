@@ -5,6 +5,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppProvider } from "@/context/AppContext";
 import { UserProvider } from "@/context/UserContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <AppProvider>
           <ThemeProvider
@@ -30,7 +33,14 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <UserProvider>{children}</UserProvider>
+            <UserProvider>
+              {/* <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}> */}
+              <AuthProvider>
+                {children}
+                <Toaster />
+              </AuthProvider>
+              {/* </GoogleOAuthProvider> */}
+            </UserProvider>
           </ThemeProvider>
         </AppProvider>
       </body>

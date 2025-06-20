@@ -64,7 +64,11 @@ function Button({
       )}
       {...props}
     >
-      {loading ? <LoaderCircle className="size-[1.2em]" /> : children}
+      {loading ? (
+        <LoaderCircle className="size-[1.2em] animate-spin" />
+      ) : (
+        children
+      )}
     </Comp>
   );
 }
