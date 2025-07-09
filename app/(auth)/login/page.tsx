@@ -31,12 +31,7 @@ import { useAuth } from "@/context/AuthContext";
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [selectedRole, setSelectedRole] = useState("restaurant");
-
-  const initialValues: LoginValues = {
-    email: "",
-    password: "",
-  };
+  const [selectedRole] = useState("restaurant");
 
   const handleSubmit = async (
     values: LoginValues,
@@ -62,7 +57,10 @@ export default function LoginPage() {
             </TabsList>
             <TabsContent value="restaurant">
               <Formik
-                initialValues={initialValues}
+                initialValues={{
+                  email: "",
+                  password: "",
+                }}
                 validationSchema={SigninValidationSchema}
                 onSubmit={handleSubmit}
               >
