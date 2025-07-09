@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Home,
@@ -15,15 +15,16 @@ import {
   DollarSign,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react"
+} from "lucide-react";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { LogoutButton } from "@/components/logout-button";
 
 export function SupplierSidebar() {
-  const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
 
   const routes = [
     {
@@ -67,18 +68,21 @@ export function SupplierSidebar() {
       icon: Settings,
       title: "Settings",
     },
-  ]
+  ];
 
   return (
     <div
       className={cn(
         "flex h-full flex-col border-r bg-background transition-all duration-300",
-        collapsed ? "w-[70px]" : "w-full",
+        collapsed ? "w-[70px]" : "w-full"
       )}
     >
       <div className="flex h-14 items-center justify-between border-b px-4 lg:h-[60px] lg:px-6">
         {!collapsed && (
-          <Link href="/supplier/dashboard" className="flex items-center gap-2 font-semibold">
+          <Link
+            href="/supplier/dashboard"
+            className="flex items-center gap-2 font-semibold"
+          >
             <Package className="h-6 w-6" />
             <span>Dosteon</span>
           </Link>
@@ -95,7 +99,11 @@ export function SupplierSidebar() {
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
         </Button>
       </div>
       <div className="flex-1 overflow-auto py-2">
@@ -107,7 +115,7 @@ export function SupplierSidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                 pathname === route.href && "bg-muted text-primary",
-                collapsed && "justify-center px-2",
+                collapsed && "justify-center px-2"
               )}
               title={collapsed ? route.title : undefined}
             >
@@ -130,13 +138,17 @@ export function SupplierSidebar() {
         </nav>
       </div>
       <div className="mt-auto p-4">
-        <Button variant="outline" className={cn("w-full", collapsed ? "justify-center px-0" : "justify-start")} asChild>
-          <Link href="/" title={collapsed ? "Logout" : undefined}>
-            <LogOut className={cn("h-4 w-4", !collapsed && "mr-2")} />
-            {!collapsed && "Logout"}
-          </Link>
-        </Button>
+        <LogoutButton
+          variant="outline"
+          className={cn(
+            "w-full",
+            collapsed ? "justify-center px-0" : "justify-start"
+          )}
+        >
+          <LogOut className={cn("h-4 w-4", !collapsed && "mr-2")} />
+          {!collapsed && "Logout"}
+        </LogoutButton>
       </div>
     </div>
-  )
+  );
 }

@@ -1,7 +1,10 @@
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+"use client";
+
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function Home() {
+  // UserContext handles all authentication logic and redirects
   return (
     <div className="flex min-h-screen flex-col">
       <header className="bg-white border-b">
@@ -23,7 +26,8 @@ export default function Home() {
             Simplify Restaurant Procurement & Inventory Management
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Connect directly with suppliers, automate inventory tracking, and never run out of stock again.
+            Connect directly with suppliers, automate inventory tracking, and
+            never run out of stock again.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild>
@@ -43,7 +47,10 @@ export default function Home() {
             title="Smart Procurement"
             description="Place orders directly with suppliers and track fulfillment."
           />
-          <FeatureCard title="Low Stock Alerts" description="Get notified when inventory items are running low." />
+          <FeatureCard
+            title="Low Stock Alerts"
+            description="Get notified when inventory items are running low."
+          />
         </div>
       </main>
       <footer className="bg-gray-50 border-t py-8">
@@ -52,14 +59,20 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
-function FeatureCard({ title, description }: { title: string; description: string }) {
+function FeatureCard({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border">
       <h3 className="text-lg font-medium mb-2">{title}</h3>
       <p className="text-gray-600">{description}</p>
     </div>
-  )
+  );
 }

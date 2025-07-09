@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import axiosInstance from "@/lib/axios";
 import {
@@ -25,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const [authenticatingWithGoogle, setAuthenticatingWithGoogle] =
     React.useState<boolean>(false);
 
@@ -116,10 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       resetFormStatus(helpers);
       await loginMutation(values);
+
+      // Invalidate user query to refetch user data
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+
       const returnUrl = searchParams.get("returnUrl");
-      window.location.href = returnUrl
-        ? decodeURIComponent(returnUrl)
-        : "/dashboard";
+
+      if (returnUrl) {
+        window.location.href = decodeURIComponent(returnUrl);
+      } else {
+        // Redirect to root, the AppGuard will handle proper redirection based on user data
+        window.location.href = "/";
+      }
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
     } finally {
@@ -169,11 +178,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetFormStatus(helpers);
       await resetPasswordMutation(values);
       toast.success("Password has been reset successfully");
-      router.push("/auth/signin");
+      router.push("/login");
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
     } finally {
       helpers.setSubmitting(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      // Call logout endpoint if available
+      await axiosInstance.get("/auth/logout");
+    } catch (error) {
+      // Continue with logout even if API call fails
+      console.error("Logout API call failed:", error);
+    } finally {
+      // Clear user data from cache
+      queryClient.removeQueries({ queryKey: ["user"] });
+      // Redirect to login
+      router.push("/login");
     }
   };
 
@@ -182,6 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signup,
     forgotPassword,
     resetPassword,
+    logout,
     resetPasswordData,
     setResetPasswordData,
     authenticatingWithGoogle,

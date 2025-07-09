@@ -1,10 +1,12 @@
 "use client";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import {
   QueryClient,
   QueryClientProvider,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
+import { useRouter, usePathname } from "next/navigation";
 import { User, UserContextType } from "@/types/user";
 import axiosInstance from "@/lib/axios";
 import { handleApiError } from "@/lib/utils";
@@ -26,40 +28,101 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const queryClient = new QueryClient();
 
-  const {
-    data: user,
-    isLoading: fetchingUser,
-    error,
-  } = useQuery<User>({
-    queryKey: ["user"],
-    queryFn: async () => {
-      try {
-        const { data } = await axiosInstance.get("/user");
-        if (!data || !data.success || !data.data) {
-          throw new Error("User data not found");
+  const UserContent: React.FC<{ children: React.ReactNode }> = ({
+    children,
+  }) => {
+    const router = useRouter();
+    const pathname = usePathname();
+    const queryClient = useQueryClient();
+
+    const {
+      data: user,
+      isLoading: fetchingUser,
+      error,
+      isError,
+    } = useQuery<User>({
+      queryKey: ["user"],
+      queryFn: async () => {
+        try {
+          const { data } = await axiosInstance.get("/user");
+          if (!data || !data.success || !data.data) {
+            throw new Error("User data not found");
+          }
+          return data.data;
+        } catch (error) {
+          throw handleApiError(error);
         }
-        return data.data;
-      } catch (error) {
-        throw handleApiError(error);
+      },
+      retry: 1, // Will retry once (total of 2 attempts)
+      staleTime: Infinity, // Consider data fresh indefinitely
+      refetchOnWindowFocus: false,
+      // Always fetch user data on every route to know authentication status
+    });
+
+    // Handle authentication and route protection
+    useEffect(() => {
+      // Don't do anything while loading
+      if (fetchingUser) return;
+
+      // Define route types for clear logic
+      const isAuthPage =
+        pathname === "/login" || pathname === "/register" || pathname === "/";
+      const isRestaurantRoute = pathname.startsWith("/restaurant");
+      const isSupplierRoute = pathname.startsWith("/supplier");
+
+      // If there's an error (user not authenticated)
+      if (isError || !user) {
+        // Only redirect to login if not already on auth pages
+        if (!isAuthPage) {
+          // Clear any cached user data
+          queryClient.removeQueries({ queryKey: ["user"] });
+          router.push("/login");
+        }
+        return;
       }
-    },
-    retry: 1, // Will retry once (total of 2 attempts)
-    staleTime: Infinity, // Consider data fresh for 5 minutes
-    refetchOnWindowFocus: false,
-  });
+
+      // If user is authenticated
+      if (user) {
+        // If on auth pages, redirect to appropriate dashboard
+        if (isAuthPage) {
+          const dashboardRoute =
+            user.accountType === "restaurant"
+              ? "/restaurant/dashboard"
+              : "/supplier/dashboard";
+          router.push(dashboardRoute);
+          return;
+        }
+
+        // Check if user is on wrong route type
+        if (user.accountType === "restaurant" && isSupplierRoute) {
+          router.push("/restaurant/dashboard");
+          return;
+        }
+
+        if (user.accountType === "supplier" && isRestaurantRoute) {
+          router.push("/supplier/dashboard");
+          return;
+        }
+
+        // User is authenticated and on correct route - allow access
+      }
+    }, [user, fetchingUser, isError, pathname, router, queryClient]);
+
+    return (
+      <UserContext.Provider
+        value={{
+          user,
+          fetchingUser,
+        }}
+      >
+        {children}
+      </UserContext.Provider>
+    );
+  };
 
   return (
-    <>
-      <QueryClientProvider client={queryClient}>
-        <UserContext.Provider
-          value={{
-            user,
-            fetchingUser,
-          }}
-        >
-          {children}
-        </UserContext.Provider>
-      </QueryClientProvider>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <UserContent>{children}</UserContent>
+    </QueryClientProvider>
   );
 };
