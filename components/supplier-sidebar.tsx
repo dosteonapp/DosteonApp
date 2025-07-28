@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LogoutButton } from "@/components/logout-button";
+import { Logo } from "./icons/Logo";
 
 export function SupplierSidebar() {
   const pathname = usePathname();
@@ -83,13 +84,14 @@ export function SupplierSidebar() {
             href="/supplier/dashboard"
             className="flex items-center gap-2 font-semibold"
           >
-            <Package className="h-6 w-6" />
+            <Logo className="w-5 h-5" />
+
             <span>Dosteon</span>
           </Link>
         )}
         {collapsed && (
           <Link href="/supplier/dashboard" className="mx-auto">
-            <Package className="h-6 w-6" />
+            <Logo className="w-5 h-5" />
           </Link>
         )}
         <Button

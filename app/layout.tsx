@@ -16,7 +16,6 @@ export const metadata: Metadata = {
   title: "Dosteon - Restaurant & Supplier Platform",
   description:
     "Real-time procurement & inventory platform for restaurants and suppliers",
-  generator: "v0.dev",
 };
 
 export default function RootLayout({

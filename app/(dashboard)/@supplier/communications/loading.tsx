@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function CommunicationsLoading() {
   return (
@@ -57,8 +57,17 @@ export default function CommunicationsLoading() {
                   {Array(5)
                     .fill(null)
                     .map((_, i) => (
-                      <div key={i} className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}>
-                        <Skeleton className={`h-20 ${i % 2 === 0 ? "w-[70%]" : "w-[60%]"} rounded-lg`} />
+                      <div
+                        key={i}
+                        className={`flex ${
+                          i % 2 === 0 ? "justify-start" : "justify-end"
+                        }`}
+                      >
+                        <Skeleton
+                          className={`h-20 ${
+                            i % 2 === 0 ? "w-[70%]" : "w-[60%]"
+                          } rounded-lg`}
+                        />
                       </div>
                     ))}
                 </div>
@@ -71,5 +80,5 @@ export default function CommunicationsLoading() {
         </div>
       </main>
     </div>
-  )
+  );
 }

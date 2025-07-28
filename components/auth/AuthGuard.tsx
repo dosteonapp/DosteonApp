@@ -20,39 +20,39 @@ export function AuthGuard({
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (fetchingUser) return;
+  // useEffect(() => {
+  //   if (fetchingUser) return;
 
-    // Auth-only route with no user - redirect to login
-    if (authOnly && !user) {
-      const returnUrl = encodeURIComponent(pathname);
-      router.push(`/auth/signin?returnUrl=${returnUrl}`);
-      return;
-    }
+  //   // Auth-only route with no user - redirect to login
+  //   if (authOnly && !user) {
+  //     const returnUrl = encodeURIComponent(pathname);
+  //     router.push(`/auth/signin?returnUrl=${returnUrl}`);
+  //     return;
+  //   }
 
-    // Auth-only route with user - check onboarding status
-    if (authOnly && user) {
-      if (!user.onboardingCompleted && !user.onboardingSkipped) {
-        router.push("/onboarding");
-        return;
-      }
-      // User is onboarded, continue to the requested page (no redirect needed)
-      return;
-    }
+  //   // Auth-only route with user - check onboarding status
+  //   if (authOnly && user) {
+  //     if (!user.onboardingCompleted && !user.onboardingSkipped) {
+  //       router.push("/onboarding");
+  //       return;
+  //     }
+  //     // User is onboarded, continue to the requested page (no redirect needed)
+  //     return;
+  //   }
 
-    // Guest-only route with user - check onboarding and redirect appropriately
-    if (guestOnly && user) {
-      if (!user.onboardingCompleted && !user.onboardingSkipped) {
-        router.push("/onboarding");
-        return;
-      }
-      // User is onboarded, redirect to dashboard or return URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const returnUrl = urlParams.get("returnUrl");
-      router.push(returnUrl ? decodeURIComponent(returnUrl) : "/dashboard");
-      return;
-    }
-  }, [fetchingUser, user, authOnly, guestOnly, router, pathname]);
+  //   // Guest-only route with user - check onboarding and redirect appropriately
+  //   if (guestOnly && user) {
+  //     if (!user.onboardingCompleted && !user.onboardingSkipped) {
+  //       router.push("/onboarding");
+  //       return;
+  //     }
+  //     // User is onboarded, redirect to dashboard or return URL
+  //     const urlParams = new URLSearchParams(window.location.search);
+  //     const returnUrl = urlParams.get("returnUrl");
+  //     router.push(returnUrl ? decodeURIComponent(returnUrl) : "/dashboard");
+  //     return;
+  //   }
+  // }, [fetchingUser, user, authOnly, guestOnly, router, pathname]);
 
   if (fetchingUser) {
     return (

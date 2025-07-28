@@ -6,10 +6,11 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, redirect } from "next/navigation";
 import { User, UserContextType } from "@/types/user";
 import axiosInstance from "@/lib/axios";
 import { handleApiError } from "@/lib/utils";
+import { useAuth } from "./AuthContext";
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -46,11 +47,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           const { data } = await axiosInstance.get("/user");
           if (!data || !data.success || !data.data) {
-            throw new Error("User data not found");
+            return redirect(
+              "/auth/signin?redirect=" + encodeURIComponent(pathname)
+            );
           }
           return data.data;
         } catch (error) {
-          throw handleApiError(error);
+          return redirect(
+            "/auth/signin?redirect=" + encodeURIComponent(pathname)
+          );
+          // throw handleApiError(error);
         }
       },
       retry: 1, // Will retry once (total of 2 attempts)
@@ -59,54 +65,54 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       // Always fetch user data on every route to know authentication status
     });
 
-    // Handle authentication and route protection
-    useEffect(() => {
-      // Don't do anything while loading
-      if (fetchingUser) return;
+    // // Handle authentication and route protection
+    // useEffect(() => {
+    //   // Don't do anything while loading
+    //   if (fetchingUser) return;
 
-      // Define route types for clear logic
-      const isAuthPage =
-        pathname === "/login" || pathname === "/register" || pathname === "/";
-      const isRestaurantRoute = pathname.startsWith("/restaurant");
-      const isSupplierRoute = pathname.startsWith("/supplier");
+    //   // Define route types for clear logic
+    //   const isAuthPage =
+    //     pathname === "/login" || pathname === "/register" || pathname === "/";
+    //   const isRestaurantRoute = pathname.startsWith("/restaurant");
+    //   const isSupplierRoute = pathname.startsWith("/supplier");
 
-      // If there's an error (user not authenticated)
-      if (isError || !user) {
-        // Only redirect to login if not already on auth pages
-        if (!isAuthPage) {
-          // Clear any cached user data
-          queryClient.removeQueries({ queryKey: ["user"] });
-          router.push("/login");
-        }
-        return;
-      }
+    //   // If there's an error (user not authenticated)
+    //   if (isError || !user) {
+    //     // Only redirect to login if not already on auth pages
+    //     if (!isAuthPage) {
+    //       // Clear any cached user data
+    //       queryClient.removeQueries({ queryKey: ["user"] });
+    //       router.push("/login");
+    //     }
+    //     return;
+    //   }
 
-      // If user is authenticated
-      if (user) {
-        // If on auth pages, redirect to appropriate dashboard
-        if (isAuthPage) {
-          const dashboardRoute =
-            user.accountType === "restaurant"
-              ? "/restaurant/dashboard"
-              : "/supplier/dashboard";
-          router.push(dashboardRoute);
-          return;
-        }
+    //   // If user is authenticated
+    //   if (user) {
+    //     // If on auth pages, redirect to appropriate dashboard
+    //     if (isAuthPage) {
+    //       const dashboardRoute =
+    //         user.accountType === "restaurant"
+    //           ? "/restaurant/dashboard"
+    //           : "/supplier/dashboard";
+    //       router.push(dashboardRoute);
+    //       return;
+    //     }
 
-        // Check if user is on wrong route type
-        if (user.accountType === "restaurant" && isSupplierRoute) {
-          router.push("/restaurant/dashboard");
-          return;
-        }
+    //     // Check if user is on wrong route type
+    //     if (user.accountType === "restaurant" && isSupplierRoute) {
+    //       router.push("/restaurant/dashboard");
+    //       return;
+    //     }
 
-        if (user.accountType === "supplier" && isRestaurantRoute) {
-          router.push("/supplier/dashboard");
-          return;
-        }
+    //     if (user.accountType === "supplier" && isRestaurantRoute) {
+    //       router.push("/supplier/dashboard");
+    //       return;
+    //     }
 
-        // User is authenticated and on correct route - allow access
-      }
-    }, [user, fetchingUser, isError, pathname, router, queryClient]);
+    //     // User is authenticated and on correct route - allow access
+    //   }
+    // }, [user, fetchingUser, isError, pathname, router, queryClient]);
 
     return (
       <UserContext.Provider
