@@ -1,6 +1,7 @@
 export interface UserContextType {
   user: User | undefined;
   fetchingUser: Boolean;
+  fetchUserError: Boolean;
 }
 
 export interface User {

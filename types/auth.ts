@@ -69,7 +69,7 @@ export interface AuthContextType {
     values: ResetPasswordValues,
     helpers: FormikHelpers<ResetPasswordValues>
   ) => Promise<void>;
-  logout: () => Promise<void>;
+  // logout: () => Promise<void>;
   resetPasswordData: { email?: string; selector?: string } | null;
   setResetPasswordData: (
     data: { email?: string; selector?: string } | null

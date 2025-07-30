@@ -27,6 +27,7 @@ import {
 import { SignupValidationSchema } from "@/schemas/auth";
 import { SignupValues } from "@/types/auth";
 import { useAuth } from "@/context/AuthContext";
+import { Metadata } from "next";
 
 export default function RegisterPage() {
   const router = useRouter();
