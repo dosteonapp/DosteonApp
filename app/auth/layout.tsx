@@ -5,10 +5,10 @@ const AuthLayout: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   return (
-    <>
-      <main className="bg-[#F7F7F7] flex-grow">{children}</main>
+    <main className="flex bg-[#F7F7F7] flex-col min-h-screen overflow-auto">
+      {children}
       <Footer />
-    </>
+    </main>
   );
 };
 

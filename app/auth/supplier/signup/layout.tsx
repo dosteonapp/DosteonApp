@@ -1,4 +1,6 @@
+import Container from "@/components/auth/Container";
 import { Metadata } from "next";
+import Image from "next/image";
 import React from "react";
 
 export const metadata: Metadata = {
@@ -8,7 +10,11 @@ export const metadata: Metadata = {
 const SignupLayout: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  return <>{children}</>;
+  return (
+    <>
+      <Container>{children}</Container>
+    </>
+  );
 };
 
 export default SignupLayout;

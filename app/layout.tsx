@@ -1,6 +1,6 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Figtree, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppProvider } from "@/context/AppContext";
@@ -11,6 +11,10 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
+const figTree = Figtree({
+  subsets: ["latin"],
+  variable: "--font-figtree",
+});
 
 export const metadata: Metadata = {
   title: "Dosteon - Restaurant & Supplier Platform",
@@ -25,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${figTree.className} ${figTree.variable}`}>
         <AppProvider>
           <ThemeProvider
             attribute="class"
