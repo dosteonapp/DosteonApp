@@ -36,10 +36,10 @@ export interface LoginValues {
 
 export interface SignupValues {
   email: string;
-  name: string;
+  firstname: string;
+  lastname: string;
   password: string;
   confirmPassword: string;
-  accountType: "restaurant" | "supplier";
 }
 
 export interface ForgotPasswordValues {

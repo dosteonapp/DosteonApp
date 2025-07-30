@@ -37,11 +37,11 @@ export default function RegisterPage() {
   const [selectedRole, setSelectedRole] = useState(defaultRole);
 
   const getInitialValues = (role: string): SignupValues => ({
-    name: "",
+    firstname: "",
+    lastname: "",
     email: "",
     password: "",
     confirmPassword: "",
-    accountType: role as "restaurant" | "supplier",
   });
 
   const handleSubmit = async (
@@ -51,7 +51,7 @@ export default function RegisterPage() {
     // Include the selected role as account type
     const signupData = {
       ...values,
-      accountType: selectedRole as "restaurant" | "supplier",
+      // accountType: selectedRole as "restaurant" | "supplier",
     };
     await signup(signupData, helpers);
   };
@@ -83,20 +83,36 @@ export default function RegisterPage() {
                       {status.error}
                     </div>
                   )}
-                  <FormikFormItem>
-                    <FormikFormLabel htmlFor="name-restaurant">
-                      Full Name
-                    </FormikFormLabel>
-                    <FormikFormControl>
-                      <Field
-                        as={Input}
-                        id="name-restaurant"
-                        name="name"
-                        placeholder="Your Full Name"
-                      />
-                    </FormikFormControl>
-                    <FormikFormMessage name="name" />
-                  </FormikFormItem>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <FormikFormItem className="flex-1">
+                      <FormikFormLabel htmlFor="firstName-restaurant">
+                        First Name
+                      </FormikFormLabel>
+                      <FormikFormControl>
+                        <Field
+                          as={Input}
+                          id="firstName-restaurant"
+                          name="firstname"
+                          placeholder="First Name"
+                        />
+                      </FormikFormControl>
+                      <FormikFormMessage name="firstname" />
+                    </FormikFormItem>
+                    <FormikFormItem className="flex-1">
+                      <FormikFormLabel htmlFor="lastName-restaurant">
+                        Last Name
+                      </FormikFormLabel>
+                      <FormikFormControl>
+                        <Field
+                          as={Input}
+                          id="lastName-restaurant"
+                          name="lastname"
+                          placeholder="Last Name"
+                        />
+                      </FormikFormControl>
+                      <FormikFormMessage name="lastname" />
+                    </FormikFormItem>
+                  </div>
                   <FormikFormItem>
                     <FormikFormLabel htmlFor="email-restaurant">
                       Email
