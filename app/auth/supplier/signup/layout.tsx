@@ -1,4 +1,5 @@
 import Container from "@/components/auth/Container";
+import { SignupHeader } from "@/components/auth/SignupHeader";
 import { Metadata } from "next";
 import Image from "next/image";
 import React from "react";
@@ -12,6 +13,7 @@ const SignupLayout: React.FC<{
 }> = ({ children }) => {
   return (
     <>
+      <SignupHeader text="Supplier Signup" />
       <Container>{children}</Container>
     </>
   );

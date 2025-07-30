@@ -10,7 +10,7 @@ import { AppGuard } from "@/components/app-guard";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const figTree = Figtree({
   subsets: ["latin"],
   variable: "--font-figtree",
@@ -29,7 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${figTree.className} ${figTree.variable}`}>
+      <body
+        className={`${figTree.className} ${inter.variable} ${figTree.variable}`}
+      >
         <AppProvider>
           <ThemeProvider
             attribute="class"

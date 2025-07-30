@@ -6,7 +6,7 @@ export const SigninHeader: React.FC<{
 }> = ({ children }) => {
   return (
     <header className="p-5 sticky top-0 z-50 bg-[#F7F7F7]">
-      <div className="flex items-center rounded-2xl justify-between p-5 bg-white shadow-lg">
+      <div className="flex max-w-7xl mx-auto items-center rounded-2xl justify-between p-5 bg-white shadow-lg">
         <Image
           src="/images/logo-full.png"
           alt="Dosteon Logo"
