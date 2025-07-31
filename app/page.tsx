@@ -23,10 +23,11 @@ export default function Home() {
             <div className="flex items-center">
               <div className="flex items-center space-x-2">
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-2">
-                    <div className="text-white font-bold text-sm">D</div>
-                  </div>
-                  <span className="text-xl font-bold text-gray-900 tracking-wide">DOSTEON</span>
+                  <img
+                    src="/images/logo-full.png"
+                    alt="Dosteon Logo"
+                    className="h-8 w-auto mr-2"
+                  />
                 </div>
               </div>
             </div>
