@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useLogout } from "@/hooks/auth";
 
 interface LogoutButtonProps {
   variant?:
@@ -35,7 +36,7 @@ export function LogoutButton({
   className,
   children,
 }: LogoutButtonProps) {
-  const { logout } = useAuth();
+  const { logout } = useLogout();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {

@@ -36,10 +36,10 @@ export interface LoginValues {
 
 export interface SignupValues {
   email: string;
-  name: string;
+  firstname: string;
+  lastname: string;
   password: string;
   confirmPassword: string;
-  accountType: "restaurant" | "supplier";
 }
 
 export interface ForgotPasswordValues {
@@ -69,7 +69,7 @@ export interface AuthContextType {
     values: ResetPasswordValues,
     helpers: FormikHelpers<ResetPasswordValues>
   ) => Promise<void>;
-  logout: () => Promise<void>;
+  // logout: () => Promise<void>;
   resetPasswordData: { email?: string; selector?: string } | null;
   setResetPasswordData: (
     data: { email?: string; selector?: string } | null

@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
 const config = {
   darkMode: ["class"],
@@ -29,7 +29,7 @@ const config = {
           300: "#8295EA",
           400: "#5872E3",
           500: "#3851DD", // Primary color
-          600: "#1F37C3",
+          600: "#2740CD",
           700: "#182C9C",
           800: "#122075",
           900: "#0C154E",
@@ -74,6 +74,10 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      fontFamily: {
+        figTree: ["var(--font-figtree)"],
+        inter: ["var(--font-inter)"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -96,6 +100,6 @@ const config = {
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config
+} satisfies Config;
 
-export default config
+export default config;
