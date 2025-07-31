@@ -31,7 +31,7 @@ export function AuthGuard({
       if (redirectTo) {
         window.location.href = redirectTo;
       } else {
-        window.location.href = "/";
+        window.location.href = "/dashboard";
       }
     }
   }

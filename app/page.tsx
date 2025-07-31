@@ -4,9 +4,12 @@ import { useState } from "react";
 import { ChevronRight, ChefHat, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Footer from "@/components/auth/Footer";
 
 export default function Home() {
-  const [selectedUserType, setSelectedUserType] = useState<"restaurant" | "supplier" | null>(null);
+  const [selectedUserType, setSelectedUserType] = useState<
+    "restaurant" | "supplier" | null
+  >(null);
 
   const handleGetStarted = (userType: "restaurant" | "supplier") => {
     setSelectedUserType(userType);
@@ -32,8 +35,8 @@ export default function Home() {
               </div>
             </div>
             <div className="flex gap-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="px-6 py-2 border-blue-900 text-gray-700 hover:bg-gray-50"
                 asChild
               >
@@ -46,7 +49,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative text-white pt-16">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/images/background.png')" }}
         ></div>
@@ -57,7 +60,8 @@ export default function Home() {
               Welcome to Dosteon
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto opacity-90 leading-relaxed">
-              Where restaurants and suppliers cut waste, restock faster, and grow together.
+              Where restaurants and suppliers cut waste, restock faster, and
+              grow together.
             </p>
           </div>
         </div>
@@ -83,15 +87,16 @@ export default function Home() {
                   I'm a Restaurant
                 </h3>
                 <p className="text-gray-600 mb-8 leading-relaxed text-sm">
-                  Find suppliers, manage orders and inventory, and streamline your kitchen operations.
+                  Find suppliers, manage orders and inventory, and streamline
+                  your kitchen operations.
                 </p>
-                <button
-                  onClick={() => handleGetStarted("restaurant")}
+                <Link
+                  href={"/auth/restaurant/signin"} // Adjust the link to your restaurant sign-in page
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium flex items-center justify-center gap-2 group mx-auto transition-all duration-200"
                 >
                   Get Started
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -105,37 +110,22 @@ export default function Home() {
                   I'm a Supplier
                 </h3>
                 <p className="text-gray-600 mb-8 leading-relaxed text-sm">
-                  Connect with restaurants, showcase your products, and grow your business.
+                  Connect with restaurants, showcase your products, and grow
+                  your business.
                 </p>
-                <button
-                  onClick={() => handleGetStarted("supplier")}
+                <Link
+                  href={"/auth/supplier/signin"} // Adjust the link to your supplier sign-in page
                   className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium flex items-center justify-center gap-2 group mx-auto transition-all duration-200"
                 >
                   Get Started
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-white py-8">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-sm text-gray-400 mb-4 md:mb-0">
-              Need help?{" "}
-              <a href="#" className="text-blue-400 hover:text-blue-300">
-                Contact support
-              </a>
-            </div>
-            <div className="text-sm text-gray-400">
-              © {new Date().getFullYear()} Dosteon. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
