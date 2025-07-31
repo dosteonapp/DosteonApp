@@ -15,7 +15,7 @@ export const SignupHeader: React.FC<{
     <header className="sticky top-0 z-50 bg-primary-600 text-white">
       <div className="flex max-w-7xl mx-auto items-center rounded-2xl justify-between p-5">
         <Button variant="ghost" onClick={goBack}>
-          <LucideArrowLeft className="mr-1 h-4 w-4 md:block hidden" />
+          <LucideArrowLeft className="mr-1 md:block hidden" />
           <span className="font-medium">Back</span>
         </Button>
         <span className="font-medium font-inter text-lg">{text}</span>

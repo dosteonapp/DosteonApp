@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AppProvider } from "@/context/AppContext";
 import { UserProvider } from "@/context/UserContext";
 import { AuthProvider } from "@/context/AuthContext";
-import { AppGuard } from "@/components/app-guard";
+// import { AppGuard } from "@/components/app-guard";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -42,7 +42,7 @@ export default function RootLayout({
             <UserProvider>
               {/* <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}> */}
               <AuthProvider>
-                <AppGuard>{children}</AppGuard>
+                {children}
                 <Toaster />
               </AuthProvider>
               {/* </GoogleOAuthProvider> */}

@@ -1,4 +1,6 @@
 "use client";
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import RoleProvider from "@/components/templates/RoleProvider";
 import { useUser } from "@/context/UserContext";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -10,18 +12,16 @@ const DashboardLayout: React.FC<{
 }> = ({ onboarding, restaurant, supplier }) => {
   const { user } = useUser();
 
-  if (!user) {
-    return redirect("/auth/signin");
-  }
-  console.log("DashboardLayout user:", user);
-
   return (
-    <div>
-      {/* {children}
-      {onboarding} */}
-      {restaurant}
-      {/* {supplier} */}
-    </div>
+    <>
+      <AuthGuard requireAuth={true} redirectTo="/auth/restaurant/signin">
+        <RoleProvider
+          onboarding={onboarding}
+          restaurant={restaurant}
+          supplier={supplier}
+        />
+      </AuthGuard>
+    </>
   );
 };
 
