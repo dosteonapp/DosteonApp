@@ -12,14 +12,17 @@ export default function Home() {
   const router = useRouter();
 
   const handleGetStarted = (userType: "restaurant" | "supplier") => {
-    setSelectedUserType(userType);
-    router.push(`/auth/${userType}/signin`);
+    if (userType === "restaurant") {
+      router.push("/auth/restaurant/signup");
+    } else if (userType === "supplier") {
+      router.push("/auth/supplier/signup");
+    }
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
+      <header className="fixed top-3 rounded-xl left-3 right-3 z-50 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -31,11 +34,11 @@ export default function Home() {
             </div>
             <div className="flex gap-4">
               <Button
-                variant="outline"
-                className="px-6 py-2 border-blue-900 text-gray-700 hover:bg-gray-50"
+               className="bg-[#3851DD] hover:bg-[#2c3fa0] text-white px-8 py-3 rounded-xl text-lg font-medium shadow-none"
+               style={{ boxShadow: 'none' }}
                 asChild
               >
-                <Link href="/auth/login">Login</Link>
+                <Link href="/auth/supplier/signin">Login</Link>
               </Button>
             </div>
           </div>
@@ -46,9 +49,9 @@ export default function Home() {
       <section className="relative text-white pt-16 flex-1">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/images/background.png')" }}
+          style={{ backgroundImage: "url('/images/background.png')"}}
         ></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/30"></div>
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-24 md:py-32">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
