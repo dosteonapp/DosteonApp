@@ -1,16 +1,32 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { AlertTriangle, ArrowUpRight, Package, ShoppingCart, TrendingUp, Menu } from "lucide-react"
-import Link from "next/link"
-import { DashboardOrderModal } from "@/components/dashboard-order-modal"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  Package,
+  ShoppingCart,
+  TrendingUp,
+  Menu,
+} from "lucide-react";
+import Link from "next/link";
+import { DashboardOrderModal } from "@/components/dashboard-order-modal";
+import { useUser } from "@/context/UserContext";
 
 export default function RestaurantDashboard() {
-  const [orderModalOpen, setOrderModalOpen] = useState(false)
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+
+  const { user } = useUser();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -24,24 +40,51 @@ export default function RestaurantDashboard() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <div className="flex items-center gap-2">
-            <Button onClick={() => setOrderModalOpen(true)} className="bg-primary hover:bg-primary-600">
+            <Button
+              onClick={() => setOrderModalOpen(true)}
+              className="bg-primary hover:bg-primary-600"
+            >
               <ShoppingCart className="mr-2 h-4 w-4" />
               New Order
             </Button>
           </div>
         </div>
+        {!user?.onboardingCompleted && (
+          <div className="mb-4 rounded-lg border border-yellow-300 bg-yellow-50 p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              <span className="font-medium text-yellow-800">
+                You have not completed onboarding. Please complete your
+                onboarding to access all features.
+              </span>
+            </div>
+            <Button
+              asChild
+              className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
+              size="sm"
+            >
+              <Link href="/dashboard/@restaurant/onboarding">
+                Complete Onboarding
+              </Link>
+            </Button>
+          </div>
+        )}
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Inventory Card */}
           <Link href="/restaurant/inventory" className="group">
             <Card className="transition-all duration-200 hover:shadow-md hover:border-primary-300 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Inventory Items</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Inventory Items
+                </CardTitle>
                 <Package className="h-4 w-4 text-primary-500 group-hover:text-primary-600" />
               </CardHeader>
               <CardContent className="relative">
                 <div className="text-2xl font-bold">142</div>
-                <p className="text-xs text-muted-foreground">12 items low on stock</p>
+                <p className="text-xs text-muted-foreground">
+                  12 items low on stock
+                </p>
                 <ArrowUpRight className="absolute bottom-0 right-0 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-primary-500" />
               </CardContent>
             </Card>
@@ -51,12 +94,16 @@ export default function RestaurantDashboard() {
           <Link href="/restaurant/orders" className="group">
             <Card className="transition-all duration-200 hover:shadow-md hover:border-primary-300 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Active Orders
+                </CardTitle>
                 <ShoppingCart className="h-4 w-4 text-primary-500 group-hover:text-primary-600" />
               </CardHeader>
               <CardContent className="relative">
                 <div className="text-2xl font-bold">8</div>
-                <p className="text-xs text-muted-foreground">3 pending confirmation</p>
+                <p className="text-xs text-muted-foreground">
+                  3 pending confirmation
+                </p>
                 <ArrowUpRight className="absolute bottom-0 right-0 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-primary-500" />
               </CardContent>
             </Card>
@@ -71,7 +118,9 @@ export default function RestaurantDashboard() {
               </CardHeader>
               <CardContent className="relative">
                 <div className="text-2xl font-bold">24</div>
-                <p className="text-xs text-muted-foreground">5 new this month</p>
+                <p className="text-xs text-muted-foreground">
+                  5 new this month
+                </p>
                 <ArrowUpRight className="absolute bottom-0 right-0 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-secondary-500" />
               </CardContent>
             </Card>
@@ -86,7 +135,9 @@ export default function RestaurantDashboard() {
               </CardHeader>
               <CardContent className="relative">
                 <div className="text-2xl font-bold">7</div>
-                <p className="text-xs text-muted-foreground">3 critical alerts</p>
+                <p className="text-xs text-muted-foreground">
+                  3 critical alerts
+                </p>
                 <ArrowUpRight className="absolute bottom-0 right-0 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-destructive" />
               </CardContent>
             </Card>
@@ -100,20 +151,31 @@ export default function RestaurantDashboard() {
           <TabsList>
             <TabsTrigger value="low-stock">Low Stock</TabsTrigger>
             <TabsTrigger value="recent-orders">Recent Orders</TabsTrigger>
-            <TabsTrigger value="upcoming-deliveries">Upcoming Deliveries</TabsTrigger>
+            <TabsTrigger value="upcoming-deliveries">
+              Upcoming Deliveries
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="low-stock" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Low Stock Items</CardTitle>
-                <CardDescription>Items that need to be reordered soon</CardDescription>
+                <CardDescription>
+                  Items that need to be reordered soon
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {lowStockItems.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between">
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-4">
-                        <div className={`w-2 h-2 rounded-full ${getStockLevelColor(item.stockLevel)}`} />
+                        <div
+                          className={`w-2 h-2 rounded-full ${getStockLevelColor(
+                            item.stockLevel
+                          )}`}
+                        />
                         <div>
                           <p className="font-medium">{item.name}</p>
                           <p className="text-sm text-muted-foreground">
@@ -139,12 +201,17 @@ export default function RestaurantDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Your most recent procurement orders</CardDescription>
+                <CardDescription>
+                  Your most recent procurement orders
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {recentOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between">
+                    <div
+                      key={order.id}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-4">
                         <div>
                           <p className="font-medium">Order #{order.id}</p>
@@ -154,7 +221,9 @@ export default function RestaurantDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant={getOrderStatusVariant(order.status)}>{order.status}</Badge>
+                        <Badge variant={getOrderStatusVariant(order.status)}>
+                          {order.status}
+                        </Badge>
                         <Button size="sm" variant="ghost" asChild>
                           <Link href={`/restaurant/orders/${order.id}`}>
                             <ArrowUpRight className="h-4 w-4" />
@@ -171,17 +240,23 @@ export default function RestaurantDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Upcoming Deliveries</CardTitle>
-                <CardDescription>Orders that are scheduled for delivery</CardDescription>
+                <CardDescription>
+                  Orders that are scheduled for delivery
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {upcomingDeliveries.map((delivery) => (
-                    <div key={delivery.id} className="flex items-center justify-between">
+                    <div
+                      key={delivery.id}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-4">
                         <div>
                           <p className="font-medium">Order #{delivery.id}</p>
                           <p className="text-sm text-muted-foreground">
-                            {delivery.supplier} • Expected: {delivery.expectedDate}
+                            {delivery.supplier} • Expected:{" "}
+                            {delivery.expectedDate}
                           </p>
                         </div>
                       </div>
@@ -200,24 +275,27 @@ export default function RestaurantDashboard() {
       </main>
 
       {/* Order Modal */}
-      <DashboardOrderModal open={orderModalOpen} onOpenChange={setOrderModalOpen} />
+      <DashboardOrderModal
+        open={orderModalOpen}
+        onOpenChange={setOrderModalOpen}
+      />
     </div>
-  )
+  );
 }
 
 // Helper function to get color based on stock level
 function getStockLevelColor(level: "critical" | "low" | "medium" | "good") {
   switch (level) {
     case "critical":
-      return "bg-destructive"
+      return "bg-destructive";
     case "low":
-      return "bg-orange-500"
+      return "bg-orange-500";
     case "medium":
-      return "bg-primary-300"
+      return "bg-primary-300";
     case "good":
-      return "bg-secondary-500"
+      return "bg-secondary-500";
     default:
-      return "bg-gray-500"
+      return "bg-gray-500";
   }
 }
 
@@ -225,15 +303,15 @@ function getStockLevelColor(level: "critical" | "low" | "medium" | "good") {
 function getOrderStatusVariant(status: string) {
   switch (status) {
     case "Delivered":
-      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90"
+      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90";
     case "In Transit":
-      return "bg-blue-500 text-white hover:bg-blue-600"
+      return "bg-blue-500 text-white hover:bg-blue-600";
     case "Confirmed":
-      return "bg-green-500 text-white hover:bg-green-600"
+      return "bg-green-500 text-white hover:bg-green-600";
     case "Pending":
-      return "bg-red-500 text-white hover:bg-red-600"
+      return "bg-red-500 text-white hover:bg-red-600";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
@@ -274,7 +352,7 @@ const lowStockItems = [
     unit: "kg",
     stockLevel: "medium" as const,
   },
-]
+];
 
 const recentOrders = [
   {
@@ -301,7 +379,7 @@ const recentOrders = [
     date: "May 1, 2023",
     status: "Delivered",
   },
-]
+];
 
 const upcomingDeliveries = [
   {
@@ -319,4 +397,4 @@ const upcomingDeliveries = [
     supplier: "Dairy Delights",
     expectedDate: "May 6, 2023, 10:00 AM - 2:00 PM",
   },
-]
+];

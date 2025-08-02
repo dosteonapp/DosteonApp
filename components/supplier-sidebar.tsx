@@ -29,43 +29,43 @@ export function SupplierSidebar() {
 
   const routes = [
     {
-      href: "/supplier/dashboard",
+      href: "/dashboard",
       icon: Home,
       title: "Dashboard",
     },
     {
-      href: "/supplier/products",
+      href: "/dashboard/products",
       icon: Package,
       title: "Products",
     },
     {
-      href: "/supplier/orders",
+      href: "/dashboard/orders",
       icon: ShoppingCart,
       title: "Orders",
     },
     {
-      href: "/supplier/customers",
+      href: "/dashboard/customers",
       icon: Users,
       title: "Customers",
       badge: "New",
     },
+    // {
+    //   href: "/dashboard/analytics",
+    //   icon: BarChart3,
+    //   title: "Analytics",
+    // },
     {
-      href: "/supplier/analytics",
-      icon: BarChart3,
-      title: "Analytics",
-    },
-    {
-      href: "/supplier/finance",
+      href: "/dashboard/finance",
       icon: DollarSign,
       title: "Finance",
     },
     {
-      href: "/supplier/notifications",
+      href: "/dashboard/notifications",
       icon: Bell,
       title: "Notifications",
     },
     {
-      href: "/supplier/settings",
+      href: "/dashboard/settings",
       icon: Settings,
       title: "Settings",
     },

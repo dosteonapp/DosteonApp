@@ -28,42 +28,42 @@ export function RestaurantSidebar() {
 
   const routes = [
     {
-      href: "/restaurant/dashboard",
+      href: "/dashboard",
       icon: Home,
       title: "Dashboard",
     },
     {
-      href: "/restaurant/suppliers",
+      href: "/dashboard/suppliers",
       icon: Users,
       title: "Suppliers",
     },
     {
-      href: "/restaurant/inventory",
+      href: "/dashboard/inventory",
       icon: Package,
       title: "Inventory",
     },
     {
-      href: "/restaurant/orders",
+      href: "/dashboard/orders",
       icon: ShoppingCart,
       title: "Orders",
     },
+    // {
+    //   href: "/dashboard/analytics",
+    //   icon: BarChart3,
+    //   title: "Analytics",
+    // },
+    // {
+    //   href: "/dashboard/finance",
+    //   icon: CreditCard,
+    //   title: "Finance",
+    // },
     {
-      href: "/restaurant/analytics",
-      icon: BarChart3,
-      title: "Analytics",
-    },
-    {
-      href: "/restaurant/finance",
-      icon: CreditCard,
-      title: "Finance",
-    },
-    {
-      href: "/restaurant/notifications",
+      href: "/dashboard/notifications",
       icon: Bell,
       title: "Notifications",
     },
     {
-      href: "/restaurant/settings",
+      href: "/dashboard/settings",
       icon: Settings,
       title: "Settings",
     },

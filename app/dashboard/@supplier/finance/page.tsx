@@ -1,18 +1,51 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Menu, Download, ArrowUpRight, FileText, BarChart3 } from "lucide-react"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, BarChart, Bar } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import Link from "next/link"
-import { DailyReportsModal } from "@/components/daily-reports-modal"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Menu,
+  Download,
+  ArrowUpRight,
+  FileText,
+  BarChart3,
+} from "lucide-react";
+import {
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import Link from "next/link";
+import { DailyReportsModal } from "@/components/daily-reports-modal";
 
 export default function SupplierFinancePage() {
-  const [reportsModalOpen, setReportsModalOpen] = useState(false)
+  const [reportsModalOpen, setReportsModalOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -26,62 +59,82 @@ export default function SupplierFinancePage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Finance</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-1" onClick={() => setReportsModalOpen(true)}>
+            <Button
+              variant="outline"
+              className="gap-1"
+              onClick={() => setReportsModalOpen(true)}
+            >
               <FileText className="h-4 w-4" />
               Daily Reports
             </Button>
-            <Button variant="outline" asChild>
+            {/* <Button variant="outline" asChild>
               <Link href="/supplier/finance/export">
                 <Download className="mr-2 h-4 w-4" />
                 Export
               </Link>
-            </Button>
-            <Button variant="default" asChild>
+            </Button> */}
+            {/* <Button variant="default" asChild>
               <Link href="/supplier/finance/revenue">
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Revenue Details
               </Link>
-            </Button>
+            </Button> */}
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue (MTD)</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Sale's Revenue (July)
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">RWF 18,750,000</div>
-              <p className="text-xs text-muted-foreground">+12% from last month</p>
+              <p className="text-xs text-muted-foreground">
+                +12% from last month
+              </p>
             </CardContent>
           </Card>
           <Card className="bg-secondary/5 border-secondary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Outstanding Receivables</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Outstanding Payments
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">RWF 4,250,000</div>
-              <p className="text-xs text-muted-foreground">8 invoices pending</p>
+              <p className="text-xs text-muted-foreground">
+                8 invoices pending
+              </p>
             </CardContent>
           </Card>
           <Card className="bg-green-500/5 border-green-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Average Order Value
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">RWF 265,000</div>
-              <p className="text-xs text-muted-foreground">+8% from last month</p>
+              <p className="text-xs text-muted-foreground">
+                +8% from last month
+              </p>
             </CardContent>
           </Card>
-          <Card className="bg-blue-500/5 border-blue-500/20">
+          {/* <Card className="bg-blue-500/5 border-blue-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Profit Margin</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Profit Margin
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">32.5%</div>
-              <p className="text-xs text-muted-foreground">+2.5% from last month</p>
+              <p className="text-xs text-muted-foreground">
+                +2.5% from last month
+              </p>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         <Tabs defaultValue="overview">
@@ -117,15 +170,33 @@ export default function SupplierFinancePage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={revenueData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <LineChart
+                      data={revenueData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Line type="monotone" dataKey="revenue" stroke="var(--color-revenue)" name="Revenue" />
-                      <Line type="monotone" dataKey="expenses" stroke="var(--color-expenses)" name="Expenses" />
-                      <Line type="monotone" dataKey="profit" stroke="var(--color-profit)" name="Profit" />
+                      <Line
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="var(--color-revenue)"
+                        name="Revenue"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="expenses"
+                        stroke="var(--color-expenses)"
+                        name="Expenses"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="profit"
+                        stroke="var(--color-profit)"
+                        name="Profit"
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -135,7 +206,9 @@ export default function SupplierFinancePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Sales by Product Category</CardTitle>
-                <CardDescription>Breakdown of your sales by product category</CardDescription>
+                <CardDescription>
+                  Breakdown of your sales by product category
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ChartContainer
@@ -160,16 +233,35 @@ export default function SupplierFinancePage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categorySalesData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <BarChart
+                      data={categorySalesData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Bar dataKey="produce" fill="var(--color-produce)" name="Produce" />
-                      <Bar dataKey="meat" fill="var(--color-meat)" name="Meat & Poultry" />
-                      <Bar dataKey="dairy" fill="var(--color-dairy)" name="Dairy" />
-                      <Bar dataKey="dryGoods" fill="var(--color-dryGoods)" name="Dry Goods" />
+                      <Bar
+                        dataKey="produce"
+                        fill="var(--color-produce)"
+                        name="Produce"
+                      />
+                      <Bar
+                        dataKey="meat"
+                        fill="var(--color-meat)"
+                        name="Meat & Poultry"
+                      />
+                      <Bar
+                        dataKey="dairy"
+                        fill="var(--color-dairy)"
+                        name="Dairy"
+                      />
+                      <Bar
+                        dataKey="dryGoods"
+                        fill="var(--color-dryGoods)"
+                        name="Dry Goods"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -201,15 +293,17 @@ export default function SupplierFinancePage() {
                           <TableCell>{sale.date}</TableCell>
                           <TableCell>{sale.customer}</TableCell>
                           <TableCell>{sale.orderId}</TableCell>
-                          <TableCell>RWF {sale.amount.toLocaleString()}</TableCell>
+                          <TableCell>
+                            RWF {sale.amount.toLocaleString()}
+                          </TableCell>
                           <TableCell>
                             <span
                               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                                 sale.status === "Completed"
                                   ? "bg-green-500 text-white"
                                   : sale.status === "Processing"
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-red-500 text-white"
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-red-500 text-white"
                               }`}
                             >
                               {sale.status}
@@ -257,15 +351,17 @@ export default function SupplierFinancePage() {
                           <TableCell>{invoice.customer}</TableCell>
                           <TableCell>{invoice.issueDate}</TableCell>
                           <TableCell>{invoice.dueDate}</TableCell>
-                          <TableCell>RWF {invoice.amount.toLocaleString()}</TableCell>
+                          <TableCell>
+                            RWF {invoice.amount.toLocaleString()}
+                          </TableCell>
                           <TableCell>
                             <span
                               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                                 invoice.status === "Paid"
                                   ? "bg-green-500 text-white"
                                   : invoice.status === "Pending"
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-red-500 text-white"
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-red-500 text-white"
                               }`}
                             >
                               {invoice.status}
@@ -274,7 +370,11 @@ export default function SupplierFinancePage() {
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button size="sm" variant="outline" asChild>
-                                <Link href={`/supplier/finance/invoices/${invoice.id}`}>View</Link>
+                                <Link
+                                  href={`/supplier/finance/invoices/${invoice.id}`}
+                                >
+                                  View
+                                </Link>
                               </Button>
                               <Button size="sm">Send Reminder</Button>
                             </div>
@@ -291,7 +391,9 @@ export default function SupplierFinancePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Expenses</CardTitle>
-                <CardDescription>Track and manage your business expenses</CardDescription>
+                <CardDescription>
+                  Track and manage your business expenses
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -312,11 +414,15 @@ export default function SupplierFinancePage() {
                           <TableCell>{expense.date}</TableCell>
                           <TableCell>{expense.description}</TableCell>
                           <TableCell>{expense.category}</TableCell>
-                          <TableCell>RWF {expense.amount.toLocaleString()}</TableCell>
+                          <TableCell>
+                            RWF {expense.amount.toLocaleString()}
+                          </TableCell>
                           <TableCell>
                             <span
                               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                expense.status === "Paid" ? "bg-green-500 text-white" : "bg-blue-500 text-white"
+                                expense.status === "Paid"
+                                  ? "bg-green-500 text-white"
+                                  : "bg-blue-500 text-white"
                               }`}
                             >
                               {expense.status}
@@ -324,7 +430,9 @@ export default function SupplierFinancePage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <Button size="sm" variant="ghost" asChild>
-                              <Link href={`/supplier/finance/expenses/${expense.id}`}>
+                              <Link
+                                href={`/supplier/finance/expenses/${expense.id}`}
+                              >
                                 <ArrowUpRight className="h-4 w-4" />
                               </Link>
                             </Button>
@@ -341,13 +449,17 @@ export default function SupplierFinancePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Financial Reports</CardTitle>
-                <CardDescription>Access and generate financial reports</CardDescription>
+                <CardDescription>
+                  Access and generate financial reports
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Profit & Loss</CardTitle>
+                      <CardTitle className="text-sm font-medium">
+                        Profit & Loss
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-muted-foreground">
@@ -360,7 +472,9 @@ export default function SupplierFinancePage() {
                   </Card>
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Balance Sheet</CardTitle>
+                      <CardTitle className="text-sm font-medium">
+                        Balance Sheet
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-muted-foreground">
@@ -373,7 +487,9 @@ export default function SupplierFinancePage() {
                   </Card>
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Cash Flow</CardTitle>
+                      <CardTitle className="text-sm font-medium">
+                        Cash Flow
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-muted-foreground">
@@ -386,10 +502,14 @@ export default function SupplierFinancePage() {
                   </Card>
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Sales Tax</CardTitle>
+                      <CardTitle className="text-sm font-medium">
+                        Sales Tax
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">View and export sales tax reports for tax filing</p>
+                      <p className="text-sm text-muted-foreground">
+                        View and export sales tax reports for tax filing
+                      </p>
                       <Button className="mt-4" variant="outline" size="sm">
                         Generate Report
                       </Button>
@@ -397,10 +517,14 @@ export default function SupplierFinancePage() {
                   </Card>
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Customer Statements</CardTitle>
+                      <CardTitle className="text-sm font-medium">
+                        Customer Statements
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">Generate statements for your customers</p>
+                      <p className="text-sm text-muted-foreground">
+                        Generate statements for your customers
+                      </p>
                       <Button className="mt-4" variant="outline" size="sm">
                         Generate Report
                       </Button>
@@ -408,10 +532,14 @@ export default function SupplierFinancePage() {
                   </Card>
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Inventory Valuation</CardTitle>
+                      <CardTitle className="text-sm font-medium">
+                        Inventory Valuation
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">View the current value of your inventory</p>
+                      <p className="text-sm text-muted-foreground">
+                        View the current value of your inventory
+                      </p>
                       <Button className="mt-4" variant="outline" size="sm">
                         Generate Report
                       </Button>
@@ -422,10 +550,14 @@ export default function SupplierFinancePage() {
             </Card>
           </TabsContent>
         </Tabs>
-        <DailyReportsModal open={reportsModalOpen} onOpenChange={setReportsModalOpen} type="finance" />
+        <DailyReportsModal
+          open={reportsModalOpen}
+          onOpenChange={setReportsModalOpen}
+          type="finance"
+        />
       </main>
     </div>
-  )
+  );
 }
 
 // Sample data
@@ -435,15 +567,45 @@ const revenueData = [
   { month: "Mar", revenue: 16800000, expenses: 11200000, profit: 5600000 },
   { month: "Apr", revenue: 17500000, expenses: 11800000, profit: 5700000 },
   { month: "May", revenue: 18750000, expenses: 12650000, profit: 6100000 },
-]
+];
 
 const categorySalesData = [
-  { month: "Jan", produce: 5200000, meat: 4100000, dairy: 3500000, dryGoods: 1700000 },
-  { month: "Feb", produce: 5400000, meat: 4300000, dairy: 3600000, dryGoods: 1900000 },
-  { month: "Mar", produce: 6300000, meat: 5000000, dairy: 3550000, dryGoods: 1950000 },
-  { month: "Apr", produce: 6450000, meat: 5200000, dairy: 3700000, dryGoods: 2150000 },
-  { month: "May", produce: 6800000, meat: 5500000, dairy: 3800000, dryGoods: 2650000 },
-]
+  {
+    month: "Jan",
+    produce: 5200000,
+    meat: 4100000,
+    dairy: 3500000,
+    dryGoods: 1700000,
+  },
+  {
+    month: "Feb",
+    produce: 5400000,
+    meat: 4300000,
+    dairy: 3600000,
+    dryGoods: 1900000,
+  },
+  {
+    month: "Mar",
+    produce: 6300000,
+    meat: 5000000,
+    dairy: 3550000,
+    dryGoods: 1950000,
+  },
+  {
+    month: "Apr",
+    produce: 6450000,
+    meat: 5200000,
+    dairy: 3700000,
+    dryGoods: 2150000,
+  },
+  {
+    month: "May",
+    produce: 6800000,
+    meat: 5500000,
+    dairy: 3800000,
+    dryGoods: 2650000,
+  },
+];
 
 const sales = [
   {
@@ -486,7 +648,7 @@ const sales = [
     amount: 145500,
     status: "Completed",
   },
-]
+];
 
 const invoices = [
   {
@@ -529,7 +691,7 @@ const invoices = [
     amount: 145500,
     status: "Paid",
   },
-]
+];
 
 const expenses = [
   {
@@ -572,4 +734,4 @@ const expenses = [
     amount: 150000,
     status: "Paid",
   },
-]
+];

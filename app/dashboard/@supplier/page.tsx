@@ -1,17 +1,48 @@
-"use client"
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ArrowUpRight, Package, TrendingUp, Menu, ArrowUp, AlertTriangle, CheckCircle2, Clock } from "lucide-react"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, Tooltip } from "recharts"
-import Link from "next/link"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Progress } from "@/components/ui/progress"
+"use client";
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowUpRight,
+  Package,
+  TrendingUp,
+  Menu,
+  ArrowUp,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
+import {
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
+import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 
 export default function SupplierDashboard() {
-  const [timeframe, setTimeframe] = useState("weekly")
+  const [timeframe, setTimeframe] = useState("weekly");
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -23,7 +54,9 @@ export default function SupplierDashboard() {
       </header>
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Supplier Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Supplier Dashboard
+          </h1>
           <div className="flex items-center gap-2">
             <Select value={timeframe} onValueChange={setTimeframe}>
               <SelectTrigger className="w-[180px]">
@@ -45,10 +78,12 @@ export default function SupplierDashboard() {
         </div>
 
         {/* Predictive Insights Section */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Projected Orders (Next Week)</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Projected Orders (Next Week)
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
@@ -62,7 +97,9 @@ export default function SupplierDashboard() {
 
           <Card className="bg-secondary/5 border-secondary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recommended Production</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Recommended Production
+              </CardTitle>
               <Package className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
@@ -76,7 +113,9 @@ export default function SupplierDashboard() {
 
           <Card className="bg-green-500/5 border-green-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Expected Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Expected Revenue
+              </CardTitle>
               <DollarSign className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
@@ -88,7 +127,7 @@ export default function SupplierDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-blue-500/5 border-blue-500/20">
+          {/* <Card className="bg-blue-500/5 border-blue-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Reliability Score</CardTitle>
               <CheckCircle2 className="h-4 w-4 text-blue-500" />
@@ -100,15 +139,17 @@ export default function SupplierDashboard() {
                 <span>+3% from last month</span>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         <div className="grid gap-4 md:grid-cols-7">
           {/* Demand Forecasting */}
-          <Card className="md:col-span-4">
+          {/* <Card className="md:col-span-4">
             <CardHeader>
               <CardTitle>Demand Forecast</CardTitle>
-              <CardDescription>Projected order volume for the next 7 days</CardDescription>
+              <CardDescription>
+                Projected order volume for the next 7 days
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -118,8 +159,20 @@ export default function SupplierDashboard() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="projected" stroke="#0ea5e9" strokeWidth={2} name="Projected Orders" />
-                  <Line type="monotone" dataKey="actual" stroke="#10b981" strokeWidth={2} name="Actual Orders" />
+                  <Line
+                    type="monotone"
+                    dataKey="projected"
+                    stroke="#0ea5e9"
+                    strokeWidth={2}
+                    name="Projected Orders"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="actual"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    name="Actual Orders"
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -127,34 +180,51 @@ export default function SupplierDashboard() {
               <Button variant="outline" size="sm" asChild>
                 <Link href="/supplier/forecasting">View Detailed Forecast</Link>
               </Button>
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50">
+              <Badge
+                variant="outline"
+                className="bg-blue-50 text-blue-700 hover:bg-blue-50"
+              >
                 AI-Powered Prediction
               </Badge>
             </CardFooter>
-          </Card>
+          </Card> */}
 
           {/* Top Consistent Customers */}
           <Card className="md:col-span-3">
             <CardHeader>
               <CardTitle>Most Consistent Customers</CardTitle>
-              <CardDescription>Restaurants with the most reliable ordering patterns</CardDescription>
+              <CardDescription>
+                Restaurants with the most reliable ordering patterns
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {consistentCustomers.map((customer) => (
-                  <div key={customer.id} className="flex items-start justify-between">
+                  <div
+                    key={customer.id}
+                    className="flex items-start justify-between"
+                  >
                     <div>
                       <h3 className="font-medium">{customer.name}</h3>
                       <div className="flex items-center mt-1">
-                        <Badge variant="outline" className="mr-2 bg-green-50 text-green-700 hover:bg-green-50">
+                        <Badge
+                          variant="outline"
+                          className="mr-2 bg-green-50 text-green-700 hover:bg-green-50"
+                        >
                           {customer.orderFrequency}
                         </Badge>
-                        <span className="text-sm text-muted-foreground">{customer.avgOrderValue} avg. order</span>
+                        <span className="text-sm text-muted-foreground">
+                          {customer.avgOrderValue} avg. order
+                        </span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium">{customer.consistencyScore}%</div>
-                      <div className="text-sm text-muted-foreground">consistency</div>
+                      <div className="font-medium">
+                        {customer.consistencyScore}%
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        consistency
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -166,11 +236,8 @@ export default function SupplierDashboard() {
               </Button>
             </CardFooter>
           </Card>
-        </div>
 
-        {/* Payment Insights */}
-        <div className="grid gap-4 md:grid-cols-7">
-          <Card className="md:col-span-3">
+          <Card className="md:col-span-4">
             <CardHeader>
               <CardTitle>Payment Calendar</CardTitle>
               <CardDescription>Upcoming and overdue payments</CardDescription>
@@ -178,15 +245,18 @@ export default function SupplierDashboard() {
             <CardContent>
               <div className="space-y-4">
                 {paymentCalendar.map((payment) => (
-                  <div key={payment.id} className="flex items-start justify-between">
+                  <div
+                    key={payment.id}
+                    className="flex items-start justify-between"
+                  >
                     <div className="flex items-start gap-3">
                       <div
                         className={`mt-0.5 rounded-full p-1 ${
                           payment.status === "upcoming"
                             ? "bg-blue-100 text-blue-700"
                             : payment.status === "due-today"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-red-100 text-red-700"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-red-100 text-red-700"
                         }`}
                       >
                         {payment.status === "upcoming" ? (
@@ -205,21 +275,25 @@ export default function SupplierDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium">RWF {payment.amount.toLocaleString()}</div>
+                      <div className="font-medium">
+                        RWF {payment.amount.toLocaleString()}
+                      </div>
                       <div
                         className={`text-xs ${
                           payment.status === "upcoming"
                             ? "text-blue-600"
                             : payment.status === "due-today"
-                              ? "text-amber-600"
-                              : "text-red-600"
+                            ? "text-amber-600"
+                            : "text-red-600"
                         }`}
                       >
                         {payment.status === "upcoming"
                           ? "Due in " + payment.daysRemaining + " days"
                           : payment.status === "due-today"
-                            ? "Due today"
-                            : "Overdue by " + Math.abs(payment.daysRemaining) + " days"}
+                          ? "Due today"
+                          : "Overdue by " +
+                            Math.abs(payment.daysRemaining) +
+                            " days"}
                       </div>
                     </div>
                   </div>
@@ -232,17 +306,24 @@ export default function SupplierDashboard() {
               </Button>
             </CardFooter>
           </Card>
+        </div>
 
+        {/* Payment Insights */}
+        <div className="grid gap-4 md:grid-cols-7">
           {/* Performance Metrics */}
-          <Card className="md:col-span-4">
+          {/* <Card className="md:col-span-4">
             <CardHeader>
               <CardTitle>Performance Metrics</CardTitle>
-              <CardDescription>Key reliability and performance indicators</CardDescription>
+              <CardDescription>
+                Key reliability and performance indicators
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-medium">On-Time Delivery Rate</div>
+                  <div className="text-sm font-medium">
+                    On-Time Delivery Rate
+                  </div>
                   <div className="text-sm font-medium">94%</div>
                 </div>
                 <Progress value={94} className="h-2" />
@@ -250,7 +331,9 @@ export default function SupplierDashboard() {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-medium">Order Fulfillment Rate</div>
+                  <div className="text-sm font-medium">
+                    Order Fulfillment Rate
+                  </div>
                   <div className="text-sm font-medium">98%</div>
                 </div>
                 <Progress value={98} className="h-2" />
@@ -258,7 +341,9 @@ export default function SupplierDashboard() {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-medium">Customer Satisfaction</div>
+                  <div className="text-sm font-medium">
+                    Customer Satisfaction
+                  </div>
                   <div className="text-sm font-medium">4.8/5</div>
                 </div>
                 <Progress value={96} className="h-2" />
@@ -266,7 +351,9 @@ export default function SupplierDashboard() {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-medium">Product Quality Rating</div>
+                  <div className="text-sm font-medium">
+                    Product Quality Rating
+                  </div>
                   <div className="text-sm font-medium">4.7/5</div>
                 </div>
                 <Progress value={94} className="h-2" />
@@ -274,10 +361,12 @@ export default function SupplierDashboard() {
             </CardContent>
             <CardFooter>
               <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link href="/supplier/performance">View Detailed Performance</Link>
+                <Link href="/supplier/performance">
+                  View Detailed Performance
+                </Link>
               </Button>
             </CardFooter>
-          </Card>
+          </Card> */}
         </div>
 
         <Tabs
@@ -293,12 +382,17 @@ export default function SupplierDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>New Orders</CardTitle>
-                <CardDescription>Orders that need your confirmation</CardDescription>
+                <CardDescription>
+                  Orders that need your confirmation
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {newOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between">
+                    <div
+                      key={order.id}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-4">
                         <div>
                           <p className="font-medium">Order #{order.id}</p>
@@ -315,7 +409,9 @@ export default function SupplierDashboard() {
                           asChild
                           className="border-primary-500 text-primary-500 hover:bg-primary-50"
                         >
-                          <Link href={`/supplier/orders/${order.id}`}>View</Link>
+                          <Link href={`/supplier/orders/${order.id}`}>
+                            View
+                          </Link>
                         </Button>
                       </div>
                     </div>
@@ -328,29 +424,45 @@ export default function SupplierDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Pending Deliveries</CardTitle>
-                <CardDescription>Orders that need to be delivered</CardDescription>
+                <CardDescription>
+                  Orders that need to be delivered
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {pendingDeliveries.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between">
+                    <div
+                      key={order.id}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-4">
                         <div>
                           <p className="font-medium">Order #{order.id}</p>
                           <p className="text-sm text-muted-foreground">
-                            {order.restaurant} • Confirmed: {order.confirmedDate}
+                            {order.restaurant} • Confirmed:{" "}
+                            {order.confirmedDate}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant={order.status === "Confirmed" ? "outline" : "secondary"}>{order.status}</Badge>
+                        <Badge
+                          variant={
+                            order.status === "Confirmed"
+                              ? "outline"
+                              : "secondary"
+                          }
+                        >
+                          {order.status}
+                        </Badge>
                         <Button
                           size="sm"
                           variant="outline"
                           asChild
                           className="border-primary-500 text-primary-500 hover:bg-primary-50"
                         >
-                          <Link href={`/supplier/orders/${order.id}`}>Update</Link>
+                          <Link href={`/supplier/orders/${order.id}`}>
+                            Update
+                          </Link>
                         </Button>
                       </div>
                     </div>
@@ -363,17 +475,23 @@ export default function SupplierDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Top Selling Products</CardTitle>
-                <CardDescription>Your most popular products this month</CardDescription>
+                <CardDescription>
+                  Your most popular products this month
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {topProducts.map((product) => (
-                    <div key={product.id} className="flex items-center justify-between">
+                    <div
+                      key={product.id}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-4">
                         <div>
                           <p className="font-medium">{product.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            RWF {product.price.toLocaleString()} / {product.unit} • {product.orders} orders
+                            RWF {product.price.toLocaleString()} /{" "}
+                            {product.unit} • {product.orders} orders
                           </p>
                         </div>
                       </div>
@@ -391,7 +509,7 @@ export default function SupplierDashboard() {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
 
 // Sample data
@@ -420,7 +538,7 @@ const newOrders = [
     date: "Yesterday, 2:30 PM",
     status: "Pending",
   },
-]
+];
 
 const pendingDeliveries = [
   {
@@ -447,7 +565,7 @@ const pendingDeliveries = [
     confirmedDate: "May 1, 2023",
     status: "In Transit",
   },
-]
+];
 
 const topProducts = [
   {
@@ -485,7 +603,7 @@ const topProducts = [
     unit: "liter",
     orders: 28,
   },
-]
+];
 
 // New data for predictive insights
 const demandForecastData = [
@@ -496,7 +614,7 @@ const demandForecastData = [
   { day: "Fri", projected: 22, actual: 21 },
   { day: "Sat", projected: 26, actual: null },
   { day: "Sun", projected: 18, actual: null },
-]
+];
 
 const consistentCustomers = [
   {
@@ -520,7 +638,7 @@ const consistentCustomers = [
     avgOrderValue: "RWF 178,000",
     consistencyScore: 88,
   },
-]
+];
 
 const paymentCalendar = [
   {
@@ -559,7 +677,7 @@ const paymentCalendar = [
     status: "upcoming",
     daysRemaining: 12,
   },
-]
+];
 
 // Import for DollarSign icon
-import { DollarSign } from "lucide-react"
+import { DollarSign } from "lucide-react";

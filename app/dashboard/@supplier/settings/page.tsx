@@ -257,11 +257,11 @@ export default function SupplierSettingsPage() {
         <Tabs defaultValue="account">
           <TabsList>
             <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="team">Team</TabsTrigger>
+            {/* <TabsTrigger value="team">Team</TabsTrigger> */}
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="payment">Payment Options</TabsTrigger>
-            <TabsTrigger value="billing">Billing</TabsTrigger>
+            {/* <TabsTrigger value="payment">Payment Options</TabsTrigger> */}
+            {/* <TabsTrigger value="billing">Billing</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="account" className="space-y-4 mt-4">
