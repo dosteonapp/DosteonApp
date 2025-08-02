@@ -9,7 +9,7 @@ export const SignupHeader: React.FC<{
 }> = ({ text }) => {
   const router = useRouter();
   const goBack = () => {
-    router.back();
+    router.push("/");
   };
   return (
     <header className="sticky top-0 z-50 bg-primary-600 text-white">

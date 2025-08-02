@@ -110,6 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Update verifyEmail to accept code
+  const verifyEmail = async (email: string, code: string) => {
+    const { data } = await axiosInstance.post("/auth/verify-email", { email, code });
+    return validateApiResponse(data);
+  };
+
   const login = async (
     values: LoginValues,
     helpers: FormikHelpers<LoginValues>
@@ -142,10 +148,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       resetFormStatus(helpers);
-      await signupMutation(values);
-      router.push("/onboarding");
+      const response = await signupMutation(values);
+      return { success: true, email: values.email }; // Return email for verification
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
+      return { success: false };
     } finally {
       helpers.setSubmitting(false);
     }
@@ -191,11 +198,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signup,
     forgotPassword,
     resetPassword,
-
     resetPasswordData,
     setResetPasswordData,
     authenticatingWithGoogle,
     authenticateWithGoogle,
+    verifyEmail, // Updated verifyEmail in context value
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
