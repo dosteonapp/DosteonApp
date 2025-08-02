@@ -1,10 +1,23 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Menu,
   Download,
@@ -16,7 +29,7 @@ import {
   DollarSign,
   Users,
   ShoppingBag,
-} from "lucide-react"
+} from "lucide-react";
 import {
   Line,
   LineChart,
@@ -31,13 +44,23 @@ import {
   Pie,
   Cell,
   Tooltip,
-} from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import Link from "next/link"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function SupplierRevenueDetailsPage() {
-  const [timeframe, setTimeframe] = useState("month")
+  const [timeframe, setTimeframe] = useState("month");
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -50,7 +73,7 @@ export default function SupplierRevenueDetailsPage() {
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/supplier/finance">
+            <Link href="/dashboard/finance">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Finance
             </Link>
@@ -59,8 +82,12 @@ export default function SupplierRevenueDetailsPage() {
 
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Revenue Details</h1>
-            <p className="text-muted-foreground">Comprehensive analysis of your business revenue</p>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Revenue Details
+            </h1>
+            <p className="text-muted-foreground">
+              Comprehensive analysis of your business revenue
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Select value={timeframe} onValueChange={setTimeframe}>
@@ -88,7 +115,9 @@ export default function SupplierRevenueDetailsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Revenue
+              </CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -101,7 +130,9 @@ export default function SupplierRevenueDetailsPage() {
           </Card>
           <Card className="bg-secondary/5 border-secondary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Average Order Value
+              </CardTitle>
               <ShoppingBag className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -114,7 +145,9 @@ export default function SupplierRevenueDetailsPage() {
           </Card>
           <Card className="bg-green-500/5 border-green-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Customers</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Active Customers
+              </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -127,7 +160,9 @@ export default function SupplierRevenueDetailsPage() {
           </Card>
           <Card className="bg-blue-500/5 border-blue-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenue per Customer</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Revenue per Customer
+              </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -151,7 +186,9 @@ export default function SupplierRevenueDetailsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Revenue Trends</CardTitle>
-                <CardDescription>Your revenue trends over the past 6 months</CardDescription>
+                <CardDescription>
+                  Your revenue trends over the past 6 months
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ChartContainer
@@ -168,7 +205,10 @@ export default function SupplierRevenueDetailsPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={revenueData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <LineChart
+                      data={revenueData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
@@ -198,7 +238,9 @@ export default function SupplierRevenueDetailsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Revenue by Product Category</CardTitle>
-                  <CardDescription>Breakdown of revenue by product category</CardDescription>
+                  <CardDescription>
+                    Breakdown of revenue by product category
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
@@ -213,13 +255,20 @@ export default function SupplierRevenueDetailsPage() {
                           fill="#8884d8"
                           dataKey="value"
                           nameKey="name"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) =>
+                            `${name}: ${(percent * 100).toFixed(0)}%`
+                          }
                         >
                           {categoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => `RWF ${value.toLocaleString()}`} />
+                        <Tooltip
+                          formatter={(value) => `RWF ${value.toLocaleString()}`}
+                        />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -230,16 +279,23 @@ export default function SupplierRevenueDetailsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Revenue by Payment Method</CardTitle>
-                  <CardDescription>Breakdown of revenue by payment method</CardDescription>
+                  <CardDescription>
+                    Breakdown of revenue by payment method
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={paymentMethodData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <BarChart
+                        data={paymentMethodData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip formatter={(value) => `RWF ${value.toLocaleString()}`} />
+                        <Tooltip
+                          formatter={(value) => `RWF ${value.toLocaleString()}`}
+                        />
                         <Legend />
                         <Bar dataKey="value" fill="#8884d8" name="Revenue" />
                       </BarChart>
@@ -254,7 +310,9 @@ export default function SupplierRevenueDetailsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Revenue by Customer</CardTitle>
-                <CardDescription>Breakdown of revenue by customer</CardDescription>
+                <CardDescription>
+                  Breakdown of revenue by customer
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -272,28 +330,38 @@ export default function SupplierRevenueDetailsPage() {
                     <TableBody>
                       {customerRevenueData.map((customer) => (
                         <TableRow key={customer.id}>
-                          <TableCell className="font-medium">{customer.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {customer.name}
+                          </TableCell>
                           <TableCell>{customer.orders}</TableCell>
-                          <TableCell>RWF {customer.revenue.toLocaleString()}</TableCell>
+                          <TableCell>
+                            RWF {customer.revenue.toLocaleString()}
+                          </TableCell>
                           <TableCell>{customer.percentage}%</TableCell>
                           <TableCell>
                             <div className="flex items-center">
                               {customer.growth > 0 ? (
                                 <>
                                   <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                                  <span className="text-green-500">+{customer.growth}%</span>
+                                  <span className="text-green-500">
+                                    +{customer.growth}%
+                                  </span>
                                 </>
                               ) : (
                                 <>
                                   <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
-                                  <span className="text-red-500">{customer.growth}%</span>
+                                  <span className="text-red-500">
+                                    {customer.growth}%
+                                  </span>
                                 </>
                               )}
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <Button size="sm" variant="ghost" asChild>
-                              <Link href={`/supplier/customers/${customer.id}`}>
+                              <Link
+                                href={`/dashboard/customers/${customer.id}`}
+                              >
                                 <ArrowUpRight className="h-4 w-4" />
                               </Link>
                             </Button>
@@ -309,7 +377,9 @@ export default function SupplierRevenueDetailsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Customer Revenue Trends</CardTitle>
-                <CardDescription>Revenue trends for your top 5 customers</CardDescription>
+                <CardDescription>
+                  Revenue trends for your top 5 customers
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ChartContainer
@@ -338,22 +408,45 @@ export default function SupplierRevenueDetailsPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={customerTrendsData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <LineChart
+                      data={customerTrendsData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Line type="monotone" dataKey="customer1" stroke="var(--color-customer1)" name="Bistro Bella" />
-                      <Line type="monotone" dataKey="customer2" stroke="var(--color-customer2)" name="Cafe Milano" />
+                      <Line
+                        type="monotone"
+                        dataKey="customer1"
+                        stroke="var(--color-customer1)"
+                        name="Bistro Bella"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="customer2"
+                        stroke="var(--color-customer2)"
+                        name="Cafe Milano"
+                      />
                       <Line
                         type="monotone"
                         dataKey="customer3"
                         stroke="var(--color-customer3)"
                         name="The Green Plate"
                       />
-                      <Line type="monotone" dataKey="customer4" stroke="var(--color-customer4)" name="Spice Garden" />
-                      <Line type="monotone" dataKey="customer5" stroke="var(--color-customer5)" name="Taste of Asia" />
+                      <Line
+                        type="monotone"
+                        dataKey="customer4"
+                        stroke="var(--color-customer4)"
+                        name="Spice Garden"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="customer5"
+                        stroke="var(--color-customer5)"
+                        name="Taste of Asia"
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -365,7 +458,9 @@ export default function SupplierRevenueDetailsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Revenue by Product</CardTitle>
-                <CardDescription>Breakdown of revenue by product</CardDescription>
+                <CardDescription>
+                  Breakdown of revenue by product
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -383,12 +478,16 @@ export default function SupplierRevenueDetailsPage() {
                     <TableBody>
                       {productRevenueData.map((product) => (
                         <TableRow key={product.id}>
-                          <TableCell className="font-medium">{product.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {product.name}
+                          </TableCell>
                           <TableCell>{product.category}</TableCell>
                           <TableCell>
                             {product.unitsSold.toLocaleString()} {product.unit}
                           </TableCell>
-                          <TableCell>RWF {product.revenue.toLocaleString()}</TableCell>
+                          <TableCell>
+                            RWF {product.revenue.toLocaleString()}
+                          </TableCell>
                           <TableCell>{product.percentage}%</TableCell>
                           <TableCell>{product.profitMargin}%</TableCell>
                         </TableRow>
@@ -402,7 +501,9 @@ export default function SupplierRevenueDetailsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Product Revenue Trends</CardTitle>
-                <CardDescription>Revenue trends for your top product categories</CardDescription>
+                <CardDescription>
+                  Revenue trends for your top product categories
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ChartContainer
@@ -427,16 +528,35 @@ export default function SupplierRevenueDetailsPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categorySalesData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <BarChart
+                      data={categorySalesData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Bar dataKey="produce" fill="var(--color-produce)" name="Produce" />
-                      <Bar dataKey="meat" fill="var(--color-meat)" name="Meat & Poultry" />
-                      <Bar dataKey="dairy" fill="var(--color-dairy)" name="Dairy" />
-                      <Bar dataKey="dryGoods" fill="var(--color-dryGoods)" name="Dry Goods" />
+                      <Bar
+                        dataKey="produce"
+                        fill="var(--color-produce)"
+                        name="Produce"
+                      />
+                      <Bar
+                        dataKey="meat"
+                        fill="var(--color-meat)"
+                        name="Meat & Poultry"
+                      />
+                      <Bar
+                        dataKey="dairy"
+                        fill="var(--color-dairy)"
+                        name="Dairy"
+                      />
+                      <Bar
+                        dataKey="dryGoods"
+                        fill="var(--color-dryGoods)"
+                        name="Dry Goods"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -448,7 +568,9 @@ export default function SupplierRevenueDetailsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Revenue by Location</CardTitle>
-                <CardDescription>Breakdown of revenue by customer location</CardDescription>
+                <CardDescription>
+                  Breakdown of revenue by customer location
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -466,22 +588,30 @@ export default function SupplierRevenueDetailsPage() {
                     <TableBody>
                       {locationRevenueData.map((location) => (
                         <TableRow key={location.id}>
-                          <TableCell className="font-medium">{location.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {location.name}
+                          </TableCell>
                           <TableCell>{location.customers}</TableCell>
                           <TableCell>{location.orders}</TableCell>
-                          <TableCell>RWF {location.revenue.toLocaleString()}</TableCell>
+                          <TableCell>
+                            RWF {location.revenue.toLocaleString()}
+                          </TableCell>
                           <TableCell>{location.percentage}%</TableCell>
                           <TableCell>
                             <div className="flex items-center">
                               {location.growth > 0 ? (
                                 <>
                                   <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                                  <span className="text-green-500">+{location.growth}%</span>
+                                  <span className="text-green-500">
+                                    +{location.growth}%
+                                  </span>
                                 </>
                               ) : (
                                 <>
                                   <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
-                                  <span className="text-red-500">{location.growth}%</span>
+                                  <span className="text-red-500">
+                                    {location.growth}%
+                                  </span>
                                 </>
                               )}
                             </div>
@@ -497,7 +627,9 @@ export default function SupplierRevenueDetailsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Location Revenue Distribution</CardTitle>
-                <CardDescription>Visual representation of revenue by location</CardDescription>
+                <CardDescription>
+                  Visual representation of revenue by location
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
@@ -512,13 +644,20 @@ export default function SupplierRevenueDetailsPage() {
                         fill="#8884d8"
                         dataKey="value"
                         nameKey="name"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) =>
+                          `${name}: ${(percent * 100).toFixed(0)}%`
+                        }
                       >
                         {locationChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => `RWF ${value.toLocaleString()}`} />
+                      <Tooltip
+                        formatter={(value) => `RWF ${value.toLocaleString()}`}
+                      />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -529,7 +668,7 @@ export default function SupplierRevenueDetailsPage() {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
 
 // Sample data
@@ -540,23 +679,30 @@ const revenueData = [
   { month: "Mar", revenue: 16800000, target: 15500000 },
   { month: "Apr", revenue: 17500000, target: 16000000 },
   { month: "May", revenue: 18750000, target: 16500000 },
-]
+];
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82ca9d"]
+const COLORS = [
+  "#0088FE",
+  "#00C49F",
+  "#FFBB28",
+  "#FF8042",
+  "#8884D8",
+  "#82ca9d",
+];
 
 const categoryData = [
   { name: "Produce", value: 6800000 },
   { name: "Meat & Poultry", value: 5500000 },
   { name: "Dairy", value: 3800000 },
   { name: "Dry Goods", value: 2650000 },
-]
+];
 
 const paymentMethodData = [
   { name: "Bank Transfer", value: 8500000 },
   { name: "Mobile Money", value: 6250000 },
   { name: "Cash on Delivery", value: 2500000 },
   { name: "Credit Card", value: 1500000 },
-]
+];
 
 const customerRevenueData = [
   {
@@ -639,7 +785,7 @@ const customerRevenueData = [
     percentage: 5.1,
     growth: 6,
   },
-]
+];
 
 const customerTrendsData = [
   {
@@ -690,7 +836,7 @@ const customerTrendsData = [
     customer4: 2150000,
     customer5: 1950000,
   },
-]
+];
 
 const productRevenueData = [
   {
@@ -793,15 +939,45 @@ const productRevenueData = [
     percentage: 6.0,
     profitMargin: 45,
   },
-]
+];
 
 const categorySalesData = [
-  { month: "Jan", produce: 5200000, meat: 4100000, dairy: 3500000, dryGoods: 1700000 },
-  { month: "Feb", produce: 5400000, meat: 4300000, dairy: 3600000, dryGoods: 1900000 },
-  { month: "Mar", produce: 6300000, meat: 5000000, dairy: 3550000, dryGoods: 1950000 },
-  { month: "Apr", produce: 6450000, meat: 5200000, dairy: 3700000, dryGoods: 2150000 },
-  { month: "May", produce: 6800000, meat: 5500000, dairy: 3800000, dryGoods: 2650000 },
-]
+  {
+    month: "Jan",
+    produce: 5200000,
+    meat: 4100000,
+    dairy: 3500000,
+    dryGoods: 1700000,
+  },
+  {
+    month: "Feb",
+    produce: 5400000,
+    meat: 4300000,
+    dairy: 3600000,
+    dryGoods: 1900000,
+  },
+  {
+    month: "Mar",
+    produce: 6300000,
+    meat: 5000000,
+    dairy: 3550000,
+    dryGoods: 1950000,
+  },
+  {
+    month: "Apr",
+    produce: 6450000,
+    meat: 5200000,
+    dairy: 3700000,
+    dryGoods: 2150000,
+  },
+  {
+    month: "May",
+    produce: 6800000,
+    meat: 5500000,
+    dairy: 3800000,
+    dryGoods: 2650000,
+  },
+];
 
 const locationRevenueData = [
   {
@@ -849,7 +1025,7 @@ const locationRevenueData = [
     percentage: 7.5,
     growth: 5,
   },
-]
+];
 
 const locationChartData = [
   { name: "Kigali City Center", value: 8500000 },
@@ -857,4 +1033,4 @@ const locationChartData = [
   { name: "Kimihurura", value: 2850000 },
   { name: "Gikondo", value: 1750000 },
   { name: "Remera", value: 1400000 },
-]
+];

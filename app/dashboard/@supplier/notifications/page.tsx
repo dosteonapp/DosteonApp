@@ -32,7 +32,7 @@ export default function SupplierNotificationsPage() {
           </div>
           <div className="flex items-center gap-2">
             {/* <Button variant="outline" asChild>
-              <Link href="/supplier/notifications/settings">
+              <Link href="/dashboard/notifications/settings">
                 <Settings className="mr-2 h-4 w-4" />
                 Notification Settings
               </Link>
@@ -178,7 +178,7 @@ const notifications: Notification[] = [
     type: "order",
     unread: true,
     actionLink: {
-      href: "/supplier/orders/ORD-7891",
+      href: "/dashboard/orders/ORD-7891",
       text: "View Order",
     },
   },
@@ -191,7 +191,7 @@ const notifications: Notification[] = [
     type: "inventory",
     unread: true,
     actionLink: {
-      href: "/supplier/products?filter=low-stock",
+      href: "/dashboard/products?filter=low-stock",
       text: "View Inventory",
     },
   },
@@ -204,7 +204,7 @@ const notifications: Notification[] = [
     type: "payment",
     unread: true,
     actionLink: {
-      href: "/supplier/finance/transactions",
+      href: "/dashboard/finance/transactions",
       text: "View Transaction",
     },
   },
@@ -224,7 +224,7 @@ const notifications: Notification[] = [
     type: "order",
     unread: true,
     actionLink: {
-      href: "/supplier/orders/ORD-7893",
+      href: "/dashboard/orders/ORD-7893",
       text: "View Order",
     },
   },
@@ -237,7 +237,7 @@ const notifications: Notification[] = [
     type: "inventory",
     unread: true,
     actionLink: {
-      href: "/supplier/products?filter=low-stock",
+      href: "/dashboard/products?filter=low-stock",
       text: "View Inventory",
     },
   },
@@ -258,7 +258,7 @@ const notifications: Notification[] = [
     type: "payment",
     unread: true,
     actionLink: {
-      href: "/supplier/finance/transactions",
+      href: "/dashboard/finance/transactions",
       text: "View Transaction",
     },
   },
@@ -271,7 +271,7 @@ const notifications: Notification[] = [
     type: "alert",
     unread: false,
     actionLink: {
-      href: "/supplier/customers",
+      href: "/dashboard/customers",
       text: "View Customers",
     },
   },

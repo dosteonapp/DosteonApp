@@ -72,7 +72,7 @@ export default function RestaurantDashboard() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Inventory Card */}
-          <Link href="/restaurant/inventory" className="group">
+          <Link href="/dashboard/inventory" className="group">
             <Card className="transition-all duration-200 hover:shadow-md hover:border-primary-300 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -91,7 +91,7 @@ export default function RestaurantDashboard() {
           </Link>
 
           {/* Orders Card */}
-          <Link href="/restaurant/orders" className="group">
+          <Link href="/dashboard/orders" className="group">
             <Card className="transition-all duration-200 hover:shadow-md hover:border-primary-300 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -110,7 +110,7 @@ export default function RestaurantDashboard() {
           </Link>
 
           {/* Suppliers Card */}
-          <Link href="/restaurant/suppliers" className="group">
+          <Link href="/dashboard/suppliers" className="group">
             <Card className="transition-all duration-200 hover:shadow-md hover:border-secondary-300 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Suppliers</CardTitle>
@@ -127,7 +127,7 @@ export default function RestaurantDashboard() {
           </Link>
 
           {/* Alerts Card */}
-          <Link href="/restaurant/notifications" className="group">
+          <Link href="/dashboard/notifications" className="group">
             <Card className="transition-all duration-200 hover:shadow-md hover:border-destructive/30 cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Alerts</CardTitle>
@@ -225,7 +225,7 @@ export default function RestaurantDashboard() {
                           {order.status}
                         </Badge>
                         <Button size="sm" variant="ghost" asChild>
-                          <Link href={`/restaurant/orders/${order.id}`}>
+                          <Link href={`/dashboard/orders/${order.id}`}>
                             <ArrowUpRight className="h-4 w-4" />
                           </Link>
                         </Button>
@@ -261,7 +261,7 @@ export default function RestaurantDashboard() {
                         </div>
                       </div>
                       <Button size="sm" variant="ghost" asChild>
-                        <Link href={`/restaurant/orders/${delivery.id}`}>
+                        <Link href={`/dashboard/orders/${delivery.id}`}>
                           <ArrowUpRight className="h-4 w-4" />
                         </Link>
                       </Button>

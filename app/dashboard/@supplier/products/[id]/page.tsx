@@ -1,23 +1,46 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, Edit, TrendingUp, Package, ShoppingCart, Star, AlertTriangle, DollarSign, Menu } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+import {
+  ArrowLeft,
+  Edit,
+  TrendingUp,
+  Package,
+  ShoppingCart,
+  Star,
+  AlertTriangle,
+  DollarSign,
+  Menu,
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 interface ProductDetailPageProps {
   params: {
-    id: string
-  }
+    id: string;
+  };
 }
 
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const [product] = useState(getProductById(params.id))
+  const [product] = useState(getProductById(params.id));
 
   if (!product) {
     return (
@@ -25,14 +48,16 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">Product Not Found</h1>
-            <p className="text-muted-foreground mb-4">The product you're looking for doesn't exist.</p>
+            <p className="text-muted-foreground mb-4">
+              The product you're looking for doesn't exist.
+            </p>
             <Button asChild>
-              <Link href="/supplier/products">Back to Products</Link>
+              <Link href="/dashboard/products">Back to Products</Link>
             </Button>
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   return (
@@ -49,13 +74,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             <Button variant="outline" size="sm" asChild>
-              <Link href="/supplier/products">
+              <Link href="/dashboard/products">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Products
               </Link>
             </Button>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">{product.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">
+                {product.name}
+              </h1>
               <p className="text-muted-foreground">SKU: {product.sku}</p>
             </div>
           </div>
@@ -64,7 +91,11 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               <Edit className="mr-2 h-4 w-4" />
               Edit Product
             </Button>
-            <Badge variant={product.status === "active" ? "default" : "secondary"}>{product.status}</Badge>
+            <Badge
+              variant={product.status === "active" ? "default" : "secondary"}
+            >
+              {product.status}
+            </Badge>
           </div>
         </div>
 
@@ -72,11 +103,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Revenue
+              </CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">RWF {product.totalRevenue.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                RWF {product.totalRevenue.toLocaleString()}
+              </div>
               <p className="text-xs text-muted-foreground">
                 <span className="text-green-600 flex items-center">
                   <TrendingUp className="mr-1 h-3 w-3" />
@@ -104,7 +139,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Stock</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Current Stock
+              </CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -124,7 +161,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Customer Rating</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Customer Rating
+              </CardTitle>
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -132,7 +171,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 {product.rating}
                 <Star className="ml-1 h-5 w-5 fill-yellow-400 text-yellow-400" />
               </div>
-              <p className="text-xs text-muted-foreground">Based on {product.reviewCount} reviews</p>
+              <p className="text-xs text-muted-foreground">
+                Based on {product.reviewCount} reviews
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -156,24 +197,38 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Category</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Category
+                      </p>
                       <p className="text-sm">{product.category}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Unit</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Unit
+                      </p>
                       <p className="text-sm">{product.unit}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Price</p>
-                      <p className="text-sm">RWF {product.price.toLocaleString()}</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Price
+                      </p>
+                      <p className="text-sm">
+                        RWF {product.price.toLocaleString()}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Created</p>
-                      <p className="text-sm">{new Date(product.createdAt).toLocaleDateString()}</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Created
+                      </p>
+                      <p className="text-sm">
+                        {new Date(product.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Description</p>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">
+                      Description
+                    </p>
                     <p className="text-sm">{product.description}</p>
                   </div>
                 </CardContent>
@@ -214,7 +269,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             <Card>
               <CardHeader>
                 <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Orders containing this product in the last 30 days</CardDescription>
+                <CardDescription>
+                  Orders containing this product in the last 30 days
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -231,15 +288,29 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   <TableBody>
                     {product.recentOrders.map((order) => (
                       <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.id}</TableCell>
+                        <TableCell className="font-medium">
+                          {order.id}
+                        </TableCell>
                         <TableCell>{order.customer}</TableCell>
                         <TableCell>
                           {order.quantity} {product.unit}
                         </TableCell>
-                        <TableCell>RWF {order.total.toLocaleString()}</TableCell>
-                        <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
                         <TableCell>
-                          <Badge variant={order.status === "delivered" ? "default" : "secondary"}>{order.status}</Badge>
+                          RWF {order.total.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(order.date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              order.status === "delivered"
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {order.status}
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -258,26 +329,36 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Current Stock</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Current Stock
+                      </p>
                       <p className="text-2xl font-bold">
                         {product.currentStock} {product.unit}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Low Stock Threshold</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Low Stock Threshold
+                      </p>
                       <p className="text-2xl font-bold">
                         {product.lowStockThreshold} {product.unit}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Reorder Point</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Reorder Point
+                      </p>
                       <p className="text-2xl font-bold">
                         {product.reorderPoint} {product.unit}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Last Restocked</p>
-                      <p className="text-sm">{new Date(product.lastRestocked).toLocaleDateString()}</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Last Restocked
+                      </p>
+                      <p className="text-sm">
+                        {new Date(product.lastRestocked).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -290,7 +371,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 <CardContent>
                   <div className="space-y-3">
                     {product.stockMovements.map((movement, index) => (
-                      <div key={index} className="flex items-center justify-between border-b pb-2">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between border-b pb-2"
+                      >
                         <div>
                           <p className="text-sm font-medium">{movement.type}</p>
                           <p className="text-xs text-muted-foreground">
@@ -299,12 +383,18 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                         </div>
                         <div className="text-right">
                           <p
-                            className={`text-sm font-medium ${movement.quantity > 0 ? "text-green-600" : "text-red-600"}`}
+                            className={`text-sm font-medium ${
+                              movement.quantity > 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
                           >
                             {movement.quantity > 0 ? "+" : ""}
                             {movement.quantity} {product.unit}
                           </p>
-                          <p className="text-xs text-muted-foreground">{movement.reason}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {movement.reason}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -324,15 +414,21 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">This Month</span>
-                      <span className="text-sm font-medium">RWF {product.salesThisMonth.toLocaleString()}</span>
+                      <span className="text-sm font-medium">
+                        RWF {product.salesThisMonth.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Last Month</span>
-                      <span className="text-sm font-medium">RWF {product.salesLastMonth.toLocaleString()}</span>
+                      <span className="text-sm font-medium">
+                        RWF {product.salesLastMonth.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Growth Rate</span>
-                      <span className="text-sm font-medium text-green-600">+12%</span>
+                      <span className="text-sm font-medium text-green-600">
+                        +12%
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -345,12 +441,19 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 <CardContent>
                   <div className="space-y-3">
                     {product.topCustomers.map((customer, index) => (
-                      <div key={index} className="flex items-center justify-between">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
                         <div>
                           <p className="text-sm font-medium">{customer.name}</p>
-                          <p className="text-xs text-muted-foreground">{customer.orders} orders</p>
+                          <p className="text-xs text-muted-foreground">
+                            {customer.orders} orders
+                          </p>
                         </div>
-                        <p className="text-sm font-medium">RWF {customer.total.toLocaleString()}</p>
+                        <p className="text-sm font-medium">
+                          RWF {customer.total.toLocaleString()}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -363,7 +466,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             <Card>
               <CardHeader>
                 <CardTitle>Customer Reviews</CardTitle>
-                <CardDescription>Recent feedback from your customers</CardDescription>
+                <CardDescription>
+                  Recent feedback from your customers
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -371,21 +476,29 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                     <div key={index} className="border-b pb-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium">{review.customer}</p>
+                          <p className="text-sm font-medium">
+                            {review.customer}
+                          </p>
                           <div className="flex">
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
                                 className={`h-4 w-4 ${
-                                  i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                  i < review.rating
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300"
                                 }`}
                               />
                             ))}
                           </div>
                         </div>
-                        <p className="text-xs text-muted-foreground">{new Date(review.date).toLocaleDateString()}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(review.date).toLocaleDateString()}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">{review.comment}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {review.comment}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -395,7 +508,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
 
 // Mock function to get product by ID
@@ -489,24 +602,27 @@ function getProductById(id: string) {
         {
           customer: "Green Valley Restaurant",
           rating: 5,
-          comment: "Excellent quality tomatoes. Always fresh and flavorful. Our customers love them!",
+          comment:
+            "Excellent quality tomatoes. Always fresh and flavorful. Our customers love them!",
           date: "2024-01-10",
         },
         {
           customer: "Urban Bistro",
           rating: 4,
-          comment: "Good quality, though sometimes the sizes vary. Overall satisfied with the product.",
+          comment:
+            "Good quality, though sometimes the sizes vary. Overall satisfied with the product.",
           date: "2024-01-05",
         },
         {
           customer: "Farm Table",
           rating: 5,
-          comment: "Perfect for our farm-to-table concept. Customers can taste the difference!",
+          comment:
+            "Perfect for our farm-to-table concept. Customers can taste the difference!",
           date: "2023-12-28",
         },
       ],
     },
-  }
+  };
 
-  return products[id as keyof typeof products] || null
+  return products[id as keyof typeof products] || null;
 }

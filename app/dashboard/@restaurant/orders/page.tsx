@@ -1,19 +1,38 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Plus, Menu, Calendar } from "lucide-react"
-import Link from "next/link"
-import { NewOrderModal } from "@/components/new-order-modal"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Plus, Menu, Calendar } from "lucide-react";
+import Link from "next/link";
+import { NewOrderModal } from "@/components/new-order-modal";
 
 export default function OrdersPage() {
-  const [newOrderModalOpen, setNewOrderModalOpen] = useState(false)
+  const [newOrderModalOpen, setNewOrderModalOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -27,7 +46,9 @@ export default function OrdersPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
-            <p className="text-muted-foreground">Manage your procurement orders</p>
+            <p className="text-muted-foreground">
+              Manage your procurement orders
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button onClick={() => setNewOrderModalOpen(true)}>
@@ -48,14 +69,20 @@ export default function OrdersPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Current Orders</CardTitle>
-                <CardDescription>View and manage your active orders</CardDescription>
+                <CardDescription>
+                  View and manage your active orders
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <div className="relative">
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input type="search" placeholder="Search orders..." className="pl-8 w-full md:w-[300px]" />
+                      <Input
+                        type="search"
+                        placeholder="Search orders..."
+                        className="pl-8 w-full md:w-[300px]"
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -78,11 +105,19 @@ export default function OrdersPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Suppliers</SelectItem>
-                        <SelectItem value="fresh-farms">Fresh Farms Inc.</SelectItem>
+                        <SelectItem value="fresh-farms">
+                          Fresh Farms Inc.
+                        </SelectItem>
                         <SelectItem value="metro-meats">Metro Meats</SelectItem>
-                        <SelectItem value="global-grocers">Global Grocers</SelectItem>
-                        <SelectItem value="organic-supplies">Organic Supplies Co.</SelectItem>
-                        <SelectItem value="dairy-delights">Dairy Delights</SelectItem>
+                        <SelectItem value="global-grocers">
+                          Global Grocers
+                        </SelectItem>
+                        <SelectItem value="organic-supplies">
+                          Organic Supplies Co.
+                        </SelectItem>
+                        <SelectItem value="dairy-delights">
+                          Dairy Delights
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -104,18 +139,26 @@ export default function OrdersPage() {
                     <TableBody>
                       {currentOrders.map((order) => (
                         <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.id}</TableCell>
+                          <TableCell className="font-medium">
+                            {order.id}
+                          </TableCell>
                           <TableCell>{order.supplier}</TableCell>
                           <TableCell>{order.date}</TableCell>
                           <TableCell>{order.totalItems}</TableCell>
                           <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
                           <TableCell>
-                            <Badge className={getOrderStatusVariant(order.status)}>{order.status}</Badge>
+                            <Badge
+                              className={getOrderStatusVariant(order.status)}
+                            >
+                              {order.status}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button size="sm" variant="outline" asChild>
-                                <Link href={`/restaurant/orders/${order.id}`}>View</Link>
+                                <Link href={`/dashboard/orders/${order.id}`}>
+                                  View
+                                </Link>
                               </Button>
                               {order.status === "Pending" && (
                                 <Button size="sm" variant="outline">
@@ -143,9 +186,16 @@ export default function OrdersPage() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Scheduled Orders</CardTitle>
-                  <CardDescription>Orders scheduled for future delivery</CardDescription>
+                  <CardDescription>
+                    Orders scheduled for future delivery
+                  </CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="h-8" onClick={() => setNewOrderModalOpen(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setNewOrderModalOpen(true)}
+                >
                   <Calendar className="mr-2 h-4 w-4" />
                   Schedule New Order
                 </Button>
@@ -167,7 +217,9 @@ export default function OrdersPage() {
                     <TableBody>
                       {scheduledOrders.map((order) => (
                         <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.id}</TableCell>
+                          <TableCell className="font-medium">
+                            {order.id}
+                          </TableCell>
                           <TableCell>{order.supplier}</TableCell>
                           <TableCell>{order.scheduledDate}</TableCell>
                           <TableCell>{order.timeSlot}</TableCell>
@@ -181,7 +233,11 @@ export default function OrdersPage() {
                               <Button size="sm" variant="outline">
                                 Edit
                               </Button>
-                              <Button size="sm" variant="outline" className="text-destructive">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive"
+                              >
                                 Cancel
                               </Button>
                             </div>
@@ -206,7 +262,11 @@ export default function OrdersPage() {
                   <div className="flex items-center gap-2">
                     <div className="relative">
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input type="search" placeholder="Search orders..." className="pl-8 w-full md:w-[300px]" />
+                      <Input
+                        type="search"
+                        placeholder="Search orders..."
+                        className="pl-8 w-full md:w-[300px]"
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -226,11 +286,19 @@ export default function OrdersPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Suppliers</SelectItem>
-                        <SelectItem value="fresh-farms">Fresh Farms Inc.</SelectItem>
+                        <SelectItem value="fresh-farms">
+                          Fresh Farms Inc.
+                        </SelectItem>
                         <SelectItem value="metro-meats">Metro Meats</SelectItem>
-                        <SelectItem value="global-grocers">Global Grocers</SelectItem>
-                        <SelectItem value="organic-supplies">Organic Supplies Co.</SelectItem>
-                        <SelectItem value="dairy-delights">Dairy Delights</SelectItem>
+                        <SelectItem value="global-grocers">
+                          Global Grocers
+                        </SelectItem>
+                        <SelectItem value="organic-supplies">
+                          Organic Supplies Co.
+                        </SelectItem>
+                        <SelectItem value="dairy-delights">
+                          Dairy Delights
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -252,13 +320,19 @@ export default function OrdersPage() {
                     <TableBody>
                       {historyOrders.map((order) => (
                         <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.id}</TableCell>
+                          <TableCell className="font-medium">
+                            {order.id}
+                          </TableCell>
                           <TableCell>{order.supplier}</TableCell>
                           <TableCell>{order.date}</TableCell>
                           <TableCell>{order.totalItems}</TableCell>
                           <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
                           <TableCell>
-                            <Badge className={getOrderStatusVariant(order.status)}>{order.status}</Badge>
+                            <Badge
+                              className={getOrderStatusVariant(order.status)}
+                            >
+                              {order.status}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
@@ -281,26 +355,29 @@ export default function OrdersPage() {
         </Tabs>
       </main>
 
-      <NewOrderModal open={newOrderModalOpen} onOpenChange={setNewOrderModalOpen} />
+      <NewOrderModal
+        open={newOrderModalOpen}
+        onOpenChange={setNewOrderModalOpen}
+      />
     </div>
-  )
+  );
 }
 
 // Update the getOrderStatusVariant function to use the new color scheme
 function getOrderStatusVariant(status: string) {
   switch (status) {
     case "Pending":
-      return "bg-red-500 text-white hover:bg-red-600"
+      return "bg-red-500 text-white hover:bg-red-600";
     case "Confirmed":
-      return "bg-green-500 text-white hover:bg-green-600"
+      return "bg-green-500 text-white hover:bg-green-600";
     case "In Transit":
-      return "bg-blue-500 text-white hover:bg-blue-600"
+      return "bg-blue-500 text-white hover:bg-blue-600";
     case "Delivered":
-      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90"
+      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90";
     case "Cancelled":
-      return "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      return "bg-destructive text-destructive-foreground hover:bg-destructive/90";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
@@ -330,7 +407,7 @@ const currentOrders = [
     totalAmount: 178.25,
     status: "In Transit",
   },
-]
+];
 
 // Sample data for scheduled orders
 const scheduledOrders = [
@@ -358,7 +435,7 @@ const scheduledOrders = [
     totalItems: 8,
     totalAmount: 180.75,
   },
-]
+];
 
 // Sample data for order history
 const historyOrders = [
@@ -394,4 +471,4 @@ const historyOrders = [
     totalAmount: 189.25,
     status: "Cancelled",
   },
-]
+];

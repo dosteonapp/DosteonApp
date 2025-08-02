@@ -335,13 +335,13 @@ export default function ProductsPage() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button size="sm" variant="outline" asChild>
-                            <Link href={`/supplier/products/${product.id}`}>
+                            <Link href={`/dashboard/products/${product.id}`}>
                               View
                             </Link>
                           </Button>
                           <Button size="sm" variant="outline" asChild>
                             <Link
-                              href={`/supplier/products/${product.id}/edit`}
+                              href={`/dashboard/products/${product.id}/edit`}
                             >
                               Edit
                             </Link>

@@ -1,13 +1,40 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Printer, Download, ShoppingCart, Menu, Truck, CheckCircle, Clock } from "lucide-react"
-import Link from "next/link"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ArrowLeft,
+  Printer,
+  Download,
+  ShoppingCart,
+  Menu,
+  Truck,
+  CheckCircle,
+  Clock,
+} from "lucide-react";
+import Link from "next/link";
 
-export default function OrderDetailsPage({ params }: { params: { id: string } }) {
+export default function OrderDetailsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   // In a real app, you would fetch the order data based on the ID
-  const order = orders.find((o) => o.id === params.id) || orders[0]
+  const order = orders.find((o) => o.id === params.id) || orders[0];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -20,7 +47,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/restaurant/orders">
+            <Link href="/dashboard/orders">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Orders
             </Link>
@@ -29,10 +56,16 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
 
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Order #{order.id}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Order #{order.id}
+            </h1>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant={getOrderStatusVariant(order.status)}>{order.status}</Badge>
-              <span className="text-muted-foreground">Placed on {order.date}</span>
+              <Badge variant={getOrderStatusVariant(order.status)}>
+                {order.status}
+              </Badge>
+              <span className="text-muted-foreground">
+                Placed on {order.date}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-4 md:mt-0">
@@ -50,7 +83,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             </Button>
             {order.status === "Delivered" && (
               <Button asChild>
-                <Link href={`/restaurant/orders/new?reorder=${order.id}`}>
+                <Link href={`/dashboard/orders/new?reorder=${order.id}`}>
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Reorder
                 </Link>
@@ -66,30 +99,42 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             </CardHeader>
             <CardContent>
               <div className="font-medium">{order.supplier}</div>
-              <div className="text-sm text-muted-foreground mt-1">{order.supplierContact}</div>
+              <div className="text-sm text-muted-foreground mt-1">
+                {order.supplierContact}
+              </div>
               <Button size="sm" variant="link" className="px-0 mt-2" asChild>
-                <Link href={`/restaurant/suppliers/${order.supplierId}`}>View Supplier</Link>
+                <Link href={`/dashboard/suppliers/${order.supplierId}`}>
+                  View Supplier
+                </Link>
               </Button>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Delivery Information</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Delivery Information
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="font-medium">{order.deliveryAddress}</div>
-              <div className="text-sm text-muted-foreground mt-1">Expected: {order.expectedDelivery}</div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Expected: {order.expectedDelivery}
+              </div>
               {order.status === "In Transit" && (
                 <div className="flex items-center gap-2 mt-2">
                   <Truck className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Estimated arrival: {order.estimatedArrival}</span>
+                  <span className="text-sm text-muted-foreground">
+                    Estimated arrival: {order.estimatedArrival}
+                  </span>
                 </div>
               )}
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Order Timeline</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Order Timeline
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -98,7 +143,9 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                     {getTimelineIcon(event.status)}
                     <div>
                       <div className="font-medium">{event.status}</div>
-                      <div className="text-sm text-muted-foreground">{event.date}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {event.date}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -129,10 +176,14 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                       <TableCell>
                         <div>
                           <p className="font-medium">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">{item.category}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.category}
+                          </p>
                         </div>
                       </TableCell>
-                      <TableCell>RWF {item.unitPrice.toLocaleString()}</TableCell>
+                      <TableCell>
+                        RWF {item.unitPrice.toLocaleString()}
+                      </TableCell>
                       <TableCell>
                         {item.quantity} {item.unit}
                       </TableCell>
@@ -167,39 +218,44 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
           <Card>
             <CardHeader>
               <CardTitle>Inventory Update</CardTitle>
-              <CardDescription>This order has been added to your inventory</CardDescription>
+              <CardDescription>
+                This order has been added to your inventory
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>Inventory was automatically updated on {order.inventoryUpdateDate}</span>
+                <span>
+                  Inventory was automatically updated on{" "}
+                  {order.inventoryUpdateDate}
+                </span>
               </div>
               <Button className="mt-4" asChild>
-                <Link href="/restaurant/inventory">View Inventory</Link>
+                <Link href="/dashboard/inventory">View Inventory</Link>
               </Button>
             </CardContent>
           </Card>
         )}
       </main>
     </div>
-  )
+  );
 }
 
 // Update the getOrderStatusVariant function to use the new color scheme
 function getOrderStatusVariant(status: string) {
   switch (status) {
     case "Delivered":
-      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90"
+      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90";
     case "In Transit":
-      return "bg-blue-500 text-white hover:bg-blue-600"
+      return "bg-blue-500 text-white hover:bg-blue-600";
     case "Confirmed":
-      return "bg-green-500 text-white hover:bg-green-600"
+      return "bg-green-500 text-white hover:bg-green-600";
     case "Pending":
-      return "bg-red-500 text-white hover:bg-red-600"
+      return "bg-red-500 text-white hover:bg-red-600";
     case "Cancelled":
-      return "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      return "bg-destructive text-destructive-foreground hover:bg-destructive/90";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
@@ -207,15 +263,15 @@ function getOrderStatusVariant(status: string) {
 function getTimelineIcon(status: string) {
   switch (status) {
     case "Order Placed":
-      return <ShoppingCart className="h-5 w-5 text-muted-foreground" />
+      return <ShoppingCart className="h-5 w-5 text-muted-foreground" />;
     case "Order Confirmed":
-      return <CheckCircle className="h-5 w-5 text-blue-500" />
+      return <CheckCircle className="h-5 w-5 text-blue-500" />;
     case "In Transit":
-      return <Truck className="h-5 w-5 text-yellow-500" />
+      return <Truck className="h-5 w-5 text-yellow-500" />;
     case "Delivered":
-      return <CheckCircle className="h-5 w-5 text-green-500" />
+      return <CheckCircle className="h-5 w-5 text-green-500" />;
     default:
-      return <Clock className="h-5 w-5 text-muted-foreground" />
+      return <Clock className="h-5 w-5 text-muted-foreground" />;
   }
 }
 
@@ -433,4 +489,4 @@ const orders = [
     total: 88600,
     inventoryUpdateDate: "May 2, 2023, 11:30 AM",
   },
-]
+];

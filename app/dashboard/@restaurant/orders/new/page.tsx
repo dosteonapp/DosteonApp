@@ -1,27 +1,51 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Plus, Trash2, Menu, Star, StarHalf } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Plus, Trash2, Menu, Star, StarHalf } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function NewOrderPage() {
-  const router = useRouter()
-  const [selectedSupplier, setSelectedSupplier] = useState("")
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter();
+  const [selectedSupplier, setSelectedSupplier] = useState("");
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const addItemToOrder = (item: Product) => {
-    const existingItem = orderItems.find((i) => i.id === item.id)
+    const existingItem = orderItems.find((i) => i.id === item.id);
 
     if (existingItem) {
-      setOrderItems(orderItems.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)))
+      setOrderItems(
+        orderItems.map((i) =>
+          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+        )
+      );
     } else {
       setOrderItems([
         ...orderItems,
@@ -32,38 +56,45 @@ export default function NewOrderPage() {
           unit: item.unit,
           quantity: 1,
         },
-      ])
+      ]);
     }
-  }
+  };
 
   const removeItemFromOrder = (itemId: string) => {
-    setOrderItems(orderItems.filter((item) => item.id !== itemId))
-  }
+    setOrderItems(orderItems.filter((item) => item.id !== itemId));
+  };
 
   const updateItemQuantity = (itemId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeItemFromOrder(itemId)
-      return
+      removeItemFromOrder(itemId);
+      return;
     }
 
-    setOrderItems(orderItems.map((item) => (item.id === itemId ? { ...item, quantity } : item)))
-  }
+    setOrderItems(
+      orderItems.map((item) =>
+        item.id === itemId ? { ...item, quantity } : item
+      )
+    );
+  };
 
   const calculateTotal = () => {
-    return orderItems.reduce((total, item) => total + item.price * item.quantity, 0)
-  }
+    return orderItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+  };
 
   const handleSubmitOrder = () => {
-    if (orderItems.length === 0 || !selectedSupplier) return
+    if (orderItems.length === 0 || !selectedSupplier) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     // Simulate API call
     setTimeout(() => {
-      setIsSubmitting(false)
-      router.push("/restaurant/orders")
-    }, 1500)
-  }
+      setIsSubmitting(false);
+      router.push("/dashboard/orders");
+    }, 1500);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -77,7 +108,9 @@ export default function NewOrderPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">New Order</h1>
-            <p className="text-muted-foreground">Create a new procurement order</p>
+            <p className="text-muted-foreground">
+              Create a new procurement order
+            </p>
           </div>
         </div>
 
@@ -85,7 +118,9 @@ export default function NewOrderPage() {
           <Card className="mb-4">
             <CardHeader>
               <CardTitle>Recommended Suppliers</CardTitle>
-              <CardDescription>Based on your order history and inventory needs</CardDescription>
+              <CardDescription>
+                Based on your order history and inventory needs
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -95,21 +130,38 @@ export default function NewOrderPage() {
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium">{supplier.name}</h3>
                         <div className="flex">
-                          {Array.from({ length: Math.floor(supplier.rating) }).map((_, i) => (
-                            <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                          {Array.from({
+                            length: Math.floor(supplier.rating),
+                          }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className="h-4 w-4 fill-primary text-primary"
+                            />
                           ))}
-                          {supplier.rating % 1 !== 0 && <StarHalf className="h-4 w-4 fill-primary text-primary" />}
+                          {supplier.rating % 1 !== 0 && (
+                            <StarHalf className="h-4 w-4 fill-primary text-primary" />
+                          )}
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">{supplier.reason}</p>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {supplier.reason}
+                      </p>
                       <div className="flex flex-wrap gap-1 mb-3">
                         {supplier.categories.map((category) => (
-                          <Badge key={category} variant="outline" className="text-xs">
+                          <Badge
+                            key={category}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             {category}
                           </Badge>
                         ))}
                       </div>
-                      <Button size="sm" className="w-full" onClick={() => setSelectedSupplier(supplier.id)}>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setSelectedSupplier(supplier.id)}
+                      >
                         Select Supplier
                       </Button>
                     </div>
@@ -125,10 +177,15 @@ export default function NewOrderPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Select Supplier</CardTitle>
-                <CardDescription>Choose a supplier for this order</CardDescription>
+                <CardDescription>
+                  Choose a supplier for this order
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
+                <Select
+                  value={selectedSupplier}
+                  onValueChange={setSelectedSupplier}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a supplier" />
                   </SelectTrigger>
@@ -147,7 +204,9 @@ export default function NewOrderPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Select Products</CardTitle>
-                  <CardDescription>Browse and add products to your order</CardDescription>
+                  <CardDescription>
+                    Browse and add products to your order
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="all">
@@ -161,7 +220,11 @@ export default function NewOrderPage() {
                       </TabsList>
                       <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input type="search" placeholder="Search products..." className="pl-8 w-[200px]" />
+                        <Input
+                          type="search"
+                          placeholder="Search products..."
+                          className="pl-8 w-[200px]"
+                        />
                       </div>
                     </div>
 
@@ -174,14 +237,18 @@ export default function NewOrderPage() {
                                 <h3 className="font-medium">{product.name}</h3>
                                 <div className="flex items-center gap-2 mt-1">
                                   <p className="text-sm text-muted-foreground">
-                                    RWF {product.price.toLocaleString()} / {product.unit}
+                                    RWF {product.price.toLocaleString()} /{" "}
+                                    {product.unit}
                                   </p>
                                   <Badge variant="outline" className="text-xs">
                                     {product.category}
                                   </Badge>
                                 </div>
                               </div>
-                              <Button size="sm" onClick={() => addItemToOrder(product)}>
+                              <Button
+                                size="sm"
+                                onClick={() => addItemToOrder(product)}
+                              >
                                 <Plus className="h-4 w-4" />
                               </Button>
                             </div>
@@ -199,17 +266,26 @@ export default function NewOrderPage() {
                             <Card key={product.id} className="overflow-hidden">
                               <div className="flex items-center p-4">
                                 <div className="flex-1">
-                                  <h3 className="font-medium">{product.name}</h3>
+                                  <h3 className="font-medium">
+                                    {product.name}
+                                  </h3>
                                   <div className="flex items-center gap-2 mt-1">
                                     <p className="text-sm text-muted-foreground">
-                                      RWF {product.price.toLocaleString()} / {product.unit}
+                                      RWF {product.price.toLocaleString()} /{" "}
+                                      {product.unit}
                                     </p>
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
                                       {product.category}
                                     </Badge>
                                   </div>
                                 </div>
-                                <Button size="sm" onClick={() => addItemToOrder(product)}>
+                                <Button
+                                  size="sm"
+                                  onClick={() => addItemToOrder(product)}
+                                >
                                   <Plus className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -229,7 +305,9 @@ export default function NewOrderPage() {
             <Card className="sticky top-4">
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
-                <CardDescription>Review your order before submitting</CardDescription>
+                <CardDescription>
+                  Review your order before submitting
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {orderItems.length === 0 ? (
@@ -265,22 +343,36 @@ export default function NewOrderPage() {
                                     variant="outline"
                                     size="icon"
                                     className="h-6 w-6 rounded-full"
-                                    onClick={() => updateItemQuantity(item.id, item.quantity - 1)}
+                                    onClick={() =>
+                                      updateItemQuantity(
+                                        item.id,
+                                        item.quantity - 1
+                                      )
+                                    }
                                   >
                                     -
                                   </Button>
-                                  <span className="w-8 text-center">{item.quantity}</span>
+                                  <span className="w-8 text-center">
+                                    {item.quantity}
+                                  </span>
                                   <Button
                                     variant="outline"
                                     size="icon"
                                     className="h-6 w-6 rounded-full"
-                                    onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
+                                    onClick={() =>
+                                      updateItemQuantity(
+                                        item.id,
+                                        item.quantity + 1
+                                      )
+                                    }
                                   >
                                     +
                                   </Button>
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right">${(item.price * item.quantity).toFixed(2)}</TableCell>
+                              <TableCell className="text-right">
+                                ${(item.price * item.quantity).toFixed(2)}
+                              </TableCell>
                               <TableCell>
                                 <Button
                                   variant="ghost"
@@ -311,7 +403,9 @@ export default function NewOrderPage() {
               <CardFooter>
                 <Button
                   className="w-full"
-                  disabled={orderItems.length === 0 || !selectedSupplier || isSubmitting}
+                  disabled={
+                    orderItems.length === 0 || !selectedSupplier || isSubmitting
+                  }
                   onClick={handleSubmitOrder}
                 >
                   {isSubmitting ? "Processing..." : "Place Order"}
@@ -322,24 +416,24 @@ export default function NewOrderPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
 
 // Types
 interface Product {
-  id: string
-  name: string
-  category: string
-  price: number
-  unit: string
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  unit: string;
 }
 
 interface OrderItem {
-  id: string
-  name: string
-  price: number
-  unit: string
-  quantity: number
+  id: string;
+  name: string;
+  price: number;
+  unit: string;
+  quantity: number;
 }
 
 // Sample data
@@ -349,22 +443,82 @@ const suppliers = [
   { id: "supplier-3", name: "Global Grocers" },
   { id: "supplier-4", name: "Organic Supplies Co." },
   { id: "supplier-5", name: "Dairy Delights" },
-]
+];
 
 const products: Product[] = [
-  { id: "prod-1", name: "Tomatoes", category: "Produce", price: 2.99, unit: "kg" },
-  { id: "prod-2", name: "Onions", category: "Produce", price: 1.49, unit: "kg" },
-  { id: "prod-3", name: "Potatoes", category: "Produce", price: 1.99, unit: "kg" },
-  { id: "prod-4", name: "Chicken Breast", category: "Meat & Poultry", price: 8.99, unit: "kg" },
-  { id: "prod-5", name: "Ground Beef", category: "Meat & Poultry", price: 7.49, unit: "kg" },
+  {
+    id: "prod-1",
+    name: "Tomatoes",
+    category: "Produce",
+    price: 2.99,
+    unit: "kg",
+  },
+  {
+    id: "prod-2",
+    name: "Onions",
+    category: "Produce",
+    price: 1.49,
+    unit: "kg",
+  },
+  {
+    id: "prod-3",
+    name: "Potatoes",
+    category: "Produce",
+    price: 1.99,
+    unit: "kg",
+  },
+  {
+    id: "prod-4",
+    name: "Chicken Breast",
+    category: "Meat & Poultry",
+    price: 8.99,
+    unit: "kg",
+  },
+  {
+    id: "prod-5",
+    name: "Ground Beef",
+    category: "Meat & Poultry",
+    price: 7.49,
+    unit: "kg",
+  },
   { id: "prod-6", name: "Milk", category: "Dairy", price: 3.29, unit: "liter" },
   { id: "prod-7", name: "Cheese", category: "Dairy", price: 5.99, unit: "kg" },
-  { id: "prod-8", name: "Rice", category: "Dry Goods", price: 2.49, unit: "kg" },
-  { id: "prod-9", name: "Pasta", category: "Dry Goods", price: 1.79, unit: "kg" },
-  { id: "prod-10", name: "Olive Oil", category: "Dry Goods", price: 9.99, unit: "liter" },
-  { id: "prod-11", name: "Bell Peppers", category: "Produce", price: 3.49, unit: "kg" },
-  { id: "prod-12", name: "Carrots", category: "Produce", price: 1.29, unit: "kg" },
-]
+  {
+    id: "prod-8",
+    name: "Rice",
+    category: "Dry Goods",
+    price: 2.49,
+    unit: "kg",
+  },
+  {
+    id: "prod-9",
+    name: "Pasta",
+    category: "Dry Goods",
+    price: 1.79,
+    unit: "kg",
+  },
+  {
+    id: "prod-10",
+    name: "Olive Oil",
+    category: "Dry Goods",
+    price: 9.99,
+    unit: "liter",
+  },
+  {
+    id: "prod-11",
+    name: "Bell Peppers",
+    category: "Produce",
+    price: 3.49,
+    unit: "kg",
+  },
+  {
+    id: "prod-12",
+    name: "Carrots",
+    category: "Produce",
+    price: 1.29,
+    unit: "kg",
+  },
+];
 
 // Sample data for recommended suppliers
 const recommendedSuppliers = [
@@ -389,4 +543,4 @@ const recommendedSuppliers = [
     categories: ["Produce"],
     reason: "Fast delivery, 25 min avg. response time",
   },
-]
+];

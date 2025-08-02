@@ -1,9 +1,16 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import {
   Menu,
   Download,
@@ -15,7 +22,7 @@ import {
   Droplet,
   Recycle,
   FileText,
-} from "lucide-react"
+} from "lucide-react";
 import {
   Line,
   LineChart,
@@ -30,20 +37,42 @@ import {
   Pie,
   Cell,
   Tooltip as RechartsTooltip,
-} from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import Link from "next/link"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { DailyReportsModal } from "@/components/daily-reports-modal"
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { DailyReportsModal } from "@/components/daily-reports-modal";
 
 export default function AnalyticsPage() {
-  const [timeRange, setTimeRange] = useState("30days")
-  const [esgTimeRange, setEsgTimeRange] = useState("3months")
-  const [reportsModalOpen, setReportsModalOpen] = useState(false)
+  const [timeRange, setTimeRange] = useState("30days");
+  const [esgTimeRange, setEsgTimeRange] = useState("3months");
+  const [reportsModalOpen, setReportsModalOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -57,7 +86,9 @@ export default function AnalyticsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
-            <p className="text-muted-foreground">Track consumption, wastage, and predict restocking needs</p>
+            <p className="text-muted-foreground">
+              Track consumption, wastage, and predict restocking needs
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -71,7 +102,11 @@ export default function AnalyticsPage() {
                 <SelectItem value="year">Last year</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" className="gap-1" onClick={() => setReportsModalOpen(true)}>
+            <Button
+              variant="outline"
+              className="gap-1"
+              onClick={() => setReportsModalOpen(true)}
+            >
               <FileText className="h-4 w-4" />
               Daily Reports
             </Button>
@@ -96,38 +131,54 @@ export default function AnalyticsPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card className="bg-gradient-to-br from-primary-50 to-white border-primary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Daily Usage</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Avg. Daily Usage
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">32.5 kg</div>
-                  <p className="text-xs text-muted-foreground">+2.5% from last period</p>
+                  <p className="text-xs text-muted-foreground">
+                    +2.5% from last period
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-primary-50 to-white border-primary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Weekly Usage</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Avg. Weekly Usage
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">227.5 kg</div>
-                  <p className="text-xs text-muted-foreground">+1.8% from last period</p>
+                  <p className="text-xs text-muted-foreground">
+                    +1.8% from last period
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Most Consumed Item</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Most Consumed Item
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">Tomatoes</div>
-                  <p className="text-xs text-muted-foreground">45.2 kg this month</p>
+                  <p className="text-xs text-muted-foreground">
+                    45.2 kg this month
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Fastest Growing Usage</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Fastest Growing Usage
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">Chicken</div>
-                  <p className="text-xs text-muted-foreground">+12.3% this month</p>
+                  <p className="text-xs text-muted-foreground">
+                    +12.3% this month
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -135,7 +186,9 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Consumption Trends by Category</CardTitle>
-                <CardDescription>Track your inventory usage patterns over time</CardDescription>
+                <CardDescription>
+                  Track your inventory usage patterns over time
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ChartContainer
@@ -160,16 +213,39 @@ export default function AnalyticsPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={consumptionData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <LineChart
+                      data={consumptionData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Line type="monotone" dataKey="produce" stroke="var(--color-produce)" name="Produce" />
-                      <Line type="monotone" dataKey="meat" stroke="var(--color-meat)" name="Meat & Poultry" />
-                      <Line type="monotone" dataKey="dairy" stroke="var(--color-dairy)" name="Dairy" />
-                      <Line type="monotone" dataKey="dryGoods" stroke="var(--color-dryGoods)" name="Dry Goods" />
+                      <Line
+                        type="monotone"
+                        dataKey="produce"
+                        stroke="var(--color-produce)"
+                        name="Produce"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="meat"
+                        stroke="var(--color-meat)"
+                        name="Meat & Poultry"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="dairy"
+                        stroke="var(--color-dairy)"
+                        name="Dairy"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="dryGoods"
+                        stroke="var(--color-dryGoods)"
+                        name="Dry Goods"
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -180,7 +256,9 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Supplier-Based Cost Efficiency</CardTitle>
-                  <CardDescription>Compare supplier costs for the same items</CardDescription>
+                  <CardDescription>
+                    Compare supplier costs for the same items
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -189,16 +267,23 @@ export default function AnalyticsPage() {
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{item.item}</span>
                           <span className="text-sm text-muted-foreground">
-                            Avg: RWF {item.avgPrice.toLocaleString()}/{item.unit}
+                            Avg: RWF {item.avgPrice.toLocaleString()}/
+                            {item.unit}
                           </span>
                         </div>
                         <div className="space-y-1">
                           {item.suppliers.map((supplier) => (
-                            <div key={supplier.name} className="flex items-center justify-between">
+                            <div
+                              key={supplier.name}
+                              className="flex items-center justify-between"
+                            >
                               <div className="flex items-center gap-2">
                                 <span className="text-sm">{supplier.name}</span>
                                 {supplier.price < item.avgPrice * 0.9 && (
-                                  <Badge variant="outline" className="bg-secondary-50 text-secondary border-secondary">
+                                  <Badge
+                                    variant="outline"
+                                    className="bg-secondary-50 text-secondary border-secondary"
+                                  >
                                     <TrendingDown className="mr-1 h-3 w-3" />
                                     Best Price
                                   </Badge>
@@ -215,7 +300,11 @@ export default function AnalyticsPage() {
                               </div>
                               <span className="text-sm font-medium">
                                 RWF {supplier.price.toLocaleString()}
-                                <Button variant="ghost" size="sm" className="ml-2 h-6 px-2 text-primary">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="ml-2 h-6 px-2 text-primary"
+                                >
                                   Order
                                 </Button>
                               </span>
@@ -228,7 +317,7 @@ export default function AnalyticsPage() {
                 </CardContent>
                 <CardFooter>
                   <Button variant="outline" className="w-full" asChild>
-                    <Link href="/restaurant/suppliers">View All Suppliers</Link>
+                    <Link href="/dashboard/suppliers">View All Suppliers</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -236,7 +325,9 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Consumption by Time of Day</CardTitle>
-                  <CardDescription>When your inventory is most used</CardDescription>
+                  <CardDescription>
+                    When your inventory is most used
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer
@@ -261,16 +352,35 @@ export default function AnalyticsPage() {
                     className="h-[300px]"
                   >
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={timeOfDayData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <BarChart
+                        data={timeOfDayData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="category" />
                         <YAxis />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Legend />
-                        <Bar dataKey="morning" fill="var(--color-morning)" name="Morning" />
-                        <Bar dataKey="afternoon" fill="var(--color-afternoon)" name="Afternoon" />
-                        <Bar dataKey="evening" fill="var(--color-evening)" name="Evening" />
-                        <Bar dataKey="night" fill="var(--color-night)" name="Night" />
+                        <Bar
+                          dataKey="morning"
+                          fill="var(--color-morning)"
+                          name="Morning"
+                        />
+                        <Bar
+                          dataKey="afternoon"
+                          fill="var(--color-afternoon)"
+                          name="Afternoon"
+                        />
+                        <Bar
+                          dataKey="evening"
+                          fill="var(--color-evening)"
+                          name="Evening"
+                        />
+                        <Bar
+                          dataKey="night"
+                          fill="var(--color-night)"
+                          name="Night"
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
@@ -284,38 +394,54 @@ export default function AnalyticsPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card className="bg-gradient-to-br from-destructive-50 to-white border-destructive-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Wastage</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total Wastage
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">32.8 kg</div>
-                  <p className="text-xs text-muted-foreground">-5.2% from last month</p>
+                  <p className="text-xs text-muted-foreground">
+                    -5.2% from last month
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-destructive-50 to-white border-destructive-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Wastage Cost</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Wastage Cost
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">RWF 78,500</div>
-                  <p className="text-xs text-muted-foreground">-3.8% from last month</p>
+                  <p className="text-xs text-muted-foreground">
+                    -3.8% from last month
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Most Wasted Item</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Most Wasted Item
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">Lettuce</div>
-                  <p className="text-xs text-muted-foreground">8.2 kg this month</p>
+                  <p className="text-xs text-muted-foreground">
+                    8.2 kg this month
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Wastage Reduction</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Wastage Reduction
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">12.3%</div>
-                  <p className="text-xs text-muted-foreground">Since using Dosteon</p>
+                  <p className="text-xs text-muted-foreground">
+                    Since using Dosteon
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -323,7 +449,9 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Wastage Trends</CardTitle>
-                <CardDescription>Track your food waste over time</CardDescription>
+                <CardDescription>
+                  Track your food waste over time
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ChartContainer
@@ -344,20 +472,33 @@ export default function AnalyticsPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={wastageData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <LineChart
+                      data={wastageData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Line type="monotone" dataKey="expired" stroke="var(--color-expired)" name="Expired" />
+                      <Line
+                        type="monotone"
+                        dataKey="expired"
+                        stroke="var(--color-expired)"
+                        name="Expired"
+                      />
                       <Line
                         type="monotone"
                         dataKey="overproduction"
                         stroke="var(--color-overproduction)"
                         name="Overproduction"
                       />
-                      <Line type="monotone" dataKey="damaged" stroke="var(--color-damaged)" name="Damaged" />
+                      <Line
+                        type="monotone"
+                        dataKey="damaged"
+                        stroke="var(--color-damaged)"
+                        name="Damaged"
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -368,7 +509,9 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Wastage by Category</CardTitle>
-                  <CardDescription>Which categories generate the most waste</CardDescription>
+                  <CardDescription>
+                    Which categories generate the most waste
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
@@ -382,13 +525,20 @@ export default function AnalyticsPage() {
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) =>
+                            `${name} ${(percent * 100).toFixed(0)}%`
+                          }
                         >
                           {wastageByCategory.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
                           ))}
                         </Pie>
-                        <RechartsTooltip formatter={(value, name) => [`${value} kg`, name]} />
+                        <RechartsTooltip
+                          formatter={(value, name) => [`${value} kg`, name]}
+                        />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -399,7 +549,9 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Wastage Reduction Opportunities</CardTitle>
-                  <CardDescription>Items with highest potential for improvement</CardDescription>
+                  <CardDescription>
+                    Items with highest potential for improvement
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -412,14 +564,26 @@ export default function AnalyticsPage() {
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">{item.reason}</span>
-                          <span className="text-secondary font-medium">Save up to {item.potentialSavings}%</span>
+                          <span className="text-muted-foreground">
+                            {item.reason}
+                          </span>
+                          <span className="text-secondary font-medium">
+                            Save up to {item.potentialSavings}%
+                          </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <Button variant="outline" size="sm" className="h-7 text-xs">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                          >
                             Adjust Order Quantity
                           </Button>
-                          <Button variant="outline" size="sm" className="h-7 text-xs">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                          >
                             Storage Tips
                           </Button>
                         </div>
@@ -441,34 +605,48 @@ export default function AnalyticsPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card className="bg-gradient-to-br from-primary-50 to-white border-primary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Items Needing Restock</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Items Needing Restock
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">8</div>
-                  <p className="text-xs text-muted-foreground">Within next 7 days</p>
+                  <p className="text-xs text-muted-foreground">
+                    Within next 7 days
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-destructive-50 to-white border-destructive-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Critical Stockouts</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Critical Stockouts
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">3</div>
-                  <p className="text-xs text-muted-foreground">Within next 48 hours</p>
+                  <p className="text-xs text-muted-foreground">
+                    Within next 48 hours
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Forecasted Demand</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Forecasted Demand
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">+12%</div>
-                  <p className="text-xs text-muted-foreground">Next week vs. current</p>
+                  <p className="text-xs text-muted-foreground">
+                    Next week vs. current
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Optimal Order Value</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Optimal Order Value
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">RWF 245,000</div>
@@ -480,7 +658,9 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Predicted Stockout Dates</CardTitle>
-                <CardDescription>When you'll need to reorder based on current usage</CardDescription>
+                <CardDescription>
+                  When you'll need to reorder based on current usage
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -498,7 +678,9 @@ export default function AnalyticsPage() {
                     <TableBody>
                       {predictedStockouts.map((item) => (
                         <TableRow key={item.name}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {item.name}
+                          </TableCell>
                           <TableCell>
                             {item.currentStock} {item.unit}
                           </TableCell>
@@ -510,7 +692,11 @@ export default function AnalyticsPage() {
                             <div className="flex items-center gap-2">
                               <Badge
                                 variant={
-                                  item.daysLeft <= 2 ? "destructive" : item.daysLeft <= 5 ? "warning" : "secondary"
+                                  item.daysLeft <= 2
+                                    ? "destructive"
+                                    : item.daysLeft <= 5
+                                    ? "warning"
+                                    : "secondary"
                                 }
                               >
                                 {item.daysLeft} days
@@ -534,7 +720,9 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Demand Forecast</CardTitle>
-                  <CardDescription>Predicted usage for next 30 days</CardDescription>
+                  <CardDescription>
+                    Predicted usage for next 30 days
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer
@@ -551,7 +739,10 @@ export default function AnalyticsPage() {
                     className="h-[300px]"
                   >
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={demandForecastData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <LineChart
+                        data={demandForecastData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" />
                         <YAxis />
@@ -581,7 +772,9 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Seasonal Trends</CardTitle>
-                  <CardDescription>How your inventory needs change throughout the year</CardDescription>
+                  <CardDescription>
+                    How your inventory needs change throughout the year
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer
@@ -602,15 +795,33 @@ export default function AnalyticsPage() {
                     className="h-[300px]"
                   >
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={seasonalTrendsData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <LineChart
+                        data={seasonalTrendsData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="month" />
                         <YAxis />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Legend />
-                        <Line type="monotone" dataKey="produce" stroke="var(--color-produce)" name="Produce" />
-                        <Line type="monotone" dataKey="meat" stroke="var(--color-meat)" name="Meat & Poultry" />
-                        <Line type="monotone" dataKey="dairy" stroke="var(--color-dairy)" name="Dairy" />
+                        <Line
+                          type="monotone"
+                          dataKey="produce"
+                          stroke="var(--color-produce)"
+                          name="Produce"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="meat"
+                          stroke="var(--color-meat)"
+                          name="Meat & Poultry"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="dairy"
+                          stroke="var(--color-dairy)"
+                          name="Dairy"
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   </ChartContainer>
@@ -621,19 +832,28 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Smart Reorder Recommendations</CardTitle>
-                <CardDescription>Optimized order quantities based on your usage patterns</CardDescription>
+                <CardDescription>
+                  Optimized order quantities based on your usage patterns
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {reorderRecommendations.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between border-b pb-4">
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between border-b pb-4"
+                    >
                       <div className="space-y-1">
                         <div className="font-medium">{item.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          Last ordered: {item.lastOrdered} • Supplier: {item.supplier}
+                          Last ordered: {item.lastOrdered} • Supplier:{" "}
+                          {item.supplier}
                         </div>
                         <div className="flex items-center gap-2 text-sm">
-                          <Badge variant="outline" className="bg-primary-50 text-primary border-primary">
+                          <Badge
+                            variant="outline"
+                            className="bg-primary-50 text-primary border-primary"
+                          >
                             <Calendar className="mr-1 h-3 w-3" />
                             Order by {item.orderBy}
                           </Badge>
@@ -664,7 +884,10 @@ export default function AnalyticsPage() {
                         <div className="text-sm text-muted-foreground">
                           Est. cost: RWF {item.estimatedCost.toLocaleString()}
                         </div>
-                        <Button size="sm" className="mt-2 bg-primary hover:bg-primary-600">
+                        <Button
+                          size="sm"
+                          className="mt-2 bg-primary hover:bg-primary-600"
+                        >
                           One-Tap Reorder
                         </Button>
                       </div>
@@ -684,8 +907,12 @@ export default function AnalyticsPage() {
           <TabsContent value="esg" className="space-y-4">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h2 className="text-lg font-semibold">Environmental, Social & Governance Metrics</h2>
-                <p className="text-sm text-muted-foreground">Track your restaurant's sustainability impact</p>
+                <h2 className="text-lg font-semibold">
+                  Environmental, Social & Governance Metrics
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Track your restaurant's sustainability impact
+                </p>
               </div>
               <Select value={esgTimeRange} onValueChange={setEsgTimeRange}>
                 <SelectTrigger className="w-[180px]">
@@ -710,9 +937,13 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">1,245 kg CO₂e</div>
-                  <p className="text-xs text-muted-foreground">-8.5% from previous period</p>
+                  <p className="text-xs text-muted-foreground">
+                    -8.5% from previous period
+                  </p>
                   <Progress value={65} className="h-2 mt-2" />
-                  <p className="text-xs text-muted-foreground mt-1">65% of your sustainability goal</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    65% of your sustainability goal
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
@@ -724,9 +955,13 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">28,500 liters</div>
-                  <p className="text-xs text-muted-foreground">-3.2% from previous period</p>
+                  <p className="text-xs text-muted-foreground">
+                    -3.2% from previous period
+                  </p>
                   <Progress value={42} className="h-2 mt-2" />
-                  <p className="text-xs text-muted-foreground mt-1">42% of your sustainability goal</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    42% of your sustainability goal
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
@@ -738,9 +973,13 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">78%</div>
-                  <p className="text-xs text-muted-foreground">+5.3% from previous period</p>
+                  <p className="text-xs text-muted-foreground">
+                    +5.3% from previous period
+                  </p>
                   <Progress value={78} className="h-2 mt-2" />
-                  <p className="text-xs text-muted-foreground mt-1">78% of your sustainability goal</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    78% of your sustainability goal
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -748,7 +987,9 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>ESG Indicators by Transaction</CardTitle>
-                <CardDescription>Tracking sustainability metrics across your supply chain</CardDescription>
+                <CardDescription>
+                  Tracking sustainability metrics across your supply chain
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -766,7 +1007,9 @@ export default function AnalyticsPage() {
                     <TableBody>
                       {esgIndicators.map((item) => (
                         <TableRow key={item.supplier}>
-                          <TableCell className="font-medium">{item.supplier}</TableCell>
+                          <TableCell className="font-medium">
+                            {item.supplier}
+                          </TableCell>
                           <TableCell>
                             <TooltipProvider>
                               <Tooltip>
@@ -774,16 +1017,23 @@ export default function AnalyticsPage() {
                                   <div className="flex items-center">
                                     <Badge
                                       variant="outline"
-                                      className={`bg-${getEsgRatingColor(item.foodMiles.rating)}-50 text-${getEsgRatingColor(
-                                        item.foodMiles.rating,
-                                      )} border-${getEsgRatingColor(item.foodMiles.rating)}`}
+                                      className={`bg-${getEsgRatingColor(
+                                        item.foodMiles.rating
+                                      )}-50 text-${getEsgRatingColor(
+                                        item.foodMiles.rating
+                                      )} border-${getEsgRatingColor(
+                                        item.foodMiles.rating
+                                      )}`}
                                     >
                                       {item.foodMiles.value} km
                                     </Badge>
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Average distance food travels from source to your restaurant</p>
+                                  <p>
+                                    Average distance food travels from source to
+                                    your restaurant
+                                  </p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -795,16 +1045,23 @@ export default function AnalyticsPage() {
                                   <div className="flex items-center">
                                     <Badge
                                       variant="outline"
-                                      className={`bg-${getEsgRatingColor(item.packaging.rating)}-50 text-${getEsgRatingColor(
-                                        item.packaging.rating,
-                                      )} border-${getEsgRatingColor(item.packaging.rating)}`}
+                                      className={`bg-${getEsgRatingColor(
+                                        item.packaging.rating
+                                      )}-50 text-${getEsgRatingColor(
+                                        item.packaging.rating
+                                      )} border-${getEsgRatingColor(
+                                        item.packaging.rating
+                                      )}`}
                                     >
                                       {item.packaging.value}
                                     </Badge>
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Type of packaging used (recyclable, compostable, etc.)</p>
+                                  <p>
+                                    Type of packaging used (recyclable,
+                                    compostable, etc.)
+                                  </p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -816,16 +1073,23 @@ export default function AnalyticsPage() {
                                   <div className="flex items-center">
                                     <Badge
                                       variant="outline"
-                                      className={`bg-${getEsgRatingColor(item.localSourcing.rating)}-50 text-${getEsgRatingColor(
-                                        item.localSourcing.rating,
-                                      )} border-${getEsgRatingColor(item.localSourcing.rating)}`}
+                                      className={`bg-${getEsgRatingColor(
+                                        item.localSourcing.rating
+                                      )}-50 text-${getEsgRatingColor(
+                                        item.localSourcing.rating
+                                      )} border-${getEsgRatingColor(
+                                        item.localSourcing.rating
+                                      )}`}
                                     >
                                       {item.localSourcing.value}%
                                     </Badge>
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Percentage of products sourced locally (within 100km)</p>
+                                  <p>
+                                    Percentage of products sourced locally
+                                    (within 100km)
+                                  </p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -833,7 +1097,11 @@ export default function AnalyticsPage() {
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
                               {item.certifications.map((cert, index) => (
-                                <Badge key={index} variant="outline" className="text-xs">
+                                <Badge
+                                  key={index}
+                                  variant="outline"
+                                  className="text-xs"
+                                >
                                   {cert}
                                 </Badge>
                               ))}
@@ -843,9 +1111,13 @@ export default function AnalyticsPage() {
                             <div className="flex items-center">
                               <Badge
                                 variant="outline"
-                                className={`bg-${getEsgRatingColor(item.overallRating)}-50 text-${getEsgRatingColor(
-                                  item.overallRating,
-                                )} border-${getEsgRatingColor(item.overallRating)}`}
+                                className={`bg-${getEsgRatingColor(
+                                  item.overallRating
+                                )}-50 text-${getEsgRatingColor(
+                                  item.overallRating
+                                )} border-${getEsgRatingColor(
+                                  item.overallRating
+                                )}`}
                               >
                                 {item.overallRating}/5
                               </Badge>
@@ -860,7 +1132,7 @@ export default function AnalyticsPage() {
               <CardFooter className="flex justify-between">
                 <Button variant="outline">Download ESG Report</Button>
                 <Button variant="outline" asChild>
-                  <Link href="/restaurant/suppliers">View Supplier Details</Link>
+                  <Link href="/dashboard/suppliers">View Supplier Details</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -868,7 +1140,9 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Carbon Footprint Breakdown</CardTitle>
-                <CardDescription>Sources of emissions in your supply chain</CardDescription>
+                <CardDescription>
+                  Sources of emissions in your supply chain
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
@@ -882,13 +1156,20 @@ export default function AnalyticsPage() {
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) =>
+                          `${name} ${(percent * 100).toFixed(0)}%`
+                        }
                       >
                         {carbonFootprintData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
                         ))}
                       </Pie>
-                      <RechartsTooltip formatter={(value, name) => [`${value} kg CO₂e`, name]} />
+                      <RechartsTooltip
+                        formatter={(value, name) => [`${value} kg CO₂e`, name]}
+                      />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -902,25 +1183,35 @@ export default function AnalyticsPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Savings</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total Savings
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">RWF 1,245,000</div>
-                  <p className="text-xs text-muted-foreground">Since using Dosteon</p>
+                  <p className="text-xs text-muted-foreground">
+                    Since using Dosteon
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Savings</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Monthly Savings
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">RWF 185,500</div>
-                  <p className="text-xs text-muted-foreground">+12.3% from last month</p>
+                  <p className="text-xs text-muted-foreground">
+                    +12.3% from last month
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Waste Reduction Savings</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Waste Reduction Savings
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">RWF 78,200</div>
@@ -943,7 +1234,9 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Savings Breakdown</CardTitle>
-                <CardDescription>Where you're saving the most money</CardDescription>
+                <CardDescription>
+                  Where you're saving the most money
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ChartContainer
@@ -968,7 +1261,10 @@ export default function AnalyticsPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={savingsBreakdownData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <BarChart
+                      data={savingsBreakdownData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
@@ -986,7 +1282,12 @@ export default function AnalyticsPage() {
                         fill="var(--color-supplierComparison)"
                         name="Supplier Comparison"
                       />
-                      <Bar dataKey="bulkOrdering" stackId="a" fill="var(--color-bulkOrdering)" name="Bulk Ordering" />
+                      <Bar
+                        dataKey="bulkOrdering"
+                        stackId="a"
+                        fill="var(--color-bulkOrdering)"
+                        name="Bulk Ordering"
+                      />
                       <Bar
                         dataKey="seasonalPurchasing"
                         stackId="a"
@@ -1002,16 +1303,22 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Price Alerts</CardTitle>
-                <CardDescription>Notifications for price changes on frequently purchased items</CardDescription>
+                <CardDescription>
+                  Notifications for price changes on frequently purchased items
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {priceAlerts.map((alert) => (
-                    <div key={alert.item} className="flex items-center justify-between border-b pb-4">
+                    <div
+                      key={alert.item}
+                      className="flex items-center justify-between border-b pb-4"
+                    >
                       <div className="space-y-1">
                         <div className="font-medium">{alert.item}</div>
                         <div className="text-sm text-muted-foreground">
-                          Supplier: {alert.supplier} • Last ordered: {alert.lastOrdered}
+                          Supplier: {alert.supplier} • Last ordered:{" "}
+                          {alert.lastOrdered}
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge
@@ -1031,7 +1338,10 @@ export default function AnalyticsPage() {
                             {alert.priceChange}% price change
                           </Badge>
                           {alert.alternativeSupplier && (
-                            <Badge variant="outline" className="bg-primary-50 text-primary border-primary">
+                            <Badge
+                              variant="outline"
+                              className="bg-primary-50 text-primary border-primary"
+                            >
                               <DollarSign className="mr-1 h-3 w-3" />
                               Better price available
                             </Badge>
@@ -1040,16 +1350,22 @@ export default function AnalyticsPage() {
                       </div>
                       <div className="text-right">
                         <div className="font-medium">
-                          New price: RWF {alert.newPrice.toLocaleString()}/{alert.unit}
+                          New price: RWF {alert.newPrice.toLocaleString()}/
+                          {alert.unit}
                         </div>
                         {alert.alternativeSupplier && (
                           <div className="text-sm text-secondary">
-                            {alert.alternativeSupplier}: RWF {alert.alternativePrice.toLocaleString()}/{alert.unit}
+                            {alert.alternativeSupplier}: RWF{" "}
+                            {alert.alternativePrice.toLocaleString()}/
+                            {alert.unit}
                           </div>
                         )}
                         <div className="flex gap-2 mt-2 justify-end">
                           {alert.alternativeSupplier && (
-                            <Button size="sm" className="bg-primary hover:bg-primary-600">
+                            <Button
+                              size="sm"
+                              className="bg-primary hover:bg-primary-600"
+                            >
                               Switch Supplier
                             </Button>
                           )}
@@ -1072,31 +1388,44 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>One-Tap Reorder Suggestions</CardTitle>
-                <CardDescription>Quick reorders based on your purchase history</CardDescription>
+                <CardDescription>
+                  Quick reorders based on your purchase history
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {reorderSuggestions.map((suggestion) => (
-                    <Card key={suggestion.id} className="overflow-hidden border-primary-100">
+                    <Card
+                      key={suggestion.id}
+                      className="overflow-hidden border-primary-100"
+                    >
                       <div className="p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-medium">{suggestion.name}</h3>
-                          <Badge variant="outline" className="bg-primary-50 text-primary border-primary">
+                          <Badge
+                            variant="outline"
+                            className="bg-primary-50 text-primary border-primary"
+                          >
                             {suggestion.frequency}
                           </Badge>
                         </div>
                         <div className="text-sm text-muted-foreground mb-2">
-                          Last ordered: {suggestion.lastOrdered} • Supplier: {suggestion.supplier}
+                          Last ordered: {suggestion.lastOrdered} • Supplier:{" "}
+                          {suggestion.supplier}
                         </div>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-sm">
-                            Typical order: {suggestion.typicalQuantity} {suggestion.unit}
+                            Typical order: {suggestion.typicalQuantity}{" "}
+                            {suggestion.unit}
                           </span>
                           <span className="text-sm font-medium">
-                            RWF {suggestion.price.toLocaleString()}/{suggestion.unit}
+                            RWF {suggestion.price.toLocaleString()}/
+                            {suggestion.unit}
                           </span>
                         </div>
-                        <Button className="w-full bg-primary hover:bg-primary-600">One-Tap Reorder</Button>
+                        <Button className="w-full bg-primary hover:bg-primary-600">
+                          One-Tap Reorder
+                        </Button>
                       </div>
                     </Card>
                   ))}
@@ -1106,22 +1435,33 @@ export default function AnalyticsPage() {
           </TabsContent>
         </Tabs>
 
-        <DailyReportsModal open={reportsModalOpen} onOpenChange={setReportsModalOpen} type="analytics" />
+        <DailyReportsModal
+          open={reportsModalOpen}
+          onOpenChange={setReportsModalOpen}
+          type="analytics"
+        />
       </main>
     </div>
-  )
+  );
 }
 
 // Helper function for ESG rating colors
 function getEsgRatingColor(rating: number) {
-  if (rating >= 4) return "secondary"
-  if (rating >= 3) return "primary"
-  if (rating >= 2) return "warning"
-  return "destructive"
+  if (rating >= 4) return "secondary";
+  if (rating >= 3) return "primary";
+  if (rating >= 2) return "warning";
+  return "destructive";
 }
 
 // Sample data
-const COLORS = ["#3851DD", "#02CA4E", "#FF6B6B", "#FFD166", "#06D6A0", "#118AB2"]
+const COLORS = [
+  "#3851DD",
+  "#02CA4E",
+  "#FF6B6B",
+  "#FFD166",
+  "#06D6A0",
+  "#118AB2",
+];
 
 const consumptionData = [
   { date: "Apr 1", produce: 120, meat: 80, dairy: 40, dryGoods: 100 },
@@ -1130,7 +1470,7 @@ const consumptionData = [
   { date: "Apr 22", produce: 125, meat: 90, dairy: 55, dryGoods: 85 },
   { date: "Apr 29", produce: 140, meat: 95, dairy: 60, dryGoods: 80 },
   { date: "May 6", produce: 135, meat: 100, dairy: 65, dryGoods: 75 },
-]
+];
 
 const costEfficiencyData = [
   {
@@ -1163,14 +1503,14 @@ const costEfficiencyData = [
       { name: "Kigali Wholesale", price: 1650 },
     ],
   },
-]
+];
 
 const timeOfDayData = [
   { category: "Produce", morning: 25, afternoon: 35, evening: 30, night: 10 },
   { category: "Meat", morning: 15, afternoon: 25, evening: 45, night: 15 },
   { category: "Dairy", morning: 30, afternoon: 30, evening: 25, night: 15 },
   { category: "Dry Goods", morning: 20, afternoon: 30, evening: 35, night: 15 },
-]
+];
 
 const wastageData = [
   { date: "Apr 1", expired: 5.2, overproduction: 3.1, damaged: 1.2 },
@@ -1179,7 +1519,7 @@ const wastageData = [
   { date: "Apr 22", expired: 4.2, overproduction: 2.5, damaged: 0.8 },
   { date: "Apr 29", expired: 3.8, overproduction: 2.2, damaged: 1.1 },
   { date: "May 6", expired: 3.5, overproduction: 2.0, damaged: 0.9 },
-]
+];
 
 const wastageByCategory = [
   { name: "Produce", value: 18.5 },
@@ -1187,7 +1527,7 @@ const wastageByCategory = [
   { name: "Dairy", value: 4.8 },
   { name: "Dry Goods", value: 2.1 },
   { name: "Beverages", value: 2.2 },
-]
+];
 
 const wastageOpportunities = [
   {
@@ -1211,7 +1551,7 @@ const wastageOpportunities = [
     reason: "Expiration before use",
     potentialSavings: 50,
   },
-]
+];
 
 const predictedStockouts = [
   {
@@ -1254,7 +1594,7 @@ const predictedStockouts = [
     daysLeft: 2,
     unit: "liter",
   },
-]
+];
 
 const demandForecastData = [
   { date: "Apr 15", actual: 45, predicted: null },
@@ -1265,7 +1605,7 @@ const demandForecastData = [
   { date: "May 20", actual: null, predicted: 62 },
   { date: "May 27", actual: null, predicted: 65 },
   { date: "Jun 3", actual: null, predicted: 68 },
-]
+];
 
 const seasonalTrendsData = [
   { month: "Jan", produce: 100, meat: 120, dairy: 90 },
@@ -1280,7 +1620,7 @@ const seasonalTrendsData = [
   { month: "Oct", produce: 125, meat: 105, dairy: 95 },
   { month: "Nov", produce: 115, meat: 110, dairy: 90 },
   { month: "Dec", produce: 105, meat: 125, dairy: 95 },
-]
+];
 
 const reorderRecommendations = [
   {
@@ -1313,7 +1653,7 @@ const reorderRecommendations = [
     estimatedCost: 45000,
     priceChange: 0,
   },
-]
+];
 
 const esgIndicators = [
   {
@@ -1356,14 +1696,14 @@ const esgIndicators = [
     certifications: ["Organic", "Local First"],
     overallRating: 5.0,
   },
-]
+];
 
 const carbonFootprintData = [
   { name: "Transportation", value: 450 },
   { name: "Refrigeration", value: 320 },
   { name: "Packaging", value: 180 },
   { name: "Food Production", value: 295 },
-]
+];
 
 const savingsBreakdownData = [
   {
@@ -1394,7 +1734,7 @@ const savingsBreakdownData = [
     bulkOrdering: 35000,
     seasonalPurchasing: 22000,
   },
-]
+];
 
 const priceAlerts = [
   {
@@ -1427,7 +1767,7 @@ const priceAlerts = [
     alternativeSupplier: null,
     alternativePrice: null,
   },
-]
+];
 
 const reorderSuggestions = [
   {
@@ -1470,4 +1810,4 @@ const reorderSuggestions = [
     unit: "kg",
     price: 90000,
   },
-]
+];

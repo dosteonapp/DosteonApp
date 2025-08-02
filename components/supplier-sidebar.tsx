@@ -81,7 +81,7 @@ export function SupplierSidebar() {
       <div className="flex h-14 items-center justify-between border-b px-4 lg:h-[60px] lg:px-6">
         {!collapsed && (
           <Link
-            href="/supplier/dashboard"
+            href="/dashboard"
             className="flex items-center gap-2 font-semibold"
           >
             <Logo className="w-5 h-5" />
@@ -90,7 +90,7 @@ export function SupplierSidebar() {
           </Link>
         )}
         {collapsed && (
-          <Link href="/supplier/dashboard" className="mx-auto">
+          <Link href="/dashboard" className="mx-auto">
             <Logo className="w-5 h-5" />
           </Link>
         )}

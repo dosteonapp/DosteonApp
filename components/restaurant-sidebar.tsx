@@ -79,7 +79,7 @@ export function RestaurantSidebar() {
       <div className="flex h-14 items-center justify-between border-b px-4 lg:h-[60px] lg:px-6">
         {!collapsed && (
           <Link
-            href="/restaurant/dashboard"
+            href="/dashboard"
             className="flex items-center gap-2 font-semibold"
           >
             <Logo className="w-5 h-5" />
@@ -87,7 +87,7 @@ export function RestaurantSidebar() {
           </Link>
         )}
         {collapsed && (
-          <Link href="/restaurant/dashboard" className="mx-auto">
+          <Link href="/dashboard" className="mx-auto">
             <Logo className="w-5 h-5" />
           </Link>
         )}

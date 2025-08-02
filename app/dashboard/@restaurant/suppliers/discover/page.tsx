@@ -1,19 +1,45 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Search, ArrowLeft, Star, Filter, MapPin } from "lucide-react"
-import Link from "next/link"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Slider } from "@/components/ui/slider"
-import { Label } from "@/components/ui/label"
-import { NewSupplierOrderModal } from "@/components/new-supplier-order-modal"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Search, ArrowLeft, Star, Filter, MapPin } from "lucide-react";
+import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { NewSupplierOrderModal } from "@/components/new-supplier-order-modal";
 
 // Sample data for discover suppliers
 const discoverSuppliers = [
@@ -65,7 +91,8 @@ const discoverSuppliers = [
   {
     id: "new-supplier-6",
     name: "Nyamirambo Dairy Cooperative",
-    description: "Fresh milk, cheese, and other dairy products from local farms",
+    description:
+      "Fresh milk, cheese, and other dairy products from local farms",
     categories: ["Dairy"],
     distance: 18,
     rating: 4.3,
@@ -107,15 +134,15 @@ const discoverSuppliers = [
     rating: 4.7,
     reviewCount: 103,
   },
-]
+];
 
 export default function DiscoverSuppliersPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [selectedDistance, setSelectedDistance] = useState([50])
-  const [selectedRating, setSelectedRating] = useState(0)
-  const [orderModalOpen, setOrderModalOpen] = useState(false)
-  const [selectedSupplier, setSelectedSupplier] = useState<any>(null)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedDistance, setSelectedDistance] = useState([50]);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
 
   // Filter suppliers based on search term and filters
   const filteredSuppliers = discoverSuppliers.filter((supplier) => {
@@ -124,25 +151,28 @@ export default function DiscoverSuppliersPage() {
       searchTerm === "" ||
       supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       supplier.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      supplier.categories.some((cat) => cat.toLowerCase().includes(searchTerm.toLowerCase()))
+      supplier.categories.some((cat) =>
+        cat.toLowerCase().includes(searchTerm.toLowerCase())
+      );
 
     // Category filter
     const matchesCategory =
-      selectedCategories.length === 0 || supplier.categories.some((cat) => selectedCategories.includes(cat))
+      selectedCategories.length === 0 ||
+      supplier.categories.some((cat) => selectedCategories.includes(cat));
 
     // Distance filter
-    const matchesDistance = supplier.distance <= selectedDistance[0]
+    const matchesDistance = supplier.distance <= selectedDistance[0];
 
     // Rating filter
-    const matchesRating = supplier.rating >= selectedRating
+    const matchesRating = supplier.rating >= selectedRating;
 
-    return matchesSearch && matchesCategory && matchesDistance && matchesRating
-  })
+    return matchesSearch && matchesCategory && matchesDistance && matchesRating;
+  });
 
   const handlePlaceOrder = (supplier: any) => {
-    setSelectedSupplier(supplier)
-    setOrderModalOpen(true)
-  }
+    setSelectedSupplier(supplier);
+    setOrderModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -156,13 +186,17 @@ export default function DiscoverSuppliersPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" asChild>
-              <Link href="/restaurant/suppliers">
+              <Link href="/dashboard/suppliers">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Discover New Suppliers</h1>
-              <p className="text-muted-foreground">Find and connect with new suppliers in your area</p>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Discover New Suppliers
+              </h1>
+              <p className="text-muted-foreground">
+                Find and connect with new suppliers in your area
+              </p>
             </div>
           </div>
         </div>
@@ -170,7 +204,9 @@ export default function DiscoverSuppliersPage() {
         <Card>
           <CardHeader>
             <CardTitle>Available Suppliers</CardTitle>
-            <CardDescription>Browse and filter suppliers that match your needs</CardDescription>
+            <CardDescription>
+              Browse and filter suppliers that match your needs
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
@@ -197,7 +233,9 @@ export default function DiscoverSuppliersPage() {
                   <SheetContent>
                     <SheetHeader>
                       <SheetTitle>Filter Suppliers</SheetTitle>
-                      <SheetDescription>Narrow down suppliers based on your requirements</SheetDescription>
+                      <SheetDescription>
+                        Narrow down suppliers based on your requirements
+                      </SheetDescription>
                     </SheetHeader>
                     <div className="py-4 space-y-6">
                       <div className="space-y-2">
@@ -213,15 +251,25 @@ export default function DiscoverSuppliersPage() {
                             "Bakery",
                             "Specialty",
                           ].map((category) => (
-                            <div key={category} className="flex items-center space-x-2">
+                            <div
+                              key={category}
+                              className="flex items-center space-x-2"
+                            >
                               <Checkbox
                                 id={category}
                                 checked={selectedCategories.includes(category)}
                                 onCheckedChange={(checked) => {
                                   if (checked) {
-                                    setSelectedCategories([...selectedCategories, category])
+                                    setSelectedCategories([
+                                      ...selectedCategories,
+                                      category,
+                                    ]);
                                   } else {
-                                    setSelectedCategories(selectedCategories.filter((c) => c !== category))
+                                    setSelectedCategories(
+                                      selectedCategories.filter(
+                                        (c) => c !== category
+                                      )
+                                    );
                                   }
                                 }}
                               />
@@ -251,7 +299,9 @@ export default function DiscoverSuppliersPage() {
                         <h3 className="text-sm font-medium">Minimum Rating</h3>
                         <Select
                           value={selectedRating.toString()}
-                          onValueChange={(value) => setSelectedRating(Number(value))}
+                          onValueChange={(value) =>
+                            setSelectedRating(Number(value))
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Any Rating" />
@@ -268,9 +318,9 @@ export default function DiscoverSuppliersPage() {
                       <Button
                         className="w-full"
                         onClick={() => {
-                          setSelectedCategories([])
-                          setSelectedDistance([50])
-                          setSelectedRating(0)
+                          setSelectedCategories([]);
+                          setSelectedDistance([50]);
+                          setSelectedRating(0);
                         }}
                       >
                         Reset Filters
@@ -306,7 +356,10 @@ export default function DiscoverSuppliersPage() {
                 <TableBody>
                   {filteredSuppliers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell
+                        colSpan={5}
+                        className="text-center py-8 text-muted-foreground"
+                      >
                         No suppliers found matching your criteria
                       </TableCell>
                     </TableRow>
@@ -316,13 +369,19 @@ export default function DiscoverSuppliersPage() {
                         <TableCell>
                           <div>
                             <div className="font-medium">{supplier.name}</div>
-                            <div className="text-sm text-muted-foreground">{supplier.description}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {supplier.description}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {supplier.categories.map((category) => (
-                              <Badge key={category} variant="outline" className="text-xs">
+                              <Badge
+                                key={category}
+                                variant="outline"
+                                className="text-xs"
+                              >
                                 {category}
                               </Badge>
                             ))}
@@ -336,21 +395,35 @@ export default function DiscoverSuppliersPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center">
-                            {Array.from({ length: Math.floor(supplier.rating) }).map((_, i) => (
-                              <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                            {Array.from({
+                              length: Math.floor(supplier.rating),
+                            }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className="h-4 w-4 fill-primary text-primary"
+                              />
                             ))}
                             {supplier.rating % 1 !== 0 && (
                               <Star className="h-4 w-4 fill-primary text-primary opacity-50" />
                             )}
-                            <span className="ml-1 text-sm">({supplier.reviewCount})</span>
+                            <span className="ml-1 text-sm">
+                              ({supplier.reviewCount})
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button size="sm" variant="outline" asChild>
-                              <Link href={`/restaurant/suppliers/discover/${supplier.id}`}>View</Link>
+                              <Link
+                                href={`/dashboard/suppliers/discover/${supplier.id}`}
+                              >
+                                View
+                              </Link>
                             </Button>
-                            <Button size="sm" onClick={() => handlePlaceOrder(supplier)}>
+                            <Button
+                              size="sm"
+                              onClick={() => handlePlaceOrder(supplier)}
+                            >
                               Place Order
                             </Button>
                           </div>
@@ -365,9 +438,13 @@ export default function DiscoverSuppliersPage() {
         </Card>
 
         {selectedSupplier && (
-          <NewSupplierOrderModal open={orderModalOpen} onOpenChange={setOrderModalOpen} supplier={selectedSupplier} />
+          <NewSupplierOrderModal
+            open={orderModalOpen}
+            onOpenChange={setOrderModalOpen}
+            supplier={selectedSupplier}
+          />
         )}
       </main>
     </div>
-  )
+  );
 }

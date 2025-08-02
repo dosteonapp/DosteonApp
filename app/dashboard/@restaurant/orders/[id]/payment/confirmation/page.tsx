@@ -1,10 +1,21 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Download, Home, Printer } from "lucide-react"
-import Link from "next/link"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Download, Home, Printer } from "lucide-react";
+import Link from "next/link";
 
-export default function PaymentConfirmationPage({ params }: { params: { id: string } }) {
+export default function PaymentConfirmationPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   // In a real app, you would fetch the order and payment data based on the ID
   const order = {
     id: params.id,
@@ -15,7 +26,7 @@ export default function PaymentConfirmationPage({ params }: { params: { id: stri
     paymentMethod: "DPO Group (Credit Card)",
     transactionId: "TXN-987654321",
     deliveryDate: "May 5, 2023",
-  }
+  };
 
   return (
     <div className="flex flex-col min-h-screen items-center justify-center bg-muted/40 p-4">
@@ -26,7 +37,9 @@ export default function PaymentConfirmationPage({ params }: { params: { id: stri
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
             <CardTitle className="text-xl">Payment Successful!</CardTitle>
-            <CardDescription>Your payment has been processed successfully</CardDescription>
+            <CardDescription>
+              Your payment has been processed successfully
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-lg border bg-card p-4 space-y-3">
@@ -44,7 +57,9 @@ export default function PaymentConfirmationPage({ params }: { params: { id: stri
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Amount Paid</span>
-                <span className="font-medium">RWF {order.paymentAmount.toLocaleString()}</span>
+                <span className="font-medium">
+                  RWF {order.paymentAmount.toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Payment Date</span>
@@ -64,9 +79,14 @@ export default function PaymentConfirmationPage({ params }: { params: { id: stri
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Expected Delivery</p>
-                  <p className="text-sm text-muted-foreground">{order.deliveryDate}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {order.deliveryDate}
+                  </p>
                 </div>
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 border-green-200"
+                >
                   Confirmed
                 </Badge>
               </div>
@@ -84,7 +104,7 @@ export default function PaymentConfirmationPage({ params }: { params: { id: stri
               </Button>
             </div>
             <Button asChild className="w-full">
-              <Link href="/restaurant/dashboard">
+              <Link href="/dashboard">
                 <Home className="mr-2 h-4 w-4" />
                 Back to Dashboard
               </Link>
@@ -93,5 +113,5 @@ export default function PaymentConfirmationPage({ params }: { params: { id: stri
         </Card>
       </div>
     </div>
-  )
+  );
 }

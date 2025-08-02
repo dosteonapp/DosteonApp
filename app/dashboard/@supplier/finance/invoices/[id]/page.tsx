@@ -1,13 +1,39 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Printer, Download, Menu, Mail, Clock, CheckCircle } from "lucide-react"
-import Link from "next/link"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ArrowLeft,
+  Printer,
+  Download,
+  Menu,
+  Mail,
+  Clock,
+  CheckCircle,
+} from "lucide-react";
+import Link from "next/link";
 
-export default function InvoiceDetailsPage({ params }: { params: { id: string } }) {
+export default function InvoiceDetailsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   // In a real app, you would fetch the invoice data based on the ID
-  const invoice = invoices.find((i) => i.id === params.id) || invoices[0]
+  const invoice = invoices.find((i) => i.id === params.id) || invoices[0];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -20,7 +46,7 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/supplier/finance">
+            <Link href="/dashboard/finance">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Finance
             </Link>
@@ -29,15 +55,17 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
 
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Invoice #{invoice.id}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Invoice #{invoice.id}
+            </h1>
             <div className="flex items-center gap-2 mt-1">
               <Badge
                 className={
                   invoice.status === "Paid"
                     ? "bg-green-500 text-white"
                     : invoice.status === "Pending"
-                      ? "bg-blue-500 text-white"
-                      : "bg-red-500 text-white"
+                    ? "bg-blue-500 text-white"
+                    : "bg-red-500 text-white"
                 }
               >
                 {invoice.status}
@@ -76,22 +104,36 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
             </CardHeader>
             <CardContent>
               <div className="font-medium">{invoice.customer}</div>
-              <div className="text-sm text-muted-foreground mt-1">{invoice.customerContact}</div>
-              <div className="text-sm text-muted-foreground">{invoice.customerAddress}</div>
+              <div className="text-sm text-muted-foreground mt-1">
+                {invoice.customerContact}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {invoice.customerAddress}
+              </div>
               <Button size="sm" variant="link" className="px-0 mt-2" asChild>
-                <Link href={`/supplier/customers/${invoice.customerId}`}>View Customer</Link>
+                <Link href={`/dashboard/customers/${invoice.customerId}`}>
+                  View Customer
+                </Link>
               </Button>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Payment Information</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Payment Information
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="font-medium">Payment Terms: {invoice.paymentTerms}</div>
-              <div className="text-sm text-muted-foreground mt-1">Payment Method: {invoice.paymentMethod}</div>
+              <div className="font-medium">
+                Payment Terms: {invoice.paymentTerms}
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Payment Method: {invoice.paymentMethod}
+              </div>
               {invoice.status === "Paid" && (
-                <div className="text-sm text-muted-foreground">Payment Date: {invoice.paymentDate}</div>
+                <div className="text-sm text-muted-foreground">
+                  Payment Date: {invoice.paymentDate}
+                </div>
               )}
               {invoice.status === "Pending" && (
                 <div className="text-sm text-green-600 font-medium mt-2">
@@ -109,7 +151,9 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Invoice Timeline</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Invoice Timeline
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -118,7 +162,9 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                     {getTimelineIcon(event.status)}
                     <div>
                       <div className="font-medium">{event.status}</div>
-                      <div className="text-sm text-muted-foreground">{event.date}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {event.date}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -149,7 +195,9 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell>{item.description}</TableCell>
-                      <TableCell>RWF {item.unitPrice.toLocaleString()}</TableCell>
+                      <TableCell>
+                        RWF {item.unitPrice.toLocaleString()}
+                      </TableCell>
                       <TableCell>
                         {item.quantity} {item.unit}
                       </TableCell>
@@ -201,29 +249,29 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
         </Card>
       </main>
     </div>
-  )
+  );
 }
 
 // Helper function to get timeline icon
 function getTimelineIcon(status: string) {
   switch (status) {
     case "Invoice Created":
-      return <Clock className="h-5 w-5 text-muted-foreground" />
+      return <Clock className="h-5 w-5 text-muted-foreground" />;
     case "Invoice Sent":
-      return <Mail className="h-5 w-5 text-blue-500" />
+      return <Mail className="h-5 w-5 text-blue-500" />;
     case "Payment Received":
-      return <CheckCircle className="h-5 w-5 text-green-500" />
+      return <CheckCircle className="h-5 w-5 text-green-500" />;
     default:
-      return <Clock className="h-5 w-5 text-muted-foreground" />
+      return <Clock className="h-5 w-5 text-muted-foreground" />;
   }
 }
 
 // Helper function to calculate days difference
 function getDaysDifference(dateString: string): number {
-  const today = new Date()
-  const dueDate = new Date(dateString)
-  const diffTime = dueDate.getTime() - today.getTime()
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const today = new Date();
+  const dueDate = new Date(dateString);
+  const diffTime = dueDate.getTime() - today.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
 // Sample data
@@ -290,7 +338,8 @@ const invoices = [
     deliveryFee: 5000,
     total: 120522,
     notes: "Thank you for your business. Please make payment by the due date.",
-    terms: "Payment is due within 30 days. Late payments are subject to a 5% fee.",
+    terms:
+      "Payment is due within 30 days. Late payments are subject to a 5% fee.",
   },
   {
     id: "INV-002",
@@ -342,6 +391,7 @@ const invoices = [
     deliveryFee: 5000,
     total: 269910,
     notes: "Thank you for your prompt payment.",
-    terms: "Payment is due within 30 days. Late payments are subject to a 5% fee.",
+    terms:
+      "Payment is due within 30 days. Late payments are subject to a 5% fee.",
   },
-]
+];

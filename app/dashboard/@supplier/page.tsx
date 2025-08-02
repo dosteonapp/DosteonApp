@@ -69,7 +69,7 @@ export default function SupplierDashboard() {
               </SelectContent>
             </Select>
             <Button asChild className="bg-primary hover:bg-primary-600">
-              <Link href="/supplier/products/new">
+              <Link href="/dashboard/products/new">
                 <Package className="mr-2 h-4 w-4" />
                 Add Product
               </Link>
@@ -178,7 +178,7 @@ export default function SupplierDashboard() {
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button variant="outline" size="sm" asChild>
-                <Link href="/supplier/forecasting">View Detailed Forecast</Link>
+                <Link href="/dashboard/forecasting">View Detailed Forecast</Link>
               </Button>
               <Badge
                 variant="outline"
@@ -232,7 +232,7 @@ export default function SupplierDashboard() {
             </CardContent>
             <CardFooter>
               <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link href="/supplier/customers">View All Customers</Link>
+                <Link href="/dashboard/customers">View All Customers</Link>
               </Button>
             </CardFooter>
           </Card>
@@ -302,7 +302,7 @@ export default function SupplierDashboard() {
             </CardContent>
             <CardFooter>
               <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link href="/supplier/payments">View Payment Calendar</Link>
+                <Link href="/dashboard/payments">View Payment Calendar</Link>
               </Button>
             </CardFooter>
           </Card>
@@ -361,7 +361,7 @@ export default function SupplierDashboard() {
             </CardContent>
             <CardFooter>
               <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link href="/supplier/performance">
+                <Link href="/dashboard/performance">
                   View Detailed Performance
                 </Link>
               </Button>
@@ -409,7 +409,7 @@ export default function SupplierDashboard() {
                           asChild
                           className="border-primary-500 text-primary-500 hover:bg-primary-50"
                         >
-                          <Link href={`/supplier/orders/${order.id}`}>
+                          <Link href={`/dashboard/orders/${order.id}`}>
                             View
                           </Link>
                         </Button>
@@ -460,7 +460,7 @@ export default function SupplierDashboard() {
                           asChild
                           className="border-primary-500 text-primary-500 hover:bg-primary-50"
                         >
-                          <Link href={`/supplier/orders/${order.id}`}>
+                          <Link href={`/dashboard/orders/${order.id}`}>
                             Update
                           </Link>
                         </Button>
@@ -496,7 +496,7 @@ export default function SupplierDashboard() {
                         </div>
                       </div>
                       <Button size="sm" variant="ghost" asChild>
-                        <Link href={`/supplier/products/${product.id}`}>
+                        <Link href={`/dashboard/products/${product.id}`}>
                           <ArrowUpRight className="h-4 w-4" />
                         </Link>
                       </Button>

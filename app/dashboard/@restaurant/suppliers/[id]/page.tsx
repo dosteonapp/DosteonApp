@@ -1,8 +1,21 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Menu,
   ArrowLeft,
@@ -15,13 +28,17 @@ import {
   StarHalf,
   DollarSign,
   Truck,
-} from "lucide-react"
-import Link from "next/link"
-import { Progress } from "@/components/ui/progress"
+} from "lucide-react";
+import Link from "next/link";
+import { Progress } from "@/components/ui/progress";
 
-export default function SupplierDetailsPage({ params }: { params: { id: string } }) {
+export default function SupplierDetailsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   // In a real app, you would fetch the supplier data based on the ID
-  const supplier = suppliers.find((s) => s.id === params.id) || suppliers[0]
+  const supplier = suppliers.find((s) => s.id === params.id) || suppliers[0];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -34,7 +51,7 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/restaurant/suppliers">
+            <Link href="/dashboard/suppliers">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Suppliers
             </Link>
@@ -43,15 +60,26 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
 
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{supplier.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {supplier.name}
+            </h1>
             <div className="flex items-center gap-2 mt-1">
               <div className="flex">
-                {Array.from({ length: Math.floor(supplier.qualityRating) }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                ))}
-                {supplier.qualityRating % 1 !== 0 && <StarHalf className="h-4 w-4 fill-primary text-primary" />}
+                {Array.from({ length: Math.floor(supplier.qualityRating) }).map(
+                  (_, i) => (
+                    <Star
+                      key={i}
+                      className="h-4 w-4 fill-primary text-primary"
+                    />
+                  )
+                )}
+                {supplier.qualityRating % 1 !== 0 && (
+                  <StarHalf className="h-4 w-4 fill-primary text-primary" />
+                )}
               </div>
-              <span className="text-muted-foreground">({supplier.totalReviews} reviews)</span>
+              <span className="text-muted-foreground">
+                ({supplier.totalReviews} reviews)
+              </span>
             </div>
             <div className="flex flex-wrap gap-1 mt-2">
               {supplier.categories.map((category) => (
@@ -69,7 +97,7 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
               </Link>
             </Button>
             <Button asChild>
-              <Link href={`/restaurant/orders/new?supplier=${supplier.id}`}>
+              <Link href={`/dashboard/orders/new?supplier=${supplier.id}`}>
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 Place Order
               </Link>
@@ -80,31 +108,51 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Order Fulfillment Rate</CardTitle>
-              <CardDescription>Successfully fulfilled orders / total orders</CardDescription>
+              <CardTitle className="text-sm font-medium">
+                Order Fulfillment Rate
+              </CardTitle>
+              <CardDescription>
+                Successfully fulfilled orders / total orders
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{supplier.metrics.fulfillmentRate}%</div>
-                <Badge variant={getRatingVariant(supplier.metrics.fulfillmentRating)}>
+                <div className="text-2xl font-bold">
+                  {supplier.metrics.fulfillmentRate}%
+                </div>
+                <Badge
+                  variant={getRatingVariant(supplier.metrics.fulfillmentRating)}
+                >
                   {supplier.metrics.fulfillmentRating}
                 </Badge>
               </div>
-              <Progress value={supplier.metrics.fulfillmentRate} className="mt-2" />
+              <Progress
+                value={supplier.metrics.fulfillmentRate}
+                className="mt-2"
+              />
               <p className="text-xs text-muted-foreground mt-2">
-                {supplier.metrics.totalOrders} orders, {supplier.metrics.fulfilledOrders} fulfilled
+                {supplier.metrics.totalOrders} orders,{" "}
+                {supplier.metrics.fulfilledOrders} fulfilled
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Response Rate</CardTitle>
-              <CardDescription>Average time between order receipt and confirmation</CardDescription>
+              <CardTitle className="text-sm font-medium">
+                Response Rate
+              </CardTitle>
+              <CardDescription>
+                Average time between order receipt and confirmation
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{supplier.metrics.responseTime}</div>
-                <Badge variant={getRatingVariant(supplier.metrics.responseRating)}>
+                <div className="text-2xl font-bold">
+                  {supplier.metrics.responseTime}
+                </div>
+                <Badge
+                  variant={getRatingVariant(supplier.metrics.responseRating)}
+                >
                   {supplier.metrics.responseRating}
                 </Badge>
               </div>
@@ -118,18 +166,28 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Quality Consistency</CardTitle>
-              <CardDescription>Deliveries meeting quality standards</CardDescription>
+              <CardTitle className="text-sm font-medium">
+                Quality Consistency
+              </CardTitle>
+              <CardDescription>
+                Deliveries meeting quality standards
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{supplier.metrics.qualityRate}%</div>
-                <Badge variant={getRatingVariant(supplier.metrics.qualityRating)}>
+                <div className="text-2xl font-bold">
+                  {supplier.metrics.qualityRate}%
+                </div>
+                <Badge
+                  variant={getRatingVariant(supplier.metrics.qualityRating)}
+                >
                   {supplier.metrics.qualityRating}
                 </Badge>
               </div>
               <Progress value={supplier.metrics.qualityRate} className="mt-2" />
-              <p className="text-xs text-muted-foreground mt-2">Based on your quality checks and returns</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Based on your quality checks and returns
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -137,43 +195,61 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Price Competitiveness</CardTitle>
-              <CardDescription>Supplier price ÷ Market average price</CardDescription>
+              <CardTitle className="text-sm font-medium">
+                Price Competitiveness
+              </CardTitle>
+              <CardDescription>
+                Supplier price ÷ Market average price
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{supplier.metrics.priceIndex}x</div>
+                <div className="text-2xl font-bold">
+                  {supplier.metrics.priceIndex}x
+                </div>
                 <Badge variant={getPriceVariant(supplier.metrics.priceIndex)}>
                   {supplier.metrics.priceIndex < 1
                     ? "Below Market"
                     : supplier.metrics.priceIndex === 1
-                      ? "At Market"
-                      : "Above Market"}
+                    ? "At Market"
+                    : "Above Market"}
                 </Badge>
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Last updated: {supplier.metrics.priceLastUpdated}</span>
+                <span className="text-xs text-muted-foreground">
+                  Last updated: {supplier.metrics.priceLastUpdated}
+                </span>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Delivery Flexibility</CardTitle>
-              <CardDescription>Special delivery requests accommodated</CardDescription>
+              <CardTitle className="text-sm font-medium">
+                Delivery Flexibility
+              </CardTitle>
+              <CardDescription>
+                Special delivery requests accommodated
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{supplier.metrics.flexibilityRate}%</div>
-                <Badge variant={getFlexibilityVariant(supplier.metrics.flexibilityRate)}>
+                <div className="text-2xl font-bold">
+                  {supplier.metrics.flexibilityRate}%
+                </div>
+                <Badge
+                  variant={getFlexibilityVariant(
+                    supplier.metrics.flexibilityRate
+                  )}
+                >
                   {getFlexibilityRating(supplier.metrics.flexibilityRate)}
                 </Badge>
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <Truck className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
-                  {supplier.metrics.specialRequests} special requests, {supplier.metrics.accommodatedRequests}{" "}
-                  accommodated
+                  {supplier.metrics.specialRequests} special requests,{" "}
+                  {supplier.metrics.accommodatedRequests} accommodated
                 </span>
               </div>
             </CardContent>
@@ -190,7 +266,9 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
             <Card>
               <CardHeader>
                 <CardTitle>Available Products</CardTitle>
-                <CardDescription>Products offered by this supplier</CardDescription>
+                <CardDescription>
+                  Products offered by this supplier
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -208,21 +286,34 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
                     <TableBody>
                       {supplier.products.map((product) => (
                         <TableRow key={product.id}>
-                          <TableCell className="font-medium">{product.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {product.name}
+                          </TableCell>
                           <TableCell>{product.category}</TableCell>
-                          <TableCell>RWF {product.price.toLocaleString()}</TableCell>
+                          <TableCell>
+                            RWF {product.price.toLocaleString()}
+                          </TableCell>
                           <TableCell>{product.unit}</TableCell>
                           <TableCell>
                             <div className="flex">
-                              {Array.from({ length: Math.floor(product.quality) }).map((_, i) => (
-                                <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                              {Array.from({
+                                length: Math.floor(product.quality),
+                              }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className="h-4 w-4 fill-primary text-primary"
+                                />
                               ))}
-                              {product.quality % 1 !== 0 && <StarHalf className="h-4 w-4 fill-primary text-primary" />}
+                              {product.quality % 1 !== 0 && (
+                                <StarHalf className="h-4 w-4 fill-primary text-primary" />
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <Button size="sm" asChild>
-                              <Link href={`/restaurant/orders/new?supplier=${supplier.id}&product=${product.id}`}>
+                              <Link
+                                href={`/dashboard/orders/new?supplier=${supplier.id}&product=${product.id}`}
+                              >
                                 Order
                               </Link>
                             </Button>
@@ -239,7 +330,9 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
             <Card>
               <CardHeader>
                 <CardTitle>Order History</CardTitle>
-                <CardDescription>Your past orders with this supplier</CardDescription>
+                <CardDescription>
+                  Your past orders with this supplier
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -257,21 +350,35 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
                     <TableBody>
                       {supplier.orderHistory.map((order) => (
                         <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.id}</TableCell>
+                          <TableCell className="font-medium">
+                            {order.id}
+                          </TableCell>
                           <TableCell>{order.date}</TableCell>
                           <TableCell>{order.items}</TableCell>
-                          <TableCell>RWF {order.total.toLocaleString()}</TableCell>
                           <TableCell>
-                            <Badge variant={getOrderStatusVariant(order.status)}>{order.status}</Badge>
+                            RWF {order.total.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={getOrderStatusVariant(order.status)}
+                            >
+                              {order.status}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button size="sm" variant="outline" asChild>
-                                <Link href={`/restaurant/orders/${order.id}`}>View</Link>
+                                <Link href={`/dashboard/orders/${order.id}`}>
+                                  View
+                                </Link>
                               </Button>
                               {order.status === "Delivered" && (
                                 <Button size="sm" variant="outline" asChild>
-                                  <Link href={`/restaurant/orders/new?reorder=${order.id}`}>Reorder</Link>
+                                  <Link
+                                    href={`/dashboard/orders/new?reorder=${order.id}`}
+                                  >
+                                    Reorder
+                                  </Link>
                                 </Button>
                               )}
                             </div>
@@ -310,14 +417,18 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
                     <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="font-medium">Address</p>
-                      <p className="text-muted-foreground">{supplier.address}</p>
+                      <p className="text-muted-foreground">
+                        {supplier.address}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="font-medium">Business Hours</p>
-                      <p className="text-muted-foreground">{supplier.businessHours}</p>
+                      <p className="text-muted-foreground">
+                        {supplier.businessHours}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -327,64 +438,64 @@ export default function SupplierDetailsPage({ params }: { params: { id: string }
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
 
 // Helper function to get badge variant based on rating
 function getRatingVariant(rating: string) {
   switch (rating) {
     case "Excellent":
-      return "success"
+      return "success";
     case "Good":
-      return "default"
+      return "default";
     case "Fair":
-      return "warning"
+      return "warning";
     case "Poor":
-      return "destructive"
+      return "destructive";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
 // Helper function to get badge variant based on price index
 function getPriceVariant(priceIndex: number) {
-  if (priceIndex < 0.95) return "success"
-  if (priceIndex <= 1.05) return "default"
-  if (priceIndex <= 1.15) return "warning"
-  return "destructive"
+  if (priceIndex < 0.95) return "success";
+  if (priceIndex <= 1.05) return "default";
+  if (priceIndex <= 1.15) return "warning";
+  return "destructive";
 }
 
 // Helper function to get badge variant based on flexibility rate
 function getFlexibilityVariant(rate: number) {
-  if (rate >= 90) return "success"
-  if (rate >= 75) return "default"
-  if (rate >= 60) return "warning"
-  return "destructive"
+  if (rate >= 90) return "success";
+  if (rate >= 75) return "default";
+  if (rate >= 60) return "warning";
+  return "destructive";
 }
 
 // Helper function to get flexibility rating text
 function getFlexibilityRating(rate: number) {
-  if (rate >= 90) return "Very Flexible"
-  if (rate >= 75) return "Flexible"
-  if (rate >= 60) return "Somewhat Flexible"
-  return "Not Flexible"
+  if (rate >= 90) return "Very Flexible";
+  if (rate >= 75) return "Flexible";
+  if (rate >= 60) return "Somewhat Flexible";
+  return "Not Flexible";
 }
 
 // Helper function to get badge variant based on order status
 function getOrderStatusVariant(status: string) {
   switch (status) {
     case "Delivered":
-      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90"
+      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90";
     case "In Transit":
-      return "bg-blue-500 text-white hover:bg-blue-600"
+      return "bg-blue-500 text-white hover:bg-blue-600";
     case "Confirmed":
-      return "bg-green-500 text-white hover:bg-green-600"
+      return "bg-green-500 text-white hover:bg-green-600";
     case "Pending":
-      return "bg-red-500 text-white hover:bg-red-600"
+      return "bg-red-500 text-white hover:bg-red-600";
     case "Cancelled":
-      return "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      return "bg-destructive text-destructive-foreground hover:bg-destructive/90";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
@@ -550,4 +661,4 @@ const suppliers = [
       },
     ],
   },
-]
+];

@@ -15,40 +15,84 @@ const tourSteps = [
   {
     id: 1,
     title: "Dashboard Overview",
-    description: "Get a bird's eye view of your business metrics, recent orders, and key performance indicators all in one place.",
+    description:
+      "Get a bird's eye view of your business metrics, recent orders, and key performance indicators all in one place.",
     icon: (
-      <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      <svg
+        className="w-8 h-8 text-blue-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+        />
       </svg>
     ),
   },
   {
     id: 2,
     title: "Inventory Management",
-    description: "Track your stock levels in real-time, set up low-stock alerts, and manage your inventory efficiently.",
+    description:
+      "Track your stock levels in real-time, set up low-stock alerts, and manage your inventory efficiently.",
     icon: (
-      <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      <svg
+        className="w-8 h-8 text-green-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+        />
       </svg>
     ),
   },
   {
     id: 3,
     title: "Order Management",
-    description: "Place orders with suppliers, track deliveries, and manage your procurement process seamlessly.",
+    description:
+      "Place orders with suppliers, track deliveries, and manage your procurement process seamlessly.",
     icon: (
-      <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+      <svg
+        className="w-8 h-8 text-purple-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+        />
       </svg>
     ),
   },
   {
     id: 4,
     title: "Analytics & Reports",
-    description: "Generate detailed reports, analyze trends, and make data-driven decisions for your business.",
+    description:
+      "Generate detailed reports, analyze trends, and make data-driven decisions for your business.",
     icon: (
-      <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      <svg
+        className="w-8 h-8 text-orange-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
       </svg>
     ),
   },
@@ -63,12 +107,12 @@ export default function QuickTourPage() {
       setCurrentStep(currentStep + 1);
     } else {
       // Tour complete, redirect to dashboard
-      router.push("/restaurant/dashboard");
+      router.push("/dashboard");
     }
   };
 
   const handleSkip = () => {
-    router.push("/restaurant/dashboard");
+    router.push("/dashboard");
   };
 
   const currentTourStep = tourSteps[currentStep];
@@ -104,7 +148,9 @@ export default function QuickTourPage() {
           <div className="bg-gray-50 p-6 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white p-4 rounded-lg border">
-                <h4 className="font-semibold text-gray-900 mb-2">Key Features</h4>
+                <h4 className="font-semibold text-gray-900 mb-2">
+                  Key Features
+                </h4>
                 <ul className="text-sm text-gray-600 space-y-1">
                   <li>• Real-time updates</li>
                   <li>• Mobile responsive</li>
@@ -126,13 +172,10 @@ export default function QuickTourPage() {
 
           {/* Navigation buttons */}
           <div className="flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={handleSkip}
-            >
+            <Button variant="outline" onClick={handleSkip}>
               Skip Tour
             </Button>
-            
+
             <div className="flex space-x-2">
               {currentStep > 0 && (
                 <Button
@@ -142,10 +185,7 @@ export default function QuickTourPage() {
                   Previous
                 </Button>
               )}
-              <Button
-                onClick={handleNext}
-                className="min-w-[100px]"
-              >
+              <Button onClick={handleNext} className="min-w-[100px]">
                 {currentStep === tourSteps.length - 1 ? "Get Started" : "Next"}
               </Button>
             </div>
@@ -154,4 +194,4 @@ export default function QuickTourPage() {
       </Card>
     </div>
   );
-} 
+}

@@ -1,13 +1,39 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Printer, Download, Menu, Clock, CheckCircle, FileText } from "lucide-react"
-import Link from "next/link"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ArrowLeft,
+  Printer,
+  Download,
+  Menu,
+  Clock,
+  CheckCircle,
+  FileText,
+} from "lucide-react";
+import Link from "next/link";
 
-export default function SaleDetailsPage({ params }: { params: { id: string } }) {
+export default function SaleDetailsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   // In a real app, you would fetch the sale data based on the ID
-  const sale = sales.find((s) => s.id === params.id) || sales[0]
+  const sale = sales.find((s) => s.id === params.id) || sales[0];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -20,7 +46,7 @@ export default function SaleDetailsPage({ params }: { params: { id: string } }) 
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/supplier/finance">
+            <Link href="/dashboard/finance">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Finance
             </Link>
@@ -29,15 +55,17 @@ export default function SaleDetailsPage({ params }: { params: { id: string } }) 
 
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Sale #{sale.id}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Sale #{sale.id}
+            </h1>
             <div className="flex items-center gap-2 mt-1">
               <Badge
                 className={
                   sale.status === "Completed"
                     ? "bg-green-500 text-white"
                     : sale.status === "Processing"
-                      ? "bg-blue-500 text-white"
-                      : "bg-red-500 text-white"
+                    ? "bg-blue-500 text-white"
+                    : "bg-red-500 text-white"
                 }
               >
                 {sale.status}
@@ -76,25 +104,37 @@ export default function SaleDetailsPage({ params }: { params: { id: string } }) 
             </CardHeader>
             <CardContent>
               <div className="font-medium">{sale.customer}</div>
-              <div className="text-sm text-muted-foreground mt-1">{sale.customerContact}</div>
+              <div className="text-sm text-muted-foreground mt-1">
+                {sale.customerContact}
+              </div>
               <Button size="sm" variant="link" className="px-0 mt-2" asChild>
-                <Link href={`/supplier/customers/${sale.customerId}`}>View Customer</Link>
+                <Link href={`/dashboard/customers/${sale.customerId}`}>
+                  View Customer
+                </Link>
               </Button>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Payment Information</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Payment Information
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="font-medium">{sale.paymentMethod}</div>
-              <div className="text-sm text-muted-foreground mt-1">Transaction ID: {sale.transactionId}</div>
-              <div className="text-sm text-muted-foreground">Payment Date: {sale.paymentDate || "Pending"}</div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Transaction ID: {sale.transactionId}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Payment Date: {sale.paymentDate || "Pending"}
+              </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Sale Timeline</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Sale Timeline
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -103,7 +143,9 @@ export default function SaleDetailsPage({ params }: { params: { id: string } }) 
                     {getTimelineIcon(event.status)}
                     <div>
                       <div className="font-medium">{event.status}</div>
-                      <div className="text-sm text-muted-foreground">{event.date}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {event.date}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -134,10 +176,14 @@ export default function SaleDetailsPage({ params }: { params: { id: string } }) 
                       <TableCell>
                         <div>
                           <p className="font-medium">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">{item.category}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.category}
+                          </p>
                         </div>
                       </TableCell>
-                      <TableCell>RWF {item.unitPrice.toLocaleString()}</TableCell>
+                      <TableCell>
+                        RWF {item.unitPrice.toLocaleString()}
+                      </TableCell>
                       <TableCell>
                         {item.quantity} {item.unit}
                       </TableCell>
@@ -175,7 +221,9 @@ export default function SaleDetailsPage({ params }: { params: { id: string } }) 
         <Card>
           <CardHeader>
             <CardTitle>Financial Details</CardTitle>
-            <CardDescription>Detailed financial information for this sale</CardDescription>
+            <CardDescription>
+              Detailed financial information for this sale
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -183,12 +231,18 @@ export default function SaleDetailsPage({ params }: { params: { id: string } }) 
                 <div className="space-y-2">
                   <h3 className="font-medium">Revenue Breakdown</h3>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <span className="text-muted-foreground">Gross Revenue:</span>
+                    <span className="text-muted-foreground">
+                      Gross Revenue:
+                    </span>
                     <span>RWF {sale.subtotal.toLocaleString()}</span>
-                    <span className="text-muted-foreground">Tax Collected:</span>
+                    <span className="text-muted-foreground">
+                      Tax Collected:
+                    </span>
                     <span>RWF {sale.tax.toLocaleString()}</span>
                     <span className="text-muted-foreground">Net Revenue:</span>
-                    <span className="font-medium">RWF {(sale.subtotal + sale.tax).toLocaleString()}</span>
+                    <span className="font-medium">
+                      RWF {(sale.subtotal + sale.tax).toLocaleString()}
+                    </span>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -196,12 +250,18 @@ export default function SaleDetailsPage({ params }: { params: { id: string } }) 
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <span className="text-muted-foreground">Product Cost:</span>
                     <span>RWF {sale.productCost.toLocaleString()}</span>
-                    <span className="text-muted-foreground">Delivery Cost:</span>
+                    <span className="text-muted-foreground">
+                      Delivery Cost:
+                    </span>
                     <span>RWF {sale.deliveryCost.toLocaleString()}</span>
-                    <span className="text-muted-foreground">Transaction Fees:</span>
+                    <span className="text-muted-foreground">
+                      Transaction Fees:
+                    </span>
                     <span>RWF {sale.transactionFees.toLocaleString()}</span>
                     <span className="text-muted-foreground">Total Cost:</span>
-                    <span className="font-medium">RWF {sale.totalCost.toLocaleString()}</span>
+                    <span className="font-medium">
+                      RWF {sale.totalCost.toLocaleString()}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -213,24 +273,35 @@ export default function SaleDetailsPage({ params }: { params: { id: string } }) 
                   </span>
                 </div>
                 <div className="flex justify-between items-center mt-1">
-                  <span className="text-sm text-muted-foreground">Profit Margin:</span>
+                  <span className="text-sm text-muted-foreground">
+                    Profit Margin:
+                  </span>
                   <span className="text-sm font-medium">
-                    {Math.round(((sale.netRevenue - sale.totalCost) / sale.netRevenue) * 100)}%
+                    {Math.round(
+                      ((sale.netRevenue - sale.totalCost) / sale.netRevenue) *
+                        100
+                    )}
+                    %
                   </span>
                 </div>
                 <div className="mt-3 p-3 bg-muted/30 rounded-md text-sm">
-                  <h4 className="font-medium mb-1">How Profit is Calculated:</h4>
+                  <h4 className="font-medium mb-1">
+                    How Profit is Calculated:
+                  </h4>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                     <span>Net Revenue:</span>
                     <span>RWF {sale.netRevenue.toLocaleString()}</span>
                     <span>- Total Cost:</span>
                     <span>RWF {sale.totalCost.toLocaleString()}</span>
                     <span className="font-medium">= Profit:</span>
-                    <span className="font-medium">RWF {(sale.netRevenue - sale.totalCost).toLocaleString()}</span>
+                    <span className="font-medium">
+                      RWF {(sale.netRevenue - sale.totalCost).toLocaleString()}
+                    </span>
                   </div>
                   <p className="mt-2 text-muted-foreground">
-                    Net Revenue includes product subtotal and tax collected. Total Cost includes product cost, delivery
-                    cost, and transaction fees.
+                    Net Revenue includes product subtotal and tax collected.
+                    Total Cost includes product cost, delivery cost, and
+                    transaction fees.
                   </p>
                 </div>
               </div>
@@ -239,22 +310,22 @@ export default function SaleDetailsPage({ params }: { params: { id: string } }) 
         </Card>
       </main>
     </div>
-  )
+  );
 }
 
 // Helper function to get timeline icon
 function getTimelineIcon(status: string) {
   switch (status) {
     case "Order Received":
-      return <Clock className="h-5 w-5 text-muted-foreground" />
+      return <Clock className="h-5 w-5 text-muted-foreground" />;
     case "Payment Confirmed":
-      return <CheckCircle className="h-5 w-5 text-green-500" />
+      return <CheckCircle className="h-5 w-5 text-green-500" />;
     case "Order Processed":
-      return <CheckCircle className="h-5 w-5 text-blue-500" />
+      return <CheckCircle className="h-5 w-5 text-blue-500" />;
     case "Delivered":
-      return <CheckCircle className="h-5 w-5 text-green-500" />
+      return <CheckCircle className="h-5 w-5 text-green-500" />;
     default:
-      return <Clock className="h-5 w-5 text-muted-foreground" />
+      return <Clock className="h-5 w-5 text-muted-foreground" />;
   }
 }
 
@@ -384,4 +455,4 @@ const sales = [
     transactionFees: 4590,
     totalCost: 160090,
   },
-]
+];

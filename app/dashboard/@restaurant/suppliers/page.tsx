@@ -1,11 +1,30 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Search, Menu, Star, StarHalf } from "lucide-react"
-import Link from "next/link"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Search, Menu, Star, StarHalf } from "lucide-react";
+import Link from "next/link";
 
 export default function SuppliersPage() {
   return (
@@ -20,11 +39,15 @@ export default function SuppliersPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Suppliers</h1>
-            <p className="text-muted-foreground">Manage your supplier relationships</p>
+            <p className="text-muted-foreground">
+              Manage your supplier relationships
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button asChild>
-              <Link href="/restaurant/suppliers/discover">Discover New Suppliers</Link>
+              <Link href="/dashboard/suppliers/discover">
+                Discover New Suppliers
+              </Link>
             </Button>
           </div>
         </div>
@@ -32,14 +55,20 @@ export default function SuppliersPage() {
         <Card>
           <CardHeader>
             <CardTitle>Your Suppliers</CardTitle>
-            <CardDescription>View and manage your supplier relationships</CardDescription>
+            <CardDescription>
+              View and manage your supplier relationships
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input type="search" placeholder="Search suppliers..." className="pl-8 w-full md:w-[300px]" />
+                  <Input
+                    type="search"
+                    placeholder="Search suppliers..."
+                    className="pl-8 w-full md:w-[300px]"
+                  />
                 </div>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -86,26 +115,39 @@ export default function SuppliersPage() {
                 <TableBody>
                   {suppliers.map((supplier) => (
                     <TableRow key={supplier.id}>
-                      <TableCell className="font-medium">{supplier.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {supplier.name}
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {supplier.categories.map((category) => (
-                            <Badge key={category} variant="outline" className="text-xs">
+                            <Badge
+                              key={category}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {category}
                             </Badge>
                           ))}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getRatingVariant(supplier.fulfillmentRating)}>
+                        <Badge
+                          variant={getRatingVariant(supplier.fulfillmentRating)}
+                        >
                           {supplier.fulfillmentRate}%
                         </Badge>
                       </TableCell>
                       <TableCell>{supplier.responseTime}</TableCell>
                       <TableCell>
                         <div className="flex items-center">
-                          {Array.from({ length: Math.floor(supplier.qualityRating) }).map((_, i) => (
-                            <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                          {Array.from({
+                            length: Math.floor(supplier.qualityRating),
+                          }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className="h-4 w-4 fill-primary text-primary"
+                            />
                           ))}
                           {supplier.qualityRating % 1 !== 0 && (
                             <StarHalf className="h-4 w-4 fill-primary text-primary" />
@@ -115,10 +157,16 @@ export default function SuppliersPage() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button size="sm" variant="outline" asChild>
-                            <Link href={`/restaurant/suppliers/${supplier.id}`}>View</Link>
+                            <Link href={`/dashboard/suppliers/${supplier.id}`}>
+                              View
+                            </Link>
                           </Button>
                           <Button size="sm" variant="outline" asChild>
-                            <Link href={`/restaurant/orders/new?supplier=${supplier.id}`}>Order</Link>
+                            <Link
+                              href={`/dashboard/orders/new?supplier=${supplier.id}`}
+                            >
+                              Order
+                            </Link>
                           </Button>
                         </div>
                       </TableCell>
@@ -131,22 +179,22 @@ export default function SuppliersPage() {
         </Card>
       </main>
     </div>
-  )
+  );
 }
 
 // Helper function to get badge variant based on rating
 function getRatingVariant(rating: string) {
   switch (rating) {
     case "Excellent":
-      return "success"
+      return "success";
     case "Good":
-      return "default"
+      return "default";
     case "Fair":
-      return "warning"
+      return "warning";
     case "Poor":
-      return "destructive"
+      return "destructive";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
@@ -215,4 +263,4 @@ const suppliers = [
     responseTime: "3 hrs avg.",
     qualityRating: 3.5,
   },
-]
+];

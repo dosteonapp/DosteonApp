@@ -31,7 +31,7 @@ export default function NotificationsPage() {
           </div>
           <div className="flex items-center gap-2">
             {/* <Button variant="outline" asChild>
-              <Link href="/restaurant/notifications/settings">
+              <Link href="/dashboard/notifications/settings">
                 <Settings className="mr-2 h-4 w-4" />
                 Notification Settings
               </Link>
@@ -176,7 +176,7 @@ const notifications: Notification[] = [
     type: "alert",
     unread: true,
     actionLink: {
-      href: "/restaurant/orders/new?item=1",
+      href: "/dashboard/orders/new?item=1",
       text: "Order Now",
     },
   },
@@ -205,7 +205,7 @@ const notifications: Notification[] = [
     type: "alert",
     unread: true,
     actionLink: {
-      href: "/restaurant/orders/new?item=3",
+      href: "/dashboard/orders/new?item=3",
       text: "Order Now",
     },
   },
@@ -227,7 +227,7 @@ const notifications: Notification[] = [
     type: "inventory",
     unread: true,
     actionLink: {
-      href: "/restaurant/inventory",
+      href: "/dashboard/inventory",
       text: "View Inventory",
     },
   },
@@ -240,7 +240,7 @@ const notifications: Notification[] = [
     type: "alert",
     unread: true,
     actionLink: {
-      href: "/restaurant/orders/new?item=2",
+      href: "/dashboard/orders/new?item=2",
       text: "Order Now",
     },
   },
@@ -261,7 +261,7 @@ const notifications: Notification[] = [
     type: "inventory",
     unread: false,
     actionLink: {
-      href: "/restaurant/inventory",
+      href: "/dashboard/inventory",
       text: "View Inventory",
     },
   },

@@ -136,25 +136,25 @@ export default function CustomersPage() {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             {/* <Button variant="outline" asChild> */}
-            {/* <Link href="/supplier/customers/segments">
+            {/* <Link href="/dashboard/customers/segments">
                 <Users className="mr-2 h-4 w-4" />
                 Segments
               </Link>
             </Button> */}
             {/* <Button variant="outline" asChild>
-              <Link href="/supplier/customers/insights">
+              <Link href="/dashboard/customers/insights">
                 <BarChart className="mr-2 h-4 w-4" />
                 Insights
               </Link>
             </Button> */}
             <Button variant="outline" asChild>
-              <Link href="/supplier/customers/messages">
+              <Link href="/dashboard/customers/messages">
                 <MessageSquare className="mr-2 h-4 w-4" />
                 Messages
               </Link>
             </Button>
             {/* <Button asChild>
-              <Link href="/supplier/customers/add">
+              <Link href="/dashboard/customers/add">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Customer
               </Link>
@@ -347,7 +347,7 @@ export default function CustomersPage() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>
                                   <Link
-                                    href={`/supplier/customers/${customer.id}`}
+                                    href={`/dashboard/customers/${customer.id}`}
                                     className="flex w-full"
                                   >
                                     View details
@@ -355,7 +355,7 @@ export default function CustomersPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Link
-                                    href={`/supplier/orders/new?customer=${customer.id}`}
+                                    href={`/dashboard/orders/new?customer=${customer.id}`}
                                     className="flex w-full"
                                   >
                                     Create order
@@ -363,7 +363,7 @@ export default function CustomersPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Link
-                                    href={`/supplier/customers/messages?id=${customer.id}`}
+                                    href={`/dashboard/customers/messages?id=${customer.id}`}
                                     className="flex w-full"
                                   >
                                     Send message

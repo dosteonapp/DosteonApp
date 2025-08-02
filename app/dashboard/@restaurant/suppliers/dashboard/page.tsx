@@ -1,36 +1,54 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, Clock, Menu, MessageSquare, Pin, PinOff, ShoppingCart, Truck } from "lucide-react"
-import Link from "next/link"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Calendar,
+  Clock,
+  Menu,
+  MessageSquare,
+  Pin,
+  PinOff,
+  ShoppingCart,
+  Truck,
+} from "lucide-react";
+import Link from "next/link";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export default function SuppliersDashboardPage() {
-  const [pinnedSuppliers, setPinnedSuppliers] = useState<string[]>(["supplier-1", "supplier-4"])
+  const [pinnedSuppliers, setPinnedSuppliers] = useState<string[]>([
+    "supplier-1",
+    "supplier-4",
+  ]);
 
   const togglePin = (supplierId: string) => {
     if (pinnedSuppliers.includes(supplierId)) {
-      setPinnedSuppliers(pinnedSuppliers.filter((id) => id !== supplierId))
+      setPinnedSuppliers(pinnedSuppliers.filter((id) => id !== supplierId));
     } else {
-      setPinnedSuppliers([...pinnedSuppliers, supplierId])
+      setPinnedSuppliers([...pinnedSuppliers, supplierId]);
     }
-  }
+  };
 
   // Sort suppliers to show pinned ones first
   const sortedSuppliers = [...suppliers].sort((a, b) => {
-    const aIsPinned = pinnedSuppliers.includes(a.id)
-    const bIsPinned = pinnedSuppliers.includes(b.id)
+    const aIsPinned = pinnedSuppliers.includes(a.id);
+    const bIsPinned = pinnedSuppliers.includes(b.id);
 
-    if (aIsPinned && !bIsPinned) return -1
-    if (!aIsPinned && bIsPinned) return 1
-    return 0
-  })
+    if (aIsPinned && !bIsPinned) return -1;
+    if (!aIsPinned && bIsPinned) return 1;
+    return 0;
+  });
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -43,12 +61,18 @@ export default function SuppliersDashboardPage() {
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Suppliers Dashboard</h1>
-            <p className="text-muted-foreground">Manage your supplier relationships</p>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Suppliers Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Manage your supplier relationships
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button asChild>
-              <Link href="/restaurant/suppliers/discover">Discover New Suppliers</Link>
+              <Link href="/dashboard/suppliers/discover">
+                Discover New Suppliers
+              </Link>
             </Button>
           </div>
         </div>
@@ -100,9 +124,9 @@ export default function SuppliersDashboardPage() {
                 {sortedSuppliers
                   .filter((supplier) => supplier.recentOrder)
                   .sort((a, b) => {
-                    const dateA = new Date(a.recentOrder?.date || "").getTime()
-                    const dateB = new Date(b.recentOrder?.date || "").getTime()
-                    return dateB - dateA
+                    const dateA = new Date(a.recentOrder?.date || "").getTime();
+                    const dateB = new Date(b.recentOrder?.date || "").getTime();
+                    return dateB - dateA;
                   })
                   .map((supplier) => (
                     <SupplierCard
@@ -118,13 +142,13 @@ export default function SuppliersDashboardPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
 
 interface SupplierCardProps {
-  supplier: Supplier
-  isPinned: boolean
-  onTogglePin: () => void
+  supplier: Supplier;
+  isPinned: boolean;
+  onTogglePin: () => void;
 }
 
 function SupplierCard({ supplier, isPinned, onTogglePin }: SupplierCardProps) {
@@ -133,8 +157,13 @@ function SupplierCard({ supplier, isPinned, onTogglePin }: SupplierCardProps) {
       <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 border">
-            <AvatarImage src={supplier.logo || "/placeholder.svg"} alt={supplier.name} />
-            <AvatarFallback>{supplier.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarImage
+              src={supplier.logo || "/placeholder.svg"}
+              alt={supplier.name}
+            />
+            <AvatarFallback>
+              {supplier.name.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div>
             <CardTitle className="text-base">{supplier.name}</CardTitle>
@@ -152,8 +181,17 @@ function SupplierCard({ supplier, isPinned, onTogglePin }: SupplierCardProps) {
             </div>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onTogglePin} className="h-8 w-8">
-          {isPinned ? <Pin className="h-4 w-4 text-primary" /> : <PinOff className="h-4 w-4" />}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onTogglePin}
+          className="h-8 w-8"
+        >
+          {isPinned ? (
+            <Pin className="h-4 w-4 text-primary" />
+          ) : (
+            <PinOff className="h-4 w-4" />
+          )}
         </Button>
       </CardHeader>
       <CardContent className="p-4 pt-0">
@@ -165,9 +203,15 @@ function SupplierCard({ supplier, isPinned, onTogglePin }: SupplierCardProps) {
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>{supplier.recentOrder.date}</span>
               </div>
-              <Badge variant={getOrderStatusVariant(supplier.recentOrder.status)}>{supplier.recentOrder.status}</Badge>
+              <Badge
+                variant={getOrderStatusVariant(supplier.recentOrder.status)}
+              >
+                {supplier.recentOrder.status}
+              </Badge>
             </div>
-            <div className="text-sm text-muted-foreground">{supplier.recentOrder.summary}</div>
+            <div className="text-sm text-muted-foreground">
+              {supplier.recentOrder.summary}
+            </div>
           </div>
         )}
 
@@ -183,64 +227,64 @@ function SupplierCard({ supplier, isPinned, onTogglePin }: SupplierCardProps) {
       </CardContent>
       <CardFooter className="p-4 pt-0 grid grid-cols-2 gap-2">
         <Button variant="outline" size="sm" asChild className="w-full">
-          <Link href={`/restaurant/orders/new?supplier=${supplier.id}`}>
+          <Link href={`/dashboard/orders/new?supplier=${supplier.id}`}>
             <ShoppingCart className="mr-1 h-3.5 w-3.5" />
             Order
           </Link>
         </Button>
         <Button variant="outline" size="sm" asChild className="w-full">
-          <Link href={`/restaurant/suppliers/${supplier.id}`}>
+          <Link href={`/dashboard/suppliers/${supplier.id}`}>
             <Truck className="mr-1 h-3.5 w-3.5" />
             Track
           </Link>
         </Button>
         <Button variant="outline" size="sm" asChild className="w-full">
-          <Link href={`/restaurant/suppliers/${supplier.id}?tab=order-history`}>
+          <Link href={`/dashboard/suppliers/${supplier.id}?tab=order-history`}>
             <Clock className="mr-1 h-3.5 w-3.5" />
             History
           </Link>
         </Button>
         <Button variant="outline" size="sm" asChild className="w-full">
-          <Link href={`/restaurant/suppliers/${supplier.id}/chat`}>
+          <Link href={`/dashboard/suppliers/${supplier.id}/chat`}>
             <MessageSquare className="mr-1 h-3.5 w-3.5" />
             Chat
           </Link>
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 // Helper function to get badge variant based on order status
 function getOrderStatusVariant(status: string) {
   switch (status) {
     case "Delivered":
-      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90"
+      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90";
     case "In Transit":
-      return "bg-blue-500 text-white hover:bg-blue-600"
+      return "bg-blue-500 text-white hover:bg-blue-600";
     case "Confirmed":
-      return "bg-green-500 text-white hover:bg-green-600"
+      return "bg-green-500 text-white hover:bg-green-600";
     case "Pending":
-      return "bg-red-500 text-white hover:bg-red-600"
+      return "bg-red-500 text-white hover:bg-red-600";
     case "Cancelled":
-      return "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      return "bg-destructive text-destructive-foreground hover:bg-destructive/90";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
 // Types
 interface Supplier {
-  id: string
-  name: string
-  logo: string
-  categories: string[]
+  id: string;
+  name: string;
+  logo: string;
+  categories: string[];
   recentOrder?: {
-    date: string
-    status: string
-    summary: string
-  }
-  nextDelivery?: string
+    date: string;
+    status: string;
+    summary: string;
+  };
+  nextDelivery?: string;
 }
 
 // Sample data
@@ -346,4 +390,4 @@ const suppliers: Supplier[] = [
       summary: "24 Bottles Soda, 12 Bottles Wine, 48 Bottles Water",
     },
   },
-]
+];

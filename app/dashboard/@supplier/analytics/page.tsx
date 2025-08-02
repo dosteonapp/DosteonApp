@@ -1,7 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Menu } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 import {
   Line,
   LineChart,
@@ -16,9 +22,13 @@ import {
   PieChart,
   Pie,
   Cell,
-} from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import Link from "next/link"
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import Link from "next/link";
 
 export default function AnalyticsPage() {
   return (
@@ -34,7 +44,7 @@ export default function AnalyticsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
-              <Link href="/supplier/analytics/export">Export Data</Link>
+              <Link href="/dashboard/analytics/export">Export Data</Link>
             </Button>
           </div>
         </div>
@@ -49,7 +59,9 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Sales Overview</CardTitle>
-                <CardDescription>Track your sales performance over time</CardDescription>
+                <CardDescription>
+                  Track your sales performance over time
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ChartContainer
@@ -66,13 +78,21 @@ export default function AnalyticsPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={salesData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <LineChart
+                      data={salesData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Line type="monotone" dataKey="sales" stroke="var(--color-sales)" name="Sales" />
+                      <Line
+                        type="monotone"
+                        dataKey="sales"
+                        stroke="var(--color-sales)"
+                        name="Sales"
+                      />
                       <Line
                         type="monotone"
                         dataKey="target"
@@ -89,7 +109,9 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Sales by Category</CardTitle>
-                <CardDescription>Breakdown of your sales by product category</CardDescription>
+                <CardDescription>
+                  Breakdown of your sales by product category
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ChartContainer
@@ -114,16 +136,35 @@ export default function AnalyticsPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categorySalesData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <BarChart
+                      data={categorySalesData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Bar dataKey="produce" fill="var(--color-produce)" name="Produce" />
-                      <Bar dataKey="meat" fill="var(--color-meat)" name="Meat & Poultry" />
-                      <Bar dataKey="dairy" fill="var(--color-dairy)" name="Dairy" />
-                      <Bar dataKey="dryGoods" fill="var(--color-dryGoods)" name="Dry Goods" />
+                      <Bar
+                        dataKey="produce"
+                        fill="var(--color-produce)"
+                        name="Produce"
+                      />
+                      <Bar
+                        dataKey="meat"
+                        fill="var(--color-meat)"
+                        name="Meat & Poultry"
+                      />
+                      <Bar
+                        dataKey="dairy"
+                        fill="var(--color-dairy)"
+                        name="Dairy"
+                      />
+                      <Bar
+                        dataKey="dryGoods"
+                        fill="var(--color-dryGoods)"
+                        name="Dry Goods"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -134,7 +175,9 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Top Selling Products</CardTitle>
-                <CardDescription>Your best performing products by sales volume</CardDescription>
+                <CardDescription>
+                  Your best performing products by sales volume
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ChartContainer
@@ -157,7 +200,11 @@ export default function AnalyticsPage() {
                       <YAxis type="category" dataKey="name" />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Bar dataKey="sales" fill="var(--color-sales)" name="Sales" />
+                      <Bar
+                        dataKey="sales"
+                        fill="var(--color-sales)"
+                        name="Sales"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -180,13 +227,20 @@ export default function AnalyticsPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={productGrowthData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <BarChart
+                      data={productGrowthData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Bar dataKey="growth" fill="var(--color-growth)" name="Growth %" />
+                      <Bar
+                        dataKey="growth"
+                        fill="var(--color-growth)"
+                        name="Growth %"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -197,13 +251,17 @@ export default function AnalyticsPage() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Customer Analytics</h2>
               <Button asChild>
-                <Link href="/supplier/analytics/customer-engagement">View Customer Engagement</Link>
+                <Link href="/dashboard/analytics/customer-engagement">
+                  View Customer Engagement
+                </Link>
               </Button>
             </div>
             <Card>
               <CardHeader>
                 <CardTitle>Customer Distribution</CardTitle>
-                <CardDescription>Breakdown of your customer base</CardDescription>
+                <CardDescription>
+                  Breakdown of your customer base
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <div className="h-[300px]">
@@ -217,13 +275,23 @@ export default function AnalyticsPage() {
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) =>
+                          `${name}: ${(percent * 100).toFixed(0)}%`
+                        }
                       >
                         {customerDistributionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value, name) => [`${value} customers`, name]} />
+                      <Tooltip
+                        formatter={(value, name) => [
+                          `${value} customers`,
+                          name,
+                        ]}
+                      />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -234,7 +302,9 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Customer Retention</CardTitle>
-                <CardDescription>Monthly customer retention rate</CardDescription>
+                <CardDescription>
+                  Monthly customer retention rate
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ChartContainer
@@ -251,13 +321,21 @@ export default function AnalyticsPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={retentionData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <LineChart
+                      data={retentionData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Legend />
-                      <Line type="monotone" dataKey="retention" stroke="var(--color-retention)" name="Retention Rate" />
+                      <Line
+                        type="monotone"
+                        dataKey="retention"
+                        stroke="var(--color-retention)"
+                        name="Retention Rate"
+                      />
                       <Line
                         type="monotone"
                         dataKey="target"
@@ -274,7 +352,7 @@ export default function AnalyticsPage() {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
 
 // Sample data
@@ -284,7 +362,7 @@ const salesData = [
   { date: "Mar", sales: 5800, target: 5000 },
   { date: "Apr", sales: 5200, target: 5000 },
   { date: "May", sales: 6000, target: 5500 },
-]
+];
 
 const categorySalesData = [
   { month: "Jan", produce: 1200, meat: 1800, dairy: 400, dryGoods: 600 },
@@ -292,7 +370,7 @@ const categorySalesData = [
   { month: "Mar", produce: 1800, meat: 2500, dairy: 700, dryGoods: 800 },
   { month: "Apr", produce: 1600, meat: 2200, dairy: 600, dryGoods: 800 },
   { month: "May", produce: 1900, meat: 2400, dairy: 800, dryGoods: 900 },
-]
+];
 
 const topProductsData = [
   { name: "Tomatoes", sales: 45 },
@@ -300,7 +378,7 @@ const topProductsData = [
   { name: "Milk", sales: 32 },
   { name: "Onions", sales: 30 },
   { name: "Olive Oil", sales: 28 },
-]
+];
 
 const productGrowthData = [
   { name: "Tomatoes", growth: 15 },
@@ -308,9 +386,9 @@ const productGrowthData = [
   { name: "Milk", growth: 8 },
   { name: "Onions", growth: 12 },
   { name: "Olive Oil", growth: 18 },
-]
+];
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"]
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
 const customerDistributionData = [
   { name: "Fine Dining", value: 8 },
@@ -318,7 +396,7 @@ const customerDistributionData = [
   { name: "Fast Casual", value: 5 },
   { name: "Cafes", value: 4 },
   { name: "Food Trucks", value: 3 },
-]
+];
 
 const retentionData = [
   { month: "Jan", retention: 85, target: 90 },
@@ -326,4 +404,4 @@ const retentionData = [
   { month: "Mar", retention: 92, target: 90 },
   { month: "Apr", retention: 90, target: 90 },
   { month: "May", retention: 94, target: 90 },
-]
+];

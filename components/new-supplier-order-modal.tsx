@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { format, addDays } from "date-fns"
-import { CalendarIcon, Plus, Search, X } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { format, addDays } from "date-fns";
+import { CalendarIcon, Plus, Search, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,115 +13,144 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar } from "@/components/ui/calendar"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
-import { Textarea } from "@/components/ui/textarea"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
 
 interface NewSupplierOrderModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   supplier: {
-    id: string
-    name: string
-    description: string
-    categories: string[]
-  }
+    id: string;
+    name: string;
+    description: string;
+    categories: string[];
+  };
 }
 
-export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSupplierOrderModalProps) {
-  const router = useRouter()
-  const [step, setStep] = useState<"items" | "details" | "schedule" | "review">("items")
-  const [orderType, setOrderType] = useState<"immediate" | "scheduled">("immediate")
-  const [selectedItems, setSelectedItems] = useState<{ id: string; name: string; quantity: number; price: number }[]>(
-    [],
-  )
-  const [date, setDate] = useState<Date | undefined>(undefined)
-  const [timeSlot, setTimeSlot] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [notes, setNotes] = useState("")
-  const [isUrgent, setIsUrgent] = useState(false)
+export function NewSupplierOrderModal({
+  open,
+  onOpenChange,
+  supplier,
+}: NewSupplierOrderModalProps) {
+  const router = useRouter();
+  const [step, setStep] = useState<"items" | "details" | "schedule" | "review">(
+    "items"
+  );
+  const [orderType, setOrderType] = useState<"immediate" | "scheduled">(
+    "immediate"
+  );
+  const [selectedItems, setSelectedItems] = useState<
+    { id: string; name: string; quantity: number; price: number }[]
+  >([]);
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [timeSlot, setTimeSlot] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [isUrgent, setIsUrgent] = useState(false);
 
   const handleAddItem = (item: { id: string; name: string; price: number }) => {
-    const existingItem = selectedItems.find((i) => i.id === item.id)
+    const existingItem = selectedItems.find((i) => i.id === item.id);
     if (existingItem) {
-      setSelectedItems(selectedItems.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)))
+      setSelectedItems(
+        selectedItems.map((i) =>
+          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+        )
+      );
     } else {
-      setSelectedItems([...selectedItems, { ...item, quantity: 1 }])
+      setSelectedItems([...selectedItems, { ...item, quantity: 1 }]);
     }
-  }
+  };
 
   const handleRemoveItem = (id: string) => {
-    setSelectedItems(selectedItems.filter((item) => item.id !== id))
-  }
+    setSelectedItems(selectedItems.filter((item) => item.id !== id));
+  };
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
-      handleRemoveItem(id)
-      return
+      handleRemoveItem(id);
+      return;
     }
-    setSelectedItems(selectedItems.map((item) => (item.id === id ? { ...item, quantity } : item)))
-  }
+    setSelectedItems(
+      selectedItems.map((item) =>
+        item.id === id ? { ...item, quantity } : item
+      )
+    );
+  };
 
   const calculateTotal = () => {
-    return selectedItems.reduce((total, item) => total + item.price * item.quantity, 0)
-  }
+    return selectedItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+  };
 
   const handleSubmit = () => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     // Simulate API call
     setTimeout(() => {
-      setIsSubmitting(false)
-      onOpenChange(false)
+      setIsSubmitting(false);
+      onOpenChange(false);
       // Reset form
-      setStep("items")
-      setSelectedItems([])
-      setDate(undefined)
-      setTimeSlot("")
-      setOrderType("immediate")
-      setNotes("")
-      setIsUrgent(false)
+      setStep("items");
+      setSelectedItems([]);
+      setDate(undefined);
+      setTimeSlot("");
+      setOrderType("immediate");
+      setNotes("");
+      setIsUrgent(false);
       // Navigate or show success message
-      router.push("/restaurant/suppliers")
-    }, 1000)
-  }
+      router.push("/dashboard/suppliers");
+    }, 1000);
+  };
 
   const handleNext = () => {
     if (step === "items" && selectedItems.length > 0) {
-      setStep("details")
+      setStep("details");
     } else if (step === "details") {
       if (orderType === "scheduled") {
-        setStep("schedule")
+        setStep("schedule");
       } else {
-        setStep("review")
+        setStep("review");
       }
     } else if (step === "schedule" && date && timeSlot) {
-      setStep("review")
+      setStep("review");
     }
-  }
+  };
 
   const handleBack = () => {
     if (step === "details") {
-      setStep("items")
+      setStep("items");
     } else if (step === "schedule") {
-      setStep("details")
+      setStep("details");
     } else if (step === "review") {
       if (orderType === "scheduled") {
-        setStep("schedule")
+        setStep("schedule");
       } else {
-        setStep("details")
+        setStep("details");
       }
     }
-  }
+  };
 
   // Sample products based on supplier categories
   const getProductsForSupplier = () => {
@@ -129,22 +158,49 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
       { id: "prod-1", name: "Tomatoes", category: "Produce", price: 2.99 },
       { id: "prod-2", name: "Onions", category: "Produce", price: 1.49 },
       { id: "prod-3", name: "Potatoes", category: "Produce", price: 1.99 },
-      { id: "prod-4", name: "Chicken Breast", category: "Meat & Poultry", price: 8.99 },
-      { id: "prod-5", name: "Ground Beef", category: "Meat & Poultry", price: 7.49 },
+      {
+        id: "prod-4",
+        name: "Chicken Breast",
+        category: "Meat & Poultry",
+        price: 8.99,
+      },
+      {
+        id: "prod-5",
+        name: "Ground Beef",
+        category: "Meat & Poultry",
+        price: 7.49,
+      },
       { id: "prod-6", name: "Milk", category: "Dairy", price: 3.29 },
       { id: "prod-7", name: "Cheese", category: "Dairy", price: 5.99 },
       { id: "prod-8", name: "Rice", category: "Dry Goods", price: 2.49 },
       { id: "prod-9", name: "Flour", category: "Dry Goods", price: 1.99 },
-      { id: "prod-10", name: "Coffee Beans", category: "Beverages", price: 12.99 },
-      { id: "prod-11", name: "Fresh Tilapia", category: "Seafood", price: 9.99 },
-      { id: "prod-12", name: "Sourdough Bread", category: "Bakery", price: 4.99 },
+      {
+        id: "prod-10",
+        name: "Coffee Beans",
+        category: "Beverages",
+        price: 12.99,
+      },
+      {
+        id: "prod-11",
+        name: "Fresh Tilapia",
+        category: "Seafood",
+        price: 9.99,
+      },
+      {
+        id: "prod-12",
+        name: "Sourdough Bread",
+        category: "Bakery",
+        price: 4.99,
+      },
       { id: "prod-13", name: "Saffron", category: "Specialty", price: 15.99 },
-    ]
+    ];
 
-    return allProducts.filter((product) => supplier.categories.includes(product.category))
-  }
+    return allProducts.filter((product) =>
+      supplier.categories.includes(product.category)
+    );
+  };
 
-  const products = getProductsForSupplier()
+  const products = getProductsForSupplier();
 
   const renderStepContent = () => {
     switch (step) {
@@ -156,21 +212,31 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
               <DialogDescription>
                 Add items to your order from {supplier.name}
                 <div className="mt-1 text-xs">
-                  <span className="font-medium">First order with this supplier</span> • {supplier.description}
+                  <span className="font-medium">
+                    First order with this supplier
+                  </span>{" "}
+                  • {supplier.description}
                 </div>
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input type="search" placeholder="Search products..." className="pl-8" />
+                <Input
+                  type="search"
+                  placeholder="Search products..."
+                  className="pl-8"
+                />
               </div>
 
               <Tabs defaultValue="all">
                 <TabsList>
                   <TabsTrigger value="all">All</TabsTrigger>
                   {supplier.categories.map((category) => (
-                    <TabsTrigger key={category} value={category.toLowerCase().replace(/\s+/g, "-")}>
+                    <TabsTrigger
+                      key={category}
+                      value={category.toLowerCase().replace(/\s+/g, "-")}
+                    >
                       {category}
                     </TabsTrigger>
                   ))}
@@ -185,13 +251,18 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
                               <div>
                                 <h3 className="font-medium">{product.name}</h3>
                                 <div className="flex items-center gap-2 mt-1">
-                                  <p className="text-sm text-muted-foreground">RWF {product.price.toFixed(2)}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    RWF {product.price.toFixed(2)}
+                                  </p>
                                   <Badge variant="outline" className="text-xs">
                                     {product.category}
                                   </Badge>
                                 </div>
                               </div>
-                              <Button size="sm" onClick={() => handleAddItem(product)}>
+                              <Button
+                                size="sm"
+                                onClick={() => handleAddItem(product)}
+                              >
                                 <Plus className="h-4 w-4" />
                               </Button>
                             </div>
@@ -213,26 +284,37 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
                   <h3 className="font-medium mb-2">Selected Items</h3>
                   <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                     {selectedItems.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between">
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between"
+                      >
                         <div>
                           <p>{item.name}</p>
-                          <p className="text-sm text-muted-foreground">RWF {item.price.toFixed(2)} each</p>
+                          <p className="text-sm text-muted-foreground">
+                            RWF {item.price.toFixed(2)} each
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
                             size="icon"
                             className="h-6 w-6 rounded-full"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            onClick={() =>
+                              handleUpdateQuantity(item.id, item.quantity - 1)
+                            }
                           >
                             -
                           </Button>
-                          <span className="w-8 text-center">{item.quantity}</span>
+                          <span className="w-8 text-center">
+                            {item.quantity}
+                          </span>
                           <Button
                             variant="outline"
                             size="icon"
                             className="h-6 w-6 rounded-full"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            onClick={() =>
+                              handleUpdateQuantity(item.id, item.quantity + 1)
+                            }
                           >
                             +
                           </Button>
@@ -250,7 +332,9 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
                   </div>
                   <div className="mt-2 pt-2 border-t flex justify-between">
                     <span>Total:</span>
-                    <span className="font-medium">RWF {calculateTotal().toFixed(2)}</span>
+                    <span className="font-medium">
+                      RWF {calculateTotal().toFixed(2)}
+                    </span>
                   </div>
                 </div>
               )}
@@ -259,26 +343,33 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleNext} disabled={selectedItems.length === 0}>
+              <Button
+                onClick={handleNext}
+                disabled={selectedItems.length === 0}
+              >
                 Next
               </Button>
             </DialogFooter>
           </>
-        )
+        );
 
       case "details":
         return (
           <>
             <DialogHeader>
               <DialogTitle>New Order - Order Details</DialogTitle>
-              <DialogDescription>Specify order details and delivery preferences</DialogDescription>
+              <DialogDescription>
+                Specify order details and delivery preferences
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               <div className="space-y-2">
                 <Label>Order Type</Label>
                 <RadioGroup
                   value={orderType}
-                  onValueChange={(value) => setOrderType(value as "immediate" | "scheduled")}
+                  onValueChange={(value) =>
+                    setOrderType(value as "immediate" | "scheduled")
+                  }
                   className="flex flex-col space-y-1"
                 >
                   <div className="flex items-center space-x-2">
@@ -309,7 +400,11 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
 
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <Switch id="urgent" checked={isUrgent} onCheckedChange={setIsUrgent} />
+                  <Switch
+                    id="urgent"
+                    checked={isUrgent}
+                    onCheckedChange={setIsUrgent}
+                  />
                   <Label htmlFor="urgent">Mark as Urgent</Label>
                 </div>
               </div>
@@ -317,8 +412,9 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
               <div className="rounded-md bg-muted p-3 text-sm">
                 <p className="font-medium">First Order with {supplier.name}</p>
                 <p className="text-muted-foreground mt-1">
-                  This is your first order with this supplier. We recommend reviewing their terms and conditions before
-                  placing your order.
+                  This is your first order with this supplier. We recommend
+                  reviewing their terms and conditions before placing your
+                  order.
                 </p>
               </div>
             </div>
@@ -326,17 +422,21 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
               <Button variant="outline" onClick={handleBack}>
                 Back
               </Button>
-              <Button onClick={handleNext}>{orderType === "scheduled" ? "Set Schedule" : "Review Order"}</Button>
+              <Button onClick={handleNext}>
+                {orderType === "scheduled" ? "Set Schedule" : "Review Order"}
+              </Button>
             </DialogFooter>
           </>
-        )
+        );
 
       case "schedule":
         return (
           <>
             <DialogHeader>
               <DialogTitle>New Order - Schedule Delivery</DialogTitle>
-              <DialogDescription>Choose when you'd like this order to be delivered</DialogDescription>
+              <DialogDescription>
+                Choose when you'd like this order to be delivered
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               <div className="space-y-2">
@@ -345,7 +445,10 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                      )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {date ? format(date, "PPP") : "Select a date"}
@@ -357,9 +460,9 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
                       selected={date}
                       onSelect={setDate}
                       disabled={(date) => {
-                        const today = new Date()
-                        today.setHours(0, 0, 0, 0)
-                        return date < today || date > addDays(today, 14)
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date < today || date > addDays(today, 14);
                       }}
                       initialFocus
                     />
@@ -374,9 +477,15 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
                     <SelectValue placeholder="Select a time slot" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="morning">Morning (8:00 AM - 12:00 PM)</SelectItem>
-                    <SelectItem value="afternoon">Afternoon (12:00 PM - 4:00 PM)</SelectItem>
-                    <SelectItem value="evening">Evening (4:00 PM - 8:00 PM)</SelectItem>
+                    <SelectItem value="morning">
+                      Morning (8:00 AM - 12:00 PM)
+                    </SelectItem>
+                    <SelectItem value="afternoon">
+                      Afternoon (12:00 PM - 4:00 PM)
+                    </SelectItem>
+                    <SelectItem value="evening">
+                      Evening (4:00 PM - 8:00 PM)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -384,7 +493,9 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Switch id="reminder" defaultChecked />
-                  <Label htmlFor="reminder">Send reminder 2 days before delivery</Label>
+                  <Label htmlFor="reminder">
+                    Send reminder 2 days before delivery
+                  </Label>
                 </div>
               </div>
             </div>
@@ -397,20 +508,24 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
               </Button>
             </DialogFooter>
           </>
-        )
+        );
 
       case "review":
         return (
           <>
             <DialogHeader>
               <DialogTitle>Review Your Order</DialogTitle>
-              <DialogDescription>Please confirm your order details before submitting</DialogDescription>
+              <DialogDescription>
+                Please confirm your order details before submitting
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               <div className="space-y-2">
                 <h3 className="font-medium">Supplier</h3>
                 <p>{supplier.name}</p>
-                <p className="text-sm text-muted-foreground">{supplier.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {supplier.description}
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -420,13 +535,17 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
                     <div key={item.id} className="flex justify-between p-2">
                       <div>
                         <p>{item.name}</p>
-                        <p className="text-sm text-muted-foreground">RWF {item.price.toFixed(2)} each</p>
+                        <p className="text-sm text-muted-foreground">
+                          RWF {item.price.toFixed(2)} each
+                        </p>
                       </div>
                       <div className="text-right">
                         <p>
                           {item.quantity} x RWF {item.price.toFixed(2)}
                         </p>
-                        <p className="font-medium">RWF {(item.quantity * item.price).toFixed(2)}</p>
+                        <p className="font-medium">
+                          RWF {(item.quantity * item.price).toFixed(2)}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -446,8 +565,8 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
                         timeSlot === "morning"
                           ? "Morning (8:00 AM - 12:00 PM)"
                           : timeSlot === "afternoon"
-                            ? "Afternoon (12:00 PM - 4:00 PM)"
-                            : "Evening (4:00 PM - 8:00 PM)"
+                          ? "Afternoon (12:00 PM - 4:00 PM)"
+                          : "Evening (4:00 PM - 8:00 PM)"
                       }`}
                 </p>
               </div>
@@ -468,8 +587,8 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
               <div className="rounded-md bg-blue-50 border border-blue-200 p-2 text-blue-800 text-sm">
                 <p className="font-medium">First Order with New Supplier</p>
                 <p className="mt-1">
-                  After placing this order, we'll add {supplier.name} to your list of connected suppliers for easier
-                  ordering in the future.
+                  After placing this order, we'll add {supplier.name} to your
+                  list of connected suppliers for easier ordering in the future.
                 </p>
               </div>
             </div>
@@ -482,16 +601,18 @@ export function NewSupplierOrderModal({ open, onOpenChange, supplier }: NewSuppl
               </Button>
             </DialogFooter>
           </>
-        )
+        );
 
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">{renderStepContent()}</DialogContent>
+      <DialogContent className="sm:max-w-[550px]">
+        {renderStepContent()}
+      </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,31 +1,50 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Camera, Flag, ImageIcon, Menu, Paperclip, Send } from "lucide-react"
-import Link from "next/link"
-import { format } from "date-fns"
+import { useState, useRef, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowLeft,
+  Camera,
+  Flag,
+  ImageIcon,
+  Menu,
+  Paperclip,
+  Send,
+} from "lucide-react";
+import Link from "next/link";
+import { format } from "date-fns";
 
-export default function SupplierChatPage({ params }: { params: { id: string } }) {
-  const [message, setMessage] = useState("")
-  const [messages, setMessages] = useState<Message[]>(sampleMessages)
-  const [isUrgent, setIsUrgent] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+export default function SupplierChatPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<Message[]>(sampleMessages);
+  const [isUrgent, setIsUrgent] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Find supplier based on ID
-  const supplier = suppliers.find((s) => s.id === params.id) || suppliers[0]
+  const supplier = suppliers.find((s) => s.id === params.id) || suppliers[0];
 
   // Scroll to bottom of messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSendMessage = () => {
-    if (!message.trim()) return
+    if (!message.trim()) return;
 
     const newMessage: Message = {
       id: `msg-${messages.length + 1}`,
@@ -34,12 +53,12 @@ export default function SupplierChatPage({ params }: { params: { id: string } })
       timestamp: new Date(),
       isUrgent,
       attachments: [],
-    }
+    };
 
-    setMessages([...messages, newMessage])
-    setMessage("")
-    setIsUrgent(false)
-  }
+    setMessages([...messages, newMessage]);
+    setMessage("");
+    setIsUrgent(false);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -53,7 +72,7 @@ export default function SupplierChatPage({ params }: { params: { id: string } })
         <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-10rem)]">
           <div className="flex items-center gap-2 mb-4">
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/restaurant/suppliers/${params.id}`}>
+              <Link href={`/dahboard/suppliers/${params.id}`}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Supplier
               </Link>
@@ -63,8 +82,13 @@ export default function SupplierChatPage({ params }: { params: { id: string } })
           <Card className="flex-1 flex flex-col">
             <CardHeader className="flex flex-row items-center gap-4 pb-4">
               <Avatar className="h-10 w-10 border">
-                <AvatarImage src={supplier.logo || "/placeholder.svg"} alt={supplier.name} />
-                <AvatarFallback>{supplier.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarImage
+                  src={supplier.logo || "/placeholder.svg"}
+                  alt={supplier.name}
+                />
+                <AvatarFallback>
+                  {supplier.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div>
                 <CardTitle>{supplier.name}</CardTitle>
@@ -89,10 +113,19 @@ export default function SupplierChatPage({ params }: { params: { id: string } })
               </div>
 
               {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === "restaurant" ? "justify-end" : "justify-start"}`}>
+                <div
+                  key={msg.id}
+                  className={`flex ${
+                    msg.sender === "restaurant"
+                      ? "justify-end"
+                      : "justify-start"
+                  }`}
+                >
                   <div
                     className={`max-w-[80%] rounded-lg p-3 ${
-                      msg.sender === "restaurant" ? "bg-primary text-primary-foreground" : "bg-muted"
+                      msg.sender === "restaurant"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
                     }`}
                   >
                     {msg.isUrgent && (
@@ -109,7 +142,10 @@ export default function SupplierChatPage({ params }: { params: { id: string } })
                     {msg.attachments && msg.attachments.length > 0 && (
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         {msg.attachments.map((attachment, index) => (
-                          <div key={index} className="relative aspect-square rounded-md overflow-hidden">
+                          <div
+                            key={index}
+                            className="relative aspect-square rounded-md overflow-hidden"
+                          >
                             <img
                               src={attachment || "/placeholder.svg"}
                               alt="Attachment"
@@ -121,7 +157,9 @@ export default function SupplierChatPage({ params }: { params: { id: string } })
                     )}
                     <div
                       className={`text-xs mt-1 ${
-                        msg.sender === "restaurant" ? "text-primary-foreground/70" : "text-muted-foreground"
+                        msg.sender === "restaurant"
+                          ? "text-primary-foreground/70"
+                          : "text-muted-foreground"
                       }`}
                     >
                       {format(msg.timestamp, "h:mm a")}
@@ -134,13 +172,25 @@ export default function SupplierChatPage({ params }: { params: { id: string } })
             <CardFooter className="p-4 pt-0">
               <div className="flex flex-col w-full gap-2">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="h-8 w-8 rounded-full">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                  >
                     <Paperclip className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon" className="h-8 w-8 rounded-full">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                  >
                     <ImageIcon className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="icon" className="h-8 w-8 rounded-full">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                  >
                     <Camera className="h-4 w-4" />
                   </Button>
                   <Button
@@ -161,12 +211,16 @@ export default function SupplierChatPage({ params }: { params: { id: string } })
                     className="flex-1 min-h-[80px]"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault()
-                        handleSendMessage()
+                        e.preventDefault();
+                        handleSendMessage();
                       }
                     }}
                   />
-                  <Button onClick={handleSendMessage} size="icon" className="h-10 w-10">
+                  <Button
+                    onClick={handleSendMessage}
+                    size="icon"
+                    className="h-10 w-10"
+                  >
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
@@ -176,18 +230,18 @@ export default function SupplierChatPage({ params }: { params: { id: string } })
         </div>
       </main>
     </div>
-  )
+  );
 }
 
 // Types
 interface Message {
-  id: string
-  content: string
-  sender: "restaurant" | "supplier"
-  timestamp: Date
-  isUrgent?: boolean
-  orderId?: string
-  attachments?: string[]
+  id: string;
+  content: string;
+  sender: "restaurant" | "supplier";
+  timestamp: Date;
+  isUrgent?: boolean;
+  orderId?: string;
+  attachments?: string[];
 }
 
 // Sample data
@@ -204,12 +258,13 @@ const suppliers = [
     logo: "/placeholder.svg?height=40&width=40",
     online: false,
   },
-]
+];
 
 const sampleMessages: Message[] = [
   {
     id: "msg-1",
-    content: "Good morning! I wanted to check if our order #ORD-7891 is confirmed for delivery tomorrow?",
+    content:
+      "Good morning! I wanted to check if our order #ORD-7891 is confirmed for delivery tomorrow?",
     sender: "restaurant",
     timestamp: new Date(new Date().setHours(new Date().getHours() - 3)),
     orderId: "ORD-7891",
@@ -219,7 +274,12 @@ const sampleMessages: Message[] = [
     content:
       "Good morning! Yes, your order #ORD-7891 is confirmed and scheduled for delivery tomorrow between 9:00 AM and 12:00 PM.",
     sender: "supplier",
-    timestamp: new Date(new Date().setHours(new Date().getHours() - 3, new Date().getMinutes() - 5)),
+    timestamp: new Date(
+      new Date().setHours(
+        new Date().getHours() - 3,
+        new Date().getMinutes() - 5
+      )
+    ),
     orderId: "ORD-7891",
   },
   {
@@ -234,7 +294,12 @@ const sampleMessages: Message[] = [
     content:
       "I'll check with our delivery team and try to prioritize your delivery for early morning. I'll update you once confirmed.",
     sender: "supplier",
-    timestamp: new Date(new Date().setHours(new Date().getHours() - 2, new Date().getMinutes() - 5)),
+    timestamp: new Date(
+      new Date().setHours(
+        new Date().getHours() - 2,
+        new Date().getMinutes() - 5
+      )
+    ),
   },
   {
     id: "msg-5",
@@ -257,4 +322,4 @@ const sampleMessages: Message[] = [
     sender: "restaurant",
     timestamp: new Date(new Date().setMinutes(new Date().getMinutes() - 30)),
   },
-]
+];

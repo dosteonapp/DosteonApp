@@ -1,11 +1,24 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Mail,
@@ -17,28 +30,50 @@ import {
   ShoppingCart,
   Calendar,
   MessageSquare,
-} from "lucide-react"
-import Link from "next/link"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+} from "lucide-react";
+import Link from "next/link";
+import {
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
-export default function CustomerDetailPage({ params }: { params: { id: string } }) {
+export default function CustomerDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const [customer] = useState(() => {
-    return customers.find((c) => c.id === params.id) || customers[0]
-  })
+    return customers.find((c) => c.id === params.id) || customers[0];
+  });
 
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/supplier/customers">
+            <Link href="/dashboard/customers">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <h1 className="text-2xl font-bold tracking-tight">{customer.name}</h1>
           <Badge
-            variant={customer.status === "Active" ? "default" : customer.status === "New" ? "secondary" : "outline"}
+            variant={
+              customer.status === "Active"
+                ? "default"
+                : customer.status === "New"
+                ? "secondary"
+                : "outline"
+            }
           >
             {customer.status}
           </Badge>
@@ -67,8 +102,12 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                 <span>Customer since: January 15, 2023</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex items-center">{renderRating(customer.rating)}</div>
-                <span className="text-sm text-muted-foreground">({customer.rating} out of 5)</span>
+                <div className="flex items-center">
+                  {renderRating(customer.rating)}
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  ({customer.rating} out of 5)
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -84,14 +123,24 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                   <p className="text-2xl font-bold">{customer.orders}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Lifetime Value</p>
-                  <p className="text-2xl font-bold">RWF {customer.lifetimeValue.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Lifetime Value
+                  </p>
+                  <p className="text-2xl font-bold">
+                    RWF {customer.lifetimeValue.toLocaleString()}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Avg. Order Value</p>
+                  <p className="text-sm text-muted-foreground">
+                    Avg. Order Value
+                  </p>
                   <p className="text-2xl font-bold">
                     RWF{" "}
-                    {customer.orders > 0 ? Math.round(customer.lifetimeValue / customer.orders).toLocaleString() : 0}
+                    {customer.orders > 0
+                      ? Math.round(
+                          customer.lifetimeValue / customer.orders
+                        ).toLocaleString()
+                      : 0}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -101,13 +150,13 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
               </div>
               <div className="mt-4 flex gap-2">
                 <Button asChild>
-                  <Link href={`/supplier/orders/new?customer=${customer.id}`}>
+                  <Link href={`/dashboard/orders/new?customer=${customer.id}`}>
                     <ShoppingCart className="mr-2 h-4 w-4" />
                     Create Order
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link href={`/supplier/customers/${customer.id}/chat`}>
+                  <Link href={`/dashboard/customers/${customer.id}/chat`}>
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Message
                   </Link>
@@ -141,20 +190,24 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                   <TableBody>
                     {customerOrders.map((order) => (
                       <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.id}</TableCell>
+                        <TableCell className="font-medium">
+                          {order.id}
+                        </TableCell>
                         <TableCell>{order.date}</TableCell>
                         <TableCell>{order.items}</TableCell>
-                        <TableCell>RWF {order.total.toLocaleString()}</TableCell>
+                        <TableCell>
+                          RWF {order.total.toLocaleString()}
+                        </TableCell>
                         <TableCell>
                           <Badge
                             variant={
                               order.status === "Delivered"
                                 ? "default"
                                 : order.status === "In Transit"
-                                  ? "secondary"
-                                  : order.status === "Confirmed"
-                                    ? "outline"
-                                    : "destructive"
+                                ? "secondary"
+                                : order.status === "Confirmed"
+                                ? "outline"
+                                : "destructive"
                             }
                           >
                             {order.status}
@@ -162,7 +215,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                         </TableCell>
                         <TableCell className="text-right">
                           <Button size="sm" variant="ghost" asChild>
-                            <Link href={`/supplier/orders/${order.id}`}>
+                            <Link href={`/dashboard/orders/${order.id}`}>
                               <ShoppingCart className="h-4 w-4" />
                             </Link>
                           </Button>
@@ -178,7 +231,9 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
             <Card>
               <CardHeader>
                 <CardTitle>Order Trends</CardTitle>
-                <CardDescription>Customer ordering patterns over time</CardDescription>
+                <CardDescription>
+                  Customer ordering patterns over time
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ChartContainer
@@ -195,7 +250,10 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={orderTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <LineChart
+                      data={orderTrends}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis yAxisId="left" />
@@ -239,7 +297,9 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                   <TableBody>
                     {topProducts.map((product) => (
                       <TableRow key={product.id}>
-                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {product.name}
+                        </TableCell>
                         <TableCell>{product.category}</TableCell>
                         <TableCell>
                           {product.quantity} {product.unit}
@@ -256,7 +316,9 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
             <Card>
               <CardHeader>
                 <CardTitle>Customer Preferences</CardTitle>
-                <CardDescription>Specific requirements and preferences</CardDescription>
+                <CardDescription>
+                  Specific requirements and preferences
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -290,14 +352,21 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
             <Card>
               <CardHeader>
                 <CardTitle>Customer Notes</CardTitle>
-                <CardDescription>Internal notes about this customer</CardDescription>
+                <CardDescription>
+                  Internal notes about this customer
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {customerNotes.map((note, index) => (
-                  <div key={index} className="border-b pb-4 last:border-0 last:pb-0">
+                  <div
+                    key={index}
+                    className="border-b pb-4 last:border-0 last:pb-0"
+                  >
                     <div className="flex justify-between mb-1">
                       <span className="font-medium">{note.author}</span>
-                      <span className="text-sm text-muted-foreground">{note.date}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {note.date}
+                      </span>
                     </div>
                     <p className="text-sm">{note.content}</p>
                   </div>
@@ -311,59 +380,61 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
 
 function renderRating(rating: number) {
-  const fullStars = Math.floor(rating)
-  const hasHalfStar = rating % 1 !== 0
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0)
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 !== 0;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
 
   return (
     <div className="flex items-center">
       {[...Array(fullStars)].map((_, i) => (
         <Star key={`full-${i}`} className="h-4 w-4 fill-primary text-primary" />
       ))}
-      {hasHalfStar && <StarHalf className="h-4 w-4 fill-primary text-primary" />}
+      {hasHalfStar && (
+        <StarHalf className="h-4 w-4 fill-primary text-primary" />
+      )}
       {[...Array(emptyStars)].map((_, i) => (
         <StarOff key={`empty-${i}`} className="h-4 w-4 text-muted-foreground" />
       ))}
     </div>
-  )
+  );
 }
 
 // Types
 interface Customer {
-  id: string
-  name: string
-  contact: string
-  orders: number
-  lifetimeValue: number
-  status: "Active" | "New" | "Inactive"
-  rating: number
+  id: string;
+  name: string;
+  contact: string;
+  orders: number;
+  lifetimeValue: number;
+  status: "Active" | "New" | "Inactive";
+  rating: number;
 }
 
 interface Order {
-  id: string
-  date: string
-  items: number
-  total: number
-  status: "Pending" | "Confirmed" | "In Transit" | "Delivered"
+  id: string;
+  date: string;
+  items: number;
+  total: number;
+  status: "Pending" | "Confirmed" | "In Transit" | "Delivered";
 }
 
 interface Product {
-  id: string
-  name: string
-  category: string
-  quantity: number
-  unit: string
-  lastOrdered: string
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  lastOrdered: string;
 }
 
 interface Note {
-  author: string
-  date: string
-  content: string
+  author: string;
+  date: string;
+  content: string;
 }
 
 // Sample data
@@ -413,7 +484,7 @@ const customers: Customer[] = [
     status: "New",
     rating: 4,
   },
-]
+];
 
 const customerOrders: Order[] = [
   {
@@ -451,7 +522,7 @@ const customerOrders: Order[] = [
     total: 275000,
     status: "Delivered",
   },
-]
+];
 
 const orderTrends = [
   { month: "Jan", orders: 5, value: 450000 },
@@ -459,7 +530,7 @@ const orderTrends = [
   { month: "Mar", orders: 8, value: 650000 },
   { month: "Apr", orders: 12, value: 985000 },
   { month: "May", orders: 13, value: 1050000 },
-]
+];
 
 const topProducts = [
   {
@@ -502,18 +573,20 @@ const topProducts = [
     unit: "liter",
     lastOrdered: "Apr 21, 2023",
   },
-]
+];
 
 const customerNotes = [
   {
     author: "John Smith",
     date: "May 2, 2023",
-    content: "Customer requested a meeting to discuss potential bulk ordering discounts for next quarter.",
+    content:
+      "Customer requested a meeting to discuss potential bulk ordering discounts for next quarter.",
   },
   {
     author: "Sarah Johnson",
     date: "Apr 15, 2023",
-    content: "Bistro Bella is expanding their menu next month and will likely increase their produce orders by 20%.",
+    content:
+      "Bistro Bella is expanding their menu next month and will likely increase their produce orders by 20%.",
   },
   {
     author: "Michael Wong",
@@ -521,4 +594,4 @@ const customerNotes = [
     content:
       "Customer complained about quality of last tomato delivery. We've arranged for premium selection on their next order.",
   },
-]
+];

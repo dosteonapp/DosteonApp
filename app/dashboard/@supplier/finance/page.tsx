@@ -68,13 +68,13 @@ export default function SupplierFinancePage() {
               Daily Reports
             </Button>
             {/* <Button variant="outline" asChild>
-              <Link href="/supplier/finance/export">
+              <Link href="/dashboard/finance/export">
                 <Download className="mr-2 h-4 w-4" />
                 Export
               </Link>
             </Button> */}
             {/* <Button variant="default" asChild>
-              <Link href="/supplier/finance/revenue">
+              <Link href="/dashboard/finance/revenue">
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Revenue Details
               </Link>
@@ -311,7 +311,9 @@ export default function SupplierFinancePage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <Button size="sm" variant="ghost" asChild>
-                              <Link href={`/supplier/finance/sales/${sale.id}`}>
+                              <Link
+                                href={`/dashboard/finance/sales/${sale.id}`}
+                              >
                                 <ArrowUpRight className="h-4 w-4" />
                               </Link>
                             </Button>
@@ -371,7 +373,7 @@ export default function SupplierFinancePage() {
                             <div className="flex justify-end gap-2">
                               <Button size="sm" variant="outline" asChild>
                                 <Link
-                                  href={`/supplier/finance/invoices/${invoice.id}`}
+                                  href={`/dashboard/finance/invoices/${invoice.id}`}
                                 >
                                   View
                                 </Link>
@@ -431,7 +433,7 @@ export default function SupplierFinancePage() {
                           <TableCell className="text-right">
                             <Button size="sm" variant="ghost" asChild>
                               <Link
-                                href={`/supplier/finance/expenses/${expense.id}`}
+                                href={`/dashboard/finance/expenses/${expense.id}`}
                               >
                                 <ArrowUpRight className="h-4 w-4" />
                               </Link>

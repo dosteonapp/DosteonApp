@@ -55,13 +55,13 @@ export default function CommunicationsPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
-              <Link href="/supplier/communications/settings">
+              <Link href="/dashboard/communications/settings">
                 <Bell className="mr-2 h-4 w-4" />
                 Notification Settings
               </Link>
             </Button>
             <Button asChild>
-              <Link href="/supplier/communications/broadcast">
+              <Link href="/dashboard/communications/broadcast">
                 <MessageSquare className="mr-2 h-4 w-4" />
                 New Broadcast
               </Link>
@@ -347,7 +347,7 @@ export default function CommunicationsPage() {
               </CardContent>
               <CardFooter>
                 <Button asChild>
-                  <Link href="/supplier/communications/broadcast">
+                  <Link href="/dashboard/communications/broadcast">
                     <Plus className="h-4 w-4 mr-2" />
                     New Broadcast
                   </Link>

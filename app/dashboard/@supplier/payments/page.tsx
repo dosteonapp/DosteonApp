@@ -227,7 +227,7 @@ export default function PaymentsPage() {
               Export
             </Button>
             <Button asChild>
-              <Link href="/supplier/payments/settings">
+              <Link href="/dashboard/payments/settings">
                 <FileText className="mr-2 h-4 w-4" />
                 Payment Terms
               </Link>
@@ -454,7 +454,7 @@ export default function PaymentsPage() {
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button size="sm" variant="outline" asChild>
-                                <Link href={`/supplier/payments/invoices/${invoice.id}`}>View</Link>
+                                <Link href={`/dashboard/payments/invoices/${invoice.id}`}>View</Link>
                               </Button>
                               {invoice.status !== "Paid" && (
                                 <Button size="sm">Record Payment</Button>
@@ -514,7 +514,7 @@ export default function PaymentsPage() {
               </CardContent>
               <CardFooter>
                 <Button asChild>
-                  <Link href="/supplier/payments/terms/new">
+                  <Link href="/dashboard/payments/terms/new">
                     Add New Payment Term
                   </Link>
                 </Button>

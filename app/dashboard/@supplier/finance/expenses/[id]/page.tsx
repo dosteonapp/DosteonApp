@@ -1,12 +1,29 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Download, Menu, FileText, Receipt, CheckCircle } from "lucide-react"
-import Link from "next/link"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowLeft,
+  Download,
+  Menu,
+  FileText,
+  Receipt,
+  CheckCircle,
+} from "lucide-react";
+import Link from "next/link";
 
-export default function ExpenseDetailsPage({ params }: { params: { id: string } }) {
+export default function ExpenseDetailsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   // In a real app, you would fetch the expense data based on the ID
-  const expense = expenses.find((e) => e.id === params.id) || expenses[0]
+  const expense = expenses.find((e) => e.id === params.id) || expenses[0];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -19,7 +36,7 @@ export default function ExpenseDetailsPage({ params }: { params: { id: string } 
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/supplier/finance">
+            <Link href="/dashboard/finance">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Finance
             </Link>
@@ -28,12 +45,22 @@ export default function ExpenseDetailsPage({ params }: { params: { id: string } 
 
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Expense #{expense.id}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Expense #{expense.id}
+            </h1>
             <div className="flex items-center gap-2 mt-1">
-              <Badge className={expense.status === "Paid" ? "bg-green-500 text-white" : "bg-blue-500 text-white"}>
+              <Badge
+                className={
+                  expense.status === "Paid"
+                    ? "bg-green-500 text-white"
+                    : "bg-blue-500 text-white"
+                }
+              >
                 {expense.status}
               </Badge>
-              <span className="text-muted-foreground">Date: {expense.date}</span>
+              <span className="text-muted-foreground">
+                Date: {expense.date}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-4 md:mt-0">
@@ -70,15 +97,23 @@ export default function ExpenseDetailsPage({ params }: { params: { id: string } 
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Amount</p>
-                  <p className="font-medium">RWF {expense.amount.toLocaleString()}</p>
+                  <p className="font-medium">
+                    RWF {expense.amount.toLocaleString()}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Payment Method</p>
+                  <p className="text-sm text-muted-foreground">
+                    Payment Method
+                  </p>
                   <p className="font-medium">{expense.paymentMethod}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Reference Number</p>
-                  <p className="font-medium">{expense.referenceNumber || "N/A"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Reference Number
+                  </p>
+                  <p className="font-medium">
+                    {expense.referenceNumber || "N/A"}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Paid By</p>
@@ -160,14 +195,19 @@ export default function ExpenseDetailsPage({ params }: { params: { id: string } 
           <CardContent className="space-y-4">
             <div>
               <h3 className="font-medium mb-2">Notes</h3>
-              <p className="text-sm">{expense.notes || "No notes available."}</p>
+              <p className="text-sm">
+                {expense.notes || "No notes available."}
+              </p>
             </div>
             <div>
               <h3 className="font-medium mb-2">Attachments</h3>
               {expense.attachments.length > 0 ? (
                 <div className="space-y-2">
                   {expense.attachments.map((attachment, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 p-2 border rounded-md"
+                    >
                       <FileText className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{attachment.name}</span>
                       <Button size="sm" variant="ghost" className="ml-auto">
@@ -177,7 +217,9 @@ export default function ExpenseDetailsPage({ params }: { params: { id: string } 
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No attachments available.</p>
+                <p className="text-sm text-muted-foreground">
+                  No attachments available.
+                </p>
               )}
             </div>
           </CardContent>
@@ -197,7 +239,9 @@ export default function ExpenseDetailsPage({ params }: { params: { id: string } 
                     <div className="text-sm text-muted-foreground">
                       By {event.by} on {event.date}
                     </div>
-                    {event.notes && <div className="text-sm mt-1">{event.notes}</div>}
+                    {event.notes && (
+                      <div className="text-sm mt-1">{event.notes}</div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -206,7 +250,7 @@ export default function ExpenseDetailsPage({ params }: { params: { id: string } 
         </Card>
       </main>
     </div>
-  )
+  );
 }
 
 // Sample data
@@ -331,4 +375,4 @@ const expenses = [
       },
     ],
   },
-]
+];

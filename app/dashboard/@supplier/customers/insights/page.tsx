@@ -1,12 +1,24 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Download, Calendar } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Download, Calendar } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -19,16 +31,20 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 export default function CustomerInsightsPage() {
-  const [timeRange, setTimeRange] = useState("30days")
+  const [timeRange, setTimeRange] = useState("30days");
 
   return (
     <div className="flex flex-col min-h-screen">
       <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6">
-        <Link href="/supplier/customers" className="flex items-center gap-2">
+        <Link href="/dashboard/customers" className="flex items-center gap-2">
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Customers</span>
         </Link>
@@ -36,8 +52,12 @@ export default function CustomerInsightsPage() {
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Customer Insights</h1>
-            <p className="text-muted-foreground">Analyze customer behavior and performance metrics</p>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Customer Insights
+            </h1>
+            <p className="text-muted-foreground">
+              Analyze customer behavior and performance metrics
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -63,7 +83,9 @@ export default function CustomerInsightsPage() {
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Customers
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">120</div>
@@ -74,7 +96,9 @@ export default function CustomerInsightsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Average Order Value
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">RWF 185,000</div>
@@ -85,7 +109,9 @@ export default function CustomerInsightsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Customer Retention</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Customer Retention
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">87%</div>
@@ -123,10 +149,15 @@ export default function CustomerInsightsPage() {
                           fill="#8884d8"
                           dataKey="value"
                           nameKey="name"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) =>
+                            `${name}: ${(percent * 100).toFixed(0)}%`
+                          }
                         >
                           {customerDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
                           ))}
                         </Pie>
                         <Tooltip />
@@ -156,14 +187,25 @@ export default function CustomerInsightsPage() {
                     className="h-[300px]"
                   >
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={customerGrowth} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <BarChart
+                        data={customerGrowth}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="month" />
                         <YAxis />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Legend />
-                        <Bar dataKey="new" fill="var(--color-new)" name="New Customers" />
-                        <Bar dataKey="total" fill="var(--color-total)" name="Total Customers" />
+                        <Bar
+                          dataKey="new"
+                          fill="var(--color-new)"
+                          name="New Customers"
+                        />
+                        <Bar
+                          dataKey="total"
+                          fill="var(--color-total)"
+                          name="Total Customers"
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
@@ -173,19 +215,32 @@ export default function CustomerInsightsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Customer Value Distribution</CardTitle>
-                <CardDescription>Breakdown of customers by value segment</CardDescription>
+                <CardDescription>
+                  Breakdown of customers by value segment
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={valueDistribution} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <BarChart
+                      data={valueDistribution}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="customers" fill="#8884d8" name="Number of Customers" />
-                      <Bar dataKey="revenue" fill="#82ca9d" name="Revenue (Million RWF)" />
+                      <Bar
+                        dataKey="customers"
+                        fill="#8884d8"
+                        name="Number of Customers"
+                      />
+                      <Bar
+                        dataKey="revenue"
+                        fill="#82ca9d"
+                        name="Revenue (Million RWF)"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -204,11 +259,11 @@ export default function CustomerInsightsPage() {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
 
 // Sample data
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"]
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
 const customerDistribution = [
   { name: "Fine Dining", value: 25 },
@@ -216,7 +271,7 @@ const customerDistribution = [
   { name: "Cafe", value: 20 },
   { name: "Fast Food", value: 15 },
   { name: "Other", value: 5 },
-]
+];
 
 const customerGrowth = [
   { month: "Jan", new: 5, total: 65 },
@@ -225,11 +280,11 @@ const customerGrowth = [
   { month: "Apr", new: 10, total: 95 },
   { month: "May", new: 15, total: 110 },
   { month: "Jun", new: 10, total: 120 },
-]
+];
 
 const valueDistribution = [
   { name: "High Value", customers: 28, revenue: 12.5 },
   { name: "Medium Value", customers: 45, revenue: 8.2 },
   { name: "Low Value", customers: 32, revenue: 3.1 },
   { name: "New", customers: 15, revenue: 0.8 },
-]
+];
