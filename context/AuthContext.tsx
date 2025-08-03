@@ -112,7 +112,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Update verifyEmail to accept code
   const verifyEmail = async (email: string, code: string) => {
-    const { data } = await axiosInstance.post("/auth/verify-email", { email, code });
+    const { data } = await axiosInstance.post("/auth/verify-email", {
+      email,
+      code,
+    });
     return validateApiResponse(data);
   };
 
@@ -148,8 +151,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       resetFormStatus(helpers);
-      const response = await signupMutation(values);
-      return { success: true, email: values.email }; // Return email for verification
+      // const response =
+      await signupMutation(values);
+      window.location.href = "/dashboard";
+      // return { success: true, email: values.email }; // Return email for verification
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
       return { success: false };

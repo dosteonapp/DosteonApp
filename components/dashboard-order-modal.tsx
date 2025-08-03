@@ -1,9 +1,16 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Check, AlertTriangle, TrendingUp, TrendingDown, Star, Search } from "lucide-react"
+import { useState } from "react";
+import {
+  Check,
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  Star,
+  Search,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,22 +18,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DashboardOrderModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalProps) {
-  const [step, setStep] = useState<"item" | "supplier" | "details" | "success">("item")
+export function DashboardOrderModal({
+  open,
+  onOpenChange,
+}: DashboardOrderModalProps) {
+  const [step, setStep] = useState<"item" | "supplier" | "details" | "success">(
+    "item"
+  );
   const [formData, setFormData] = useState({
     item: "",
     itemName: "",
@@ -36,24 +48,80 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
     supplier: "",
     deliveryDate: "",
     notes: "",
-  })
+  });
 
   const [warnings, setWarnings] = useState<{
-    quantity?: string
-    deliveryDate?: string
-  }>({})
+    quantity?: string;
+    deliveryDate?: string;
+  }>({});
 
   // Sample inventory items
   const inventoryItems = [
-    { id: "1", name: "Tomatoes", category: "Produce", unit: "kg", currentStock: 2.5, minLevel: 5 },
-    { id: "2", name: "Onions", category: "Produce", unit: "kg", currentStock: 5, minLevel: 8 },
-    { id: "3", name: "Chicken Breast", category: "Meat & Poultry", unit: "kg", currentStock: 8, minLevel: 10 },
-    { id: "4", name: "Olive Oil", category: "Dry Goods", unit: "liter", currentStock: 5, minLevel: 2 },
-    { id: "5", name: "Rice", category: "Dry Goods", unit: "kg", currentStock: 10, minLevel: 5 },
-    { id: "6", name: "Milk", category: "Dairy", unit: "liter", currentStock: 4, minLevel: 6 },
-    { id: "7", name: "Potatoes", category: "Produce", unit: "kg", currentStock: 15, minLevel: 10 },
-    { id: "8", name: "Flour", category: "Dry Goods", unit: "kg", currentStock: 3, minLevel: 5 },
-  ]
+    {
+      id: "1",
+      name: "Tomatoes",
+      category: "Produce",
+      unit: "kg",
+      currentStock: 2.5,
+      minLevel: 5,
+    },
+    {
+      id: "2",
+      name: "Onions",
+      category: "Produce",
+      unit: "kg",
+      currentStock: 5,
+      minLevel: 8,
+    },
+    {
+      id: "3",
+      name: "Chicken Breast",
+      category: "Meat & Poultry",
+      unit: "kg",
+      currentStock: 8,
+      minLevel: 10,
+    },
+    {
+      id: "4",
+      name: "Olive Oil",
+      category: "Dry Goods",
+      unit: "liter",
+      currentStock: 5,
+      minLevel: 2,
+    },
+    {
+      id: "5",
+      name: "Rice",
+      category: "Dry Goods",
+      unit: "kg",
+      currentStock: 10,
+      minLevel: 5,
+    },
+    {
+      id: "6",
+      name: "Milk",
+      category: "Dairy",
+      unit: "liter",
+      currentStock: 4,
+      minLevel: 6,
+    },
+    {
+      id: "7",
+      name: "Potatoes",
+      category: "Produce",
+      unit: "kg",
+      currentStock: 15,
+      minLevel: 10,
+    },
+    {
+      id: "8",
+      name: "Flour",
+      category: "Dry Goods",
+      unit: "kg",
+      currentStock: 3,
+      minLevel: 5,
+    },
+  ];
 
   // Suggested suppliers based on the item
   const suggestedSuppliers = [
@@ -93,14 +161,14 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
       deliveryFlexibility: "High",
       categories: ["Dairy"],
     },
-  ]
+  ];
 
   const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
     // If selecting an item, update related fields
     if (field === "item") {
-      const selectedItem = inventoryItems.find((item) => item.id === value)
+      const selectedItem = inventoryItems.find((item) => item.id === value);
       if (selectedItem) {
         setFormData((prev) => ({
           ...prev,
@@ -111,72 +179,73 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
             selectedItem.currentStock < selectedItem.minLevel
               ? (selectedItem.minLevel - selectedItem.currentStock).toFixed(1)
               : "1",
-        }))
+        }));
       }
     }
 
     // Validate as user types
-    validateField(field, value)
-  }
+    validateField(field, value);
+  };
 
   const validateField = (field: string, value: string) => {
-    const newWarnings = { ...warnings }
+    const newWarnings = { ...warnings };
 
     if (field === "quantity") {
-      const quantity = Number.parseFloat(value)
+      const quantity = Number.parseFloat(value);
 
       if (quantity <= 0) {
-        newWarnings.quantity = "Quantity must be greater than zero"
+        newWarnings.quantity = "Quantity must be greater than zero";
       } else if (quantity > 100) {
-        newWarnings.quantity = "Large order quantity. Please confirm this is correct."
+        newWarnings.quantity =
+          "Large order quantity. Please confirm this is correct.";
       } else {
-        delete newWarnings.quantity
+        delete newWarnings.quantity;
       }
     }
 
     if (field === "deliveryDate") {
-      const deliveryDate = new Date(value)
-      const today = new Date()
+      const deliveryDate = new Date(value);
+      const today = new Date();
 
       if (deliveryDate < today) {
-        newWarnings.deliveryDate = "Delivery date cannot be in the past"
+        newWarnings.deliveryDate = "Delivery date cannot be in the past";
       } else {
-        delete newWarnings.deliveryDate
+        delete newWarnings.deliveryDate;
       }
     }
 
-    setWarnings(newWarnings)
-  }
+    setWarnings(newWarnings);
+  };
 
   const handleNextStep = () => {
     if (step === "item" && formData.item) {
-      setStep("supplier")
+      setStep("supplier");
     } else if (step === "supplier" && formData.supplier) {
-      setStep("details")
+      setStep("details");
     }
-  }
+  };
 
   const handlePreviousStep = () => {
     if (step === "supplier") {
-      setStep("item")
+      setStep("item");
     } else if (step === "details") {
-      setStep("supplier")
+      setStep("supplier");
     }
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Here you would typically send the order to your backend
     // For now, we'll just simulate a successful submission
     setTimeout(() => {
-      setStep("success")
-    }, 500)
-  }
+      setStep("success");
+    }, 500);
+  };
 
   const handleClose = () => {
     // Reset the form when closing
-    setStep("item")
+    setStep("item");
     setFormData({
       item: "",
       itemName: "",
@@ -186,27 +255,29 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
       supplier: "",
       deliveryDate: "",
       notes: "",
-    })
-    onOpenChange(false)
-  }
+    });
+    onOpenChange(false);
+  };
 
   const getPriceIndicator = (level: string) => {
     switch (level) {
       case "Low":
-        return <TrendingUp className="h-4 w-4 text-destructive" />
+        return <TrendingUp className="h-4 w-4 text-destructive" />;
       case "Medium":
-        return null
+        return null;
       case "High":
-        return <TrendingDown className="h-4 w-4 text-secondary-500" />
+        return <TrendingDown className="h-4 w-4 text-secondary-500" />;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const getRelevantSuppliers = () => {
-    if (!formData.category) return suggestedSuppliers
-    return suggestedSuppliers.filter((supplier) => supplier.categories.includes(formData.category))
-  }
+    if (!formData.category) return suggestedSuppliers;
+    return suggestedSuppliers.filter((supplier) =>
+      supplier.categories.includes(formData.category)
+    );
+  };
 
   const renderStepContent = () => {
     switch (step) {
@@ -215,13 +286,19 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
           <>
             <DialogHeader>
               <DialogTitle>New Order - Select Item</DialogTitle>
-              <DialogDescription>Select an item from your inventory to order</DialogDescription>
+              <DialogDescription>
+                Select an item from your inventory to order
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <div className="space-y-4">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input type="search" placeholder="Search items..." className="pl-8" />
+                  <Input
+                    type="search"
+                    placeholder="Search items..."
+                    className="pl-8"
+                  />
                 </div>
 
                 <Tabs defaultValue="all">
@@ -230,42 +307,15 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
                     <TabsTrigger value="low">Low Stock</TabsTrigger>
                     <TabsTrigger value="critical">Critical</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="all" className="space-y-2 mt-2">
-                    {inventoryItems.map((item) => (
-                      <Card
-                        key={item.id}
-                        className={`cursor-pointer border-2 ${
-                          formData.item === item.id ? "border-primary-500 bg-primary-50" : ""
-                        }`}
-                        onClick={() => handleChange("item", item.id)}
-                      >
-                        <CardContent className="p-3">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium">{item.name}</div>
-                              <div className="text-sm text-muted-foreground">{item.category}</div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-medium">
-                                {item.currentStock} {item.unit}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                Min: {item.minLevel} {item.unit}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </TabsContent>
-                  <TabsContent value="low" className="space-y-2 mt-2">
-                    {inventoryItems
-                      .filter((item) => item.currentStock < item.minLevel && item.currentStock > item.minLevel * 0.5)
-                      .map((item) => (
+                  <div className=" max-h">
+                    <TabsContent value="all" className="space-y-2 mt-2">
+                      {inventoryItems.map((item) => (
                         <Card
                           key={item.id}
                           className={`cursor-pointer border-2 ${
-                            formData.item === item.id ? "border-primary-500 bg-primary-50" : ""
+                            formData.item === item.id
+                              ? "border-primary-500 bg-primary-50"
+                              : ""
                           }`}
                           onClick={() => handleChange("item", item.id)}
                         >
@@ -273,7 +323,9 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
                             <div className="flex items-center justify-between">
                               <div>
                                 <div className="font-medium">{item.name}</div>
-                                <div className="text-sm text-muted-foreground">{item.category}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {item.category}
+                                </div>
                               </div>
                               <div className="text-right">
                                 <div className="font-medium">
@@ -287,37 +339,82 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
                           </CardContent>
                         </Card>
                       ))}
-                  </TabsContent>
-                  <TabsContent value="critical" className="space-y-2 mt-2">
-                    {inventoryItems
-                      .filter((item) => item.currentStock <= item.minLevel * 0.5)
-                      .map((item) => (
-                        <Card
-                          key={item.id}
-                          className={`cursor-pointer border-2 ${
-                            formData.item === item.id ? "border-primary-500 bg-primary-50" : ""
-                          }`}
-                          onClick={() => handleChange("item", item.id)}
-                        >
-                          <CardContent className="p-3">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-medium">{item.name}</div>
-                                <div className="text-sm text-muted-foreground">{item.category}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-medium">
-                                  {item.currentStock} {item.unit}
+                    </TabsContent>
+                    <TabsContent value="low" className="space-y-2 mt-2">
+                      {inventoryItems
+                        .filter(
+                          (item) =>
+                            item.currentStock < item.minLevel &&
+                            item.currentStock > item.minLevel * 0.5
+                        )
+                        .map((item) => (
+                          <Card
+                            key={item.id}
+                            className={`cursor-pointer border-2 ${
+                              formData.item === item.id
+                                ? "border-primary-500 bg-primary-50"
+                                : ""
+                            }`}
+                            onClick={() => handleChange("item", item.id)}
+                          >
+                            <CardContent className="p-3">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium">{item.name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {item.category}
+                                  </div>
                                 </div>
-                                <div className="text-sm text-muted-foreground">
-                                  Min: {item.minLevel} {item.unit}
+                                <div className="text-right">
+                                  <div className="font-medium">
+                                    {item.currentStock} {item.unit}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    Min: {item.minLevel} {item.unit}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </TabsContent>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </TabsContent>
+                    <TabsContent value="critical" className="space-y-2 mt-2">
+                      {inventoryItems
+                        .filter(
+                          (item) => item.currentStock <= item.minLevel * 0.5
+                        )
+                        .map((item) => (
+                          <Card
+                            key={item.id}
+                            className={`cursor-pointer border-2 ${
+                              formData.item === item.id
+                                ? "border-primary-500 bg-primary-50"
+                                : ""
+                            }`}
+                            onClick={() => handleChange("item", item.id)}
+                          >
+                            <CardContent className="p-3">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium">{item.name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {item.category}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-medium">
+                                    {item.currentStock} {item.unit}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    Min: {item.minLevel} {item.unit}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </TabsContent>
+                  </div>
                 </Tabs>
               </div>
             </div>
@@ -334,13 +431,15 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
               </Button>
             </DialogFooter>
           </>
-        )
+        );
       case "supplier":
         return (
           <>
             <DialogHeader>
               <DialogTitle>New Order - Select Supplier</DialogTitle>
-              <DialogDescription>Choose a supplier for {formData.itemName}</DialogDescription>
+              <DialogDescription>
+                Choose a supplier for {formData.itemName}
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <div className="space-y-4">
@@ -350,7 +449,9 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
                     <Card
                       key={supplier.name}
                       className={`cursor-pointer border-2 ${
-                        formData.supplier === supplier.name ? "border-primary-500 bg-primary-50" : ""
+                        formData.supplier === supplier.name
+                          ? "border-primary-500 bg-primary-50"
+                          : ""
                       }`}
                       onClick={() => handleChange("supplier", supplier.name)}
                     >
@@ -360,16 +461,23 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
                             <div className="font-medium">{supplier.name}</div>
                             <div className="flex items-center">
                               <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              <span className="text-xs ml-1">{supplier.rating}</span>
+                              <span className="text-xs ml-1">
+                                {supplier.rating}
+                              </span>
                             </div>
                           </div>
-                          <Badge variant="outline" className="flex items-center gap-1">
+                          <Badge
+                            variant="outline"
+                            className="flex items-center gap-1"
+                          >
                             {getPriceIndicator(supplier.priceCompetitiveness)}
                             Price: {supplier.priceCompetitiveness}
                           </Badge>
                         </div>
                         <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                          <div>Fulfillment Rate: {supplier.fulfillmentRate}</div>
+                          <div>
+                            Fulfillment Rate: {supplier.fulfillmentRate}
+                          </div>
                           <div>Response Time: {supplier.responseTime}</div>
                         </div>
                       </CardContent>
@@ -379,7 +487,11 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handlePreviousStep}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePreviousStep}
+              >
                 Back
               </Button>
               <Button
@@ -391,21 +503,24 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
               </Button>
             </DialogFooter>
           </>
-        )
+        );
       case "details":
         return (
           <>
             <DialogHeader>
               <DialogTitle>New Order - Order Details</DialogTitle>
               <DialogDescription>
-                Finalize your order for {formData.itemName} from {formData.supplier}
+                Finalize your order for {formData.itemName} from{" "}
+                {formData.supplier}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="quantity">Quantity to Order ({formData.unit})</Label>
+                    <Label htmlFor="quantity">
+                      Quantity to Order ({formData.unit})
+                    </Label>
                     <Input
                       id="quantity"
                       type="number"
@@ -422,18 +537,24 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="deliveryDate">Requested Delivery Date</Label>
+                    <Label htmlFor="deliveryDate">
+                      Requested Delivery Date
+                    </Label>
                     <Input
                       id="deliveryDate"
                       type="date"
                       value={formData.deliveryDate}
-                      onChange={(e) => handleChange("deliveryDate", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("deliveryDate", e.target.value)
+                      }
                       required
                     />
                     {warnings.deliveryDate && (
                       <Alert variant="warning" className="mt-2 py-2">
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>{warnings.deliveryDate}</AlertDescription>
+                        <AlertDescription>
+                          {warnings.deliveryDate}
+                        </AlertDescription>
                       </Alert>
                     )}
                   </div>
@@ -450,16 +571,23 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={handlePreviousStep}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousStep}
+                >
                   Back
                 </Button>
-                <Button type="submit" className="bg-primary-500 hover:bg-primary-600">
+                <Button
+                  type="submit"
+                  className="bg-primary-500 hover:bg-primary-600"
+                >
                   Place Order
                 </Button>
               </DialogFooter>
             </form>
           </>
-        )
+        );
       case "success":
         return (
           <>
@@ -469,35 +597,48 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
                 Order Placed Successfully
               </DialogTitle>
               <DialogDescription>
-                Your order for {formData.itemName} has been sent to {formData.supplier}.
+                Your order for {formData.itemName} has been sent to{" "}
+                {formData.supplier}.
               </DialogDescription>
             </DialogHeader>
             <div className="py-6">
               <div className="rounded-lg border p-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Item</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Item
+                    </p>
                     <p>{formData.itemName}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Quantity</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Quantity
+                    </p>
                     <p>
                       {formData.quantity} {formData.unit}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Supplier</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Supplier
+                    </p>
                     <p>{formData.supplier}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Requested Delivery</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Requested Delivery
+                    </p>
                     <p>
-                      {formData.deliveryDate ? new Date(formData.deliveryDate).toLocaleDateString() : "Not specified"}
+                      {formData.deliveryDate
+                        ? new Date(formData.deliveryDate).toLocaleDateString()
+                        : "Not specified"}
                     </p>
                   </div>
                   {formData.notes && (
                     <div className="col-span-2">
-                      <p className="text-sm font-medium text-muted-foreground">Notes</p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Notes
+                      </p>
                       <p>{formData.notes}</p>
                     </div>
                   )}
@@ -509,7 +650,7 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
               <Button
                 variant="outline"
                 onClick={() => {
-                  setStep("item")
+                  setStep("item");
                   setFormData({
                     item: "",
                     itemName: "",
@@ -519,22 +660,24 @@ export function DashboardOrderModal({ open, onOpenChange }: DashboardOrderModalP
                     supplier: "",
                     deliveryDate: "",
                     notes: "",
-                  })
+                  });
                 }}
               >
                 Place Another Order
               </Button>
             </DialogFooter>
           </>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">{renderStepContent()}</DialogContent>
+      <DialogContent className="sm:max-w-[550px]">
+        {renderStepContent()}
+      </DialogContent>
     </Dialog>
-  )
+  );
 }
