@@ -18,15 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Menu, Star, StarHalf, Loader2, Trash2 } from "lucide-react";
+import { Search, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMyNetwork, useRemoveFromMyNetwork } from "@/hooks/network";
 import { useToast } from "@/hooks/use-toast";
@@ -43,7 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export default function SuppliersPage() {
+export default function RestaurantsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -66,7 +59,7 @@ export default function SuppliersPage() {
 
   const removeFromNetworkMutation = useRemoveFromMyNetwork();
 
-  const suppliers = networkResponse?.data?.items || [];
+  const restaurants = networkResponse?.data?.items || [];
   const pagination = networkResponse?.data?.pagination;
 
   // Reset to first page when search changes
@@ -113,26 +106,21 @@ export default function SuppliersPage() {
       </div>
     );
   }
+
   return (
     <div className="flex flex-col min-h-screen">
-      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
-        <Menu className="h-6 w-6" />
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">Suppliers</h1>
-        </div>
-      </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Suppliers</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Restaurants</h1>
             <p className="text-muted-foreground">
-              Manage your supplier relationships
+              Manage your restaurant partnerships
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button asChild>
-              <Link href="/dashboard/suppliers/discover">
-                Discover New Suppliers
+              <Link href="/dashboard/restaurants/discover">
+                Discover New Restaurants
               </Link>
             </Button>
           </div>
@@ -140,9 +128,9 @@ export default function SuppliersPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Your Suppliers</CardTitle>
+            <CardTitle>Your Restaurant Partners</CardTitle>
             <CardDescription>
-              View and manage your supplier relationships
+              View and manage your restaurant partnerships
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -152,39 +140,12 @@ export default function SuppliersPage() {
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search suppliers..."
+                    placeholder="Search restaurants..."
                     className="pl-8 w-full md:w-[300px]"
                     value={searchInput}
                     onChange={(e) => handleSearchInputChange(e.target.value)}
                   />
                 </div>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="produce">Produce</SelectItem>
-                    <SelectItem value="meat">Meat & Poultry</SelectItem>
-                    <SelectItem value="dairy">Dairy</SelectItem>
-                    <SelectItem value="dry-goods">Dry Goods</SelectItem>
-                    <SelectItem value="beverages">Beverages</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Rating" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Ratings</SelectItem>
-                    <SelectItem value="excellent">Excellent</SelectItem>
-                    <SelectItem value="good">Good</SelectItem>
-                    <SelectItem value="fair">Fair</SelectItem>
-                    <SelectItem value="poor">Poor</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
@@ -192,7 +153,7 @@ export default function SuppliersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Supplier Name</TableHead>
+                    <TableHead>Restaurant Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Account Type</TableHead>
                     <TableHead>Connection Date</TableHead>
@@ -209,61 +170,54 @@ export default function SuppliersPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ) : suppliers.length === 0 ? (
+                  ) : restaurants.length === 0 ? (
                     <TableRow>
                       <TableCell
                         colSpan={5}
                         className="text-center py-8 text-muted-foreground"
                       >
                         <div className="flex flex-col items-center gap-2">
-                          <p>No suppliers in your network yet</p>
+                          <p>No restaurants in your network yet</p>
                           <Button asChild>
-                            <Link href="/dashboard/suppliers/discover">
-                              Discover Suppliers
+                            <Link href="/dashboard/restaurants/discover">
+                              Discover Restaurants
                             </Link>
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    suppliers.map((supplier) => (
-                      <TableRow key={supplier._id}>
+                    restaurants.map((restaurant) => (
+                      <TableRow key={restaurant._id}>
                         <TableCell className="font-medium">
                           <div>
                             <div className="font-medium">
-                              {supplier.networkUser.firstname}{" "}
-                              {supplier.networkUser.lastname}
+                              {restaurant.networkUser.firstname}{" "}
+                              {restaurant.networkUser.lastname}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {supplier.networkUser.active
+                              {restaurant.networkUser.active
                                 ? "Active"
                                 : "Inactive"}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{supplier.networkUser.email}</TableCell>
+                        <TableCell>{restaurant.networkUser.email}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            {supplier.networkUserType}
+                            {restaurant.networkUserType}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {new Date(supplier.createdAt).toLocaleDateString()}
+                          {new Date(restaurant.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button size="sm" variant="outline" asChild>
                               <Link
-                                href={`/dashboard/suppliers/${supplier.networkUserId}`}
+                                href={`/dashboard/restaurants/${restaurant.networkUserId}`}
                               >
                                 View
-                              </Link>
-                            </Button>
-                            <Button size="sm" variant="outline" asChild>
-                              <Link
-                                href={`/dashboard/orders/new?supplier=${supplier.networkUserId}`}
-                              >
-                                Order
                               </Link>
                             </Button>
                             <AlertDialog>
@@ -275,12 +229,12 @@ export default function SuppliersPage() {
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>
-                                    Remove Supplier
+                                    Remove Restaurant
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Are you sure you want to remove{" "}
-                                    {supplier.networkUser.firstname}{" "}
-                                    {supplier.networkUser.lastname} from your
+                                    {restaurant.networkUser.firstname}{" "}
+                                    {restaurant.networkUser.lastname} from your
                                     network? This action cannot be undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
@@ -289,7 +243,7 @@ export default function SuppliersPage() {
                                   <AlertDialogAction
                                     onClick={() =>
                                       handleRemoveFromNetwork(
-                                        supplier.networkUserId
+                                        restaurant.networkUserId
                                       )
                                     }
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

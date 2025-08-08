@@ -18,41 +18,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowLeft, Star, Filter, MapPin, Loader2 } from "lucide-react";
+import { Search, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
-import { NewSupplierOrderModal } from "@/components/new-supplier-order-modal";
-import { useDiscoverSuppliers, useAddToMyNetwork } from "@/hooks/network";
+import { useDiscoverRestaurants, useAddToMyNetwork } from "@/hooks/network";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 
-export default function DiscoverSuppliersPage() {
+export default function DiscoverRestaurantsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedDistance, setSelectedDistance] = useState([50]);
-  const [selectedRating, setSelectedRating] = useState(0);
-  const [orderModalOpen, setOrderModalOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
-
+  
   // Debounce the search input with 500ms delay
   const debouncedSearch = useDebounce(searchInput, 500);
 
@@ -60,11 +36,11 @@ export default function DiscoverSuppliersPage() {
 
   // Use the real API hook with debounced search
   const {
-    data: suppliersResponse,
+    data: restaurantsResponse,
     isLoading,
     isError,
     error,
-  } = useDiscoverSuppliers({
+  } = useDiscoverRestaurants({
     page: currentPage,
     limit: 10,
     search: debouncedSearch,
@@ -72,8 +48,8 @@ export default function DiscoverSuppliersPage() {
 
   const addToNetworkMutation = useAddToMyNetwork();
 
-  const suppliers = suppliersResponse?.data?.items || [];
-  const pagination = suppliersResponse?.data?.pagination;
+  const restaurants = restaurantsResponse?.data?.items || [];
+  const pagination = restaurantsResponse?.data?.pagination;
 
   // Reset to first page when search changes
   useEffect(() => {
@@ -87,11 +63,6 @@ export default function DiscoverSuppliersPage() {
     } catch (error) {
       // Error is handled in the mutation
     }
-  };
-
-  const handlePlaceOrder = (supplier: any) => {
-    setSelectedSupplier(supplier);
-    setOrderModalOpen(true);
   };
 
   const handleSearchInputChange = (value: string) => {
@@ -109,7 +80,7 @@ export default function DiscoverSuppliersPage() {
           <Card>
             <CardContent className="text-center py-8">
               <p className="text-red-500">
-                Error loading suppliers: {error?.message}
+                Error loading restaurants: {error?.message}
               </p>
               <Button
                 onClick={() => window.location.reload()}
@@ -127,26 +98,20 @@ export default function DiscoverSuppliersPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
-        <ArrowLeft className="h-6 w-6" />
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">Discover Suppliers</h1>
-        </div>
-      </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" asChild>
-              <Link href="/dashboard/suppliers">
+              <Link href="/dashboard/restaurants">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
-                Discover New Suppliers
+                Discover New Restaurants
               </h1>
               <p className="text-muted-foreground">
-                Find and connect with new suppliers in your area
+                Find and connect with new restaurant partners
               </p>
             </div>
           </div>
@@ -154,9 +119,9 @@ export default function DiscoverSuppliersPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Available Suppliers</CardTitle>
+            <CardTitle>Available Restaurants</CardTitle>
             <CardDescription>
-              Browse and filter suppliers that match your needs
+              Browse and connect with restaurants looking for suppliers
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -166,130 +131,12 @@ export default function DiscoverSuppliersPage() {
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search suppliers..."
+                    placeholder="Search restaurants..."
                     className="pl-8 w-full"
                     value={searchInput}
                     onChange={(e) => handleSearchInputChange(e.target.value)}
                   />
                 </div>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline">
-                      <Filter className="mr-2 h-4 w-4" />
-                      Filters
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Filter Suppliers</SheetTitle>
-                      <SheetDescription>
-                        Narrow down suppliers based on your requirements
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="py-4 space-y-6">
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium">Categories</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            "Produce",
-                            "Meat & Poultry",
-                            "Dairy",
-                            "Dry Goods",
-                            "Beverages",
-                            "Seafood",
-                            "Bakery",
-                            "Specialty",
-                          ].map((category) => (
-                            <div
-                              key={category}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={category}
-                                checked={selectedCategories.includes(category)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedCategories([
-                                      ...selectedCategories,
-                                      category,
-                                    ]);
-                                  } else {
-                                    setSelectedCategories(
-                                      selectedCategories.filter(
-                                        (c) => c !== category
-                                      )
-                                    );
-                                  }
-                                }}
-                              />
-                              <Label htmlFor={category}>{category}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium">Distance (km)</h3>
-                        <Slider
-                          defaultValue={[50]}
-                          max={100}
-                          step={5}
-                          value={selectedDistance}
-                          onValueChange={setSelectedDistance}
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>0 km</span>
-                          <span>{selectedDistance[0]} km</span>
-                          <span>100 km</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium">Minimum Rating</h3>
-                        <Select
-                          value={selectedRating.toString()}
-                          onValueChange={(value) =>
-                            setSelectedRating(Number(value))
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Any Rating" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="0">Any Rating</SelectItem>
-                            <SelectItem value="3">3+ Stars</SelectItem>
-                            <SelectItem value="4">4+ Stars</SelectItem>
-                            <SelectItem value="4.5">4.5+ Stars</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <Button
-                        className="w-full"
-                        onClick={() => {
-                          setSelectedCategories([]);
-                          setSelectedDistance([50]);
-                          setSelectedRating(0);
-                        }}
-                      >
-                        Reset Filters
-                      </Button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-
-                <Select defaultValue="distance">
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Sort By" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="distance">Distance</SelectItem>
-                    <SelectItem value="rating">Rating</SelectItem>
-                    <SelectItem value="name">Name</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
@@ -297,7 +144,7 @@ export default function DiscoverSuppliersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Supplier Name</TableHead>
+                    <TableHead>Restaurant Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Account Type</TableHead>
                     <TableHead>Status</TableHead>
@@ -310,43 +157,43 @@ export default function DiscoverSuppliersPage() {
                       <TableCell colSpan={5} className="text-center py-8">
                         <div className="flex items-center justify-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Loading suppliers...</span>
+                          <span>Loading restaurants...</span>
                         </div>
                       </TableCell>
                     </TableRow>
-                  ) : suppliers.length === 0 ? (
+                  ) : restaurants.length === 0 ? (
                     <TableRow>
                       <TableCell
                         colSpan={5}
                         className="text-center py-8 text-muted-foreground"
                       >
-                        No suppliers found matching your criteria
+                        No restaurants found matching your criteria
                       </TableCell>
                     </TableRow>
                   ) : (
-                    suppliers.map((supplier) => (
-                      <TableRow key={supplier._id}>
+                    restaurants.map((restaurant) => (
+                      <TableRow key={restaurant._id}>
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {supplier.firstname} {supplier.lastname}
+                              {restaurant.firstname} {restaurant.lastname}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               Member since:{" "}
                               {new Date(
-                                supplier.createdAt
+                                restaurant.createdAt
                               ).toLocaleDateString()}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{supplier.email}</TableCell>
+                        <TableCell>{restaurant.email}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            {supplier.accountType}
+                            {restaurant.accountType}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {supplier.isInNetwork ? (
+                          {restaurant.isInNetwork ? (
                             <Badge variant="secondary">Already Connected</Badge>
                           ) : (
                             <Badge variant="outline">Available</Badge>
@@ -356,19 +203,21 @@ export default function DiscoverSuppliersPage() {
                           <div className="flex justify-end gap-2">
                             <Button size="sm" variant="outline" asChild>
                               <Link
-                                href={`/dashboard/suppliers/${supplier._id}`}
+                                href={`/dashboard/restaurants/${restaurant._id}`}
                               >
                                 View
                               </Link>
                             </Button>
-                            {supplier.isInNetwork ? (
+                            {restaurant.isInNetwork ? (
                               <Button size="sm" variant="secondary" disabled>
                                 Already Connected
                               </Button>
                             ) : (
                               <Button
                                 size="sm"
-                                onClick={() => handleAddToNetwork(supplier._id)}
+                                onClick={() =>
+                                  handleAddToNetwork(restaurant._id)
+                                }
                                 disabled={addToNetworkMutation.isPending}
                               >
                                 {addToNetworkMutation.isPending ? (
@@ -420,14 +269,6 @@ export default function DiscoverSuppliersPage() {
             )}
           </CardContent>
         </Card>
-
-        {selectedSupplier && (
-          <NewSupplierOrderModal
-            open={orderModalOpen}
-            onOpenChange={setOrderModalOpen}
-            supplier={selectedSupplier}
-          />
-        )}
       </main>
     </div>
   );

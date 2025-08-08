@@ -49,6 +49,11 @@ export function SupplierSidebar() {
       title: "Customers",
       badge: "New",
     },
+    {
+      href: "/dashboard/restaurants",
+      icon: Users,
+      title: "Restaurants",
+    },
     // {
     //   href: "/dashboard/analytics",
     //   icon: BarChart3,
