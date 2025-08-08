@@ -1,10 +1,17 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Menu,
   MessageSquare,
@@ -20,38 +27,48 @@ import {
   FileText,
   ImageIcon,
   Paperclip,
-} from "lucide-react"
-import Link from "next/link"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+} from "lucide-react";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CommunicationsPage() {
-  const [selectedChat, setSelectedChat] = useState<string | null>("chat-1")
-  const [messageText, setMessageText] = useState("")
-  const [templateFilter, setTemplateFilter] = useState("all")
+  const [selectedChat, setSelectedChat] = useState<string | null>("chat-1");
+  const [messageText, setMessageText] = useState("");
+  const [templateFilter, setTemplateFilter] = useState("all");
 
   const handleSendMessage = () => {
-    if (!messageText.trim()) return
+    if (!messageText.trim()) return;
     // In a real app, this would send the message to the API
-    console.log("Sending message:", messageText)
-    setMessageText("")
-  }
+    console.log("Sending message:", messageText);
+    setMessageText("");
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
+      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
         <Menu className="h-6 w-6" />
         <div className="flex-1">
           <h1 className="text-lg font-semibold">Communications</h1>
         </div>
-      </header>
+      </header> */}
       <main className="flex-1 p-4 md:p-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Communication Hub</h1>
-            <p className="text-muted-foreground">Manage all your customer communications in one place</p>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Communication Hub
+            </h1>
+            <p className="text-muted-foreground">
+              Manage all your customer communications in one place
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
@@ -84,7 +101,11 @@ export default function CommunicationsPage() {
                 <CardHeader className="px-4 py-3">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input type="search" placeholder="Search conversations..." className="pl-8" />
+                    <Input
+                      type="search"
+                      placeholder="Search conversations..."
+                      className="pl-8"
+                    />
                   </div>
                 </CardHeader>
                 <CardContent className="p-0 max-h-[calc(100vh-250px)] overflow-y-auto">
@@ -98,20 +119,33 @@ export default function CommunicationsPage() {
                         onClick={() => setSelectedChat(chat.id)}
                       >
                         <Avatar>
-                          <AvatarImage src={`/placeholder.svg?height=40&width=40`} alt={chat.name} />
-                          <AvatarFallback>{chat.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          <AvatarImage
+                            src={`/placeholder.svg?height=40&width=40`}
+                            alt={chat.name}
+                          />
+                          <AvatarFallback>
+                            {chat.name.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-medium truncate">{chat.name}</h3>
-                            <span className="text-xs text-muted-foreground">{chat.lastMessageTime}</span>
+                            <h3 className="font-medium truncate">
+                              {chat.name}
+                            </h3>
+                            <span className="text-xs text-muted-foreground">
+                              {chat.lastMessageTime}
+                            </span>
                           </div>
-                          <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {chat.lastMessage}
+                          </p>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge variant="outline" className="text-xs">
                               {chat.type}
                             </Badge>
-                            {chat.unread > 0 && <Badge className="text-xs">{chat.unread}</Badge>}
+                            {chat.unread > 0 && (
+                              <Badge className="text-xs">{chat.unread}</Badge>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -139,13 +173,19 @@ export default function CommunicationsPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h3 className="font-medium">{chats.find((c) => c.id === selectedChat)?.name}</h3>
+                          <h3 className="font-medium">
+                            {chats.find((c) => c.id === selectedChat)?.name}
+                          </h3>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
                               {chats.find((c) => c.id === selectedChat)?.type}
                             </Badge>
                             <span className="text-xs text-muted-foreground">
-                              Last active: {chats.find((c) => c.id === selectedChat)?.lastActive}
+                              Last active:{" "}
+                              {
+                                chats.find((c) => c.id === selectedChat)
+                                  ?.lastActive
+                              }
                             </span>
                           </div>
                         </div>
@@ -170,21 +210,31 @@ export default function CommunicationsPage() {
                             .map((message, index) => (
                               <div
                                 key={index}
-                                className={`flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}
+                                className={`flex ${
+                                  message.sender === "me"
+                                    ? "justify-end"
+                                    : "justify-start"
+                                }`}
                               >
                                 <div
                                   className={`max-w-[80%] rounded-lg p-3 ${
-                                    message.sender === "me" ? "bg-primary text-primary-foreground" : "bg-muted"
+                                    message.sender === "me"
+                                      ? "bg-primary text-primary-foreground"
+                                      : "bg-muted"
                                   }`}
                                 >
                                   <p>{message.text}</p>
                                   <div
                                     className={`flex items-center justify-end gap-1 mt-1 text-xs ${
-                                      message.sender === "me" ? "text-primary-foreground/70" : "text-muted-foreground"
+                                      message.sender === "me"
+                                        ? "text-primary-foreground/70"
+                                        : "text-muted-foreground"
                                     }`}
                                   >
                                     {message.time}
-                                    {message.sender === "me" && <CheckCheck className="h-3 w-3" />}
+                                    {message.sender === "me" && (
+                                      <CheckCheck className="h-3 w-3" />
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -200,8 +250,8 @@ export default function CommunicationsPage() {
                                 onChange={(e) => setMessageText(e.target.value)}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter" && !e.shiftKey) {
-                                    e.preventDefault()
-                                    handleSendMessage()
+                                    e.preventDefault();
+                                    handleSendMessage();
                                   }
                                 }}
                               />
@@ -220,7 +270,10 @@ export default function CommunicationsPage() {
                                 </Button>
                               </div>
                             </div>
-                            <Button onClick={handleSendMessage} disabled={!messageText.trim()}>
+                            <Button
+                              onClick={handleSendMessage}
+                              disabled={!messageText.trim()}
+                            >
                               <Send className="h-4 w-4 mr-2" />
                               Send
                             </Button>
@@ -233,7 +286,9 @@ export default function CommunicationsPage() {
                   <CardContent className="flex items-center justify-center h-[calc(100vh-250px)]">
                     <div className="text-center">
                       <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground/50" />
-                      <h3 className="mt-4 text-lg font-medium">No conversation selected</h3>
+                      <h3 className="mt-4 text-lg font-medium">
+                        No conversation selected
+                      </h3>
                       <p className="text-muted-foreground mt-2">
                         Select a conversation from the list to start messaging
                       </p>
@@ -248,7 +303,10 @@ export default function CommunicationsPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Message Templates</h2>
               <div className="flex items-center gap-2">
-                <Select value={templateFilter} onValueChange={setTemplateFilter}>
+                <Select
+                  value={templateFilter}
+                  onValueChange={setTemplateFilter}
+                >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter templates" />
                   </SelectTrigger>
@@ -269,12 +327,18 @@ export default function CommunicationsPage() {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {messageTemplates
-                .filter((template) => templateFilter === "all" || template.category === templateFilter)
+                .filter(
+                  (template) =>
+                    templateFilter === "all" ||
+                    template.category === templateFilter
+                )
                 .map((template) => (
                   <Card key={template.id}>
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">
-                        <CardTitle className="text-base">{template.name}</CardTitle>
+                        <CardTitle className="text-base">
+                          {template.name}
+                        </CardTitle>
                         <Badge variant="outline" className="text-xs">
                           {template.category}
                         </Badge>
@@ -282,7 +346,9 @@ export default function CommunicationsPage() {
                       <CardDescription>{template.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="bg-muted p-3 rounded-md text-sm">{template.content}</div>
+                      <div className="bg-muted p-3 rounded-md text-sm">
+                        {template.content}
+                      </div>
                       <div className="mt-3 text-xs text-muted-foreground">
                         <span className="font-medium">Variables: </span>
                         {template.variables.join(", ")}
@@ -303,7 +369,9 @@ export default function CommunicationsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Recent Broadcasts</CardTitle>
-                <CardDescription>Messages sent to multiple customers at once</CardDescription>
+                <CardDescription>
+                  Messages sent to multiple customers at once
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -314,7 +382,9 @@ export default function CommunicationsPage() {
                     >
                       <div>
                         <h3 className="font-medium">{broadcast.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{broadcast.message}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {broadcast.message}
+                        </p>
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="outline" className="text-xs">
                             {broadcast.recipients} recipients
@@ -325,8 +395,8 @@ export default function CommunicationsPage() {
                               broadcast.status === "Sent"
                                 ? "bg-green-50 text-green-700"
                                 : broadcast.status === "Scheduled"
-                                  ? "bg-blue-50 text-blue-700"
-                                  : "bg-amber-50 text-amber-700"
+                                ? "bg-blue-50 text-blue-700"
+                                : "bg-amber-50 text-amber-700"
                             }
                           >
                             {broadcast.status}
@@ -335,7 +405,9 @@ export default function CommunicationsPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm">{broadcast.date}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{broadcast.openRate}% open rate</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {broadcast.openRate}% open rate
+                        </p>
                         <Button variant="ghost" size="sm" className="mt-2">
                           View Report
                           <ChevronRight className="h-4 w-4 ml-1" />
@@ -360,18 +432,28 @@ export default function CommunicationsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Notification Settings</CardTitle>
-                <CardDescription>Configure how you notify your customers</CardDescription>
+                <CardDescription>
+                  Configure how you notify your customers
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
                   {notificationSettings.map((setting) => (
-                    <div key={setting.id} className="border-b pb-6 last:border-0 last:pb-0">
+                    <div
+                      key={setting.id}
+                      className="border-b pb-6 last:border-0 last:pb-0"
+                    >
                       <h3 className="font-medium text-lg">{setting.name}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{setting.description}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {setting.description}
+                      </p>
 
                       <div className="grid gap-4 mt-4 md:grid-cols-2">
                         {setting.channels.map((channel) => (
-                          <div key={channel.id} className="flex items-start gap-3 p-3 border rounded-md">
+                          <div
+                            key={channel.id}
+                            className="flex items-start gap-3 p-3 border rounded-md"
+                          >
                             <div className="mt-0.5">
                               {channel.type === "email" ? (
                                 <MessageSquare className="h-5 w-5 text-blue-500" />
@@ -386,13 +468,23 @@ export default function CommunicationsPage() {
                                 <h4 className="font-medium">{channel.name}</h4>
                                 <Badge
                                   variant="outline"
-                                  className={channel.enabled ? "bg-green-50 text-green-700" : ""}
+                                  className={
+                                    channel.enabled
+                                      ? "bg-green-50 text-green-700"
+                                      : ""
+                                  }
                                 >
                                   {channel.enabled ? "Enabled" : "Disabled"}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1">{channel.description}</p>
-                              <Button variant="outline" size="sm" className="mt-2">
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {channel.description}
+                              </p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-2"
+                              >
                                 Configure
                               </Button>
                             </div>
@@ -408,7 +500,7 @@ export default function CommunicationsPage() {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
 
 // Sample data
@@ -417,7 +509,8 @@ const chats = [
     id: "chat-1",
     name: "Bistro Bella",
     type: "Restaurant",
-    lastMessage: "Thank you for confirming the delivery time. We'll be ready to receive the order.",
+    lastMessage:
+      "Thank you for confirming the delivery time. We'll be ready to receive the order.",
     lastMessageTime: "10:30 AM",
     unread: 0,
     lastActive: "Today at 10:30 AM",
@@ -426,7 +519,8 @@ const chats = [
     id: "chat-2",
     name: "Cafe Milano",
     type: "Restaurant",
-    lastMessage: "Can we adjust our standing order for next week? We need to increase the quantity of tomatoes.",
+    lastMessage:
+      "Can we adjust our standing order for next week? We need to increase the quantity of tomatoes.",
     lastMessageTime: "Yesterday",
     unread: 2,
     lastActive: "Yesterday at 4:15 PM",
@@ -444,7 +538,8 @@ const chats = [
     id: "chat-4",
     name: "Spice Garden",
     type: "Restaurant",
-    lastMessage: "We're experiencing a delay with our bank transfer. Can we discuss payment options?",
+    lastMessage:
+      "We're experiencing a delay with our bank transfer. Can we discuss payment options?",
     lastMessageTime: "Apr 29",
     unread: 0,
     lastActive: "Apr 29 at 11:20 AM",
@@ -459,7 +554,7 @@ const chats = [
     unread: 0,
     lastActive: "Apr 28 at 3:10 PM",
   },
-]
+];
 
 const messages = [
   {
@@ -504,14 +599,15 @@ const messages = [
     text: "Thank you for the update. I've checked our system and can confirm that we've received your payment for invoice #INV-003. The receipt has been emailed to you.",
     time: "May 1, 2:45 PM",
   },
-]
+];
 
 const messageTemplates = [
   {
     id: "template-1",
     name: "Order Confirmation",
     category: "order",
-    description: "Confirm that an order has been received and is being processed",
+    description:
+      "Confirm that an order has been received and is being processed",
     content:
       "Dear {{customer_name}}, we've received your order #{{order_id}} and are processing it now. Your estimated delivery date is {{delivery_date}}. Thank you for your business!",
     variables: ["customer_name", "order_id", "delivery_date"],
@@ -523,7 +619,12 @@ const messageTemplates = [
     description: "Notify customer that their order is out for delivery",
     content:
       "Hello {{customer_name}}, your order #{{order_id}} is out for delivery and should arrive between {{delivery_time_start}} and {{delivery_time_end}}. Our driver will call you shortly before arrival.",
-    variables: ["customer_name", "order_id", "delivery_time_start", "delivery_time_end"],
+    variables: [
+      "customer_name",
+      "order_id",
+      "delivery_time_start",
+      "delivery_time_end",
+    ],
   },
   {
     id: "template-3",
@@ -561,7 +662,7 @@ const messageTemplates = [
       "Dear {{customer_name}}, we regret to inform you that your order #{{order_id}} will be delayed by approximately {{delay_time}}. We apologize for any inconvenience and will keep you updated on its status.",
     variables: ["customer_name", "order_id", "delay_time"],
   },
-]
+];
 
 const broadcasts = [
   {
@@ -604,19 +705,21 @@ const broadcasts = [
     status: "Sent",
     openRate: 75,
   },
-]
+];
 
 const notificationSettings = [
   {
     id: "notification-1",
     name: "Order Notifications",
-    description: "Notifications related to new orders, order updates, and order status changes",
+    description:
+      "Notifications related to new orders, order updates, and order status changes",
     channels: [
       {
         id: "channel-1",
         name: "Email Notifications",
         type: "email",
-        description: "Send order confirmations, updates, and status changes via email",
+        description:
+          "Send order confirmations, updates, and status changes via email",
         enabled: true,
       },
       {
@@ -638,13 +741,15 @@ const notificationSettings = [
   {
     id: "notification-2",
     name: "Payment Notifications",
-    description: "Notifications related to payments, invoices, and financial transactions",
+    description:
+      "Notifications related to payments, invoices, and financial transactions",
     channels: [
       {
         id: "channel-4",
         name: "Email Notifications",
         type: "email",
-        description: "Send payment confirmations, invoices, and receipts via email",
+        description:
+          "Send payment confirmations, invoices, and receipts via email",
         enabled: true,
       },
       {
@@ -666,7 +771,8 @@ const notificationSettings = [
   {
     id: "notification-3",
     name: "Delivery Notifications",
-    description: "Notifications related to deliveries, shipments, and logistics",
+    description:
+      "Notifications related to deliveries, shipments, and logistics",
     channels: [
       {
         id: "channel-7",
@@ -691,4 +797,4 @@ const notificationSettings = [
       },
     ],
   },
-]
+];

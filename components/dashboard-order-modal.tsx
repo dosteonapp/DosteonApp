@@ -307,7 +307,7 @@ export function DashboardOrderModal({
                     <TabsTrigger value="low">Low Stock</TabsTrigger>
                     <TabsTrigger value="critical">Critical</TabsTrigger>
                   </TabsList>
-                  <div className=" max-h">
+                  <div className="max-h-[300px] overflow-y-auto">
                     <TabsContent value="all" className="space-y-2 mt-2">
                       {inventoryItems.map((item) => (
                         <Card

@@ -98,12 +98,12 @@ export default function NewOrderPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
+      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
         <Menu className="h-6 w-6" />
         <div className="flex-1">
           <h1 className="text-lg font-semibold">New Order</h1>
         </div>
-      </header>
+      </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center justify-between">
           <div>

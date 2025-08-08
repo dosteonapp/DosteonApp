@@ -46,19 +46,19 @@ export default function SupplierDashboard() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
+      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
         <Menu className="h-6 w-6" />
         <div className="flex-1">
           <h1 className="text-lg font-semibold">Dashboard</h1>
         </div>
-      </header>
+      </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">
             Supplier Dashboard
           </h1>
           <div className="flex items-center gap-2">
-            <Select value={timeframe} onValueChange={setTimeframe}>
+            {/* <Select value={timeframe} onValueChange={setTimeframe}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select timeframe" />
               </SelectTrigger>
@@ -67,7 +67,7 @@ export default function SupplierDashboard() {
                 <SelectItem value="monthly">Monthly View</SelectItem>
                 <SelectItem value="quarterly">Quarterly View</SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
             <Button asChild className="bg-primary hover:bg-primary-600">
               <Link href="/dashboard/products/new">
                 <Package className="mr-2 h-4 w-4" />
@@ -78,8 +78,8 @@ export default function SupplierDashboard() {
         </div>
 
         {/* Predictive Insights Section */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="bg-primary/5 border-primary/20">
+        {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"> */}
+        {/* <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Projected Orders (Next Week)
@@ -93,8 +93,8 @@ export default function SupplierDashboard() {
                 <span>+15% from last week</span>
               </div>
             </CardContent>
-          </Card>
-
+          </Card> */}
+        {/* 
           <Card className="bg-secondary/5 border-secondary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -109,8 +109,8 @@ export default function SupplierDashboard() {
                 <span>+8% from last week</span>
               </div>
             </CardContent>
-          </Card>
-
+          </Card> */}
+        {/* 
           <Card className="bg-green-500/5 border-green-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -125,9 +125,9 @@ export default function SupplierDashboard() {
                 <span>+12% from last week</span>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
-          {/* <Card className="bg-blue-500/5 border-blue-500/20">
+        {/* <Card className="bg-blue-500/5 border-blue-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Reliability Score</CardTitle>
               <CheckCircle2 className="h-4 w-4 text-blue-500" />
@@ -140,11 +140,11 @@ export default function SupplierDashboard() {
               </div>
             </CardContent>
           </Card> */}
-        </div>
+        {/* </div> */}
 
-        <div className="grid gap-4 md:grid-cols-7">
-          {/* Demand Forecasting */}
-          {/* <Card className="md:col-span-4">
+        {/* <div className="grid gap-4 md:grid-cols-7"> */}
+        {/* Demand Forecasting */}
+        {/* <Card className="md:col-span-4">
             <CardHeader>
               <CardTitle>Demand Forecast</CardTitle>
               <CardDescription>
@@ -189,8 +189,8 @@ export default function SupplierDashboard() {
             </CardFooter>
           </Card> */}
 
-          {/* Top Consistent Customers */}
-          <Card className="md:col-span-3">
+        {/* Top Consistent Customers */}
+        {/* <Card className="md:col-span-3">
             <CardHeader>
               <CardTitle>Most Consistent Customers</CardTitle>
               <CardDescription>
@@ -305,8 +305,8 @@ export default function SupplierDashboard() {
                 <Link href="/dashboard/payments">View Payment Calendar</Link>
               </Button>
             </CardFooter>
-          </Card>
-        </div>
+          </Card> */}
+        {/* </div> */}
 
         {/* Payment Insights */}
         <div className="grid gap-4 md:grid-cols-7">
@@ -376,7 +376,7 @@ export default function SupplierDashboard() {
           <TabsList>
             <TabsTrigger value="new-orders">New Orders</TabsTrigger>
             <TabsTrigger value="pending-delivery">Pending Delivery</TabsTrigger>
-            <TabsTrigger value="top-products">Top Products</TabsTrigger>
+            {/* <TabsTrigger value="top-products">Top Products</TabsTrigger> */}
           </TabsList>
           <TabsContent value="new-orders" className="space-y-4">
             <Card>

@@ -1,11 +1,24 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Package, Menu, Download, AlertTriangle } from "lucide-react"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  TrendingUp,
+  Package,
+  Menu,
+  Download,
+  AlertTriangle,
+} from "lucide-react";
 import {
   Line,
   LineChart,
@@ -20,27 +33,44 @@ import {
   PieChart,
   Pie,
   Cell,
-} from "recharts"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+} from "recharts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function ForecastingPage() {
-  const [timeframe, setTimeframe] = useState("weekly")
-  const [productCategory, setProductCategory] = useState("all")
+  const [timeframe, setTimeframe] = useState("weekly");
+  const [productCategory, setProductCategory] = useState("all");
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
+      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
         <Menu className="h-6 w-6" />
         <div className="flex-1">
           <h1 className="text-lg font-semibold">Demand Forecasting</h1>
         </div>
-      </header>
+      </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Demand Forecasting</h1>
-            <p className="text-muted-foreground">AI-powered predictions to optimize your inventory and production</p>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Demand Forecasting
+            </h1>
+            <p className="text-muted-foreground">
+              AI-powered predictions to optimize your inventory and production
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Select value={timeframe} onValueChange={setTimeframe}>
@@ -64,40 +94,64 @@ export default function ForecastingPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Projected Orders</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Projected Orders
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {timeframe === "weekly" ? "32" : timeframe === "monthly" ? "128" : "384"}
+                {timeframe === "weekly"
+                  ? "32"
+                  : timeframe === "monthly"
+                  ? "128"
+                  : "384"}
               </div>
               <p className="text-xs text-muted-foreground">
-                {timeframe === "weekly" ? "Next 7 days" : timeframe === "monthly" ? "Next 30 days" : "Next 90 days"}
+                {timeframe === "weekly"
+                  ? "Next 7 days"
+                  : timeframe === "monthly"
+                  ? "Next 30 days"
+                  : "Next 90 days"}
               </p>
             </CardContent>
           </Card>
 
           <Card className="bg-secondary/5 border-secondary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recommended Production</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Recommended Production
+              </CardTitle>
               <Package className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {timeframe === "weekly" ? "1,250 kg" : timeframe === "monthly" ? "5,100 kg" : "15,300 kg"}
+                {timeframe === "weekly"
+                  ? "1,250 kg"
+                  : timeframe === "monthly"
+                  ? "5,100 kg"
+                  : "15,300 kg"}
               </div>
-              <p className="text-xs text-muted-foreground">Based on projected demand</p>
+              <p className="text-xs text-muted-foreground">
+                Based on projected demand
+              </p>
             </CardContent>
           </Card>
 
           <Card className="bg-green-500/5 border-green-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Expected Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Expected Revenue
+              </CardTitle>
               <DollarSign className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {timeframe === "weekly" ? "RWF 8.2M" : timeframe === "monthly" ? "RWF 32.5M" : "RWF 97.8M"}
+                {timeframe === "weekly"
+                  ? "RWF 8.2M"
+                  : timeframe === "monthly"
+                  ? "RWF 32.5M"
+                  : "RWF 97.8M"}
               </div>
               <p className="text-xs text-muted-foreground">Projected revenue</p>
             </CardContent>
@@ -105,14 +159,22 @@ export default function ForecastingPage() {
 
           <Card className="bg-blue-500/5 border-blue-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Prediction Confidence</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Prediction Confidence
+              </CardTitle>
               <AlertTriangle className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {timeframe === "weekly" ? "92%" : timeframe === "monthly" ? "85%" : "78%"}
+                {timeframe === "weekly"
+                  ? "92%"
+                  : timeframe === "monthly"
+                  ? "85%"
+                  : "78%"}
               </div>
-              <p className="text-xs text-muted-foreground">AI model confidence score</p>
+              <p className="text-xs text-muted-foreground">
+                AI model confidence score
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -129,7 +191,9 @@ export default function ForecastingPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Demand Forecast Overview</CardTitle>
-                <CardDescription>Projected order volume for the next period</CardDescription>
+                <CardDescription>
+                  Projected order volume for the next period
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -138,8 +202,8 @@ export default function ForecastingPage() {
                       timeframe === "weekly"
                         ? weeklyForecastData
                         : timeframe === "monthly"
-                          ? monthlyForecastData
-                          : quarterlyForecastData
+                        ? monthlyForecastData
+                        : quarterlyForecastData
                     }
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -154,7 +218,13 @@ export default function ForecastingPage() {
                       strokeWidth={2}
                       name="Projected Orders"
                     />
-                    <Line type="monotone" dataKey="actual" stroke="#10b981" strokeWidth={2} name="Actual Orders" />
+                    <Line
+                      type="monotone"
+                      dataKey="actual"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      name="Actual Orders"
+                    />
                     <Line
                       type="monotone"
                       dataKey="lastPeriod"
@@ -168,10 +238,14 @@ export default function ForecastingPage() {
               </CardContent>
               <CardFooter className="flex justify-between">
                 <div className="text-sm text-muted-foreground">
-                  <span className="font-medium">Note:</span> Projections are based on historical data, seasonal
-                  patterns, and market trends.
+                  <span className="font-medium">Note:</span> Projections are
+                  based on historical data, seasonal patterns, and market
+                  trends.
                 </div>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50">
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 hover:bg-blue-50"
+                >
                   AI-Powered Prediction
                 </Badge>
               </CardFooter>
@@ -180,7 +254,9 @@ export default function ForecastingPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Demand Drivers</CardTitle>
-                <CardDescription>Factors influencing projected demand</CardDescription>
+                <CardDescription>
+                  Factors influencing projected demand
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -192,12 +268,18 @@ export default function ForecastingPage() {
                         <XAxis dataKey="factor" />
                         <YAxis />
                         <Tooltip />
-                        <Bar dataKey="impact" fill="#0ea5e9" name="Impact Score" />
+                        <Bar
+                          dataKey="impact"
+                          fill="#0ea5e9"
+                          name="Impact Score"
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium mb-2">Demand Distribution</h3>
+                    <h3 className="text-sm font-medium mb-2">
+                      Demand Distribution
+                    </h3>
                     <ResponsiveContainer width="100%" height={200}>
                       <PieChart>
                         <Pie
@@ -209,10 +291,15 @@ export default function ForecastingPage() {
                           fill="#8884d8"
                           dataKey="value"
                           nameKey="name"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) =>
+                            `${name}: ${(percent * 100).toFixed(0)}%`
+                          }
                         >
                           {demandDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
                           ))}
                         </Pie>
                         <Tooltip />
@@ -227,7 +314,10 @@ export default function ForecastingPage() {
           <TabsContent value="by-product" className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Product Demand Forecast</h2>
-              <Select value={productCategory} onValueChange={setProductCategory}>
+              <Select
+                value={productCategory}
+                onValueChange={setProductCategory}
+              >
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
@@ -244,7 +334,9 @@ export default function ForecastingPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Product Demand Forecast</CardTitle>
-                <CardDescription>Projected demand by product for the next period</CardDescription>
+                <CardDescription>
+                  Projected demand by product for the next period
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -264,11 +356,15 @@ export default function ForecastingPage() {
                         .filter(
                           (product) =>
                             productCategory === "all" ||
-                            product.category.toLowerCase().replace(/\s+/g, "-") === productCategory,
+                            product.category
+                              .toLowerCase()
+                              .replace(/\s+/g, "-") === productCategory
                         )
                         .map((product) => (
                           <TableRow key={product.id}>
-                            <TableCell className="font-medium">{product.name}</TableCell>
+                            <TableCell className="font-medium">
+                              {product.name}
+                            </TableCell>
                             <TableCell>{product.category}</TableCell>
                             <TableCell>
                               {product.currentStock} {product.unit}
@@ -278,7 +374,8 @@ export default function ForecastingPage() {
                             </TableCell>
                             <TableCell>
                               {product.recommendedProduction} {product.unit}
-                              {product.currentStock < product.projectedDemand && (
+                              {product.currentStock <
+                                product.projectedDemand && (
                                 <Badge variant="destructive" className="ml-2">
                                   Low Stock
                                 </Badge>
@@ -291,8 +388,8 @@ export default function ForecastingPage() {
                                   product.confidence >= 90
                                     ? "bg-green-50 text-green-700"
                                     : product.confidence >= 75
-                                      ? "bg-yellow-50 text-yellow-700"
-                                      : "bg-red-50 text-red-700"
+                                    ? "bg-yellow-50 text-yellow-700"
+                                    : "bg-red-50 text-red-700"
                                 }
                               >
                                 {product.confidence}%
@@ -311,7 +408,9 @@ export default function ForecastingPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Customer Demand Forecast</CardTitle>
-                <CardDescription>Projected orders by customer for the next period</CardDescription>
+                <CardDescription>
+                  Projected orders by customer for the next period
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -329,11 +428,15 @@ export default function ForecastingPage() {
                     <TableBody>
                       {customerForecast.map((customer) => (
                         <TableRow key={customer.id}>
-                          <TableCell className="font-medium">{customer.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {customer.name}
+                          </TableCell>
                           <TableCell>{customer.orderFrequency}</TableCell>
                           <TableCell>{customer.lastOrder}</TableCell>
                           <TableCell>{customer.projectedNextOrder}</TableCell>
-                          <TableCell>RWF {customer.projectedValue.toLocaleString()}</TableCell>
+                          <TableCell>
+                            RWF {customer.projectedValue.toLocaleString()}
+                          </TableCell>
                           <TableCell>
                             <Badge
                               variant="outline"
@@ -341,8 +444,8 @@ export default function ForecastingPage() {
                                 customer.confidence >= 90
                                   ? "bg-green-50 text-green-700"
                                   : customer.confidence >= 75
-                                    ? "bg-yellow-50 text-yellow-700"
-                                    : "bg-red-50 text-red-700"
+                                  ? "bg-yellow-50 text-yellow-700"
+                                  : "bg-red-50 text-red-700"
                               }
                             >
                               {customer.confidence}%
@@ -361,7 +464,9 @@ export default function ForecastingPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Seasonal Trends</CardTitle>
-                <CardDescription>Demand patterns throughout the year</CardDescription>
+                <CardDescription>
+                  Demand patterns throughout the year
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -371,17 +476,42 @@ export default function ForecastingPage() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="produce" stroke="#10b981" strokeWidth={2} name="Produce" />
-                    <Line type="monotone" dataKey="meat" stroke="#ef4444" strokeWidth={2} name="Meat & Poultry" />
-                    <Line type="monotone" dataKey="dairy" stroke="#0ea5e9" strokeWidth={2} name="Dairy" />
-                    <Line type="monotone" dataKey="dryGoods" stroke="#f59e0b" strokeWidth={2} name="Dry Goods" />
+                    <Line
+                      type="monotone"
+                      dataKey="produce"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      name="Produce"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="meat"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      name="Meat & Poultry"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="dairy"
+                      stroke="#0ea5e9"
+                      strokeWidth={2}
+                      name="Dairy"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="dryGoods"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      name="Dry Goods"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
               <CardFooter>
                 <div className="text-sm text-muted-foreground">
-                  <span className="font-medium">Note:</span> Seasonal patterns are based on historical data and may be
-                  affected by holidays, events, and weather patterns.
+                  <span className="font-medium">Note:</span> Seasonal patterns
+                  are based on historical data and may be affected by holidays,
+                  events, and weather patterns.
                 </div>
               </CardFooter>
             </Card>
@@ -400,7 +530,9 @@ export default function ForecastingPage() {
                     >
                       <div>
                         <h3 className="font-medium">{event.name}</h3>
-                        <p className="text-sm text-muted-foreground">{event.date}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {event.date}
+                        </p>
                         <p className="text-sm mt-1">{event.description}</p>
                       </div>
                       <div className="text-right">
@@ -410,8 +542,8 @@ export default function ForecastingPage() {
                             event.impactLevel === "High"
                               ? "bg-red-50 text-red-700"
                               : event.impactLevel === "Medium"
-                                ? "bg-yellow-50 text-yellow-700"
-                                : "bg-blue-50 text-blue-700"
+                              ? "bg-yellow-50 text-yellow-700"
+                              : "bg-blue-50 text-blue-700"
                           }
                         >
                           {event.impactLevel} Impact
@@ -420,8 +552,8 @@ export default function ForecastingPage() {
                           {event.impactLevel === "High"
                             ? "+40-60% demand"
                             : event.impactLevel === "Medium"
-                              ? "+20-40% demand"
-                              : "+5-20% demand"}
+                            ? "+20-40% demand"
+                            : "+5-20% demand"}
                         </p>
                       </div>
                     </div>
@@ -433,7 +565,7 @@ export default function ForecastingPage() {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
 
 // Sample data
@@ -445,20 +577,20 @@ const weeklyForecastData = [
   { period: "Fri", projected: 22, actual: 21, lastPeriod: 18 },
   { period: "Sat", projected: 26, actual: null, lastPeriod: 22 },
   { period: "Sun", projected: 18, actual: null, lastPeriod: 16 },
-]
+];
 
 const monthlyForecastData = [
   { period: "Week 1", projected: 32, actual: 30, lastPeriod: 28 },
   { period: "Week 2", projected: 36, actual: 35, lastPeriod: 30 },
   { period: "Week 3", projected: 30, actual: 28, lastPeriod: 26 },
   { period: "Week 4", projected: 30, actual: null, lastPeriod: 25 },
-]
+];
 
 const quarterlyForecastData = [
   { period: "Month 1", projected: 128, actual: 125, lastPeriod: 115 },
   { period: "Month 2", projected: 136, actual: null, lastPeriod: 120 },
   { period: "Month 3", projected: 120, actual: null, lastPeriod: 110 },
-]
+];
 
 const demandDrivers = [
   { factor: "Seasonality", impact: 85 },
@@ -466,16 +598,16 @@ const demandDrivers = [
   { factor: "Weather", impact: 60 },
   { factor: "Promotions", impact: 50 },
   { factor: "Market Trends", impact: 40 },
-]
+];
 
 const demandDistribution = [
   { name: "Regular Orders", value: 65 },
   { name: "Seasonal Demand", value: 20 },
   { name: "Special Events", value: 10 },
   { name: "New Customers", value: 5 },
-]
+];
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"]
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 const productForecast = [
   {
@@ -558,7 +690,7 @@ const productForecast = [
     unit: "kg",
     confidence: 96,
   },
-]
+];
 
 const customerForecast = [
   {
@@ -606,7 +738,7 @@ const customerForecast = [
     projectedValue: 210000,
     confidence: 90,
   },
-]
+];
 
 const seasonalTrends = [
   { month: "Jan", produce: 80, meat: 90, dairy: 85, dryGoods: 70 },
@@ -621,28 +753,31 @@ const seasonalTrends = [
   { month: "Oct", produce: 95, meat: 95, dairy: 90, dryGoods: 85 },
   { month: "Nov", produce: 90, meat: 110, dairy: 95, dryGoods: 95 },
   { month: "Dec", produce: 100, meat: 120, dairy: 110, dryGoods: 110 },
-]
+];
 
 const seasonalEvents = [
   {
     id: "event-1",
     name: "Independence Day",
     date: "July 1-4, 2023",
-    description: "National holiday with increased restaurant activity and special menus.",
+    description:
+      "National holiday with increased restaurant activity and special menus.",
     impactLevel: "High",
   },
   {
     id: "event-2",
     name: "Restaurant Week",
     date: "May 15-22, 2023",
-    description: "Annual event where restaurants offer special prix fixe menus to attract customers.",
+    description:
+      "Annual event where restaurants offer special prix fixe menus to attract customers.",
     impactLevel: "Medium",
   },
   {
     id: "event-3",
     name: "Summer Tourism Season",
     date: "June 1 - August 31, 2023",
-    description: "Increased tourism leads to higher restaurant traffic and demand for fresh ingredients.",
+    description:
+      "Increased tourism leads to higher restaurant traffic and demand for fresh ingredients.",
     impactLevel: "High",
   },
   {
@@ -652,7 +787,7 @@ const seasonalEvents = [
     description: "Weekend event celebrating local cuisine and ingredients.",
     impactLevel: "Low",
   },
-]
+];
 
 // Import for DollarSign icon
-import { DollarSign } from "lucide-react"
+import { DollarSign } from "lucide-react";

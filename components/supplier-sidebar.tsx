@@ -54,11 +54,11 @@ export function SupplierSidebar() {
     //   icon: BarChart3,
     //   title: "Analytics",
     // },
-    {
-      href: "/dashboard/finance",
-      icon: DollarSign,
-      title: "Finance",
-    },
+    // {
+    //   href: "/dashboard/finance",
+    //   icon: DollarSign,
+    //   title: "Finance",
+    // },
     {
       href: "/dashboard/notifications",
       icon: Bell,

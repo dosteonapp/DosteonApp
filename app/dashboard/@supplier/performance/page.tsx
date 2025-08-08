@@ -1,11 +1,26 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Menu, Download, CheckCircle2, Clock, Star, ArrowUp, ArrowDown } from "lucide-react"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Menu,
+  Download,
+  CheckCircle2,
+  Clock,
+  Star,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import {
   Line,
   LineChart,
@@ -25,27 +40,44 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-} from "recharts"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Progress } from "@/components/ui/progress"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+} from "recharts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function PerformancePage() {
-  const [timeframe, setTimeframe] = useState("monthly")
+  const [timeframe, setTimeframe] = useState("monthly");
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
+      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
         <Menu className="h-6 w-6" />
         <div className="flex-1">
           <h1 className="text-lg font-semibold">Performance</h1>
         </div>
-      </header>
+      </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Performance Metrics</h1>
-            <p className="text-muted-foreground">Track and improve your reliability and service quality</p>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Performance Metrics
+            </h1>
+            <p className="text-muted-foreground">
+              Track and improve your reliability and service quality
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Select value={timeframe} onValueChange={setTimeframe}>
@@ -70,7 +102,9 @@ export default function PerformancePage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Reliability Score</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Reliability Score
+              </CardTitle>
               <CheckCircle2 className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
@@ -84,7 +118,9 @@ export default function PerformancePage() {
 
           <Card className="bg-green-500/5 border-green-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">On-Time Delivery</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                On-Time Delivery
+              </CardTitle>
               <Clock className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
@@ -98,7 +134,9 @@ export default function PerformancePage() {
 
           <Card className="bg-blue-500/5 border-blue-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Order Fulfillment</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Order Fulfillment
+              </CardTitle>
               <CheckCircle2 className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
@@ -112,7 +150,9 @@ export default function PerformancePage() {
 
           <Card className="bg-amber-500/5 border-amber-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Customer Rating</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Customer Rating
+              </CardTitle>
               <Star className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
@@ -177,7 +217,9 @@ export default function PerformancePage() {
               <Card className="md:col-span-3">
                 <CardHeader>
                   <CardTitle>Performance Radar</CardTitle>
-                  <CardDescription>Multi-dimensional performance view</CardDescription>
+                  <CardDescription>
+                    Multi-dimensional performance view
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -185,7 +227,13 @@ export default function PerformancePage() {
                       <PolarGrid />
                       <PolarAngleAxis dataKey="metric" />
                       <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                      <Radar name="Current" dataKey="value" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.6} />
+                      <Radar
+                        name="Current"
+                        dataKey="value"
+                        stroke="#0ea5e9"
+                        fill="#0ea5e9"
+                        fillOpacity={0.6}
+                      />
                       <Radar
                         name="Previous"
                         dataKey="previousValue"
@@ -203,7 +251,9 @@ export default function PerformancePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Performance Breakdown</CardTitle>
-                <CardDescription>Detailed view of your performance metrics</CardDescription>
+                <CardDescription>
+                  Detailed view of your performance metrics
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
@@ -212,17 +262,21 @@ export default function PerformancePage() {
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <h3 className="font-medium">{metric.name}</h3>
-                          <p className="text-sm text-muted-foreground">{metric.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {metric.description}
+                          </p>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold">{metric.value}%</div>
+                          <div className="text-lg font-bold">
+                            {metric.value}%
+                          </div>
                           <div
                             className={`flex items-center text-xs ${
                               metric.trend > 0
                                 ? "text-green-600"
                                 : metric.trend < 0
-                                  ? "text-red-600"
-                                  : "text-muted-foreground"
+                                ? "text-red-600"
+                                : "text-muted-foreground"
                             }`}
                           >
                             {metric.trend > 0 ? (
@@ -250,7 +304,9 @@ export default function PerformancePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>On-Time Delivery Rate</CardTitle>
-                  <CardDescription>Percentage of orders delivered on time</CardDescription>
+                  <CardDescription>
+                    Percentage of orders delivered on time
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -260,7 +316,13 @@ export default function PerformancePage() {
                       <YAxis domain={[70, 100]} />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="onTimeRate" stroke="#10b981" strokeWidth={2} name="On-Time Rate" />
+                      <Line
+                        type="monotone"
+                        dataKey="onTimeRate"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        name="On-Time Rate"
+                      />
                       <Line
                         type="monotone"
                         dataKey="target"
@@ -277,7 +339,9 @@ export default function PerformancePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Delivery Issues</CardTitle>
-                  <CardDescription>Breakdown of delivery problems</CardDescription>
+                  <CardDescription>
+                    Breakdown of delivery problems
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -291,10 +355,15 @@ export default function PerformancePage() {
                         fill="#8884d8"
                         dataKey="value"
                         nameKey="name"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) =>
+                          `${name}: ${(percent * 100).toFixed(0)}%`
+                        }
                       >
                         {deliveryIssues.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
                         ))}
                       </Pie>
                       <Tooltip />
@@ -308,7 +377,9 @@ export default function PerformancePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Recent Delivery Performance</CardTitle>
-                <CardDescription>Detailed view of recent deliveries</CardDescription>
+                <CardDescription>
+                  Detailed view of recent deliveries
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
@@ -326,7 +397,9 @@ export default function PerformancePage() {
                     <TableBody>
                       {recentDeliveries.map((delivery) => (
                         <TableRow key={delivery.id}>
-                          <TableCell className="font-medium">{delivery.orderId}</TableCell>
+                          <TableCell className="font-medium">
+                            {delivery.orderId}
+                          </TableCell>
                           <TableCell>{delivery.customer}</TableCell>
                           <TableCell>{delivery.scheduledDate}</TableCell>
                           <TableCell>{delivery.actualDate}</TableCell>
@@ -337,8 +410,8 @@ export default function PerformancePage() {
                                 delivery.status === "On Time"
                                   ? "bg-green-50 text-green-700"
                                   : delivery.status === "Delayed"
-                                    ? "bg-amber-50 text-amber-700"
-                                    : "bg-red-50 text-red-700"
+                                  ? "bg-amber-50 text-amber-700"
+                                  : "bg-red-50 text-red-700"
                               }
                             >
                               {delivery.status}
@@ -359,7 +432,9 @@ export default function PerformancePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Product Quality Ratings</CardTitle>
-                  <CardDescription>Average quality ratings by product category</CardDescription>
+                  <CardDescription>
+                    Average quality ratings by product category
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -369,7 +444,11 @@ export default function PerformancePage() {
                       <YAxis domain={[3, 5]} />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="rating" fill="#0ea5e9" name="Rating (out of 5)" />
+                      <Bar
+                        dataKey="rating"
+                        fill="#0ea5e9"
+                        name="Rating (out of 5)"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -378,7 +457,9 @@ export default function PerformancePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Quality Issues</CardTitle>
-                  <CardDescription>Breakdown of reported quality issues</CardDescription>
+                  <CardDescription>
+                    Breakdown of reported quality issues
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -392,10 +473,15 @@ export default function PerformancePage() {
                         fill="#8884d8"
                         dataKey="value"
                         nameKey="name"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) =>
+                          `${name}: ${(percent * 100).toFixed(0)}%`
+                        }
                       >
                         {qualityIssues.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
                         ))}
                       </Pie>
                       <Tooltip />
@@ -419,10 +505,34 @@ export default function PerformancePage() {
                     <YAxis domain={[3, 5]} />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="freshness" stroke="#10b981" strokeWidth={2} name="Freshness" />
-                    <Line type="monotone" dataKey="appearance" stroke="#0ea5e9" strokeWidth={2} name="Appearance" />
-                    <Line type="monotone" dataKey="taste" stroke="#f59e0b" strokeWidth={2} name="Taste" />
-                    <Line type="monotone" dataKey="packaging" stroke="#6366f1" strokeWidth={2} name="Packaging" />
+                    <Line
+                      type="monotone"
+                      dataKey="freshness"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      name="Freshness"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="appearance"
+                      stroke="#0ea5e9"
+                      strokeWidth={2}
+                      name="Appearance"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="taste"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      name="Taste"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="packaging"
+                      stroke="#6366f1"
+                      strokeWidth={2}
+                      name="Packaging"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -433,14 +543,18 @@ export default function PerformancePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Customer Feedback Summary</CardTitle>
-                <CardDescription>Overview of customer ratings and feedback</CardDescription>
+                <CardDescription>
+                  Overview of customer ratings and feedback
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
                     <h3 className="text-sm font-medium mb-2">Overall Rating</h3>
                     <div className="text-3xl font-bold">4.8/5</div>
-                    <p className="text-sm text-muted-foreground mt-1">Based on 124 reviews</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Based on 124 reviews
+                    </p>
 
                     <div className="space-y-2 mt-4">
                       <div>
@@ -482,7 +596,9 @@ export default function PerformancePage() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium mb-2">Feedback Categories</h3>
+                    <h3 className="text-sm font-medium mb-2">
+                      Feedback Categories
+                    </h3>
                     <ResponsiveContainer width="100%" height={200}>
                       <PieChart>
                         <Pie
@@ -494,10 +610,15 @@ export default function PerformancePage() {
                           fill="#8884d8"
                           dataKey="value"
                           nameKey="name"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) =>
+                            `${name}: ${(percent * 100).toFixed(0)}%`
+                          }
                         >
                           {feedbackCategories.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
                           ))}
                         </Pie>
                         <Tooltip />
@@ -511,12 +632,17 @@ export default function PerformancePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Recent Customer Feedback</CardTitle>
-                <CardDescription>Latest reviews and comments from customers</CardDescription>
+                <CardDescription>
+                  Latest reviews and comments from customers
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {customerFeedback.map((feedback) => (
-                    <div key={feedback.id} className="border-b pb-4 last:border-0 last:pb-0">
+                    <div
+                      key={feedback.id}
+                      className="border-b pb-4 last:border-0 last:pb-0"
+                    >
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
@@ -527,14 +653,16 @@ export default function PerformancePage() {
                                 feedback.rating >= 4
                                   ? "bg-green-50 text-green-700"
                                   : feedback.rating >= 3
-                                    ? "bg-amber-50 text-amber-700"
-                                    : "bg-red-50 text-red-700"
+                                  ? "bg-amber-50 text-amber-700"
+                                  : "bg-red-50 text-red-700"
                               }
                             >
                               {feedback.rating}/5
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">{feedback.date}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {feedback.date}
+                          </p>
                         </div>
                         <Badge variant="outline">{feedback.category}</Badge>
                       </div>
@@ -542,7 +670,9 @@ export default function PerformancePage() {
                       {feedback.response && (
                         <div className="mt-2 pl-4 border-l-2 border-muted">
                           <p className="text-sm font-medium">Your response:</p>
-                          <p className="text-sm text-muted-foreground">{feedback.response}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {feedback.response}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -559,7 +689,7 @@ export default function PerformancePage() {
         </Tabs>
       </main>
     </div>
-  )
+  );
 }
 
 // Sample data
@@ -569,7 +699,7 @@ const performanceTrends = [
   { period: "Mar", reliability: 88, onTimeDelivery: 88, orderFulfillment: 94 },
   { period: "Apr", reliability: 90, onTimeDelivery: 92, orderFulfillment: 96 },
   { period: "May", reliability: 92, onTimeDelivery: 94, orderFulfillment: 98 },
-]
+];
 
 const performanceRadar = [
   { metric: "Reliability", value: 92, previousValue: 89 },
@@ -578,7 +708,7 @@ const performanceRadar = [
   { metric: "Quality", value: 95, previousValue: 93 },
   { metric: "Communication", value: 90, previousValue: 85 },
   { metric: "Responsiveness", value: 88, previousValue: 82 },
-]
+];
 
 const performanceMetrics = [
   {
@@ -623,7 +753,7 @@ const performanceMetrics = [
     value: 88,
     trend: 6,
   },
-]
+];
 
 const deliveryTrends = [
   { period: "Week 1", onTimeRate: 90, target: 95 },
@@ -634,7 +764,7 @@ const deliveryTrends = [
   { period: "Week 6", onTimeRate: 95, target: 95 },
   { period: "Week 7", onTimeRate: 94, target: 95 },
   { period: "Week 8", onTimeRate: 96, target: 95 },
-]
+];
 
 const deliveryIssues = [
   { name: "Traffic Delays", value: 45 },
@@ -642,9 +772,9 @@ const deliveryIssues = [
   { name: "Staff Shortages", value: 15 },
   { name: "Vehicle Issues", value: 10 },
   { name: "Other", value: 5 },
-]
+];
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"]
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
 const recentDeliveries = [
   {
@@ -692,7 +822,7 @@ const recentDeliveries = [
     status: "Late",
     variance: "+1 hr 45 min",
   },
-]
+];
 
 const qualityRatings = [
   { category: "Produce", rating: 4.8 },
@@ -700,7 +830,7 @@ const qualityRatings = [
   { category: "Dairy", rating: 4.9 },
   { category: "Dry Goods", rating: 4.6 },
   { category: "Seafood", rating: 4.5 },
-]
+];
 
 const qualityIssues = [
   { name: "Freshness", value: 40 },
@@ -708,22 +838,52 @@ const qualityIssues = [
   { name: "Size/Weight", value: 20 },
   { name: "Appearance", value: 10 },
   { name: "Other", value: 5 },
-]
+];
 
 const qualityTrends = [
-  { period: "Jan", freshness: 4.5, appearance: 4.3, taste: 4.6, packaging: 4.2 },
-  { period: "Feb", freshness: 4.6, appearance: 4.4, taste: 4.6, packaging: 4.3 },
-  { period: "Mar", freshness: 4.7, appearance: 4.5, taste: 4.7, packaging: 4.4 },
-  { period: "Apr", freshness: 4.8, appearance: 4.6, taste: 4.8, packaging: 4.5 },
-  { period: "May", freshness: 4.9, appearance: 4.7, taste: 4.8, packaging: 4.6 },
-]
+  {
+    period: "Jan",
+    freshness: 4.5,
+    appearance: 4.3,
+    taste: 4.6,
+    packaging: 4.2,
+  },
+  {
+    period: "Feb",
+    freshness: 4.6,
+    appearance: 4.4,
+    taste: 4.6,
+    packaging: 4.3,
+  },
+  {
+    period: "Mar",
+    freshness: 4.7,
+    appearance: 4.5,
+    taste: 4.7,
+    packaging: 4.4,
+  },
+  {
+    period: "Apr",
+    freshness: 4.8,
+    appearance: 4.6,
+    taste: 4.8,
+    packaging: 4.5,
+  },
+  {
+    period: "May",
+    freshness: 4.9,
+    appearance: 4.7,
+    taste: 4.8,
+    packaging: 4.6,
+  },
+];
 
 const feedbackCategories = [
   { name: "Product Quality", value: 45 },
   { name: "Delivery", value: 30 },
   { name: "Customer Service", value: 15 },
   { name: "Pricing", value: 10 },
-]
+];
 
 const customerFeedback = [
   {
@@ -734,7 +894,8 @@ const customerFeedback = [
     category: "Product Quality",
     comment:
       "The produce we received was exceptionally fresh. Our chefs were very impressed with the quality of the tomatoes and herbs in particular.",
-    response: "Thank you for your kind feedback! We're glad your chefs are happy with our produce quality.",
+    response:
+      "Thank you for your kind feedback! We're glad your chefs are happy with our produce quality.",
   },
   {
     id: "feedback-2",
@@ -768,4 +929,4 @@ const customerFeedback = [
       "Your team was extremely responsive when we needed to make a last-minute change to our order. The flexibility and service were outstanding.",
     response: null,
   },
-]
+];

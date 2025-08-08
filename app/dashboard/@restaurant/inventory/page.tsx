@@ -1,14 +1,41 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Search, Plus, Menu, Edit, Trash2, AlertTriangle, QrCode } from "lucide-react"
-import { InventoryItemModal } from "@/components/inventory-item-modal"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  Search,
+  Plus,
+  Menu,
+  Edit,
+  Trash2,
+  AlertTriangle,
+  QrCode,
+} from "lucide-react";
+import { InventoryItemModal } from "@/components/inventory-item-modal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,34 +45,39 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 // Add import for OrderItemModal at the top with other imports
-import { OrderItemModal } from "@/components/order-item-modal"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { OrderItemModal } from "@/components/order-item-modal";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { ResponseWithPagination } from "@/types/pagination";
+import { Inventory } from "@/types/restaurant";
+import axiosInstance from "@/lib/axios";
+import { validateApiResponse } from "@/lib/utils";
 
 export default function InventoryPage() {
-  const [addItemOpen, setAddItemOpen] = useState(false)
-  const [editItemOpen, setEditItemOpen] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<any>(null)
+  const [addItemOpen, setAddItemOpen] = useState(false);
+  const [editItemOpen, setEditItemOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   // Add state for order modal after other state declarations
-  const [orderItemOpen, setOrderItemOpen] = useState(false)
+  const [orderItemOpen, setOrderItemOpen] = useState(false);
 
   const handleAddItem = () => {
-    setAddItemOpen(true)
-  }
+    setAddItemOpen(true);
+  };
 
   const handleEditItem = (item: any) => {
-    setSelectedItem(item)
-    setEditItemOpen(true)
-  }
+    setSelectedItem(item);
+    setEditItemOpen(true);
+  };
 
   const handleDeleteItem = (item: any) => {
-    setSelectedItem(item)
-    setDeleteDialogOpen(true)
-  }
+    setSelectedItem(item);
+    setDeleteDialogOpen(true);
+  };
 
   const confirmDelete = () => {
     // Here you would typically delete the item from your backend
@@ -54,29 +86,54 @@ export default function InventoryPage() {
       title: "Item Deleted",
       description: `${selectedItem.name} has been removed from your inventory.`,
       variant: "default",
-    })
-    setDeleteDialogOpen(false)
-  }
+    });
+    setDeleteDialogOpen(false);
+  };
 
   // Update the handleOrderItem function
   const handleOrderItem = (item: any) => {
-    setSelectedItem(item)
-    setOrderItemOpen(true)
-  }
+    setSelectedItem(item);
+    setOrderItemOpen(true);
+  };
+
+  const {} = useInfiniteQuery<ResponseWithPagination<Inventory, "items">>({
+    queryKey: ["inventory"],
+    queryFn: async ({ pageParam }) => {
+      const { data } = await axiosInstance.get("/restaurant/inventory", {
+        params: {
+          page: pageParam,
+        },
+      });
+
+      return validateApiResponse(data);
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage?.pagination) return undefined;
+
+      return lastPage?.pagination?.currentPage
+        ? lastPage?.pagination?.currentPage + 1
+        : undefined;
+    },
+  });
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
+      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
         <Menu className="h-6 w-6" />
         <div className="flex-1">
           <h1 className="text-lg font-semibold">Inventory</h1>
         </div>
-      </header>
+      </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Inventory Management</h1>
-            <p className="text-muted-foreground">Track and manage your restaurant's inventory</p>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Inventory Management
+            </h1>
+            <p className="text-muted-foreground">
+              Track and manage your restaurant's inventory
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button onClick={handleAddItem}>
@@ -95,14 +152,20 @@ export default function InventoryPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Current Inventory</CardTitle>
-                <CardDescription>View and manage all inventory items</CardDescription>
+                <CardDescription>
+                  View and manage all inventory items
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <div className="relative">
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input type="search" placeholder="Search inventory..." className="pl-8 w-full md:w-[300px]" />
+                      <Input
+                        type="search"
+                        placeholder="Search inventory..."
+                        className="pl-8 w-full md:w-[300px]"
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -140,17 +203,23 @@ export default function InventoryPage() {
                       <TableRow>
                         <TableHead>Item Name</TableHead>
                         <TableHead>Category</TableHead>
-                        <TableHead className="text-right">Current Stock</TableHead>
+                        <TableHead className="text-right">
+                          Current Stock
+                        </TableHead>
                         <TableHead className="text-right">Min. Level</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Last Updated</TableHead>
+                        <TableHead className="text-right">
+                          Last Updated
+                        </TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {inventoryItems.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {item.name}
+                          </TableCell>
                           <TableCell>{item.category}</TableCell>
                           <TableCell className="text-right">
                             {item.currentStock} {item.unit}
@@ -159,29 +228,45 @@ export default function InventoryPage() {
                             {item.minLevel} {item.unit}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStockLevelVariant(item.stockLevel)}>{item.stockLevel}</Badge>
+                            <Badge
+                              variant={getStockLevelVariant(item.stockLevel)}
+                            >
+                              {item.stockLevel}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="text-right">{item.lastUpdated}</TableCell>
+                          <TableCell className="text-right">
+                            {item.lastUpdated}
+                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button size="sm" variant="outline" onClick={() => handleEditItem(item)}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditItem(item)}
+                              >
                                 <Edit className="h-4 w-4" />
                                 <span className="sr-only">Edit</span>
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => handleDeleteItem(item)}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteItem(item)}
+                              >
                                 <Trash2 className="h-4 w-4" />
                                 <span className="sr-only">Delete</span>
                               </Button>
                               <Button
                                 size="sm"
                                 variant={
-                                  item.stockLevel === "Critical" || item.stockLevel === "Low"
+                                  item.stockLevel === "Critical" ||
+                                  item.stockLevel === "Low"
                                     ? "destructive"
                                     : "outline"
                                 }
                                 onClick={() => handleOrderItem(item)}
                               >
-                                {item.stockLevel === "Critical" || item.stockLevel === "Low" ? (
+                                {item.stockLevel === "Critical" ||
+                                item.stockLevel === "Low" ? (
                                   <AlertTriangle className="mr-1 h-4 w-4" />
                                 ) : null}
                                 Order
@@ -200,14 +285,20 @@ export default function InventoryPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Daily Stock Tracking</CardTitle>
-                <CardDescription>Track opening and closing stock levels for daily operations</CardDescription>
+                <CardDescription>
+                  Track opening and closing stock levels for daily operations
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <div className="relative">
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input type="search" placeholder="Search items..." className="pl-8 w-full md:w-[300px]" />
+                      <Input
+                        type="search"
+                        placeholder="Search items..."
+                        className="pl-8 w-full md:w-[300px]"
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -234,8 +325,12 @@ export default function InventoryPage() {
                       <TableRow>
                         <TableHead>Item Name</TableHead>
                         <TableHead>Category</TableHead>
-                        <TableHead className="text-right">Opening Stock</TableHead>
-                        <TableHead className="text-right">Closing Stock</TableHead>
+                        <TableHead className="text-right">
+                          Opening Stock
+                        </TableHead>
+                        <TableHead className="text-right">
+                          Closing Stock
+                        </TableHead>
                         <TableHead className="text-right">Usage</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -244,7 +339,9 @@ export default function InventoryPage() {
                     <TableBody>
                       {inventoryItems.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {item.name}
+                          </TableCell>
                           <TableCell>{item.category}</TableCell>
                           <TableCell className="text-right">
                             <Input
@@ -258,7 +355,10 @@ export default function InventoryPage() {
                           <TableCell className="text-right">
                             <Input
                               type="number"
-                              defaultValue={Math.max(0, item.currentStock - Math.random() * 2).toFixed(1)}
+                              defaultValue={Math.max(
+                                0,
+                                item.currentStock - Math.random() * 2
+                              ).toFixed(1)}
                               className="w-20 text-right"
                               min="0"
                               step="0.1"
@@ -268,7 +368,11 @@ export default function InventoryPage() {
                             {(Math.random() * 2).toFixed(1)} {item.unit}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStockLevelVariant(item.stockLevel)}>{item.stockLevel}</Badge>
+                            <Badge
+                              variant={getStockLevelVariant(item.stockLevel)}
+                            >
+                              {item.stockLevel}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <Button size="sm" variant="outline">
@@ -287,11 +391,20 @@ export default function InventoryPage() {
       </main>
 
       {/* Add Item Modal */}
-      <InventoryItemModal open={addItemOpen} onOpenChange={setAddItemOpen} mode="add" />
+      <InventoryItemModal
+        open={addItemOpen}
+        onOpenChange={setAddItemOpen}
+        mode="add"
+      />
 
       {/* Edit Item Modal */}
       {selectedItem && (
-        <InventoryItemModal open={editItemOpen} onOpenChange={setEditItemOpen} mode="edit" initialData={selectedItem} />
+        <InventoryItemModal
+          open={editItemOpen}
+          onOpenChange={setEditItemOpen}
+          mode="edit"
+          initialData={selectedItem}
+        />
       )}
 
       {/* Delete Confirmation Dialog */}
@@ -300,12 +413,16 @@ export default function InventoryPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete {selectedItem?.name} from your inventory. This action cannot be undone.
+              This will permanently delete {selectedItem?.name} from your
+              inventory. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -313,26 +430,32 @@ export default function InventoryPage() {
       </AlertDialog>
 
       {/* Order Item Modal */}
-      {selectedItem && <OrderItemModal open={orderItemOpen} onOpenChange={setOrderItemOpen} item={selectedItem} />}
+      {selectedItem && (
+        <OrderItemModal
+          open={orderItemOpen}
+          onOpenChange={setOrderItemOpen}
+          item={selectedItem}
+        />
+      )}
 
       <Toaster />
     </div>
-  )
+  );
 }
 
 // Helper function to get badge variant based on stock level
 function getStockLevelVariant(level: string) {
   switch (level) {
     case "Critical":
-      return "destructive"
+      return "destructive";
     case "Low":
-      return "warning"
+      return "warning";
     case "Medium":
-      return "secondary"
+      return "secondary";
     case "Good":
-      return "success"
+      return "success";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
@@ -442,4 +565,4 @@ const inventoryItems = [
     location: "Pantry",
     expiryDate: "",
   },
-]
+];
