@@ -17,9 +17,9 @@ const RoleProvider = ({
     if (!user) {
       return <div>Unauthorized</div>;
     }
-    if (!user?.onboardingCompleted && !user?.onboardingSkipped) {
-      return onboarding;
-    }
+    // if (!user?.onboardingCompleted && !user?.onboardingSkipped) {
+    //   return onboarding;
+    // }
 
     if (user?.accountType === "restaurant") {
       return restaurant;
