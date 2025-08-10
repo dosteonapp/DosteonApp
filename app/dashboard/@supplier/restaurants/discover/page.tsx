@@ -28,7 +28,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 export default function DiscoverRestaurantsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Debounce the search input with 500ms delay
   const debouncedSearch = useDebounce(searchInput, 500);
 

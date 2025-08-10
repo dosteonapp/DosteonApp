@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   Card,
   CardContent,
@@ -36,6 +37,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { InventoryItemModal } from "@/components/inventory-item-modal";
+import { LogUsageModal } from "@/components/log-usage-modal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,23 +53,102 @@ import { Toaster } from "@/components/ui/toaster";
 // Add import for OrderItemModal at the top with other imports
 import { OrderItemModal } from "@/components/order-item-modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useInfiniteQuery } from "@tanstack/react-query";
+
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { ResponseWithPagination } from "@/types/pagination";
 import { Inventory } from "@/types/restaurant";
 import axiosInstance from "@/lib/axios";
+import { deleteInventoryItem } from "@/lib/services/inventoryService";
 import { validateApiResponse } from "@/lib/utils";
 
+// Infinite query for inventory
+type InventoryApiResponse = {
+  items: any[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalProducts: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+};
+
 export default function InventoryPage() {
+  const queryClient = useQueryClient();
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [editItemOpen, setEditItemOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  // Add state for order modal after other state declarations
   const [orderItemOpen, setOrderItemOpen] = useState(false);
 
-  const handleAddItem = () => {
-    setAddItemOpen(true);
-  };
+  // Search, filter, and pagination state
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
+  const [category, setCategory] = useState("all");
+  const [stockLevel, setStockLevel] = useState("all");
+
+  // For log usage modal
+  const [logUsageOpen, setLogUsageOpen] = useState(false);
+  const [logUsageItem, setLogUsageItem] = useState<any>(null);
+
+  // Dummy daily stock log data
+  const dummyStockLogs = [
+    {
+      itemId: "1",
+      name: "Tomatoes",
+      logs: [
+        { date: "2025-08-07", opening: 100, used: 20, closing: 80 },
+        { date: "2025-08-08", opening: 80, used: 10, closing: 70 },
+        { date: "2025-08-09", opening: 70, used: 15, closing: 55 },
+      ],
+      unit: "kg",
+    },
+    {
+      itemId: "2",
+      name: "Cheese",
+      logs: [
+        { date: "2025-08-08", opening: 50, used: 5, closing: 45 },
+        { date: "2025-08-09", opening: 45, used: 7, closing: 38 },
+      ],
+      unit: "kg",
+    },
+  ];
+
+  // Use the user's infinite query style, but debounce the search param
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isFetching,
+  } = useInfiniteQuery<ResponseWithPagination<Inventory, "items">>({
+    queryKey: ["inventory", debouncedSearch],
+    queryFn: async ({ pageParam = 1 }) => {
+      const params: any = { page: pageParam };
+      if (debouncedSearch) params.search = debouncedSearch;
+      const { data } = await axiosInstance.get("/restaurant/inventory", {
+        params,
+      });
+      return validateApiResponse(data);
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage?.pagination) return undefined;
+      return lastPage?.pagination?.hasNextPage
+        ? lastPage?.pagination?.currentPage + 1
+        : undefined;
+    },
+  });
+
+  // Flatten paginated items from infinite query
+  const inventoryItems = data?.pages?.flatMap((page) => page.items) || [];
+  const pagination = data?.pages?.[data.pages.length - 1]?.pagination;
+
+  const handleAddItem = () => setAddItemOpen(true);
 
   const handleEditItem = (item: any) => {
     setSelectedItem(item);
@@ -79,15 +160,38 @@ export default function InventoryPage() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
-    // Here you would typically delete the item from your backend
-    // For now, we'll just show a success toast
-    toast({
-      title: "Item Deleted",
-      description: `${selectedItem.name} has been removed from your inventory.`,
-      variant: "default",
-    });
-    setDeleteDialogOpen(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const confirmDelete = async () => {
+    if (!selectedItem?._id) return;
+    setIsDeleting(true);
+    try {
+      await deleteInventoryItem(selectedItem._id);
+      // Optimistically update cache
+      queryClient.setQueryData(["inventory", debouncedSearch], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: any) => ({
+            ...page,
+            items: page.items.filter((item: any) => item._id !== selectedItem._id),
+          })),
+        };
+      });
+      toast({
+        title: "Item Deleted",
+        description: `${selectedItem.name} has been removed from your inventory.`,
+        variant: "default",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err?.response?.data?.message || "Failed to delete inventory item.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+    }
   };
 
   // Update the handleOrderItem function
@@ -96,35 +200,22 @@ export default function InventoryPage() {
     setOrderItemOpen(true);
   };
 
-  const {} = useInfiniteQuery<ResponseWithPagination<Inventory, "items">>({
-    queryKey: ["inventory"],
-    queryFn: async ({ pageParam }) => {
-      const { data } = await axiosInstance.get("/restaurant/inventory", {
-        params: {
-          page: pageParam,
-        },
-      });
+  // Handler for log usage
+  const handleLogUsage = (item: any) => {
+    setLogUsageItem(item);
+    setLogUsageOpen(true);
+  };
 
-      return validateApiResponse(data);
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage?.pagination) return undefined;
+  // Find dummy logs for daily stock tab
+  const getLogsForItem = (item: any) => {
+    return dummyStockLogs.find((log) => log.name === item.name);
+  };
 
-      return lastPage?.pagination?.currentPage
-        ? lastPage?.pagination?.currentPage + 1
-        : undefined;
-    },
-  });
+  // For demo, use dummyStockLogs for daily stock tab
+  const allStockLogs = dummyStockLogs;
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
-        <Menu className="h-6 w-6" />
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">Inventory</h1>
-        </div>
-      </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -137,257 +228,161 @@ export default function InventoryPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button onClick={handleAddItem}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Item
+              <Plus className="mr-2 h-4 w-4" /> Add Item
             </Button>
           </div>
         </div>
 
-        <Tabs defaultValue="inventory" className="w-full">
-          <TabsList>
-            <TabsTrigger value="inventory">Inventory Items</TabsTrigger>
-            <TabsTrigger value="daily-stock">Daily Stock Tracking</TabsTrigger>
-          </TabsList>
-          <TabsContent value="inventory">
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Inventory</CardTitle>
-                <CardDescription>
-                  View and manage all inventory items
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="search"
-                        placeholder="Search inventory..."
-                        className="pl-8 w-full md:w-[300px]"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Select defaultValue="all">
-                      <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        <SelectItem value="produce">Produce</SelectItem>
-                        <SelectItem value="meat">Meat & Poultry</SelectItem>
-                        <SelectItem value="dairy">Dairy</SelectItem>
-                        <SelectItem value="dry-goods">Dry Goods</SelectItem>
-                        <SelectItem value="beverages">Beverages</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select defaultValue="all">
-                      <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Stock Level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Levels</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="good">Good</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Inventory</CardTitle>
+            <CardDescription>
+              View and manage all inventory items
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search inventory..."
+                    className="pl-8 w-full md:w-[300px]"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
                 </div>
-
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Item Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead className="text-right">
-                          Current Stock
-                        </TableHead>
-                        <TableHead className="text-right">Min. Level</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">
-                          Last Updated
-                        </TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {inventoryItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">
-                            {item.name}
-                          </TableCell>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell className="text-right">
-                            {item.currentStock} {item.unit}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {item.minLevel} {item.unit}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={getStockLevelVariant(item.stockLevel)}
+              </div>
+            </div>
+            {isLoading || isFetching ? (
+              <div className="flex justify-center items-center py-10">
+                <span className="text-muted-foreground">
+                  Loading inventory...
+                </span>
+              </div>
+            ) : isError ? (
+              <div className="flex justify-center items-center py-10">
+                <span className="text-destructive">
+                  Error loading inventory.
+                </span>
+              </div>
+            ) : inventoryItems.length === 0 ? (
+              <div className="flex flex-col items-center py-10">
+                <span className="text-muted-foreground">
+                  No inventory items found.
+                </span>
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item Name</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead className="text-right">
+                        Current Stock
+                      </TableHead>
+                      <TableHead className="text-right">Min. Level</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Last Updated</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-right">Log Usage</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {inventoryItems.map((item: any) => (
+                      <TableRow key={item._id}>
+                        <TableCell className="font-medium">
+                          {item.name}
+                        </TableCell>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell className="text-right">
+                          {item.currentStock} {item.unit}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {item.minimumLevel} {item.unit}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              getStockLevelVariant(getStockLevel(item)) as any
+                            }
+                          >
+                            {getStockLevel(item)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {item.updatedAt
+                            ? new Date(item.updatedAt).toLocaleString()
+                            : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditItem(item)}
                             >
-                              {item.stockLevel}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {item.lastUpdated}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEditItem(item)}
-                              >
-                                <Edit className="h-4 w-4" />
-                                <span className="sr-only">Edit</span>
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeleteItem(item)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Delete</span>
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant={
-                                  item.stockLevel === "Critical" ||
-                                  item.stockLevel === "Low"
-                                    ? "destructive"
-                                    : "outline"
-                                }
-                                onClick={() => handleOrderItem(item)}
-                              >
-                                {item.stockLevel === "Critical" ||
-                                item.stockLevel === "Low" ? (
-                                  <AlertTriangle className="mr-1 h-4 w-4" />
-                                ) : null}
-                                Order
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="daily-stock">
-            <Card>
-              <CardHeader>
-                <CardTitle>Daily Stock Tracking</CardTitle>
-                <CardDescription>
-                  Track opening and closing stock levels for daily operations
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="search"
-                        placeholder="Search items..."
-                        className="pl-8 w-full md:w-[300px]"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Select defaultValue="today">
-                      <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Date" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="today">Today</SelectItem>
-                        <SelectItem value="yesterday">Yesterday</SelectItem>
-                        <SelectItem value="custom">Custom Date</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button variant="outline" className="flex-shrink-0">
-                      <QrCode className="mr-2 h-4 w-4" />
-                      Scan Barcode
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteItem(item)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={
+                                getStockLevel(item) === "Critical" ||
+                                getStockLevel(item) === "Low"
+                                  ? "destructive"
+                                  : "outline"
+                              }
+                              onClick={() => handleOrderItem(item)}
+                            >
+                              {getStockLevel(item) === "Critical" ||
+                              getStockLevel(item) === "Low" ? (
+                                <AlertTriangle className="mr-1 h-4 w-4" />
+                              ) : null}
+                              Order
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleLogUsage(item)}
+                          >
+                            Log Usage
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {/* Pagination Controls */}
+                {hasNextPage && (
+                  <div className="flex justify-center py-4">
+                    <Button
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      variant="outline"
+                    >
+                      {isFetchingNextPage ? "Loading more..." : "Load More"}
                     </Button>
                   </div>
-                </div>
-
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Item Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead className="text-right">
-                          Opening Stock
-                        </TableHead>
-                        <TableHead className="text-right">
-                          Closing Stock
-                        </TableHead>
-                        <TableHead className="text-right">Usage</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {inventoryItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">
-                            {item.name}
-                          </TableCell>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell className="text-right">
-                            <Input
-                              type="number"
-                              defaultValue={item.currentStock}
-                              className="w-20 text-right"
-                              min="0"
-                              step="0.1"
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Input
-                              type="number"
-                              defaultValue={Math.max(
-                                0,
-                                item.currentStock - Math.random() * 2
-                              ).toFixed(1)}
-                              className="w-20 text-right"
-                              min="0"
-                              step="0.1"
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {(Math.random() * 2).toFixed(1)} {item.unit}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={getStockLevelVariant(item.stockLevel)}
-                            >
-                              {item.stockLevel}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="outline">
-                              Save
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        {/* End of inventory card/table */}
       </main>
 
       {/* Add Item Modal */}
@@ -422,8 +417,13 @@ export default function InventoryPage() {
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground"
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? (
+                <span className="flex items-center gap-2"><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg> Deleting...</span>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -438,18 +438,40 @@ export default function InventoryPage() {
         />
       )}
 
+      {/* Log Usage Modal */}
+      {logUsageItem && (
+        <LogUsageModal
+          open={logUsageOpen}
+          onOpenChange={setLogUsageOpen}
+          item={logUsageItem}
+          onSave={(log) => {
+            setLogUsageOpen(false);
+            // In real app, update logs here
+          }}
+          latestDate={
+            getLogsForItem(logUsageItem)?.logs?.[
+              getLogsForItem(logUsageItem)?.logs.length - 1
+            ]?.date || "2025-08-09"
+          }
+          currentLevel={
+            getLogsForItem(logUsageItem)?.logs?.[
+              getLogsForItem(logUsageItem)?.logs.length - 1
+            ]?.closing || 0
+          }
+        />
+      )}
       <Toaster />
     </div>
   );
 }
 
-// Helper function to get badge variant based on stock level
+// Helper: get badge variant based on stock level
 function getStockLevelVariant(level: string) {
   switch (level) {
     case "Critical":
       return "destructive";
     case "Low":
-      return "warning";
+      return "outline";
     case "Medium":
       return "secondary";
     case "Good":
@@ -459,110 +481,16 @@ function getStockLevelVariant(level: string) {
   }
 }
 
-// Sample data
-const inventoryItems = [
-  {
-    id: "1",
-    name: "Tomatoes",
-    category: "Produce",
-    currentStock: 2.5,
-    unit: "kg",
-    minLevel: 5,
-    stockLevel: "Critical",
-    lastUpdated: "Today, 8:30 AM",
-    supplier: "Kigali Farms",
-    location: "Cold Storage",
-    expiryDate: "2023-05-15",
-  },
-  {
-    id: "2",
-    name: "Onions",
-    category: "Produce",
-    currentStock: 5,
-    unit: "kg",
-    minLevel: 8,
-    stockLevel: "Low",
-    lastUpdated: "Yesterday, 4:15 PM",
-    supplier: "Nyarutarama Grocers",
-    location: "Dry Storage",
-    expiryDate: "2023-06-20",
-  },
-  {
-    id: "3",
-    name: "Chicken Breast",
-    category: "Meat & Poultry",
-    currentStock: 8,
-    unit: "kg",
-    minLevel: 10,
-    stockLevel: "Low",
-    lastUpdated: "Yesterday, 2:00 PM",
-    supplier: "Rwanda Meat Suppliers",
-    location: "Freezer",
-    expiryDate: "2023-05-10",
-  },
-  {
-    id: "4",
-    name: "Olive Oil",
-    category: "Dry Goods",
-    currentStock: 5,
-    unit: "liter",
-    minLevel: 2,
-    stockLevel: "Good",
-    lastUpdated: "May 1, 2023",
-    supplier: "Nyarutarama Grocers",
-    location: "Pantry",
-    expiryDate: "",
-  },
-  {
-    id: "5",
-    name: "Rice",
-    category: "Dry Goods",
-    currentStock: 10,
-    unit: "kg",
-    minLevel: 5,
-    stockLevel: "Good",
-    lastUpdated: "April 28, 2023",
-    supplier: "Nyarutarama Grocers",
-    location: "Dry Storage",
-    expiryDate: "",
-  },
-  {
-    id: "6",
-    name: "Milk",
-    category: "Dairy",
-    currentStock: 4,
-    unit: "liter",
-    minLevel: 6,
-    stockLevel: "Medium",
-    lastUpdated: "Today, 9:00 AM",
-    supplier: "Dairy Fresh",
-    location: "Refrigerator",
-    expiryDate: "2023-05-08",
-  },
-  {
-    id: "7",
-    name: "Potatoes",
-    category: "Produce",
-    currentStock: 15,
-    unit: "kg",
-    minLevel: 10,
-    stockLevel: "Good",
-    lastUpdated: "April 30, 2023",
-    supplier: "Kigali Farms",
-    location: "Dry Storage",
-    expiryDate: "2023-06-15",
-  },
-  {
-    id: "8",
-    name: "Flour",
-    category: "Dry Goods",
-    currentStock: 3,
-    unit: "kg",
-    minLevel: 5,
-    stockLevel: "Medium",
-    lastUpdated: "May 2, 2023",
-    supplier: "Nyarutarama Grocers",
-    location: "Pantry",
-    expiryDate: "",
-  },
-];
+// Helper: derive stock level from item (basic logic, adjust as needed)
+function getStockLevel(item: any): string {
+  if (
+    typeof item.currentStock === "number" &&
+    typeof item.minimumLevel === "number"
+  ) {
+    if (item.currentStock <= 0) return "Critical";
+    if (item.currentStock < item.minimumLevel) return "Low";
+    if (item.currentStock < item.minimumLevel * 2) return "Medium";
+    return "Good";
+  }
+  return "Unknown";
+}

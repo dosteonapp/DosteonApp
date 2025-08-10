@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 /**
  * Custom hook to debounce a value
@@ -35,7 +35,9 @@ export function useDebounceCallback<T extends (...args: any[]) => any>(
   delay: number,
   deps: React.DependencyList = []
 ): T {
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
   const debouncedCallback = ((...args: Parameters<T>) => {
     if (debounceTimer) {
