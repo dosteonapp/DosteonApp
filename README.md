@@ -1,6 +1,6 @@
 # Dosteon
 
-Dosteon is an AI-powered dashboard platform supporting role-based interaction for **Restaurants** and **Suppliers**.
+Dosteon is an  dashboard platform supporting role-based interaction for **Restaurants** and **Suppliers**.
 
 ## Project Overview
 
