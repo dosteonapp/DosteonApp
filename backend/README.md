@@ -1,43 +1,61 @@
 # Dosteon Backend
 
-This is the Express.js backend server for the Dosteon project. It handles core authentication logic, user profile management, and database interactions via the Supabase Admin SDK.
+This is the FastAPI backend server for the Dosteon project. It handles core authentication logic (including social logins and magic links), user profile management, inventory, and orders via the Supabase Python SDK.
 
 ## Prerequisites
 
-- Node.js (Latest LTS)
-- NPM or Yarn
-- Access to a Supabase project (specifically the Service Role Key)
+- Python 3.9+
+- [Virtualenv](https://virtualenv.pypa.io/en/latest/) (recommended)
+- Access to a Supabase project
 
 ## Getting Started
 
-1.  **Install Dependencies**:
+1.  **Set up Virtual Environment**:
     ```bash
-    npm install
+    python -m venv venv
+    .\venv\Scripts\activate  # Windows
+    source venv/bin/activate  # Linux/macOS
     ```
 
-2.  **Environment Variables**:
-    Create a `.env` file in this directory and add the following:
+2.  **Install Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Environment Variables**:
+    Create a `.env` file in the `backend/` directory and add the following:
     ```env
-    PORT=4000
+    PROJECT_NAME="Dosteon API"
     SUPABASE_URL=your_supabase_project_url
+    SUPABASE_ANON_KEY=your_supabase_anon_key
     SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+    BACKEND_CORS_ORIGINS=["http://localhost:3000"]
     ```
 
-3.  **Run in Development Mode**:
+4.  **Run in Development Mode**:
     ```bash
-    npm run dev
+    uvicorn app.main:app --reload
     ```
-    The server will start on `http://localhost:4000`.
+    The server will start on `http://localhost:8000`. You can access the Interactive API docs at `http://localhost:8000/docs`.
 
-## Architecture
+## Recent Updates
 
-- `routes/auth.js`: Handles email/password signup (with admin user creation) and login.
-- `supabaseClient.js`: Initializes the Supabase client with the Service Role Key for backend operations.
-- `index.js`: Main entry point setting up Express and middleware (CORS, JSON).
+- **Modular Architecture**: Refactored to a domain-driven structure (api, core, models, repositories, schemas, services).
+- **Enhanced Authentication**: 
+    - Password complexity validation.
+    - Social login integration (Google, Apple).
+    - Magic link sign-in flow.
+    - Secure password rest mechanism.
+- **Service Layer**: Implemented a dedicated service layer for business logic separation.
 
-## Testing
+## Features
 
-You can use the provided integration script to test the backend logic separately:
-```bash
-node scripts/integration-test.js
-```
+- **Auth**: Fully integrated with Supabase Auth for secure user management.
+- **Inventory**: Endpoints for managing restaurant/supplier stock.
+- **Orders**: Core order processing and tracking.
+
+## API Documentation
+
+Once the server is running, visit:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
