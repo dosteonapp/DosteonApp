@@ -325,16 +325,16 @@ export default function DiscoverSuppliersPage() {
                     </TableRow>
                   ) : (
                     suppliers.map((supplier) => (
-                      <TableRow key={supplier._id}>
+                      <TableRow key={supplier.id}>
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {supplier.firstname} {supplier.lastname}
+                              {supplier.first_name} {supplier.last_name}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               Member since:{" "}
                               {new Date(
-                                supplier.createdAt
+                                supplier.created_at
                               ).toLocaleDateString()}
                             </div>
                           </div>
@@ -342,7 +342,7 @@ export default function DiscoverSuppliersPage() {
                         <TableCell>{supplier.email}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            {supplier.accountType}
+                            {supplier.role}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -356,7 +356,7 @@ export default function DiscoverSuppliersPage() {
                           <div className="flex justify-end gap-2">
                             <Button size="sm" variant="outline" asChild>
                               <Link
-                                href={`/dashboard/suppliers/${supplier._id}`}
+                                href={`/dashboard/suppliers/${supplier.id}`}
                               >
                                 View
                               </Link>
@@ -368,7 +368,7 @@ export default function DiscoverSuppliersPage() {
                             ) : (
                               <Button
                                 size="sm"
-                                onClick={() => handleAddToNetwork(supplier._id)}
+                                onClick={() => handleAddToNetwork(supplier.id)}
                                 disabled={addToNetworkMutation.isPending}
                               >
                                 {addToNetworkMutation.isPending ? (

@@ -5,13 +5,13 @@ import { useUser } from "@/context/UserContext";
 
 // Types for the API responses
 export interface NetworkUser {
-  _id: string;
-  firstname: string;
-  lastname: string;
+  id: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  accountType: "supplier" | "restaurant";
+  role: "supplier" | "restaurant";
   active?: boolean;
-  createdAt: string;
+  created_at: string;
 }
 
 export interface DiscoveryUser extends NetworkUser {
@@ -19,10 +19,10 @@ export interface DiscoveryUser extends NetworkUser {
 }
 
 export interface NetworkEntry {
-  _id: string;
-  networkUserId: string;
-  networkUserType: "supplier" | "restaurant";
-  createdAt: string;
+  id: string;
+  network_user_id: string;
+  network_user_type: "supplier" | "restaurant";
+  created_at: string;
   networkUser: NetworkUser;
 }
 
@@ -238,11 +238,11 @@ export const useGetAvailableUsers = (
 export const useUserType = (): "restaurant" | "supplier" => {
   const { user } = useUser();
 
-  if (!user?.accountType) {
-    throw new Error("User account type not available");
+  if (!user?.role) {
+    throw new Error("User role not available");
   }
 
-  return user.accountType;
+  return user.role;
 };
 
 // Convenience hooks that automatically determine user type

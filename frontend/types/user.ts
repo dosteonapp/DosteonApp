@@ -5,16 +5,13 @@ export interface UserContextType {
 }
 
 export interface User {
-  _id: string;
-  name: string;
+  id: string;
   email: string;
-  password?: string;
+  first_name?: string;
+  last_name?: string;
+  role: "supplier" | "restaurant";
+  created_at?: string | Date;
   onboardingCompleted?: boolean;
   emailVerified?: boolean;
-  googleId?: string; // Added this for Google auth
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
-  accountType: "supplier" | "restaurant"; // Required field to track account type
-  //   onboardingStatus: OnboardingStatus;
   onboardingSkipped?: boolean;
 }

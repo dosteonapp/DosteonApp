@@ -21,9 +21,9 @@ const RoleProvider = ({
     //   return onboarding;
     // }
 
-    if (user?.accountType === "restaurant") {
+    if (user?.role === "restaurant") {
       return restaurant;
-    } else if (user?.accountType === "supplier") {
+    } else if (user?.role === "supplier") {
       return supplier;
     } else {
       return <div>Unauthorized</div>;

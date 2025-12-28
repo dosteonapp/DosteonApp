@@ -24,12 +24,12 @@ import * as Yup from "yup";
 
 const BusinessDetailsSchema = Yup.object().shape({
   businessType: Yup.string().required("Business type is required"),
-  cuisine: Yup.string().when('accountType', {
+  cuisine: Yup.string().when('role', {
     is: 'restaurant',
     then: (schema) => schema.required("Cuisine type is required"),
     otherwise: (schema) => schema.optional(),
   }),
-  specialties: Yup.string().when('accountType', {
+  specialties: Yup.string().when('role', {
     is: 'supplier',
     then: (schema) => schema.required("Specialties are required"),
     otherwise: (schema) => schema.optional(),
@@ -73,7 +73,7 @@ export default function BusinessDetailsPage() {
             <TabsContent value="restaurant">
               <Formik
                 initialValues={{
-                  accountType: "restaurant",
+                  role: "restaurant",
                   businessType: "",
                   cuisine: "",
                   description: "",
@@ -199,7 +199,7 @@ export default function BusinessDetailsPage() {
             <TabsContent value="supplier">
               <Formik
                 initialValues={{
-                  accountType: "supplier",
+                  role: "supplier",
                   businessType: "",
                   specialties: "",
                   description: "",

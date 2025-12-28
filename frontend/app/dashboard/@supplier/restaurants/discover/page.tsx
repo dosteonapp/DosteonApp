@@ -172,16 +172,16 @@ export default function DiscoverRestaurantsPage() {
                     </TableRow>
                   ) : (
                     restaurants.map((restaurant) => (
-                      <TableRow key={restaurant._id}>
+                      <TableRow key={restaurant.id}>
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {restaurant.firstname} {restaurant.lastname}
+                              {restaurant.first_name} {restaurant.last_name}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               Member since:{" "}
                               {new Date(
-                                restaurant.createdAt
+                                restaurant.created_at
                               ).toLocaleDateString()}
                             </div>
                           </div>
@@ -189,7 +189,7 @@ export default function DiscoverRestaurantsPage() {
                         <TableCell>{restaurant.email}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            {restaurant.accountType}
+                            {restaurant.role}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -203,7 +203,7 @@ export default function DiscoverRestaurantsPage() {
                           <div className="flex justify-end gap-2">
                             <Button size="sm" variant="outline" asChild>
                               <Link
-                                href={`/dashboard/restaurants/${restaurant._id}`}
+                                href={`/dashboard/restaurants/${restaurant.id}`}
                               >
                                 View
                               </Link>
@@ -216,7 +216,7 @@ export default function DiscoverRestaurantsPage() {
                               <Button
                                 size="sm"
                                 onClick={() =>
-                                  handleAddToNetwork(restaurant._id)
+                                  handleAddToNetwork(restaurant.id)
                                 }
                                 disabled={addToNetworkMutation.isPending}
                               >

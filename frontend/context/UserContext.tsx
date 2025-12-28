@@ -35,11 +35,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     } = useQuery<User>({
       queryKey: ["user"],
       queryFn: async () => {
-        const { data } = await axiosInstance.get("/user");
-        if (!data || !data.success || !data.data) {
+        const { data } = await axiosInstance.get("/auth/me");
+        if (!data) {
           throw new Error("User not authenticated or user data not found");
         }
-        return data.data;
+        return data;
       },
       retry: 1,
       refetchOnWindowFocus: false,

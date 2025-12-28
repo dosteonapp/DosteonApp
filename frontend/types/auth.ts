@@ -23,8 +23,9 @@ export interface AuthResponse {
     user?: {
       id: string;
       email: string;
-      firstName: string;
-      lastName: string;
+      first_name: string;
+      last_name: string;
+      role: "restaurant" | "supplier";
     };
   };
 }

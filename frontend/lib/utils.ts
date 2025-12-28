@@ -9,8 +9,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function handleApiError(error: unknown): Error {
   if (error instanceof AxiosError) {
-    // Check for API response with message
-    const apiMessage = error.response?.data?.message;
+    // Check for API response with message or detail (FastAPI)
+    const apiMessage = error.response?.data?.message || error.response?.data?.detail;
 
     if (apiMessage) return new Error(apiMessage);
 
