@@ -20,6 +20,7 @@ const ForgotPasswordSchema = Yup.object().shape({
 });
 
 import { EmailCheckScreen } from "@/components/auth/EmailCheckScreen";
+import Image from "next/image";
 
 export default function ForgotPasswordPage() {
   const { forgotPassword } = useAuth();
@@ -49,12 +50,19 @@ export default function ForgotPasswordPage() {
           description={`We've sent a password reset link to ${email}. Please check your inbox and follow the instructions.`}
           buttonText="Back to Login"
           onButtonClick={() => setIsSent(false)}
+          role="supplier"
         />
       ) : (
-        <>
+        <div className="bg-white rounded-3xl shadow-xl p-6 md:p-12">
           <div className="flex flex-col items-center gap-2 mb-8">
-            <div className="w-16 h-16 rounded-xl border border-blue-100 flex items-center justify-center mb-4">
-              <Key className="w-8 h-8 text-blue-600" />
+            <div className="mb-6">
+              <Image
+                src="/images/logo-full.png"
+                alt="Dosteon Logo"
+                width={160}
+                height={40}
+                className="h-auto w-auto max-h-8"
+              />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2 font-serif text-center">Forgot Your Password?</h1>
             <p className="text-gray-500 text-center">
@@ -84,7 +92,7 @@ export default function ForgotPasswordPage() {
                       name="email"
                       type="email"
                       placeholder="Enter your email address"
-                      className="w-full h-12 border-gray-200 rounded-lg focus:ring-blue-600"
+                      className="w-full h-12 border-gray-200 rounded-lg focus:ring-[#00a13e]"
                     />
                   </FormikFormControl>
                   <FormikFormMessage name="email" />
@@ -93,7 +101,7 @@ export default function ForgotPasswordPage() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-base transition-colors"
+                  className="w-full h-12 bg-[#00a13e] hover:bg-[#008a35] text-white font-semibold rounded-lg text-base transition-colors"
                 >
                   {isSubmitting ? "Sending..." : "Send Reset Link"}
                 </Button>
@@ -101,7 +109,7 @@ export default function ForgotPasswordPage() {
                 <div className="text-center">
                   <Link
                     href="/auth/supplier/signin"
-                    className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                    className="text-[#00a13e] hover:text-[#008a35] font-medium text-sm"
                   >
                     Back to Sign In
                   </Link>
@@ -109,8 +117,9 @@ export default function ForgotPasswordPage() {
               </Form>
             )}
           </Formik>
-        </>
+        </div>
       )}
     </div>
   );
 }
+

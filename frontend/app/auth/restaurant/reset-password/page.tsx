@@ -7,6 +7,7 @@ import * as Yup from "yup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Key, Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import {
   FormikFormItem,
@@ -55,9 +56,15 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-xl w-full max-w-xl p-12 flex flex-col items-center mx-auto">
-        <div className="w-16 h-16 rounded-xl border border-blue-100 flex items-center justify-center mb-6">
-          <Key className="w-8 h-8 text-blue-600" />
+      <div className="bg-white rounded-3xl shadow-xl w-full max-w-xl p-6 md:p-12 flex flex-col items-center mx-auto">
+        <div className="mb-6">
+          <Image
+            src="/images/logo-full.png"
+            alt="Dosteon Logo"
+            width={160}
+            height={40}
+            className="h-auto w-auto max-h-8"
+          />
         </div>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-2 font-serif">Reset Your Password</h1>

@@ -9,8 +9,8 @@ export default function PasswordChangedPage() {
     <StatusScreen
       role="supplier"
       icon={
-        <div className="w-16 h-16 rounded-xl border border-blue-100 flex items-center justify-center">
-          <Key className="w-8 h-8 text-blue-600" />
+        <div className="w-16 h-16 rounded-xl border border-green-100 flex items-center justify-center">
+          <Key className="w-8 h-8 text-[#00a13e]" />
         </div>
       }
       title="Password Changed"

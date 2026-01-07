@@ -34,7 +34,7 @@ export default function Home() {
             </div>
             <div className="flex gap-4">
               <Button
-                className="bg-[#3851DD] hover:bg-[#2c3fa0] text-white px-6 py-2 rounded-xl text-base font-medium shadow-none"
+                className="bg-[#00a13e] hover:bg-[#00a13e] text-white px-6 py-2 rounded-xl text-base font-medium shadow-none"
                 style={{ boxShadow: "none" }}
                 asChild
               >
@@ -109,8 +109,8 @@ export default function Home() {
             {/* Supplier Card */}
             <div className="bg-white rounded-2xl shadow-md p-8 hover:shadow-lg transition-all duration-300 border border-gray-100">
               <div className="text-center">
-                <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-orange-100">
-                  <Truck className="w-8 h-8 text-orange-600" />
+                <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-green-100">
+                  <Truck className="w-8 h-8 text-green-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
                   I'm a Supplier
@@ -121,7 +121,7 @@ export default function Home() {
                 </p>
                 <Button
                   onClick={() => handleGetStarted("supplier")}
-                  className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium flex items-center justify-center gap-2 mx-auto transition-all duration-200"
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium flex items-center justify-center gap-2 mx-auto transition-all duration-200"
                 >
                   Get Started
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

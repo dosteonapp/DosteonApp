@@ -20,6 +20,8 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { EmailCheckScreen } from "@/components/auth/EmailCheckScreen";
 
+import Image from "next/image";
+
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -66,15 +68,25 @@ export default function RegisterPage() {
           description={`We've sent a verification link to ${successEmail}. Please click the link in the email to activate your account.`}
           buttonText="Back to Sign Up"
           onButtonClick={() => setSuccessEmail(null)}
+          role="supplier"
         />
       ) : (
-        <>
+        <div className="bg-white rounded-3xl shadow-xl p-6 md:p-12">
           <div className="flex flex-col items-center gap-2 mb-8">
+            <div className="mb-6">
+              <Image
+                src="/images/logo-full.png"
+                alt="Dosteon Logo"
+                width={160}
+                height={40}
+                className="h-auto w-auto max-h-8"
+              />
+            </div>
             <h2 className="text-3xl font-bold text-gray-900 font-serif">
-              Sign up as a Supplier
+              Create Your Account
             </h2>
             <p className="text-gray-500 text-center">
-              Tell us about yourself and your business to get started.
+              Get started with Dosteon to access and sell more to food businesses.
             </p>
           </div>
 
@@ -104,14 +116,14 @@ export default function RegisterPage() {
                     <FormikFormItem className="flex-1">
                       <FormikFormLabel htmlFor="firstName-supplier">First Name</FormikFormLabel>
                       <FormikFormControl>
-                        <Field as={Input} id="firstName-supplier" name="firstname" placeholder="First Name" className="w-full h-12 border-gray-200 rounded-lg focus:ring-blue-600" />
+                        <Field as={Input} id="firstName-supplier" name="firstname" placeholder="First Name" className="w-full h-12 border-gray-200 rounded-lg focus:ring-[#00a13e]" />
                       </FormikFormControl>
                       <FormikFormMessage name="firstname" />
                     </FormikFormItem>
                     <FormikFormItem className="flex-1">
                       <FormikFormLabel htmlFor="lastName-supplier">Last Name</FormikFormLabel>
                       <FormikFormControl>
-                        <Field as={Input} id="lastName-supplier" name="lastname" placeholder="Last Name" className="w-full h-12 border-gray-200 rounded-lg focus:ring-blue-600" />
+                        <Field as={Input} id="lastName-supplier" name="lastname" placeholder="Last Name" className="w-full h-12 border-gray-200 rounded-lg focus:ring-[#00a13e]" />
                       </FormikFormControl>
                       <FormikFormMessage name="lastname" />
                     </FormikFormItem>
@@ -119,7 +131,7 @@ export default function RegisterPage() {
                   <FormikFormItem>
                     <FormikFormLabel htmlFor="email-supplier">Email Address</FormikFormLabel>
                     <FormikFormControl>
-                      <Field as={Input} id="email-supplier" name="email" type="email" placeholder="supplier@example.com" className="w-full h-12 border-gray-200 rounded-lg focus:ring-blue-600" />
+                      <Field as={Input} id="email-supplier" name="email" type="email" placeholder="restaurant@example.com" className="w-full h-12 border-gray-200 rounded-lg focus:ring-[#00a13e]" />
                     </FormikFormControl>
                     <FormikFormMessage name="email" />
                   </FormikFormItem>
@@ -127,7 +139,7 @@ export default function RegisterPage() {
                     <FormikFormLabel htmlFor="password-supplier">New Password</FormikFormLabel>
                     <FormikFormControl>
                       <div className="relative">
-                        <Field as={Input} id="password-supplier" name="password" type={showPassword ? "text" : "password"} placeholder="Create a secure password" className="w-full h-12 border-gray-200 rounded-lg focus:ring-blue-600 pl-10 pr-10" />
+                        <Field as={Input} id="password-supplier" name="password" type={showPassword ? "text" : "password"} placeholder="Create a secure password" className="w-full h-12 border-gray-200 rounded-lg focus:ring-[#00a13e] pl-10 pr-10" />
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" tabIndex={-1}>
                           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -135,7 +147,7 @@ export default function RegisterPage() {
                       </div>
                     </FormikFormControl>
                     <p className="text-xs text-gray-500 mt-1">
-                      Password must be at least <b>8 Characters</b> and must contain at least a <b>Capital Letter</b>, a <b>Number</b> and a <b>Special Character</b>.
+                      Password must be at least 8 Characters and must contain at least a Capital Letter, a Number and a Special Character.
                     </p>
                     <FormikFormMessage name="password" />
                   </FormikFormItem>
@@ -147,19 +159,19 @@ export default function RegisterPage() {
                     <FormikFormMessage name="confirmPassword" />
                   </FormikFormItem>
 
-                  <Button type="submit" className="w-full h-12 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors rounded-lg font-semibold mt-4" disabled={!allRequirementsMet || isSubmitting}>
-                    {isSubmitting ? "Registering..." : "Register as Supplier"}
+                  <Button type="submit" className="w-full h-12 bg-[#00a13e] text-white hover:bg-[#008a35] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors rounded-lg font-semibold mt-4" disabled={!allRequirementsMet || isSubmitting}>
+                    {isSubmitting ? "Registering..." : "Register as a Supplier"}
                   </Button>
                   <div className="text-center text-sm">
                     <span className="text-gray-600">Already have an account? </span>
-                    <Link href="/auth/supplier/signin" className="text-blue-600 hover:text-blue-800 font-medium">Log In</Link>
+                    <Link href="/auth/supplier/signin" className="text-[#00a13e] hover:text-[#008a35] font-medium">Login Here</Link>
                   </div>
                   <div className="flex items-center gap-2 my-4">
                     <div className="flex-1 h-px bg-gray-100" />
                     <span className="text-xs text-gray-400">Or continue with</span>
                     <div className="flex-1 h-px bg-gray-100" />
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <Button type="button" variant="outline" className="flex-1 h-12 flex items-center justify-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50" onClick={() => handleSocialLogin("google")}>
                       <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
                       Google
@@ -173,14 +185,14 @@ export default function RegisterPage() {
                   </div>
                   <p className="text-xs text-gray-500 text-center mt-2">
                     By creating an account, you agree to our{' '}
-                    <a href="#" className="text-blue-600 hover:text-blue-800">Terms of Service</a> and{' '}
-                    <a href="#" className="text-blue-600 hover:text-blue-800">Privacy Policy</a>.
+                    <a href="#" className="text-[#00a13e] hover:text-[#008a35]">Terms of Service</a> and{' '}
+                    <a href="#" className="text-[#00a13e] hover:text-[#008a35]">Privacy Policy</a>.
                   </p>
                 </Form>
               );
             }}
           </Formik>
-        </>
+        </div>
       )}
     </div>
   );

@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Formik, Form, Field, FormikHelpers } from "formik";
 import * as Yup from "yup";
+import { toast } from "sonner";
+import Image from "next/image";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Key, Eye, EyeOff } from "lucide-react";
@@ -55,12 +58,18 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-xl w-full max-w-xl p-12 flex flex-col items-center mx-auto">
-        <div className="w-16 h-16 rounded-xl border border-blue-100 flex items-center justify-center mb-6">
-          <Key className="w-8 h-8 text-blue-600" />
-        </div>
+      <div className="bg-white rounded-3xl shadow-xl w-full max-w-xl p-6 md:p-12 flex flex-col items-center mx-auto">
+            <div className="mb-6">
+              <Image
+                src="/images/logo-full.png"
+                alt="Dosteon Logo"
+                width={160}
+                height={40}
+                className="h-auto w-auto max-h-8"
+              />
+            </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 font-serif">Reset Your Password</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2 font-serif text-center">Reset Your Password</h1>
         
         <Formik
           initialValues={{ password: "", confirmPassword: "" }}
@@ -85,7 +94,7 @@ export default function ResetPasswordPage() {
                       name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter new password"
-                      className="w-full h-12 border-gray-200 rounded-lg pr-10"
+                      className="w-full h-12 border-gray-200 rounded-lg focus:ring-[#00a13e] pr-10"
                     />
                     <button
                       type="button"
@@ -97,7 +106,7 @@ export default function ResetPasswordPage() {
                   </div>
                 </FormikFormControl>
                 <p className="text-xs text-gray-500 mt-1">
-                  Password must be at least <b>8 Characters</b> and must contain at least a <b>Capital Letter</b>, a <b>Number</b> and a <b>Special Character</b>.
+                  Password must be at least 8 Characters and must contain at least a Capital Letter, a Number and a Special Character.
                 </p>
                 <FormikFormMessage name="password" />
               </FormikFormItem>
@@ -112,7 +121,7 @@ export default function ResetPasswordPage() {
                       name="confirmPassword"
                       type={showPassword ? "text" : "password"}
                       placeholder="Confirm new password"
-                      className="w-full h-12 border-gray-200 rounded-lg pr-10"
+                      className="w-full h-12 border-gray-200 rounded-lg focus:ring-[#00a13e] pr-10"
                     />
                   </div>
                 </FormikFormControl>
@@ -122,7 +131,7 @@ export default function ResetPasswordPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-base transition-colors"
+                className="w-full h-12 bg-[#00a13e] hover:bg-[#008a35] text-white font-semibold rounded-lg text-base transition-colors"
               >
                 {isSubmitting ? "Updating..." : "Update Password"}
               </Button>
@@ -132,4 +141,5 @@ export default function ResetPasswordPage() {
       </div>
     </div>
   );
+
 }

@@ -20,6 +20,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 import { EmailCheckScreen } from "@/components/auth/EmailCheckScreen";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -75,11 +76,23 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl w-full max-w-xl p-12 mx-auto transition-all duration-300">
+    <div className="bg-white rounded-3xl shadow-xl w-full max-w-xl p-6 md:p-12 mx-auto transition-all duration-300">
       <div className="flex flex-col items-center gap-2 mb-8">
+        <div className="mb-6">
+          <Image
+            src="/images/logo-full.png"
+            alt="Dosteon Logo"
+            width={160}
+            height={40}
+            className="h-auto w-auto max-h-8"
+          />
+        </div>
         <h2 className="text-3xl font-bold text-gray-900 font-serif">
           Create Your Account
         </h2>
+        <p className="text-gray-500 text-center max-w-sm">
+          Get started with Dosteon to streamline your restaurant operations.
+        </p>
       </div>
 
           <Formik
@@ -103,10 +116,6 @@ export default function RegisterPage() {
                       {status.error}
                     </div>
                   )}
-                  <p className="text-gray-500 text-center mb-2">
-                    Get started with Dosteon to streamline your restaurant
-                    operations.
-                  </p>
                   <div className="flex flex-col md:flex-row gap-3">
                     <FormikFormItem className="flex-1">
                       <FormikFormLabel htmlFor="firstName-restaurant">
@@ -222,13 +231,13 @@ export default function RegisterPage() {
                   </Button>
                   <div className="text-center">
                     <span className="text-gray-600">
-                      Already have an account?{" "}
+                      Already have a restaurant account?{" "}
                     </span>
                     <Link
                       href="/auth/restaurant/signin"
                       className="text-blue-600 hover:text-blue-800 font-medium"
                     >
-                      Login Here
+                      Sign In Here
                     </Link>
                   </div>
                   <div className="flex items-center gap-2 my-4">
@@ -238,7 +247,7 @@ export default function RegisterPage() {
                     </span>
                     <div className="flex-1 h-px bg-gray-100" />
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <Button
                       type="button"
                       className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"

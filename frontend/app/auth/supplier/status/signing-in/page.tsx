@@ -9,7 +9,7 @@ export default function SigningInPage() {
     <StatusScreen
       role="supplier"
       icon={
-        <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
+        <Loader2 className="w-16 h-16 text-[#00a13e] animate-spin" />
       }
       title="Signing you in..."
       description="Please wait while we complete the authentication."

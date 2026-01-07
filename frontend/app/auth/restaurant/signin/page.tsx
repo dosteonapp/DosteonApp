@@ -18,6 +18,7 @@ import { LoginValues } from "@/types/auth";
 import { useAuth } from "@/context/AuthContext";
 import { EmailCheckScreen } from "@/components/auth/EmailCheckScreen";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -60,7 +61,24 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl w-full max-w-xl p-12 mx-auto transition-all duration-300">
+    <div className="bg-white rounded-3xl shadow-xl w-full max-w-xl p-6 md:p-12 mx-auto transition-all duration-300">
+      <div className="flex flex-col items-center gap-2 mb-8">
+        <div className="mb-6">
+          <Image
+            src="/images/logo-full.png"
+            alt="Dosteon Logo"
+            width={160}
+            height={40}
+            className="h-auto w-auto max-h-8"
+          />
+        </div>
+        <h2 className="text-3xl font-bold text-gray-900 font-serif text-center mt-2">
+          Sign In to Dosteon
+        </h2>
+        <p className="text-gray-500 text-center max-w-sm">
+          Sign in to manage your restaurant and orders.
+        </p>
+      </div>
       {loginMethod === 'magic' ? (
         <div className="flex flex-col items-center">
           <div className="w-16 h-16 rounded-xl border border-blue-100 flex items-center justify-center mb-6 bg-blue-50/30">
@@ -73,13 +91,7 @@ export default function LoginPage() {
             Enter your email and we'll send you a secure link to sign in
           </p>
         </div>
-      ) : (
-        <div className="flex flex-col items-center gap-2 mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 font-serif">
-            Log In to Dosteon
-          </h2>
-        </div>
-      )}
+      ) : null}
 
       <Formik
         initialValues={{ email: "", password: "" }}
@@ -181,7 +193,7 @@ export default function LoginPage() {
                   <div className="flex-1 h-px bg-gray-100" />
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button
                     type="button"
                     variant="outline"
@@ -207,12 +219,12 @@ export default function LoginPage() {
             )}
 
             <div className="text-center text-sm text-gray-500 mt-6">
-              Don't have an account?{" "}
+              Don't have a restaurant account?{" "}
               <Link
                 href="/auth/restaurant/signup"
                 className="text-[#3851DD] font-medium hover:underline"
               >
-                Sign Up
+                Sign Up Here
               </Link>
             </div>
           </Form>
