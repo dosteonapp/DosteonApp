@@ -36,9 +36,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
+        
+        # Log the detailed error for debugging
+        print(f"Token validation error: {str(e)}")
+        
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Could not validate credentials: {str(e)}",
+            detail="Session expired or invalid. Please login again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

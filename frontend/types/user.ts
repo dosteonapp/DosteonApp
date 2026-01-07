@@ -1,5 +1,5 @@
 export interface UserContextType {
-  user: User | undefined;
+  user: User | null | undefined;
   fetchingUser: boolean;
   fetchUserError: boolean;
 }

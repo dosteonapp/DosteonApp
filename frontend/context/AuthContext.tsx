@@ -29,45 +29,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authenticatingWithGoogle, setAuthenticatingWithGoogle] =
     React.useState<boolean>(false);
 
-  //   const googleLogin = useGoogleLogin({
-  //     flow: "auth-code",
-  //     scope: "openid email profile",
-  //     onSuccess: async ({ code }) => {
-  //       try {
-  //         const { data } = await axiosInstance.post("/auth/google-signin", {
-  //           code,
-  //         });
+  React.useEffect(() => {
+    const initAuth = async () => {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        // Invalidate user query to trigger UI refresh
+        queryClient.invalidateQueries({ queryKey: ["user"] });
+        
+        // Handle specific auth events if needed
+        if (event === 'SIGNED_OUT') {
+           router.push("/");
+        }
+      });
 
-  //         if (data.success) {
-  //           const returnUrl = searchParams.get("returnUrl");
-  //           window.location.href = returnUrl
-  //             ? decodeURIComponent(returnUrl)
-  //             : "/dashboard";
-  //         } else {
-  //           throw new Error(data.message || "Google login failed");
-  //         }
-  //       } catch (error) {
-  //         console.error("Google login error:", error);
-  //         toast.error(handleApiError(error).message || "Google login failed");
-  //       } finally {
-  //         setAuthenticatingWithGoogle(false);
-  //       }
-  //     },
-  //     onError: (error) => {
-  //       setAuthenticatingWithGoogle(false);
-  //       console.error("Google login failed:", error);
-  //       toast.error(error.error_description || "Google login failed");
-  //     },
-  //     onNonOAuthError: (error) => {
-  //       setAuthenticatingWithGoogle(false);
-  //       console.error("Google login non-OAuth error:", error);
-  //       toast.error(error.type || "Google login failed");
-  //     },
-  //   });
+      return () => {
+        subscription.unsubscribe();
+      };
+    };
+
+    initAuth();
+  }, [queryClient, router]);
 
   const authenticateWithGoogle = async () => {
     setAuthenticatingWithGoogle(true);
-    // googleLogin();
+    await authenticateWithOAuth("google");
   };
 
   const [resetPasswordData, setResetPasswordData] = React.useState<{
@@ -77,7 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { mutateAsync: loginMutation } = useMutation({
     mutationFn: async (credentials: LoginValues) => {
-      // Align with Backend /api/auth/login
       const { data } = await axiosInstance.post("/auth/login", credentials);
       return data;
     },
@@ -85,7 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { mutateAsync: signupMutation } = useMutation({
     mutationFn: async (values: SignupValues) => {
-      // Align with Backend /api/auth/signup
       const { data } = await axiosInstance.post("/auth/signup", {
         email: values.email,
         password: values.password,
@@ -108,9 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { mutateAsync: resetPasswordMutation } = useMutation({
     mutationFn: async (values: ResetPasswordValues) => {
+      // In a native flow, the user is authenticated via the code in the URL.
+      // We need to pass the access_token from the current session.
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data } = await axiosInstance.post("/auth/reset-password", {
-        code: values.code,
-        selector: resetPasswordData?.selector,
+        access_token: session?.access_token,
         password: values.password,
         confirmPassword: values.confirmPassword,
       });
@@ -118,15 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Update verifyEmail to accept code
-  const verifyEmail = async (email: string, code: string) => {
-    const { data } = await axiosInstance.get("/auth/verify-email", {
-      params: { email, code }
-    });
-    return data;
-  };
-
-  // Magic Link Support
   const sendMagicLink = async (email: string) => {
     const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
@@ -160,17 +141,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetFormStatus(helpers);
       const data = await loginMutation(values);
 
-      // Save token (Axios withCredentials handles it if cookie-based, but our backend sends json)
-      if (data.access_token) {
-        localStorage.setItem('access_token', data.access_token);
+      // IMPORTANT: Set the session in the Supabase client.
+      // This is the single source of truth for all future requests.
+      if (data.access_token && data.refresh_token) {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
       }
 
-      // Invalidate user query
-      queryClient.invalidateQueries({ queryKey: ["user"] });
-
-      const returnUrl = searchParams.get("returnUrl");
-      window.location.href = returnUrl ? decodeURIComponent(returnUrl) : "/dashboard";
-
+      router.push("/dashboard");
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
     } finally {
@@ -184,9 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       resetFormStatus(helpers);
-      const data = await signupMutation(values);
-      // Since it triggers Email Verification, we don't redirect to dashboard yet.
-      // The page should handle the "Check your email" state.
+      await signupMutation(values);
       return { success: true, email: values.email };
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
@@ -199,15 +179,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const forgotPassword = async (
     values: ForgotPasswordValues,
     helpers: FormikHelpers<ForgotPasswordValues>
-  ) => {
+  ): Promise<{ success: boolean } | void> => {
     try {
       resetFormStatus(helpers);
-      const data = (await forgotPasswordMutation(values)) as {
-        selector: string;
-      };
-
-      setResetPasswordData({ email: values.email, selector: data.selector });
-      router.push("/auth/reset-password");
+      await forgotPasswordMutation(values);
+      return { success: true };
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
     } finally {
@@ -223,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetFormStatus(helpers);
       await resetPasswordMutation(values);
       toast.success("Password has been reset successfully");
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
     } finally {
@@ -242,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authenticateWithOAuth,
     authenticatingWithGoogle,
     authenticateWithGoogle,
-    verifyEmail, // Updated verifyEmail in context value
+    verifyEmail: async () => {}, // Deprecated in native flow
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

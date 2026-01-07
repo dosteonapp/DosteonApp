@@ -66,7 +66,7 @@ export interface AuthContextType {
   forgotPassword: (
     values: ForgotPasswordValues,
     helpers: FormikHelpers<ForgotPasswordValues>
-  ) => Promise<void>;
+  ) => Promise<{ success: boolean } | void>;
   resetPassword: (
     values: ResetPasswordValues,
     helpers: FormikHelpers<ResetPasswordValues>

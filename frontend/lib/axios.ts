@@ -7,8 +7,12 @@ const axiosInstance = axios.create({
   },
 });
 
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
+axiosInstance.interceptors.request.use(async (config) => {
+  const { createClient } = await import("./supabase/client");
+  const supabase = createClient();
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

@@ -32,17 +32,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       data: user,
       isLoading: fetchingUser,
       isError: fetchUserError,
-    } = useQuery<User>({
+    } = useQuery<User | null>({
       queryKey: ["user"],
       queryFn: async () => {
-        const { data } = await axiosInstance.get("/auth/me");
-        if (!data) {
-          throw new Error("User not authenticated or user data not found");
+        try {
+          // Check if we have a session first before calling the backend
+          const { createClient } = await import("@/lib/supabase/client");
+          const supabase = createClient();
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            return null;
+          }
+
+          const { data } = await axiosInstance.get("/auth/me");
+          return data;
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          throw error;
         }
-        return data;
       },
       retry: 1,
       refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
     });
 
     return (

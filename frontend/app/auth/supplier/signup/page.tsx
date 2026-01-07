@@ -7,7 +7,7 @@ import { Formik, Form, Field, FormikHelpers } from "formik";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Eye, EyeOff, Lock, Check } from "lucide-react";
+import { Eye, EyeOff, Lock, Check, Mail } from "lucide-react";
 import {
   FormikFormItem,
   FormikFormLabel,
@@ -17,23 +17,17 @@ import {
 import { SignupValidationSchema } from "@/schemas/auth";
 import { SignupValues } from "@/types/auth";
 import { useAuth } from "@/context/AuthContext";
-import { InputOTP, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "sonner";
+import { EmailCheckScreen } from "@/components/auth/EmailCheckScreen";
 
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signup, verifyEmail, authenticateWithOAuth } = useAuth();
-  const defaultRole = searchParams.get("role") || "supplier";
-  const [selectedRole, setSelectedRole] = useState(defaultRole);
+  const { signup, authenticateWithOAuth } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [verificationError, setVerificationError] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
+  const [successEmail, setSuccessEmail] = useState<string | null>(null);
 
-  const getInitialValues = (role: string): SignupValues => ({
+  const getInitialValues = (): SignupValues => ({
     firstname: "",
     lastname: "",
     email: "",
@@ -49,8 +43,7 @@ export default function RegisterPage() {
     try {
       const response = await signup(values, helpers);
       if (response && response.success) {
-        setEmail(values.email);
-        setIsVerifying(true);
+        setSuccessEmail(values.email);
       }
     } catch (error) {
       helpers.setStatus({ error: "Signup failed. Please try again." });
@@ -66,227 +59,129 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12 mx-auto">
+    <div className="w-full max-w-xl mx-auto">
+      {successEmail ? (
+        <EmailCheckScreen
+          title="Check your email"
+          description={`We've sent a verification link to ${successEmail}. Please click the link in the email to activate your account.`}
+          buttonText="Back to Sign Up"
+          onButtonClick={() => setSuccessEmail(null)}
+        />
+      ) : (
+        <>
+          <div className="flex flex-col items-center gap-2 mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 font-serif">
+              Sign up as a Supplier
+            </h2>
+            <p className="text-gray-500 text-center">
+              Tell us about yourself and your business to get started.
+            </p>
+          </div>
 
-          {isVerified ? (
-            // Email Verification Complete State
-            <div className="flex flex-col items-center space-y-6 py-8 text-center">
-              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                <Check className="h-10 w-10 text-green-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800">Account Verified!</h2>
-              <p className="text-gray-600">Your account has been successfully verified. You can now access your dashboard.</p>
-              <Button onClick={() => router.push("/dashboard")} className="w-full bg-blue-600 text-white py-3">
-                Continue to Dashboard
-              </Button>
-            </div>
-          ) : isVerifying ? (
-            // Success: Email Link Sent State
-            <div className="flex flex-col items-center space-y-6 py-8 text-center">
-              <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                <svg width="40" height="40" fill="none" viewBox="0 0 24 24" className="text-blue-600">
-                  <rect width="18" height="14" x="3" y="5" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
-                  <path d="M3 7l9 6 9-6" stroke="currentColor" strokeWidth="2" fill="none" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800">Check your email</h2>
-              <p className="text-gray-600">
-                We've sent a verification link to <b>{email}</b>. <br />
-                Please click the link in the email to activate your account.
-              </p>
-              <Button variant="outline" onClick={() => setIsVerifying(false)} className="w-full">
-                Back to Sign Up
-              </Button>
-            </div>
-          ) : (
-            // Registration Form State
-            <>
-              {/* Logo and Heading - Only show during registration */}
-              <div className="flex flex-col items-center gap-2 mb-6">
-                <img
-                  src="/images/logo-full.png"
-                  alt="Dosteon Logo"
-                  className="h-10 w-auto mb-2"
-                />
-                <h2 className="text-2xl font-semibold text-gray-900">
-                  Create Your Account
-                </h2>
-              </div>
+          <Formik
+            initialValues={getInitialValues()}
+            validationSchema={SignupValidationSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ isSubmitting, status, values }) => {
+              const passwordRequirements = {
+                length: values.password.length >= 8,
+                capital: /[A-Z]/.test(values.password),
+                number: /\d/.test(values.password),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(values.password),
+              };
+              const allRequirementsMet = Object.values(passwordRequirements).every(Boolean);
 
-              <Formik
-                initialValues={getInitialValues("supplier")}
-                validationSchema={SignupValidationSchema}
-                onSubmit={handleSubmit}
-              >
-                {({ isSubmitting, status, values }) => {
-                  const passwordRequirements = {
-                    length: values.password.length >= 8,
-                    capital: /[A-Z]/.test(values.password),
-                    number: /\d/.test(values.password),
-                    special: /[!@#$%^&*(),.?":{}|<>]/.test(values.password),
-                  };
-                  const allRequirementsMet = Object.values(passwordRequirements).every(Boolean);
-
-                  return (
-                    <Form className="space-y-4">
-                      {status?.error && (
-                        <div className="p-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-                          {status.error}
-                        </div>
-                      )}
-                      <p className="text-gray-500 text-center mb-2">
-                        Tell us about yourself and your business to get started.
-                      </p>
-                      <div className="flex flex-col md:flex-row gap-3">
-                        <FormikFormItem className="flex-1">
-                          <FormikFormLabel htmlFor="firstName-supplier">
-                            First Name
-                          </FormikFormLabel>
-                          <FormikFormControl>
-                            <Field
-                              as={Input}
-                              id="firstName-supplier"
-                              name="firstname"
-                              placeholder="First Name"
-                              className="w-full"
-                            />
-                          </FormikFormControl>
-                          <FormikFormMessage name="firstname" />
-                        </FormikFormItem>
-                        <FormikFormItem className="flex-1">
-                          <FormikFormLabel htmlFor="lastName-supplier">
-                            Last Name
-                          </FormikFormLabel>
-                          <FormikFormControl>
-                            <Field
-                              as={Input}
-                              id="lastName-supplier"
-                              name="lastname"
-                              placeholder="Last Name"
-                              className="w-full"
-                            />
-                          </FormikFormControl>
-                          <FormikFormMessage name="lastname" />
-                        </FormikFormItem>
+              return (
+                <Form className="space-y-4">
+                  {status?.error && (
+                    <div className="p-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                      {status.error}
+                    </div>
+                  )}
+                  
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <FormikFormItem className="flex-1">
+                      <FormikFormLabel htmlFor="firstName-supplier">First Name</FormikFormLabel>
+                      <FormikFormControl>
+                        <Field as={Input} id="firstName-supplier" name="firstname" placeholder="First Name" className="w-full h-12 border-gray-200 rounded-lg focus:ring-blue-600" />
+                      </FormikFormControl>
+                      <FormikFormMessage name="firstname" />
+                    </FormikFormItem>
+                    <FormikFormItem className="flex-1">
+                      <FormikFormLabel htmlFor="lastName-supplier">Last Name</FormikFormLabel>
+                      <FormikFormControl>
+                        <Field as={Input} id="lastName-supplier" name="lastname" placeholder="Last Name" className="w-full h-12 border-gray-200 rounded-lg focus:ring-blue-600" />
+                      </FormikFormControl>
+                      <FormikFormMessage name="lastname" />
+                    </FormikFormItem>
+                  </div>
+                  <FormikFormItem>
+                    <FormikFormLabel htmlFor="email-supplier">Email Address</FormikFormLabel>
+                    <FormikFormControl>
+                      <Field as={Input} id="email-supplier" name="email" type="email" placeholder="supplier@example.com" className="w-full h-12 border-gray-200 rounded-lg focus:ring-blue-600" />
+                    </FormikFormControl>
+                    <FormikFormMessage name="email" />
+                  </FormikFormItem>
+                  <FormikFormItem>
+                    <FormikFormLabel htmlFor="password-supplier">New Password</FormikFormLabel>
+                    <FormikFormControl>
+                      <div className="relative">
+                        <Field as={Input} id="password-supplier" name="password" type={showPassword ? "text" : "password"} placeholder="Create a secure password" className="w-full h-12 border-gray-200 rounded-lg focus:ring-blue-600 pl-10 pr-10" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" tabIndex={-1}>
+                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
                       </div>
-                      <FormikFormItem>
-                        <FormikFormLabel htmlFor="email-supplier">
-                          Email
-                        </FormikFormLabel>
-                        <FormikFormControl>
-                          <Field
-                            as={Input}
-                            id="email-supplier"
-                            name="email"
-                            type="email"
-                            placeholder="supplier@example.com"
-                            className="w-full"
-                          />
-                        </FormikFormControl>
-                        <FormikFormMessage name="email" />
-                      </FormikFormItem>
-                      <FormikFormItem>
-                        <FormikFormLabel htmlFor="password-supplier">
-                          New Password
-                        </FormikFormLabel>
+                    </FormikFormControl>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Password must be at least <b>8 Characters</b> and must contain at least a <b>Capital Letter</b>, a <b>Number</b> and a <b>Special Character</b>.
+                    </p>
+                    <FormikFormMessage name="password" />
+                  </FormikFormItem>
+                  <FormikFormItem>
+                    <FormikFormLabel htmlFor="confirmPassword-supplier">Confirm Password</FormikFormLabel>
+                    <FormikFormControl>
+                      <Field as={PasswordInput} id="confirmPassword-supplier" name="confirmPassword" placeholder="Confirm your password" />
+                    </FormikFormControl>
+                    <FormikFormMessage name="confirmPassword" />
+                  </FormikFormItem>
 
-                        <FormikFormControl>
-                          <div className="relative">
-                            <Field
-                              as={Input}
-                              id="password-supplier"
-                              name="password"
-                              type={showPassword ? "text" : "password"}
-                              placeholder="Create a secure password"
-                              className="w-full pl-10 pr-10"
-                            />
-
-                            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-                              tabIndex={-1}
-                              aria-label={showPassword ? "Hide password" : "Show password"}
-                            >
-                              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                            </button>
-                          </div>
-                        </FormikFormControl>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Password must be at least <b>8 Characters</b> and must contain at least a <b>Capital Letter</b>, a <b>Number</b> and a <b>Special Character</b>.
-                        </p>
-                        <FormikFormMessage name="password" />
-                      </FormikFormItem>
-                      <FormikFormItem>
-                        <FormikFormLabel htmlFor="confirmPassword-supplier">
-                          Confirm Password
-                        </FormikFormLabel>
-                        <FormikFormControl>
-                          <Field
-                            as={PasswordInput}
-                            id="confirmPassword-supplier"
-                            name="confirmPassword"
-                            className="w-full"
-                          />
-                        </FormikFormControl>
-                        <FormikFormMessage name="confirmPassword" />
-                      </FormikFormItem>
-
-                      <Button
-                        type="submit"
-                        className="w-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                        disabled={!allRequirementsMet || isSubmitting}
-                      >
-                        {isSubmitting ? "Registering..." : "Register as Supplier"}
-                      </Button>
-                      <div className="text-center">
-                        <span className="text-gray-600">Already have an account? </span>
-                        <Link href="/auth/supplier/signin" className="text-blue-600 hover:text-blue-800 font-medium">Login Here</Link>
-                      </div>
-                      <div className="flex items-center gap-2 my-1">
-                        <div className="flex-1 h-px bg-gray-200" />
-                        <span className="text-xs text-gray-400">Or continue with</span>
-                        <div className="flex-1 h-px bg-gray-200" />
-                      </div>
-                      <div className="flex gap-3">
-                        <Button
-                          type="button"
-                          className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                          onClick={() => handleSocialLogin("google")}
-                        >
-                          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                          Google
-                        </Button>
-                        <Button
-                          type="button"
-                          className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                          onClick={() => handleSocialLogin("apple")}
-                        >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M16.365 1.43c0 1.14-.93 2.07-2.07 2.07-.04 0-.08 0-.12-.01-.02-.04-.03-.09-.03-.14 0-1.13.93-2.06 2.07-2.06.04 0 .08 0 .12.01.02.04.03.09.03.13zm2.52 4.13c-1.34-.08-2.47.77-3.11.77-.65 0-1.65-.75-2.72-.73-1.4.02-2.7.82-3.42 2.09-1.46 2.54-.37 6.3 1.05 8.36.7 1.01 1.53 2.14 2.62 2.1 1.06-.04 1.46-.68 2.74-.68 1.28 0 1.64.68 2.73.66 1.13-.02 1.84-1.03 2.53-2.04.8-1.18 1.13-2.32 1.14-2.38-.02-.01-2.19-.84-2.21-3.33-.02-2.08 1.7-3.07 1.78-3.12-1-.15-1.97.6-2.5.6-.53 0-1.34-.59-2.21-.57zm-2.6-3.36c.38-.46.64-1.1.57-1.74-.55.02-1.22.37-1.62.83-.36.41-.67 1.07-.55 1.7.59.05 1.21-.34 1.6-.79z" />
-                          </svg>
-                          Apple
-                        </Button>
-                      </div>
-                      <p className="text-xs text-gray-500 text-center mt-2">
-                        By creating an account, you agree to our{' '}
-                        <a href="#" className="text-blue-600 hover:text-blue-800">Terms of Service</a> and{' '}
-                        <a href="#" className="text-blue-600 hover:text-blue-800">Privacy Policy</a>.
-                      </p>
-                    </Form>
-                  );
-                }}
-              </Formik>
-            </>
-          )}
-        </div>
-      </main>
-
+                  <Button type="submit" className="w-full h-12 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors rounded-lg font-semibold mt-4" disabled={!allRequirementsMet || isSubmitting}>
+                    {isSubmitting ? "Registering..." : "Register as Supplier"}
+                  </Button>
+                  <div className="text-center text-sm">
+                    <span className="text-gray-600">Already have an account? </span>
+                    <Link href="/auth/supplier/signin" className="text-blue-600 hover:text-blue-800 font-medium">Log In</Link>
+                  </div>
+                  <div className="flex items-center gap-2 my-4">
+                    <div className="flex-1 h-px bg-gray-100" />
+                    <span className="text-xs text-gray-400">Or continue with</span>
+                    <div className="flex-1 h-px bg-gray-100" />
+                  </div>
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" className="flex-1 h-12 flex items-center justify-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50" onClick={() => handleSocialLogin("google")}>
+                      <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                      Google
+                    </Button>
+                    <Button type="button" variant="outline" className="flex-1 h-12 flex items-center justify-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50" onClick={() => handleSocialLogin("apple")}>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16.365 1.43c0 1.14-.93 2.07-2.07 2.07-.04 0-.08 0-.12-.01-.02-.04-.03-.09-.03-.14 0-1.13.93-2.06 2.07-2.06.04 0 .08 0 .12.01.02.04.03.09.03.13zm2.52 4.13c-1.34-.08-2.47.77-3.11.77-.65 0-1.65-.75-2.72-.73-1.4.02-2.7.82-3.42 2.09-1.46 2.54-.37 6.3 1.05 8.36.7 1.01 1.53 2.14 2.62 2.1 1.06-.04 1.46-.68 2.74-.68 1.28 0 1.64.68 2.73.66 1.13-.02 1.84-1.03 2.53-2.04.8-1.18 1.13-2.32 1.14-2.38-.02-.01-2.19-.84-2.21-3.33-.02-2.08 1.7-3.07 1.78-3.12-1-.15-1.97.6-2.5.6-.53 0-1.34-.59-2.21-.57zm-2.6-3.36c.38-.46.64-1.1.57-1.74-.55.02-1.22.37-1.62.83-.36.41-.67 1.07-.55 1.7.59.05 1.21-.34 1.6-.79z" />
+                      </svg>
+                      Apple
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    By creating an account, you agree to our{' '}
+                    <a href="#" className="text-blue-600 hover:text-blue-800">Terms of Service</a> and{' '}
+                    <a href="#" className="text-blue-600 hover:text-blue-800">Privacy Policy</a>.
+                  </p>
+                </Form>
+              );
+            }}
+          </Formik>
+        </>
+      )}
     </div>
-
   );
 }
