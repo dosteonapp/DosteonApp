@@ -30,23 +30,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     React.useState<boolean>(false);
 
   React.useEffect(() => {
+    if (bypassAuth) return;
+    
     const initAuth = async () => {
       const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        // Invalidate user query to trigger UI refresh
-        queryClient.invalidateQueries({ queryKey: ["user"] });
+      try {
+        const supabase = createClient();
         
-        // Handle specific auth events if needed
-        if (event === 'SIGNED_OUT') {
-           router.push("/");
-        }
-      });
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          // Invalidate user query to trigger UI refresh
+          queryClient.invalidateQueries({ queryKey: ["user"] });
+          
+          // Handle specific auth events if needed
+          if (event === 'SIGNED_OUT') {
+             router.push("/");
+          }
+        });
 
-      return () => {
-        subscription.unsubscribe();
-      };
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (err) {
+        console.warn("Supabase initialization skipped:", err);
+      }
     };
 
     initAuth();
