@@ -1,4 +1,4 @@
-import type React from "react";
+import React, { Suspense } from "react";
 import { RestaurantSidebar } from "@/components/restaurant-sidebar";
 import { ToastContainer } from "@/components/toast-container";
 import { Metadata } from "next";
@@ -26,7 +26,9 @@ export default function RestaurantLayout({
           <RestaurantSidebar />
         </div>
         <div className="flex-1 overflow-auto relative">
-          <DashboardHeader />
+          <Suspense fallback={<div className="h-[100px] bg-white border-b border-[#F1F5F9]" />}>
+            <DashboardHeader />
+          </Suspense>
           <RestaurantDayLifecycleOverlay />
           <RestaurantDayRouteGuard>
             <div className="p-10">
