@@ -121,21 +121,13 @@ export default function SuppliersPage() {
           <h1 className="text-lg font-semibold">Suppliers</h1>
         </div>
       </header> */}
-      <main className="flex-1 space-y-4 p-4 md:p-8">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Suppliers</h1>
-            <p className="text-muted-foreground">
-              Manage your supplier relationships
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button asChild>
-              <Link href="/dashboard/suppliers/discover">
-                Discover New Suppliers
-              </Link>
-            </Button>
-          </div>
+      <main className="flex-1 space-y-4">
+        <div className="flex items-center justify-end">
+          <Button asChild>
+            <Link href="/dashboard/suppliers/discover">
+              Discover New Suppliers
+            </Link>
+          </Button>
         </div>
 
         <Card>
@@ -227,12 +219,12 @@ export default function SuppliersPage() {
                     </TableRow>
                   ) : (
                     suppliers.map((supplier) => (
-                      <TableRow key={supplier._id}>
+                      <TableRow key={supplier.id}>
                         <TableCell className="font-medium">
                           <div>
                             <div className="font-medium">
-                              {supplier.networkUser.firstname}{" "}
-                              {supplier.networkUser.lastname}
+                              {supplier.networkUser.first_name}{" "}
+                              {supplier.networkUser.last_name}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {supplier.networkUser.active
@@ -244,24 +236,24 @@ export default function SuppliersPage() {
                         <TableCell>{supplier.networkUser.email}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            {supplier.networkUserType}
+                            {supplier.network_user_type}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {new Date(supplier.createdAt).toLocaleDateString()}
+                          {new Date(supplier.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button size="sm" variant="outline" asChild>
                               <Link
-                                href={`/dashboard/suppliers/${supplier.networkUserId}`}
+                                href={`/dashboard/suppliers/${supplier.network_user_id}`}
                               >
                                 View
                               </Link>
                             </Button>
                             <Button size="sm" variant="outline" asChild>
                               <Link
-                                href={`/dashboard/orders/new?supplier=${supplier.networkUserId}`}
+                                href={`/dashboard/orders/new?supplier=${supplier.network_user_id}`}
                               >
                                 Order
                               </Link>
@@ -279,8 +271,8 @@ export default function SuppliersPage() {
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Are you sure you want to remove{" "}
-                                    {supplier.networkUser.firstname}{" "}
-                                    {supplier.networkUser.lastname} from your
+                                    {supplier.networkUser.first_name}{" "}
+                                    {supplier.networkUser.last_name} from your
                                     network? This action cannot be undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
@@ -289,7 +281,7 @@ export default function SuppliersPage() {
                                   <AlertDialogAction
                                     onClick={() =>
                                       handleRemoveFromNetwork(
-                                        supplier.networkUserId
+                                        supplier.network_user_id
                                       )
                                     }
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

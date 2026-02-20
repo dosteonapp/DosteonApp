@@ -364,8 +364,6 @@ export default function PaymentsPage() {
                         </div>
                         {payment.status !== 'paid' && (
                           <div className="mt-2">
-                            <Button size="sm  && (
-                          <div className="mt-2\">
                             <Button size="sm" variant="outline" className="mr-2">
                               <Send className="mr-2 h-3 w-3" />
                               Send Reminder

@@ -11,7 +11,9 @@ export default function SupplierLayout({
       <div className="h-full">
         <SupplierSidebar />
       </div>
-      <div className="flex-1 overflow-auto">{children}</div>
+      <div className="flex-1 overflow-auto">
+        {children}
+      </div>
     </div>
   )
 }

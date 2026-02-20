@@ -36,6 +36,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import Link from "next/link";
+import { useRestaurantDayActionGuard } from "@/hooks/useRestaurantDayActionGuard";
 import { useSearchParams } from "next/navigation";
 import { DailyReportsModal } from "@/components/daily-reports-modal";
 
@@ -43,34 +44,27 @@ export default function FinancePage() {
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get("tab") || "overview";
   const [reportsModalOpen, setReportsModalOpen] = useState(false);
+  const { guard } = useRestaurantDayActionGuard();
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
-        <Menu className="h-6 w-6" />
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">Finance</h1>
-        </div>
-      </header> */}
-      <main className="flex-1 space-y-4 p-4 md:p-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Finance</h1>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="gap-1"
-              onClick={() => setReportsModalOpen(true)}
-            >
-              <FileText className="h-4 w-4" />
-              Daily Reports
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/dashboard/finance/export">
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Link>
-            </Button>
-          </div>
+      {/* <header ... */}
+      <main className="flex-1 space-y-4">
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="outline"
+            className="gap-1"
+            onClick={() => guard(() => setReportsModalOpen(true), { actionName: "daily reports" })}
+          >
+            <FileText className="h-4 w-4" />
+            Daily Reports
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/finance/export">
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Link>
+          </Button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -355,7 +349,7 @@ export default function FinancePage() {
                                 View
                               </Button>
                               {invoice.status === "Pending" && (
-                                <Button size="sm">Pay</Button>
+                                <Button size="sm" onClick={() => guard(() => console.log("Pay invoice"), { actionName: "invoice payment" })}>Pay</Button>
                               )}
                             </div>
                           </TableCell>
@@ -557,10 +551,10 @@ export default function FinancePage() {
                 <div className="flex justify-between mb-4">
                   <h3 className="text-lg font-medium">Recent Transactions</h3>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => guard(() => console.log("Add expense"), { actionName: "petty cash expense" })}>
                       Add Expense
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => guard(() => console.log("Replenish"), { actionName: "petty cash replenishment" })}>
                       Replenish
                     </Button>
                   </div>

@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   Home,
   Package,
   ShoppingCart,
@@ -12,7 +11,6 @@ import {
   Settings,
   LogOut,
   Users,
-  DollarSign,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -54,16 +52,6 @@ export function SupplierSidebar() {
       icon: Users,
       title: "Restaurants",
     },
-    // {
-    //   href: "/dashboard/analytics",
-    //   icon: BarChart3,
-    //   title: "Analytics",
-    // },
-    // {
-    //   href: "/dashboard/finance",
-    //   icon: DollarSign,
-    //   title: "Finance",
-    // },
     {
       href: "/dashboard/notifications",
       icon: Bell,
@@ -90,7 +78,6 @@ export function SupplierSidebar() {
             className="flex items-center gap-2 font-semibold"
           >
             <Logo className="w-5 h-5" />
-
             <span>Dosteon</span>
           </Link>
         )}
@@ -115,33 +102,37 @@ export function SupplierSidebar() {
       </div>
       <div className="flex-1 overflow-auto py-2">
         <nav className="grid items-start px-2 text-sm font-medium">
-          {routes.map((route) => (
-            <Link
-              key={route.href}
-              href={route.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                pathname === route.href && "bg-muted text-primary",
-                collapsed && "justify-center px-2"
-              )}
-              title={collapsed ? route.title : undefined}
-            >
-              <route.icon className="h-4 w-4" />
-              {!collapsed && (
-                <div className="flex items-center justify-between w-full">
-                  <span>{route.title}</span>
-                  {route.badge && (
-                    <Badge
-                      variant="outline"
-                      className="ml-2 bg-green-100 text-green-800 hover:bg-green-100 border-green-200"
-                    >
-                      {route.badge}
-                    </Badge>
-                  )}
-                </div>
-              )}
-            </Link>
-          ))}
+          {routes.map((route) => {
+            const isActive = pathname === route.href || (route.href !== "/dashboard" && pathname.startsWith(route.href));
+
+            return (
+              <Link
+                key={route.href}
+                href={route.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary relative group",
+                  isActive && "bg-muted text-primary",
+                  collapsed && "justify-center px-2"
+                )}
+                title={collapsed ? route.title : undefined}
+              >
+                <route.icon className="h-4 w-4" />
+                {!collapsed && (
+                  <div className="flex items-center justify-between w-full">
+                    <span>{route.title}</span>
+                    {route.badge && (
+                      <Badge
+                        variant="outline"
+                        className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200"
+                      >
+                        {route.badge}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </Link>
+            );
+          })}
         </nav>
       </div>
       <div className="mt-auto p-4">

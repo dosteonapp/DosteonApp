@@ -1,524 +1,376 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  AlertTriangle,
+import { useState, useEffect } from "react";
+import { 
+  ArrowRight, 
+  Package, 
+  AlertTriangle, 
+  AlertCircle, 
+  CheckCircle2, 
+  RotateCcw,
+  Plus,
   ArrowUpRight,
-  Package,
-  ShoppingCart,
-  TrendingUp,
-  Menu,
-  Loader2,
+  ClipboardList,
+  Activity,
+  User,
+  History,
+  Lock,
+  Utensils,
+  Bell,
+  Clock,
+  Calendar,
+  Search,
+  Sun,
+  X
 } from "lucide-react";
 import Link from "next/link";
-import { DashboardOrderModal } from "@/components/dashboard-order-modal";
-import { useUser } from "@/context/UserContext";
-import { useQuery } from "@tanstack/react-query";
-import axiosInstance from "@/lib/axios";
-import { validateApiResponse } from "@/lib/utils";
-import { Inventory, Order } from "@/types/restaurant";
-import { ResponseWithPagination } from "@/types/pagination";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { restaurantOpsService, Activity as ActivityType } from "@/lib/services/restaurantOpsService";
+import { DayState } from "@/lib/dayLifecycle/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
+import { LockedActionOverlay } from "@/components/day/LockedActionOverlay";
+import { dayModeStyles } from "@/lib/dayLifecycle/dayModeStyles";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
-const AnimateSkeleton = () => {
+export default function RestaurantDashboardPage() {
+  const { status, isOpen, isLocked, isUserUnlocked, setIsUserUnlocked, isLoading: isStatusLoading } = useRestaurantDayLifecycle();
+  const [activities, setActivities] = useState<ActivityType[]>([]);
+  const [isActivitiesLoading, setIsActivitiesLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const activityData = await restaurantOpsService.getRecentActivities();
+        // Matching design's specific activities for the demo
+        setActivities([
+          {
+            id: "1",
+            title: "Daily Stock Confirmed",
+            description: "[User Name] [sub-team, e.g., Kitchen] confirmed today's closing stock",
+            time: "2 hours ago",
+            type: "stock"
+          },
+          {
+            id: "2",
+            title: "Manual stock update",
+            description: "[User Name] added [x][quantity] of [product name] manually",
+            time: "2 hours ago",
+            type: "stock"
+          },
+          {
+            id: "3",
+            title: "Stock Discrepancy Alert",
+            description: "Inventory mismatch flagged for [product name]",
+            time: "2 hours ago",
+            type: "alert",
+            actionLabel: "Fix Inventory",
+            actionHref: "/dashboard/inventory"
+          },
+          {
+            id: "4",
+            title: "Stock Review Reminder",
+            description: "📦 Don't forget to confirm today's closing stock. This keeps your inventory accurate.",
+            time: "2 hours ago",
+            type: "remind",
+            actionLabel: "Review Inventory",
+            actionHref: "/dashboard/inventory"
+          }
+        ]);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setIsActivitiesLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (isStatusLoading || isActivitiesLoading) {
+    return <DashboardSkeleton />;
+  }
+
+  const showOverlay = !isOpen && !isUserUnlocked;
+
   return (
-    <Card className="animate-pulse">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium bg-gray-300 w-3/4 h-4 rounded" />
-        <div className="bg-gray-300 w-4 h-4 rounded-full" />
-      </CardHeader>
-      <CardContent className="relative">
-        <div className="text-2xl font-bold bg-gray-300 w-1/2 h-6 mb-2 rounded" />
-        <ArrowUpRight className="absolute bottom-0 right-0 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-gray-400" />
-      </CardContent>
-    </Card>
-  );
-};
-
-export default function RestaurantDashboard() {
-  const [orderModalOpen, setOrderModalOpen] = useState(false);
-  const { user } = useUser();
-
-  const { data: stats, isFetching: fetchingStats } = useQuery<{
-    inventoryCount: number;
-    inProgressCount: number;
-    lowStockCount: number;
-  }>({
-    queryKey: ["restaurant-stats"],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get("/restaurant/stats");
-      return validateApiResponse(data);
-    },
-    enabled: !!user,
-  });
-
-  const { data: lowStockItems, isFetching: fetchingLowStockItems } = useQuery<
-    Inventory[]
-  >({
-    queryKey: ["restaurant-low-stock"],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get(
-        "/restaurant/inventory/low-stock"
-      );
-      console.log(validateApiResponse(data), `validateApiResponse(data)`);
-
-      return validateApiResponse<ResponseWithPagination<Inventory, "items">>(
-        data
-      ).items;
-    },
-    enabled: !!user,
-  });
-
-  const { data: recentOrders, isFetching: fetchingRecentOrders } = useQuery<
-    Order[]
-  >({
-    queryKey: ["restaurant-recent-orders"],
-    queryFn: async () => {
-      const { data } = await axiosInstance.get("/restaurant/orders/recent");
-      const response = validateApiResponse<{ orders: Order[] }>(data);
-      return response.orders || [];
-    },
-    enabled: !!user,
-  });
-
-  return (
-    <div className="flex flex-col min-h-screen">
-      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
-        <Menu className="h-6 w-6" />
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">Dashboard</h1>
+    <>
+      {/* Opening Checklist Overlay */}
+      {showOverlay && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <ReviewOpeningChecklistSection 
+              onBack={() => {
+                  setIsUserUnlocked(true);
+              }} 
+          />
         </div>
-      </header> */}
-      <main className="flex-1 space-y-4 p-4 md:p-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setOrderModalOpen(true)}
-              className="bg-primary hover:bg-primary-600"
-            >
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              New Order
-            </Button>
-          </div>
-        </div>
-        {/* {!user?.onboardingCompleted && (
-          <div className="mb-4 rounded-lg border border-yellow-300 bg-yellow-50 p-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              <span className="font-medium text-yellow-800">
-                You have not completed onboarding. Please complete your
-                onboarding to access all features.
-              </span>
+      )}
+
+      <div className={cn(
+        "space-y-12 max-w-7xl mx-auto w-full pb-20 transition-all duration-500",
+        showOverlay && "blur-xl scale-[0.98] pointer-events-none"
+      )}>
+        {/* Hero Variant Selection */}
+        {isOpen ? (
+            <HomeHeroActive name="Sherry" />
+        ) : (
+            <HomeHeroOpening name="Sherry" />
+        )}
+
+        {/* Recent Activities Section */}
+        <div className="space-y-8 bg-white border border-slate-100 rounded-[32px] p-10 lg:p-12">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1.5">
+              <h2 className="text-[28px] font-bold text-[#1E293B] tracking-tight">Recent Activities</h2>
+              <p className="text-slate-400 font-medium text-[15px]">Your most recent procurement orders</p>
             </div>
-            <Button
-              asChild
-              className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
-              size="sm"
-            >
-              <Link href="/dashboard/@restaurant/onboarding">
-                Complete Onboarding
+            <Button variant="ghost" className="text-slate-500 hover:text-[#3B59DA] font-bold text-[15px]" asChild>
+                <Link href="/dashboard/activities">View All</Link>
+            </Button>
+          </div>
+          
+          <div className="grid gap-4">
+            {activities.map((activity) => (
+              <div key={activity.id} className="border border-slate-100 rounded-3xl p-6 lg:p-8 bg-white flex items-center gap-8 group transition-all hover:bg-slate-50/50">
+                <div className="h-14 w-14 rounded-2xl bg-[#F8FAFF] flex items-center justify-center shrink-0 border border-slate-50 group-hover:bg-indigo-50 transition-colors">
+                  <Package className="h-6 w-6 text-[#3B59DA]" />
+                </div>
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <h4 className="font-bold text-[#1E293B] text-[20px] tracking-tight">{activity.title}</h4>
+                  <p className="text-[16px] font-medium text-slate-400 leading-relaxed">{activity.description}</p>
+                  <p className="text-[12px] font-bold text-slate-300 uppercase tracking-widest pt-1">{activity.time}</p>
+                </div>
+                {activity.actionLabel && (
+                  <LockedActionOverlay label="Open the day to resolve stock alerts">
+                    <Button 
+                      className={cn(
+                        "rounded-2xl h-14 px-10 font-bold transition-all shadow-sm",
+                        activity.actionLabel.includes('Fix') ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white" : "bg-white border-2 border-indigo-100 text-[#3B59DA] hover:bg-slate-50"
+                      )}
+                    >
+                      {activity.actionLabel}
+                    </Button>
+                  </LockedActionOverlay>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function HomeHeroOpening({ name }: { name: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-[48px] p-10 lg:p-12 shadow-2xl bg-gradient-to-r from-[#030712] via-[#2F29A3] to-[#8B31FF] text-white min-h-[320px] flex items-center">
+      {/* Design Pattern Watermark */}
+      <div className="absolute -bottom-16 -right-16 opacity-[0.05] pointer-events-none scale-150">
+          <Utensils className="h-[300px] w-[300px] -rotate-12" />
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-8 relative z-10 w-full items-center justify-between">
+        <div className="space-y-6 text-left shrink">
+          <div className="space-y-4">
+            <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-[0.9]">
+              Welcome <br /> back, <br />
+              <span className="font-inria italic font-medium opacity-90 text-4xl lg:text-6xl block mt-2">{name}</span>
+            </h1>
+            <div className="inline-flex items-center gap-2 bg-[#EF4444] px-4 py-1.5 rounded-full shadow-lg border border-white/10">
+                <ClipboardList className="h-3 w-3" />
+                <span className="text-[10px] font-black uppercase tracking-[0.1em] whitespace-nowrap">16 items need counting</span>
+            </div>
+            <p className="text-indigo-50 text-xs lg:text-sm font-bold leading-relaxed opacity-80 max-w-[200px]">
+              Do your opening stock count before starting your restaurant operations.
+            </p>
+          </div>
+          <div className="flex justify-start">
+            <Button className="h-12 px-8 bg-white text-[#4F46E5] hover:bg-slate-50 rounded-xl font-black gap-3 text-sm shadow-xl transition-all" asChild>
+              <Link href="/dashboard/inventory/daily-stock-count">
+                Count Daily Stock <ArrowRight className="h-4 w-4 stroke-[3px]" />
               </Link>
             </Button>
           </div>
-        )} */}
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* Inventory Card */}
-          <>
-            {!fetchingStats ? (
-              <Link href="/dashboard/inventory" className="group">
-                <Card className="transition-all duration-200 hover:shadow-md hover:border-primary-300 cursor-pointer">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Inventory Items
-                    </CardTitle>
-                    <Package className="h-4 w-4 text-primary-500 group-hover:text-primary-600" />
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <div className="text-2xl font-bold">
-                      {stats?.inventoryCount}
-                    </div>
-                    {/* <p className="text-xs text-muted-foreground">
-                    12 items low on stock */}
-                    {/* </p> */}
-                    <ArrowUpRight className="absolute bottom-0 right-0 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-primary-500" />
-                  </CardContent>
-                </Card>
-              </Link>
-            ) : (
-              <>
-                <AnimateSkeleton />
-              </>
-            )}
-          </>
-
-          {/* Orders Card */}
-          <>
-            {!fetchingStats ? (
-              <>
-                <Link href="/dashboard/orders" className="group">
-                  <Card className="transition-all duration-200 hover:shadow-md hover:border-primary-300 cursor-pointer">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Active Orders
-                      </CardTitle>
-                      <ShoppingCart className="h-4 w-4 text-primary-500 group-hover:text-primary-600" />
-                    </CardHeader>
-                    <CardContent className="relative">
-                      <div className="text-2xl font-bold">
-                        {stats?.inProgressCount}
-                      </div>
-                      {/* <p className="text-xs text-muted-foreground">
-                        3 pending confirmation
-                      </p> */}
-                      <ArrowUpRight className="absolute bottom-0 right-0 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-primary-500" />
-                    </CardContent>
-                  </Card>
-                </Link>
-              </>
-            ) : (
-              <>
-                <AnimateSkeleton />
-              </>
-            )}
-          </>
-
-          <>
-            {!fetchingStats ? (
-              <>
-                <Link href="/dashboard/notifications" className="group">
-                  <Card className="transition-all duration-200 hover:shadow-md hover:border-destructive/30 cursor-pointer">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Low stock
-                      </CardTitle>
-                      <AlertTriangle className="h-4 w-4 text-destructive group-hover:text-destructive/80" />
-                    </CardHeader>
-                    <CardContent className="relative">
-                      <div className="text-2xl font-bold">
-                        {stats?.lowStockCount}
-                      </div>
-                      <ArrowUpRight className="absolute bottom-0 right-0 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-destructive" />
-                    </CardContent>
-                  </Card>
-                </Link>
-              </>
-            ) : (
-              <AnimateSkeleton />
-            )}
-          </>
-          {/* 
-     
-
-          <Link href="/dashboard/suppliers" className="group">
-                  <Card className="transition-all duration-200 hover:shadow-md hover:border-secondary-300 cursor-pointer">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Suppliers
-                      </CardTitle>
-                      <TrendingUp className="h-4 w-4 text-secondary-500 group-hover:text-secondary-600" />
-                    </CardHeader>
-                    <CardContent className="relative">
-                      <div className="text-2xl font-bold">24</div>
-                      <p className="text-xs text-muted-foreground">
-                        5 new this month
-                      </p>
-                      <ArrowUpRight className="absolute bottom-0 right-0 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-secondary-500" />
-                    </CardContent>
-                  </Card>
-                </Link> */}
         </div>
 
-        <Tabs
-          defaultValue="low-stock"
-          className="[&_[data-state=active]]:text-primary-500 [&_[data-state=active]]:border-b-primary-500"
-        >
-          <TabsList>
-            <TabsTrigger value="low-stock">Low Stock</TabsTrigger>
-            <TabsTrigger value="recent-orders">Recent Orders</TabsTrigger>
-            {/* <TabsTrigger value="upcoming-deliveries">
-              Upcoming Deliveries
-            </TabsTrigger> */}
-          </TabsList>
-          <TabsContent value="low-stock" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Low Stock Items</CardTitle>
-                <CardDescription>
-                  Items that need to be reordered soon
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <>
-                    {!fetchingLowStockItems && lowStockItems?.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center w-full">
-                        No low stock items found try ordering.
-                      </p>
-                    )}
-                  </>
-
-                  {/* show loading spinner */}
-                  {fetchingLowStockItems && (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
-                  )}
-                  <>
-                    {lowStockItems?.map((item) => (
-                      <>
-                        <div
-                          key={item._id}
-                          className="flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div
-                              className={`w-2 h-2 rounded-full ${getStockLevelColor(
-                                item.stockLevel || "good"
-                              )}`}
-                            />
-                            <div>
-                              <p className="font-medium">{item.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {item.currentStock} {item.unit} remaining
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setOrderModalOpen(true)}
-                            className="border-primary-500 text-primary-500 hover:bg-primary-50"
-                          >
-                            Reorder
-                          </Button>
-                        </div>
-                      </>
-                    ))}
-                  </>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="recent-orders" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>
-                  Your most recent procurement orders
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <>
-                    {!fetchingRecentOrders && recentOrders?.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center w-full">
-                        No recent orders found.
-                      </p>
-                    )}
-                  </>
-
-                  {recentOrders?.map((order) => (
-                    <div
-                      key={order._id}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <p className="font-medium">Order #{order.id}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {order.supplier} • {order.date}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={getOrderStatusStyles(order.status)}
-                          variant="outline"
-                        >
-                          {order.status}
-                        </Badge>
-                        <Button size="sm" variant="ghost" asChild>
-                          <Link href={`/dashboard/orders/${order.id}`}>
-                            <ArrowUpRight className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="upcoming-deliveries" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upcoming Deliveries</CardTitle>
-                <CardDescription>
-                  Orders that are scheduled for delivery
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {upcomingDeliveries.map((delivery) => (
-                    <div
-                      key={delivery.id}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <p className="font-medium">Order #{delivery.id}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {delivery.supplier} • Expected:{" "}
-                            {delivery.expectedDate}
-                          </p>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="ghost" asChild>
-                        <Link href={`/dashboard/orders/${delivery.id}`}>
-                          <ArrowUpRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
-
-      {/* Order Modal */}
-      <DashboardOrderModal
-        open={orderModalOpen}
-        onOpenChange={setOrderModalOpen}
-      />
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full lg:w-auto xl:flex-1">
+          <HeroStatCard label="Total Inventory Items" value="24" icon={Package} accent="#4F46E5" />
+          <HeroStatCard label="Critical Stock Items" value="6" icon={AlertCircle} accent="#EF4444" />
+          <HeroStatCard label="Low Stock Items" value="6" icon={AlertTriangle} accent="#F59E0B" />
+          <HeroStatCard label="Shift Status" value="Inactive" icon={Clock} accent="#10B981" />
+        </div>
+      </div>
     </div>
   );
 }
 
-// Helper function to get color based on stock level
-function getStockLevelColor(level: "critical" | "low" | "medium" | "good") {
-  switch (level) {
-    case "critical":
-      return "bg-destructive";
-    case "low":
-      return "bg-orange-500";
-    case "medium":
-      return "bg-primary-300";
-    case "good":
-      return "bg-secondary-500";
-    default:
-      return "bg-gray-500";
-  }
+function HomeHeroActive({ name }: { name: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-[24px] p-8 lg:p-12 border border-[#3B59DA]/20 bg-[#F8FAFF] shadow-sm">
+      <div className="flex flex-col lg:flex-row gap-8 relative z-10 w-full lg:items-stretch justify-between">
+        <div className="flex flex-col justify-between text-left lg:max-w-[340px] shrink-0 py-2">
+          <div className="space-y-5">
+            <h1 className="text-[36px] lg:text-[42px] font-bold text-[#1E293B] tracking-tight font-inria italic leading-tight">
+              Welcome back, {name}
+            </h1>
+            <div className="inline-flex items-center gap-2 bg-white text-[#3B59DA] px-4 py-1.5 rounded-full border border-indigo-100 shadow-sm">
+                <Lock className="h-4 w-4" />
+                <span className="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">Opening Prep Locked</span>
+            </div>
+            <p className="text-slate-500 text-[15px] font-medium leading-[1.6]">
+              Closing Stock Count will be enabled at 7 PM. To change the Closing Stock Count time, your admin can change it in the store management settings.
+            </p>
+          </div>
+          <div className="flex justify-start pt-8">
+            <Button variant="outline" className="h-14 px-8 border-[#3B59DA] bg-white text-[#3B59DA] hover:bg-[#3B59DA]/5 rounded-[12px] font-bold gap-4 text-[15px] transition-all w-full lg:w-fit" asChild>
+              <Link href="/dashboard/kitchen-service">
+                Proceed to Kitchen Service <ArrowRight className="h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-2 flex-1 min-w-0 self-center">
+          <HeroStatCard label="Total Inventory Items" value="24" icon={Package} accent="#3B59DA" />
+          <HeroStatCard label="Critical Stock Items" value="6" icon={AlertCircle} accent="#EF4444" />
+          <HeroStatCard label="Low Stock Items" value="6" icon={AlertTriangle} accent="#F59E0B" />
+          <HeroStatCard label="Shift Status" value="Active" icon={Clock} accent="#10B981" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-// Helper function to get badge custom styles based on order status
-function getOrderStatusStyles(status: string) {
-  switch (status) {
-    case "Delivered":
-      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90 border-transparent";
-    case "In Transit":
-      return "bg-blue-500 text-white hover:bg-blue-600 border-transparent";
-    case "Confirmed":
-      return "bg-green-500 text-white hover:bg-green-600 border-transparent";
-    case "Pending":
-      return "bg-red-500 text-white hover:bg-red-600 border-transparent";
-    default:
-      return "";
-  }
+function HeroStatCard({ label, value, icon: Icon, accent }: { label: string, value: string, icon: any, accent: string }) {
+  return (
+    <div className="bg-white rounded-[12px] p-5 h-[150px] shadow-sm flex flex-col justify-between border border-slate-100 w-full transition-all hover:shadow-md">
+      <div className="flex items-center gap-3">
+        <div 
+          className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+          style={{ backgroundColor: `${accent}10`, color: accent }}
+        >
+            <Icon className="h-5 w-5 stroke-[2.5px]" />
+        </div>
+        <span className="text-[11px] font-bold text-slate-400 leading-tight">
+          {label}
+        </span>
+      </div>
+      <div>
+        <p className="text-[32px] lg:text-[36px] font-bold tracking-tight text-[#333] leading-none">{value}</p>
+      </div>
+    </div>
+  );
 }
 
-// Sample data
-// const lowStockItems = [
-//   {
-//     id: "1",
-//     name: "Tomatoes",
-//     currentStock: 2.5,
-//     unit: "kg",
-//     stockLevel: "critical" as const,
-//   },
-//   {
-//     id: "2",
-//     name: "Onions",
-//     currentStock: 5,
-//     unit: "kg",
-//     stockLevel: "low" as const,
-//   },
-//   {
-//     id: "3",
-//     name: "Chicken Breast",
-//     currentStock: 8,
-//     unit: "kg",
-//     stockLevel: "low" as const,
-//   },
-//   {
-//     id: "4",
-//     name: "Olive Oil",
-//     currentStock: 1,
-//     unit: "liter",
-//     stockLevel: "medium" as const,
-//   },
-//   {
-//     id: "5",
-//     name: "Rice",
-//     currentStock: 10,
-//     unit: "kg",
-//     stockLevel: "medium" as const,
-//   },
-// ];
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-white border-2 border-slate-100 rounded-[20px] p-7 space-y-2.5 transition-all hover:border-indigo-100/50 shadow-sm">
+      <p className="text-sm font-bold text-slate-400 uppercase tracking-tight">{label}</p>
+      <p className="text-3xl font-black text-[#1E293B] tracking-tight">{value}</p>
+    </div>
+  );
+}
 
-const recentOrders = [
-  {
-    id: "ORD-7891",
-    supplier: "Fresh Farms Inc.",
-    date: "Today, 10:30 AM",
-    status: "Pending",
-  },
-  {
-    id: "ORD-7890",
-    supplier: "Metro Meats",
-    date: "Yesterday, 2:15 PM",
-    status: "Confirmed",
-  },
-  {
-    id: "ORD-7889",
-    supplier: "Global Grocers",
-    date: "May 2, 2023",
-    status: "In Transit",
-  },
-  {
-    id: "ORD-7888",
-    supplier: "Organic Supplies Co.",
-    date: "May 1, 2023",
-    status: "Delivered",
-  },
-];
+function ReviewOpeningChecklistSection({ onBack }: { onBack: () => void }) {
+  const router = useRouter();
+  const { finishOpening } = useRestaurantDayLifecycle();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-const upcomingDeliveries = [
-  {
-    id: "ORD-7889",
-    supplier: "Global Grocers",
-    expectedDate: "Tomorrow, 9:00 AM - 12:00 PM",
-  },
-  {
-    id: "ORD-7890",
-    supplier: "Metro Meats",
-    expectedDate: "May 5, 2023, 1:00 PM - 3:00 PM",
-  },
-  {
-    id: "ORD-7892",
-    supplier: "Dairy Delights",
-    expectedDate: "May 6, 2023, 10:00 AM - 2:00 PM",
-  },
-];
+  const handleConfirm = async () => {
+    setIsSubmitting(true);
+    try {
+      // Background submission
+      restaurantOpsService.submitOpeningChecklist({});
+      // Instant UI transition
+      finishOpening();
+      
+      toast({
+        title: "Kitchen Opened",
+        description: "Your restaurant operations are now live and all features are unlocked.",
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: "Failed to open kitchen. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card className="w-full max-w-3xl rounded-[32px] shadow-[0_32px_128px_rgba(0,0,0,0.18)] border border-white/20 overflow-hidden bg-white/95 backdrop-blur-sm animate-in zoom-in-95 duration-300">
+      <div className="p-10 pb-6 flex items-center justify-between">
+        <h1 className="text-[28px] font-bold text-[#1E293B] tracking-tight">
+          Review Opening Checklist
+        </h1>
+      </div>
+
+      <CardContent className="px-10 py-6 space-y-10">
+        <div className="bg-[#F8FAFF] border border-[#E9EFFF] rounded-3xl p-8 flex items-center gap-6">
+          <div className="bg-white rounded-full p-4 shadow-sm border border-[#E9EFFF] shrink-0">
+            <div className="bg-[#EEF2FF] rounded-full p-2">
+              <CheckCircle2 className="h-7 w-7 text-[#4F46E5]" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-2xl font-black text-[#1E293B]">Ready to Open?</h3>
+            <p className="text-slate-500 font-bold text-base leading-relaxed">
+              Submitting this will unlock Kitchen Service mode and log stock levels for Oct 24.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <h2 className="text-sm font-black text-slate-400 uppercase tracking-[0.1em]">
+            Summary Stats
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <StatCard label="Items Counted" value="24 / 24" />
+            <StatCard label="Notes Added" value="1 Note" />
+            <StatCard label="Opening Time" value="08:45 AM" />
+            <StatCard label="Staff" value="Sarah C." />
+          </div>
+        </div>
+      </CardContent>
+
+      <div className="p-10 pt-4 flex items-center justify-end gap-5">
+        <Button 
+          variant="outline" 
+          className="h-[60px] px-10 rounded-2xl border-2 border-slate-200 font-black text-[#1E293B] hover:bg-slate-50 transition-all text-lg"
+          onClick={onBack}
+        >
+          Back
+        </Button>
+        <Button 
+          className="h-[60px] px-12 rounded-2xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black shadow-xl shadow-indigo-100 transition-all border-none text-lg"
+          onClick={handleConfirm}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Opening Kitchen..." : "Confirm & Open Kitchen"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="max-w-7xl mx-auto w-full p-10 space-y-16">
+      <Skeleton className="h-16 w-full rounded-2xl" />
+      <Skeleton className="h-[440px] w-full rounded-[48px]" />
+      <div className="space-y-8">
+          <Skeleton className="h-12 w-80 rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-[32px]" />
+          <Skeleton className="h-32 w-full rounded-[32px]" />
+      </div>
+    </div>
+  );
+}

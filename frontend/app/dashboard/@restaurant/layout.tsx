@@ -2,6 +2,10 @@ import type React from "react";
 import { RestaurantSidebar } from "@/components/restaurant-sidebar";
 import { ToastContainer } from "@/components/toast-container";
 import { Metadata } from "next";
+import { RestaurantDayLifecycleProvider } from "@/components/day/RestaurantDayLifecycleProvider";
+import { RestaurantDayLifecycleOverlay } from "@/components/day/RestaurantDayLifecycleOverlay";
+import { RestaurantDayRouteGuard } from "@/components/day/RestaurantDayRouteGuard";
+import { DashboardHeader } from "@/components/dashboard-header";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -16,14 +20,22 @@ export default function RestaurantLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen overflow-hidden">
-      <div className="h-full">
-        <RestaurantSidebar />
+    <RestaurantDayLifecycleProvider>
+      <div className="flex h-screen overflow-hidden bg-white">
+        <div className="h-full">
+          <RestaurantSidebar />
+        </div>
+        <div className="flex-1 overflow-auto relative">
+          <DashboardHeader />
+          <RestaurantDayLifecycleOverlay />
+          <RestaurantDayRouteGuard>
+            <div className="p-10">
+                {children}
+            </div>
+          </RestaurantDayRouteGuard>
+          <ToastContainer />
+        </div>
       </div>
-      <div className="flex-1 overflow-auto">
-        {children}
-        <ToastContainer />
-      </div>
-    </div>
+    </RestaurantDayLifecycleProvider>
   );
 }

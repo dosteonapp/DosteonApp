@@ -38,3 +38,8 @@ export async function addInventoryItem(data: {
   const response = await axiosInstance.post("/restaurant/inventory", data);
   return response.data;
 }
+
+export async function getInventoryItem(id: string) {
+  const response = await axiosInstance.get(`/restaurant/inventory/${id}`);
+  return response.data;
+}

@@ -82,39 +82,31 @@ export default function AnalyticsPage() {
           <h1 className="text-lg font-semibold">Analytics</h1>
         </div>
       </header> */}
-      <main className="flex-1 space-y-4 p-4 md:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
-            <p className="text-muted-foreground">
-              Track consumption, wastage, and predict restocking needs
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select time range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7days">Last 7 days</SelectItem>
-                <SelectItem value="30days">Last 30 days</SelectItem>
-                <SelectItem value="90days">Last 90 days</SelectItem>
-                <SelectItem value="year">Last year</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              className="gap-1"
-              onClick={() => setReportsModalOpen(true)}
-            >
-              <FileText className="h-4 w-4" />
-              Daily Reports
-            </Button>
-            <Button variant="outline" className="gap-1">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-          </div>
+      <main className="flex-1 space-y-4">
+        <div className="flex items-center justify-end gap-2 flex-wrap">
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-[180px] rounded-xl border-slate-200">
+              <SelectValue placeholder="Select time range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7days">Last 7 days</SelectItem>
+              <SelectItem value="30days">Last 30 days</SelectItem>
+              <SelectItem value="90days">Last 90 days</SelectItem>
+              <SelectItem value="year">Last year</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            className="gap-1 rounded-xl border-slate-200"
+            onClick={() => setReportsModalOpen(true)}
+          >
+            <FileText className="h-4 w-4" />
+            Daily Reports
+          </Button>
+          <Button variant="outline" className="gap-1 rounded-xl border-slate-200">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
         </div>
 
         <Tabs defaultValue="consumption">

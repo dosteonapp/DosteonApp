@@ -29,33 +29,22 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Menu, Calendar } from "lucide-react";
 import Link from "next/link";
+import { useRestaurantDayActionGuard } from "@/hooks/useRestaurantDayActionGuard";
 import { NewOrderModal } from "@/components/new-order-modal";
 
 export default function OrdersPage() {
   const [newOrderModalOpen, setNewOrderModalOpen] = useState(false);
+  const { guard } = useRestaurantDayActionGuard();
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
-        <Menu className="h-6 w-6" />
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">Orders</h1>
-        </div>
-      </header> */}
+      {/* <header ... */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
-            <p className="text-muted-foreground">
-              Manage your procurement orders
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setNewOrderModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Order
-            </Button>
-          </div>
+        <div className="flex items-center justify-end">
+          <Button onClick={() => guard(() => setNewOrderModalOpen(true), { actionName: "order creation" })}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Order
+          </Button>
         </div>
 
         <Tabs defaultValue="current">
@@ -161,12 +150,12 @@ export default function OrdersPage() {
                                 </Link>
                               </Button>
                               {order.status === "Pending" && (
-                                <Button size="sm" variant="outline">
+                                <Button size="sm" variant="outline" onClick={() => guard(() => console.log("Cancel order"), { actionName: "order cancellation" })}>
                                   Cancel
                                 </Button>
                               )}
                               {order.status === "Delivered" && (
-                                <Button size="sm" variant="outline">
+                                <Button size="sm" variant="outline" onClick={() => guard(() => console.log("Reorder"), { actionName: "reorder" })}>
                                   Reorder
                                 </Button>
                               )}
@@ -194,7 +183,7 @@ export default function OrdersPage() {
                   variant="outline"
                   size="sm"
                   className="h-8"
-                  onClick={() => setNewOrderModalOpen(true)}
+                  onClick={() => guard(() => setNewOrderModalOpen(true), { actionName: "scheduling order" })}
                 >
                   <Calendar className="mr-2 h-4 w-4" />
                   Schedule New Order
@@ -339,7 +328,7 @@ export default function OrdersPage() {
                               <Button size="sm" variant="outline">
                                 View
                               </Button>
-                              <Button size="sm" variant="outline">
+                              <Button size="sm" variant="outline" onClick={() => guard(() => console.log("Reorder"), { actionName: "reorder" })}>
                                 Reorder
                               </Button>
                             </div>

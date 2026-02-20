@@ -2,6 +2,7 @@
 
 import { useUser } from "@/context/UserContext";
 import { LoadingScreen } from "../ui/loading-screen";
+import { bypassAuth } from "@/lib/flags";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -15,6 +16,10 @@ export function AuthGuard({
   redirectTo,
 }: AuthGuardProps) {
   const { user, fetchingUser } = useUser();
+
+  if (bypassAuth) {
+    return <>{children}</>;
+  }
 
   if (fetchingUser) {
     return <LoadingScreen />;

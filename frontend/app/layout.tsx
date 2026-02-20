@@ -1,6 +1,6 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Figtree, Inter } from "next/font/google";
+import { Figtree, Inria_Serif } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppProvider } from "@/context/AppContext";
@@ -9,8 +9,13 @@ import { AuthProvider } from "@/context/AuthContext";
 // import { AppGuard } from "@/components/app-guard";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/sonner";
+import { MockWarningBanner } from "@/components/mock-warning-banner";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const inria = Inria_Serif({ 
+  subsets: ["latin"], 
+  weight: ["300", "400", "700"],
+  variable: "--font-inria" 
+});
 const figTree = Figtree({
   subsets: ["latin"],
   variable: "--font-figtree",
@@ -30,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${figTree.className} ${inter.variable} ${figTree.variable}`}
+        className={`${figTree.className} ${inria.variable} ${figTree.variable}`}
         suppressHydrationWarning
       >
         <AppProvider>
@@ -43,6 +48,7 @@ export default function RootLayout({
             <UserProvider>
               {/* <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}> */}
               <AuthProvider>
+                <MockWarningBanner />
                 {children}
                 <Toaster />
               </AuthProvider>

@@ -75,8 +75,10 @@ const config = {
         },
       },
       fontFamily: {
-        figTree: ["var(--font-figtree)"],
-        inter: ["var(--font-inter)"],
+        figTree: ["var(--font-figtree)", "sans-serif"],
+        inria: ["var(--font-inria)", "serif"],
+        sans: ["var(--font-figtree)", "sans-serif"],
+        serif: ["var(--font-inria)", "serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

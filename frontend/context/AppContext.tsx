@@ -15,11 +15,11 @@ export const useAppContext = () => {
   return context;
 };
 
+const queryClient = new QueryClient();
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const queryClient = new QueryClient();
-
   return (
     <>
       <QueryClientProvider client={queryClient}>

@@ -43,3 +43,15 @@ Thumbs.db
 test-results.txt
 coverage/
 **/coverage/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.pytest_cache/
+
+# Build artifacts
+dist/
+build/
+.next/
+node_modules/

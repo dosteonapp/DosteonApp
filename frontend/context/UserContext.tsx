@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { User, UserContextType } from "@/types/user";
 import axiosInstance from "@/lib/axios";
+import { bypassAuth } from "@/lib/flags";
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -35,6 +36,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     } = useQuery<User | null>({
       queryKey: ["user"],
       queryFn: async () => {
+        if (bypassAuth) {
+          return {
+            id: "mock-restaurant-id",
+            email: "admin@therestaurant.com",
+            first_name: "Sherry",
+            last_name: "Harper",
+            role: "restaurant",
+            created_at: new Date().toISOString(),
+          } as User;
+        }
         try {
           // Check if we have a session first before calling the backend
           const { createClient } = await import("@/lib/supabase/client");
