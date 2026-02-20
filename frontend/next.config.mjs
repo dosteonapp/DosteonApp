@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Force rebuild for Vercel 404 fix
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
