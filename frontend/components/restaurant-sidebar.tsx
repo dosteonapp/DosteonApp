@@ -78,10 +78,10 @@ export function RestaurantSidebar() {
     <div
       className={cn(
         "flex h-full flex-col border-r bg-white transition-all duration-300 shadow-sm",
-        collapsed ? "w-[80px]" : "w-[260px]"
+        collapsed ? "w-[80px]" : "w-[280px]"
       )}
     >
-      <div className="flex h-20 items-center justify-between px-6 border-b border-[#F1F5F9] relative">
+      <div className="flex h-24 items-center justify-between px-8 border-b border-[#F1F5F9] relative">
         {!collapsed && (
           <Link
             href="/dashboard"
@@ -100,65 +100,69 @@ export function RestaurantSidebar() {
           variant="ghost"
           size="icon"
           className={cn(
-            "h-6 w-6 rounded-lg border border-slate-100 bg-slate-50 shadow-sm absolute -right-3 top-7 z-50", 
+            "h-7 w-7 rounded-lg border border-slate-100 bg-white shadow-sm absolute -right-3.5 top-8 z-50 transition-transform active:scale-95", 
             collapsed && "static mt-2"
           )}
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? (
-            <ChevronRight className="h-3 w-3" />
+            <ChevronRight className="h-4 w-4 text-slate-400" />
           ) : (
-            <ChevronLeft className="h-3 w-3" />
+            <ChevronLeft className="h-4 w-4 text-slate-400" />
           )}
         </Button>
       </div>
 
-      <div className="flex-1 overflow-auto py-8">
-        <nav className="flex flex-col gap-10 px-4">
+      <div className="flex-1 overflow-auto py-6">
+        <nav className="flex flex-col gap-8 px-6">
           {/* Operations Section */}
-          <div className="space-y-2">
+          <div className="space-y-4">
             {!collapsed && (
-              <h3 className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 ml-1">
+              <h3 className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">
                 OPERATIONS
               </h3>
             )}
-            {operationsRoutes.map((route) => (
-              <SidebarLink 
-                key={route.href} 
-                route={route} 
-                pathname={pathname} 
-                collapsed={collapsed} 
-                isLocked={status ? (isModuleLocked(route.href, status.state) && !isUserUnlocked) : false}
-                shouldBlock={status ? (shouldBlockModuleAccess(route.href, status.state) && !isUserUnlocked) : false}
-              />
-            ))}
+            <div className="flex flex-col gap-2">
+                {operationsRoutes.map((route) => (
+                <SidebarLink 
+                    key={route.href} 
+                    route={route} 
+                    pathname={pathname} 
+                    collapsed={collapsed} 
+                    isLocked={status ? (isModuleLocked(route.href, status.state) && !isUserUnlocked) : false}
+                    shouldBlock={status ? (shouldBlockModuleAccess(route.href, status.state) && !isUserUnlocked) : false}
+                />
+                ))}
+            </div>
           </div>
 
           {/* Systems Section */}
-          <div className="space-y-2">
+          <div className="space-y-4">
             {!collapsed && (
-              <h3 className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 ml-1">
+              <h3 className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">
                 SYSTEMS
               </h3>
             )}
-            {systemsRoutes.map((route) => (
-              <SidebarLink 
-                key={route.href} 
-                route={route} 
-                pathname={pathname} 
-                collapsed={collapsed} 
-                isLocked={status ? isModuleLocked(route.href, status.state) : false}
-                shouldBlock={status ? shouldBlockModuleAccess(route.href, status.state) : false}
-              />
-            ))}
+            <div className="flex flex-col gap-2">
+                {systemsRoutes.map((route) => (
+                <SidebarLink 
+                    key={route.href} 
+                    route={route} 
+                    pathname={pathname} 
+                    collapsed={collapsed} 
+                    isLocked={status ? isModuleLocked(route.href, status.state) : false}
+                    shouldBlock={status ? shouldBlockModuleAccess(route.href, status.state) : false}
+                />
+                ))}
+            </div>
           </div>
         </nav>
       </div>
 
       <div className="mt-auto p-6 space-y-6">
         {!collapsed && (
-          <div className="flex items-center gap-3 bg-[#F8FAFC] p-4 rounded-3xl border border-[#F1F5F9] shadow-sm">
-            <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
+          <div className="flex items-center gap-4 bg-[#F8FAFC] p-4 rounded-3xl border border-[#F1F5F9] shadow-sm">
+            <div className="h-12 w-12 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
                 <img 
                     src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=100" 
                     alt="User" 
@@ -166,7 +170,7 @@ export function RestaurantSidebar() {
                 />
             </div>
             <div className="flex flex-col min-w-0">
-                <span className="text-sm font-black text-[#1E293B] truncate">Sherry Harper</span>
+                <span className="text-[15px] font-black text-[#1E293B] truncate tracking-tight">Sherry Harper</span>
                 <span className="text-[10px] font-bold text-slate-400 capitalize">Admin Manager</span>
             </div>
           </div>

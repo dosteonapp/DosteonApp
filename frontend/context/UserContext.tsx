@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import {
   QueryClient,
   QueryClientProvider,
@@ -24,7 +24,7 @@ export const useUser = () => {
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const queryClient = new QueryClient();
+  const [queryClient] = useState(() => new QueryClient());
 
   const UserContent: React.FC<{ children: React.ReactNode }> = ({
     children,

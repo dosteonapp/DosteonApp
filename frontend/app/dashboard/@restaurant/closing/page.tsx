@@ -71,7 +71,7 @@ export default function ClosingPage() {
             onOpenChange={setIsReviewModalOpen}
             summary={closingSummary}
         />
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* State Conditional Render */}
         {!isOpen ? (
           <ClosingLockedUI />
@@ -107,8 +107,8 @@ export default function ClosingPage() {
             </div>
 
             {/* Sticky Bottom Bar - Pinned to Bottom, Responding to Sidebar */}
-            <div className="fixed bottom-0 right-0 z-50 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.04)] left-0 lg:left-[var(--sidebar-width,260px)] transition-[left] duration-300">
-                <div className="w-full px-10 h-24 lg:h-32 flex items-center justify-end gap-4">
+            <div className="fixed bottom-0 right-0 z-50 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.04)] left-0 lg:left-[280px] transition-[left] duration-300">
+                <div className="w-full px-10 h-24 lg:h-32 flex items-center justify-end gap-4 max-w-7xl mx-auto">
                     <Button variant="outline" className="h-14 px-8 rounded-xl border-[#3B59DA]/20 text-[#3B59DA] font-bold hover:bg-slate-50 shadow-sm transition-all">
                         Save a draft
                     </Button>

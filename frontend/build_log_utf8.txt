@@ -1,0 +1,40 @@
+﻿
+> my-v0-project@0.1.0 build
+> next build
+
+   Γû▓ Next.js 15.4.0-canary.61
+   - Environments: .env
+
+   Creating an optimized production build ...
+node.exe : Failed to 
+compile.
+At C:\Program 
+Files\nodejs\npm.ps1:29 
+char:3
++   & $NODE_EXE $NPM_CLI_JS 
+$args
++   ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo          
+    : NotSpecified: (Faile  
+  d to compile.:String) [   
+ ], RemoteException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+
+app\auth\callback\page.tsx
+You cannot have two 
+parallel pages that resolve 
+to the same path. Please 
+check /auth/callback/page 
+and /auth/callback/route. 
+Refer to the route group 
+docs for more information: h
+ttps://nextjs.org/docs/app/b
+uilding-your-application/rou
+ting/route-groups
+
+
+> Build failed because of 
+webpack errors
