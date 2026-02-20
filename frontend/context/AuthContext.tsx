@@ -4,6 +4,7 @@ import React, { createContext, useContext, ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/lib/axios";
+import { bypassAuth } from "@/lib/flags";
 import {
   handleApiError,
   resetFormStatus,
@@ -138,6 +139,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       resetFormStatus(helpers);
+      
+      if (bypassAuth) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        router.push("/dashboard");
+        return;
+      }
+
       const data = await loginMutation(values);
 
       // IMPORTANT: Set the session in the Supabase client.
@@ -165,6 +173,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       resetFormStatus(helpers);
+
+      if (bypassAuth) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        return { success: true, email: values.email };
+      }
+
       await signupMutation(values);
       return { success: true, email: values.email };
     } catch (error) {
