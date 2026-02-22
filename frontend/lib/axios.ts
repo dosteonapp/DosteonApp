@@ -8,8 +8,14 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(async (config) => {
+  if (require('./flags').bypassAuth) {
+    return config;
+  }
+  
   const { createClient } = await import("./supabase/client");
   const supabase = createClient();
+  if (!supabase) return config;
+  
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
 

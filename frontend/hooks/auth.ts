@@ -10,12 +10,15 @@ export const useLogout = () => {
       // 1. Sign out from Supabase (clears local session)
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      await supabase.auth.signOut();
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
       
       // 2. Clear user data from react-query cache
       queryClient.removeQueries({ queryKey: ["user"] });
       
-      // 3. Clear all other caches if necessary
+      // 3. Clear all other caches and mock data
+      localStorage.removeItem('mock_user');
       queryClient.clear();
       
     } catch (error) {

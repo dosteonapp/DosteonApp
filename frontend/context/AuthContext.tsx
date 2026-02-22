@@ -115,8 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const sendMagicLink = async (email: string) => {
+    if (bypassAuth) {
+      toast.info("Magic links are disabled in bypass mode");
+      return { success: true };
+    }
     const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
+    if (!supabase) return { success: false };
+    
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -128,8 +134,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const authenticateWithOAuth = async (provider: 'google' | 'apple') => {
+    if (bypassAuth) {
+      // Simulate OAuth login
+      localStorage.setItem('mock_user', JSON.stringify({
+        email: `oauth-${provider}@example.com`,
+        role: 'restaurant',
+        id: `mock-oauth-id`,
+        first_name: 'Social',
+        last_name: 'User'
+      }));
+      router.push("/dashboard");
+      return;
+    }
+    
     const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
+    if (!supabase) return;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -148,6 +169,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (bypassAuth) {
         await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Save mock data to simulate session
+        const role = window.location.pathname.includes('supplier') ? 'supplier' : 'restaurant';
+        localStorage.setItem('mock_user', JSON.stringify({
+          email: values.email,
+          role: role,
+          id: `mock-${role}-id`,
+          first_name: values.email.split('@')[0],
+          last_name: 'User'
+        }));
+        
         router.push("/dashboard");
         return;
       }

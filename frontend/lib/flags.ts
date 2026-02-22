@@ -4,8 +4,8 @@
  */
 
 export const FLAGS = {
-  useMocks: process.env.NEXT_PUBLIC_USE_MOCKS === "true",
-  bypassAuth: process.env.NEXT_PUBLIC_BYPASS_AUTH === "true",
+  useMocks: true,
+  bypassAuth: true,
 };
 
 export const useMocks = FLAGS.useMocks;

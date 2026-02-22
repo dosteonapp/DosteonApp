@@ -37,6 +37,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       queryKey: ["user"],
       queryFn: async () => {
         if (bypassAuth) {
+          const savedMock = localStorage.getItem('mock_user');
+          if (savedMock) {
+            try {
+              return JSON.parse(savedMock) as User;
+            } catch (e) {
+              console.error("Failed to parse mock_user", e);
+            }
+          }
           return {
             id: "mock-restaurant-id",
             email: "admin@therestaurant.com",
