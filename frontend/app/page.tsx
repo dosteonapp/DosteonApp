@@ -100,7 +100,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/30"></div>
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-24 md:py-32">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold mb-6 leading-tight font-inria italic">
               Welcome to Dosteon
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto opacity-90 leading-relaxed">
@@ -136,7 +136,7 @@ export default function Home() {
                 </p>
                 <Button
                   onClick={() => handleGetStarted("restaurant")}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium flex items-center justify-center gap-2 mx-auto transition-all duration-200"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 mx-auto transition-all duration-200"
                 >
                   Get Started
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -159,7 +159,7 @@ export default function Home() {
                 </p>
                 <Button
                   onClick={() => handleGetStarted("supplier")}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium flex items-center justify-center gap-2 mx-auto transition-all duration-200"
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 mx-auto transition-all duration-200"
                 >
                   Get Started
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

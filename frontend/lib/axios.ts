@@ -1,4 +1,5 @@
 import axios from "axios";
+import { bypassAuth } from "./flags";
 
 const axiosInstance = axios.create({
   baseURL: "/api/v1",
@@ -8,7 +9,7 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(async (config) => {
-  if (require('./flags').bypassAuth) {
+  if (bypassAuth) {
     return config;
   }
   

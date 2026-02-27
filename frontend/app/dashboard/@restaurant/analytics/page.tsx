@@ -76,12 +76,12 @@ export default function AnalyticsPage() {
   const [reportsModalOpen, setReportsModalOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <main className="flex-1 space-y-8 max-w-[1700px] mx-auto w-full pb-20 transition-all duration-500">
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-1 space-y-10 w-full pb-20 transition-all duration-500">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1 text-center sm:text-left">
-            <h2 className="text-[28px] md:text-3xl font-bold text-[#1E293B] tracking-tight">Analytics</h2>
-            <p className="text-[13px] md:text-sm font-medium text-slate-400">Track consumption, wastage, and predictive trends</p>
+            <h2 className="text-[28px] md:text-3xl font-semibold text-[#1E293B] tracking-tight font-inria italic">Analytics</h2>
+            <p className="text-[13px] md:text-sm font-semibold text-slate-400">Track consumption, wastage, and predictive trends</p>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -533,7 +533,7 @@ export default function AnalyticsPage() {
                           <TableCell className="font-medium text-xs md:text-sm">{item.stockoutDate}</TableCell>
                           <TableCell>
                             <Badge className={cn(
-                              "rounded-full px-2.5 md:px-3 py-1 text-[9px] md:text-[10px] font-black uppercase tracking-widest border-none whitespace-nowrap",
+                              "rounded-full px-2.5 md:px-3 py-1 text-[9px] md:text-[10px] font-semibold uppercase tracking-widest border-none whitespace-nowrap",
                               item.daysLeft <= 2 ? "bg-red-50 text-red-600" : 
                               item.daysLeft <= 5 ? "bg-amber-50 text-amber-600" : 
                               "bg-emerald-50 text-emerald-600"
@@ -1663,9 +1663,9 @@ function StatCard({ label, value, subtext, variant = "default" }: { label: strin
       "rounded-[24px] md:rounded-[28px] border shadow-[0_2px_15px_rgba(0,0,0,0.02)] p-6 md:p-8 space-y-4 transition-all group active:scale-[0.98]",
       variantStyles[variant]
     )}>
-      <h4 className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] group-hover:text-indigo-500 transition-colors">{label}</h4>
+      <h4 className="text-[10px] md:text-[11px] font-semibold text-slate-400 uppercase tracking-[0.15em] group-hover:text-indigo-500 transition-colors">{label}</h4>
       <div className="space-y-1.5">
-        <div className="text-[clamp(20px,2vw,32px)] font-black text-[#1E293B] tracking-tight leading-none">{value}</div>
+        <div className="text-[clamp(20px,2vw,32px)] font-semibold text-[#1E293B] tracking-tight leading-none">{value}</div>
         <p className="text-[clamp(10px,1.1vw,12px)] font-bold text-slate-400 group-hover:text-slate-500 transition-colors uppercase tracking-wider">{subtext}</p>
       </div>
     </Card>

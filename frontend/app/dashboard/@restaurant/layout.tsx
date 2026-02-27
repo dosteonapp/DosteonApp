@@ -21,7 +21,7 @@ export default function RestaurantLayout({
 }) {
   return (
     <RestaurantDayLifecycleProvider>
-      <div className="flex h-screen overflow-hidden bg-white">
+      <div className="flex h-screen overflow-hidden bg-[#F8FAFF]">
         <div className="h-full">
           <RestaurantSidebar />
         </div>
@@ -31,7 +31,7 @@ export default function RestaurantLayout({
           </Suspense>
           <RestaurantDayLifecycleOverlay />
           <RestaurantDayRouteGuard>
-            <div className="p-1 md:p-2 lg:p-3">
+            <div className="pt-4 px-6 pb-6 w-full">
                 {children}
             </div>
           </RestaurantDayRouteGuard>

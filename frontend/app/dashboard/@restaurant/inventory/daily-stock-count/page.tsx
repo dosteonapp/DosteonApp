@@ -5,16 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   ChevronLeft, 
-  Search, 
-  ChevronRight,
-  Bell,
-  Calendar as CalendarIcon,
   Search as SearchIcon,
   RotateCcw,
   Package,
   ArrowRight,
   Lock,
-  CheckCircle2
+  CheckCircle2,
+  X,
+  TrendingUp,
+  History,
+  Info,
+  ChevronRight,
+  ArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,15 +29,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import { OpeningStockItem } from "@/mocks/openingStock.mock";
 import { useToast } from "@/hooks/use-toast";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
 import { motion, AnimatePresence } from "framer-motion";
-
 import { ReviewOpeningChecklist } from "@/components/day/ReviewOpeningChecklist";
 
 export default function DailyStockCountPage() {
@@ -45,14 +60,17 @@ export default function DailyStockCountPage() {
   const [items, setItems] = useState<OpeningStockItem[]>([]);
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [editingItem, setEditingItem] = useState<OpeningStockItem | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await restaurantOpsService.getOpeningChecklistItems();
         setItems(data);
+        const confirmed = new Set(data.filter(i => i.isConfirmed).map(i => i.id));
+        setConfirmedIds(confirmed);
       } catch (err) {
         console.error("Failed to fetch opening items:", err);
       } finally {
@@ -69,6 +87,25 @@ export default function DailyStockCountPage() {
         else next.add(id);
         return next;
     });
+    
+    // Update the item in the list as well
+    setItems(current => current.map(item => 
+        item.id === id ? { ...item, isConfirmed: !confirmedIds.has(id) } : item
+    ));
+  };
+
+  const handleEditAmount = (item: OpeningStockItem) => {
+    setEditingItem(item);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdateItem = (updatedItem: OpeningStockItem) => {
+    setItems(current => current.map(item => item.id === updatedItem.id ? updatedItem : item));
+    setEditModalOpen(false);
+    toast({
+        title: "Item Updated",
+        description: `${updatedItem.name} inventory has been adjusted.`
+    });
   };
 
   const handleSaveDraft = async () => {
@@ -81,8 +118,8 @@ export default function DailyStockCountPage() {
   const handleComplete = async () => {
     if (confirmedIds.size < items.length) {
       toast({
-        title: "Incomplete Registry",
-        description: "Please validate all assets before finalizing.",
+        title: "Checklist Incomplete",
+        description: `Please confirm all ${items.length} items before finishing.`,
         variant: "destructive"
       });
       return;
@@ -91,340 +128,473 @@ export default function DailyStockCountPage() {
   };
 
   const progressCount = confirmedIds.size;
-  const totalCount = items.length || 9; // Fallback to 9 as per design
-  const progressPercent = Math.round((progressCount / totalCount) * 100);
+  const totalCount = items.length;
+  const progressPercent = totalCount > 0 ? Math.round((progressCount / totalCount) * 100) : 0;
 
   if (isLoading) return <OpeningSkeleton />;
 
   return (
-    <div className={cn(
-      "flex flex-col gap-10 bg-white min-h-screen pb-48 transition-all duration-500",
-      showReview && "blur-xl scale-[0.98] pointer-events-none"
-    )}>
-      {/* Review Modal Overlay */}
-      {showReview && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-in fade-in duration-300 pointer-events-auto">
-          <ReviewOpeningChecklist 
-            onBack={() => setShowReview(false)} 
-            onConfirm={() => router.push("/dashboard")}
-          />
-        </div>
-      )}
+    <div className="min-h-screen bg-[#F8FAFC] font-figtree pb-48">
+      {/* Dynamic Background */}
+      <div className="fixed inset-0 pointer-events-none opacity-30">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-200/20 rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-200/10 rounded-full blur-[100px]" />
+      </div>
 
-      <div className="space-y-10 px-6 mt-6">
-        <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-        >
+      <div className={cn(
+        "relative flex flex-col gap-8 px-6 py-6 transition-all duration-500 max-w-[1600px] mx-auto",
+        showReview && "blur-xl scale-[0.98] pointer-events-none"
+      )}>
+        {/* Navigation */}
+        <div className="flex items-center">
             <Button 
-                variant="outline" 
-                className="h-12 px-6 rounded-2xl border-slate-200 bg-white font-black text-slate-500 gap-2 hover:bg-slate-50 shadow-sm transition-all w-fit"
+                variant="ghost" 
+                className="h-10 px-4 rounded-xl font-bold bg-white border border-slate-200 shadow-sm transition-all hover:bg-slate-50 text-slate-600 gap-2"
                 onClick={() => router.back()}
             >
-                <ArrowRight className="h-4 w-4 rotate-180" /> Back to Dashboard
+                <ArrowLeft className="h-4 w-4" /> Back
             </Button>
-        </motion.div>
+        </div>
 
-        {/* Progress Header Box - Premium Overhaul */}
+        {/* Hero Progress Header */}
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-none bg-gradient-to-r from-[#1E3A8A] via-[#2D46B2] to-[#3B59DA] p-8 md:p-10 lg:p-12 flex flex-col xl:flex-row items-center gap-10 md:gap-14 shadow-2xl relative overflow-hidden text-white w-full"
+            className="bg-white border border-[#EEF2FF] rounded-[24px] p-8 shadow-[0_8px_30px_rgb(238,242,255,0.4)] flex flex-col md:flex-row items-center gap-10 relative overflow-hidden"
         >
-            {/* Animated Background Decor */}
-            <div className="absolute inset-0 pointer-events-none opacity-40">
-                <motion.div 
-                    animate={{ 
-                        scale: [1, 1.2, 1],
-                        rotate: [0, 45, 0]
-                    }}
-                    transition={{ duration: 20, repeat: Infinity }}
-                    className="absolute -top-1/4 -right-1/4 w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[100px]" 
-                />
-                <motion.div 
-                    animate={{ 
-                        scale: [1, 1.1, 1],
-                        x: [0, -30, 0]
-                    }}
-                    transition={{ duration: 15, repeat: Infinity }}
-                    className="absolute -bottom-1/4 -left-1/4 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[80px]" 
-                />
-            </div>
+            <CircularProgress percentage={progressPercent} count={progressCount} total={totalCount} />
             
-            <CircularProgress percentage={progressPercent} />
-            
-            <div className="space-y-8 flex-1 relative z-10 text-center xl:text-left">
-                <div className="space-y-4">
-                    <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full backdrop-blur-md">
-                         <div className="h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
-                         <span className="text-[11px] font-black uppercase tracking-widest text-white/70 italic">Operations Registry</span>
-                    </div>
-                    <div className="space-y-2">
-                        <h1 className="text-[56px] font-black tracking-tighter font-inria italic leading-none">Daily Asset Registry</h1>
-                        <p className="text-xl font-bold text-slate-400 max-w-2xl mx-auto xl:mx-0">Verify physical stock levels to synchronize the digital infrastructure for today&apos;s service.</p>
-                    </div>
+            <div className="flex-1 space-y-4">
+                <div className="space-y-1">
+                    <h1 className="text-2xl md:text-[28px] font-semibold text-[#1E293B] tracking-tight">Daily Stock Count</h1>
+                    <p className="text-slate-400 font-medium text-sm md:text-base">Check each product and confirm the quantity in stock</p>
                 </div>
-                
-                <div className="flex flex-wrap gap-6 justify-center xl:justify-start">
-                    <div className="bg-white/5 px-8 py-5 rounded-[28px] border border-white/10 backdrop-blur-md">
-                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Completion Check</p>
-                         <p className="text-3xl font-black text-white font-inria italic">{progressCount} <span className="text-slate-600 text-lg">/ {totalCount} Assets</span></p>
-                    </div>
-                    <div className="bg-white/5 px-8 py-5 rounded-[28px] border border-white/10 backdrop-blur-md">
-                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Avg Validation Time</p>
-                         <p className="text-3xl font-black text-white font-inria italic">4m 20s</p>
-                    </div>
+                <div className="flex flex-col gap-1">
+                    <h3 className="text-[17px] font-semibold text-[#1E293B]">Progress: {progressCount} of {totalCount} Items Counted</h3>
+                    <p className="text-slate-400 font-medium text-[13px]">Finish stock counts to unlock Kitchen Service dashboard.</p>
                 </div>
             </div>
         </motion.div>
 
-        {/* List Grid Header */}
-        <div className="space-y-8">
-            {!isLocked && (
-                <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-                    <div className="space-y-1">
-                        <h2 className="text-3xl font-black text-[#1E293B] tracking-tight font-inria italic">Pending Validations</h2>
-                        <p className="text-sm font-bold text-slate-400">Inventory assets requiring manual verification</p>
-                    </div>
-                    <div className="flex items-center gap-4 w-full lg:w-auto">
-                        <div className="relative flex-1 lg:w-80">
-                            <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
-                            <Input 
-                                placeholder="Filter registry..." 
-                                className="pl-14 h-16 rounded-[24px] border-slate-100 bg-white font-bold text-[#1E293B] focus-visible:ring-indigo-100 shadow-sm"
-                            />
-                        </div>
-                        <Select defaultValue="all">
-                            <SelectTrigger className="h-16 lg:w-48 rounded-[24px] border-slate-100 bg-white font-black text-slate-500 hover:shadow-md transition-all">
-                                <SelectValue placeholder="All Assets" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-2xl border-slate-100">
-                                <SelectItem value="all">All Assets</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-            )}
-            {isLocked && (
-                <div className="relative z-20 w-full">
-                    <div className="bg-gradient-to-br from-[#1E3A8A] via-[#2D46B2] to-[#3B59DA] backdrop-blur-xl rounded-none p-12 md:p-20 lg:p-24 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] border border-white/10 flex flex-col items-center text-center w-full space-y-8 md:space-y-10 relative overflow-hidden">
-                        {/* Premium Decor */}
-                        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
-                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px] pointer-events-none" />
-                        
-                        <div className="h-20 w-20 md:h-24 md:w-24 rounded-[32px] bg-white/5 text-white flex items-center justify-center shadow-inner border border-white/10 relative z-10 transition-transform hover:scale-110">
-                            <Lock className="h-10 w-10 md:h-12 md:w-12 text-indigo-400" />
-                        </div>
-                        <div className="space-y-4 md:space-y-6 relative z-10 max-w-2xl">
-                            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter font-inria italic">Kitchen Service is Locked</h2>
-                            <p className="text-slate-400 text-lg md:text-xl font-bold leading-relaxed px-4">
-                                The Kitchen Service workflow is not yet available. Please synchronize your physical stock levels by completing the Daily Stock Count before you proceed.
-                            </p>
-                        </div>
-                        <Button className="h-16 md:h-20 px-12 md:px-16 bg-white text-[#3B59DA] hover:bg-slate-50 rounded-[28px] font-black gap-3 md:gap-4 text-lg md:text-xl shadow-2xl transition-all group relative z-10 border-none font-inria italic" asChild>
-                            <Link href="/dashboard/inventory/daily-stock-count">
-                                Begin Daily Registry <ArrowRight className="h-6 w-6 md:h-8 md:w-8 transition-transform group-hover:translate-x-2" />
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
-            )}
+        {/* Toolbar */}
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 px-0">
+            <div className="relative w-full max-w-[340px]">
+                <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input 
+                    placeholder="Search items..." 
+                    className="pl-11 h-12 border-slate-200 rounded-lg bg-white focus:ring-slate-100 placeholder:text-slate-400 text-sm"
+                />
+            </div>
+            <div className="flex items-center gap-4 w-full md:w-auto">
+                <Select defaultValue="all">
+                    <SelectTrigger className="h-12 border-slate-200 rounded-lg w-full md:w-[180px] bg-white font-medium text-slate-600 text-[13px] shadow-sm">
+                        <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-slate-200">
+                        <SelectItem value="all">All Categories</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select defaultValue="all">
+                    <SelectTrigger className="h-12 border-slate-200 rounded-lg w-full md:w-[180px] bg-white font-medium text-slate-600 text-[13px] shadow-sm">
+                        <SelectValue placeholder="All Levels" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-slate-200">
+                        <SelectItem value="all">All Levels</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
 
-            <div className="grid grid-cols-1 gap-6 pb-20">
-                <AnimatePresence mode="popLayout" initial={false}>
-                    {items.map((item, idx) => (
-                        <StockRow 
-                            key={item.id} 
-                            item={item} 
-                            idx={idx}
-                            isConfirmed={confirmedIds.has(item.id)}
-                            onConfirm={() => handleConfirm(item.id)}
+        {/* Items Table Section */}
+        <div className="bg-white border border-slate-100 rounded-[28px] overflow-hidden shadow-sm">
+            <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-50">
+                <div className="flex items-center gap-4">
+                    <div className="h-6 w-6 rounded-md border-2 border-slate-200 flex items-center justify-center cursor-pointer hover:border-indigo-400 transition-all">
+                        <div className="h-3 w-3 rounded-sm bg-indigo-500 opacity-0" />
+                    </div>
+                    <span className="text-sm font-bold text-slate-500">Check All</span>
+                </div>
+                
+                <div className="flex flex-col lg:flex-row items-center gap-4 flex-1 justify-end">
+                    <div className="relative w-full max-w-[280px]">
+                        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input 
+                            placeholder="Search items..." 
+                            className="pl-11 h-11 border-slate-100 rounded-xl bg-[#F8FAFC] focus:ring-slate-100 placeholder:text-slate-400 text-xs font-medium"
                         />
-                    ))}
-                </AnimatePresence>
+                    </div>
+                    <Select defaultValue="all">
+                        <SelectTrigger className="h-11 border-slate-100 rounded-xl w-full md:w-[160px] bg-[#F8FAFC] font-bold text-slate-500 text-xs shadow-none">
+                            <SelectValue placeholder="Category" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-slate-100">
+                            <SelectItem value="all">Category: All</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select defaultValue="all">
+                        <SelectTrigger className="h-11 border-slate-100 rounded-xl w-full md:w-[140px] bg-[#F8FAFC] font-bold text-slate-500 text-xs shadow-none">
+                            <SelectValue placeholder="Level" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-slate-100">
+                            <SelectItem value="all">Level: All</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
+            <div className="overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="border-slate-50 bg-[#FBFDFF] hover:bg-[#FBFDFF]">
+                            <TableHead className="py-5 pl-8 w-[40px]"></TableHead>
+                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest py-5">Item Name</TableHead>
+                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Measurement Unit</TableHead>
+                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Current Stock</TableHead>
+                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Status</TableHead>
+                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Updated On</TableHead>
+                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest text-right pr-8">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {items.map((item, idx) => (
+                            <TableRow 
+                                key={item.id} 
+                                className={cn(
+                                    "border-slate-50 transition-colors group",
+                                    confirmedIds.has(item.id) ? "bg-emerald-50/20" : "hover:bg-slate-50/50"
+                                )}
+                            >
+                                <TableCell className="pl-8">
+                                    <div 
+                                        className={cn(
+                                            "h-5 w-5 rounded-md border-2 transition-all flex items-center justify-center cursor-pointer",
+                                            confirmedIds.has(item.id) 
+                                                ? "bg-[#3B59DA] border-[#3B59DA]" 
+                                                : "border-slate-200 hover:border-indigo-400 bg-white"
+                                        )}
+                                        onClick={() => handleConfirm(item.id)}
+                                    >
+                                        <CheckCircle2 className={cn("h-3 w-3 text-white transition-opacity", confirmedIds.has(item.id) ? "opacity-100" : "opacity-0")} />
+                                    </div>
+                                </TableCell>
+                                <TableCell className="py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-300">
+                                            <Package className="h-5 w-5" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-[#1E293B] text-sm">{item.name}</span>
+                                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{item.id}</span>
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-slate-500 font-bold text-xs uppercase">{item.unit}</TableCell>
+                                <TableCell className="font-bold text-[#1E293B] text-sm">
+                                    {confirmedIds.has(item.id) ? item.totalOpening : (item.todayOpening ?? '--')}
+                                </TableCell>
+                                <TableCell>
+                                    <Badge 
+                                        className={cn(
+                                            "border-none rounded-full font-bold text-[9px] px-2.5 py-0.5 uppercase tracking-tight",
+                                            confirmedIds.has(item.id) ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400"
+                                        )}
+                                    >
+                                        {confirmedIds.has(item.id) ? "Confirmed" : "Incomplete"}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-slate-400 text-[11px] font-bold">Oct 06, 2025; 14:32</TableCell>
+                                <TableCell className="text-right pr-8">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="h-8 rounded-lg font-bold text-xs text-indigo-600 hover:bg-indigo-50 px-3"
+                                            onClick={() => handleEditAmount(item)}
+                                        >
+                                            Edit
+                                        </Button>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg hover:bg-slate-50 text-slate-300 group-hover:text-[#3B59DA] transition-all">
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </div>
         </div>
       </div>
 
-      {/* Sticky Bottom Bar - Enhanced Glassmorphism */}
-      <div className="fixed bottom-6 md:bottom-10 left-0 right-0 z-50 flex justify-center">
-        <div className="w-full max-w-[1700px] px-4 md:px-6 lg:px-8">
-            <motion.div 
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="bg-[#1E293B]/95 backdrop-blur-3xl border border-white/10 rounded-none p-4 md:p-6 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] flex flex-col sm:flex-row items-center justify-between gap-4"
-            >
-            <Button 
-                variant="ghost" 
-                className="h-14 px-10 rounded-[20px] text-slate-400 hover:text-white hover:bg-white/5 font-black transition-all"
-                onClick={handleSaveDraft}
-            >
-                Save Temporary Draft
-            </Button>
-            
-            <div className="flex items-center gap-10">
-                <div className="hidden md:block text-right">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1.5">Synchronized State</p>
-                    <p className="text-white font-black font-inria text-xl tracking-tight italic">{progressPercent}% Calibrated</p>
-                </div>
-                <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+      {/* Sticky Bottom Bar */}
+      <div 
+        className="fixed bottom-0 right-0 z-50 p-6 md:p-8 bg-white/80 backdrop-blur-xl border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] transition-[left] duration-300"
+        style={{ left: 'var(--sidebar-width)' }}
+      >
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6"
+          >
+              <div className="flex items-center gap-6">
+                <Button 
+                    variant="ghost" 
+                    className="h-14 px-8 rounded-2xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 font-bold transition-all gap-2"
+                    onClick={handleSaveDraft}
                 >
-                    <Button 
-                        className={cn(
-                            "h-18 px-14 rounded-[28px] font-black gap-3 transition-all border-none pr-10 group text-lg",
-                            progressPercent === 100 
-                                ? "bg-emerald-500 hover:bg-emerald-600 shadow-[0_20px_40px_-5px_rgba(16,185,129,0.3)]" 
-                                : "bg-[#3B59DA] hover:bg-[#2D46B2] shadow-[0_20px_40px_-5px_rgba(59,89,218,0.3)]"
-                        )}
-                        onClick={handleComplete}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? "Finalizing Registry..." : "Finalize & Sign Entries"}
-                        <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
-                    </Button>
-                </motion.div>
-            </div>
-        </motion.div>
+                    <RotateCcw className="h-5 w-5" /> Save a draft
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-8 w-full md:w-auto">
+                <div className="hidden xl:block text-right">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">Finalization Status</p>
+                    <p className="text-[#1E293B] font-bold text-xl tracking-tight leading-none">{progressPercent}% Progress Counted</p>
+                </div>
+                <Button 
+                    className={cn(
+                        "h-16 px-12 rounded-2xl font-bold gap-3 transition-all border-none text-lg shadow-xl w-full md:w-auto",
+                        progressPercent === 100 
+                            ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-900/20" 
+                            : "bg-indigo-600/90 hover:bg-indigo-700 text-white/90"
+                    )}
+                    onClick={handleComplete}
+                >
+                    Review & Complete Opening
+                    <ArrowRight className="h-5 w-5" />
+                </Button>
+              </div>
+          </motion.div>
       </div>
-    </div>
+
+      {/* Modals */}
+      <AnimatePresence>
+        {showReview && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
+                <ReviewOpeningChecklist 
+                    onBack={() => setShowReview(false)} 
+                    onConfirm={() => router.push("/dashboard")}
+                />
+            </div>
+        )}
+      </AnimatePresence>
+
+      <UpdateItemModal 
+        isOpen={editModalOpen} 
+        onClose={() => setEditModalOpen(false)} 
+        item={editingItem} 
+        onUpdate={handleUpdateItem}
+      />
     </div>
   );
 }
 
-
-function StockRow({ item, isConfirmed, onConfirm, idx }: { item: OpeningStockItem, isConfirmed: boolean, onConfirm: () => void, idx: number }) {
+function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: { 
+    item: OpeningStockItem, 
+    isConfirmed: boolean, 
+    onConfirm: () => void, 
+    onEdit: () => void,
+    idx: number 
+}) {
     return (
         <motion.div 
             layout
-            initial={{ opacity: 0, scale: 0.98, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ 
-                duration: 0.5, 
-                delay: Math.min(idx * 0.08, 0.4),
-                ease: [0.16, 1, 0.3, 1]
-            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: Math.min(idx * 0.05, 0.3) }}
             className={cn(
-                "rounded-none border-2 p-10 flex flex-col xl:flex-row items-center justify-between gap-10 transition-all group relative overflow-hidden",
-                isConfirmed 
-                    ? "bg-emerald-50/10 border-emerald-100 shadow-[0_20px_50px_rgba(16,185,129,0.04)]" 
-                    : "bg-white border-slate-50 hover:border-indigo-100 hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-1"
+                "group bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all overflow-hidden",
+                isConfirmed && "bg-slate-50/50"
             )}
         >
-            <div className="flex items-center gap-10 w-full xl:w-auto self-start xl:self-center">
-                <motion.button 
-                    onClick={onConfirm}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.9 }}
-                    className={cn(
-                        "h-24 w-24 rounded-[36px] border-4 flex items-center justify-center transition-all shrink-0 relative overflow-hidden shadow-inner",
-                        isConfirmed ? "bg-emerald-500 border-emerald-100 text-white shadow-xl shadow-emerald-500/20" : "bg-slate-50 border-white text-slate-200"
-                    )}
-                >
-                    {isConfirmed ? (
-                        <motion.div 
-                            initial={{ scale: 0 }} 
-                            animate={{ scale: 1 }} 
-                            className="flex items-center justify-center"
-                        >
-                            <CheckCircle2 className="h-12 w-12" />
-                        </motion.div>
-                    ) : (
-                        <div className="h-4 w-4 rounded-full bg-slate-200" />
-                    )}
-                </motion.button>
+            <div className="flex flex-col lg:flex-row items-center gap-8 justify-between">
+                <div className="flex items-center gap-6 w-full lg:w-auto min-w-[280px]">
+                    <div className="h-16 w-16 rounded-full border border-slate-200 bg-white shrink-0 flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-full border border-slate-100 bg-slate-50/50" />
+                    </div>
+                    <div className="space-y-0.5 overflow-hidden">
+                        <h4 className="text-lg font-semibold text-[#1E293B] tracking-tight truncate">{item.name}</h4>
+                        <p className="text-[13px] font-medium text-slate-400">
+                            Yesterday's Closing: <span className="font-semibold text-slate-500">{item.yesterdayClosing} {item.unit}</span>
+                        </p>
+                    </div>
+                </div>
 
-                <div className="space-y-4">
+                <div className="flex-1 w-full grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-10">
                     <div className="space-y-1">
-                        <h4 className="text-[28px] font-black text-[#1E293B] tracking-tight font-inria italic group-hover:text-[#3B59DA] transition-colors">{item.name}</h4>
-                        <div className="flex items-center gap-3">
-                             <Badge variant="secondary" className="bg-slate-50 text-slate-400 font-bold border border-slate-100 px-4 py-1 rounded-xl uppercase tracking-wider text-[10px]">Beverage Asset</Badge>
-                             <span className="h-1 w-1 rounded-full bg-slate-200" />
-                             <p className="text-xs font-black text-slate-300 font-mono tracking-widest uppercase">ID: {item.id.split('-')[0].toUpperCase()}</p>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Today's Opening</p>
+                        <p className="text-lg font-bold text-[#1E293B]">{item.todayOpening ?? '10'} <span className="text-sm font-semibold">{item.unit}</span></p>
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Amount Added Today</p>
+                        <p className="text-lg font-bold text-[#1E293B]">{item.amountAddedToday ?? '--'}</p>
+                    </div>
+                    <div className="flex items-center gap-8 border-l-2 border-slate-100 pl-8">
+                        <div className="space-y-1">
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Total Opening Stock:</p>
+                            <p className="text-lg font-bold text-[#3B59DA]">{item.totalOpening ?? '10'} <span className="text-sm font-semibold">{item.unit}</span></p>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-16 gap-y-10 w-full xl:w-auto px-6 border-l-2 border-slate-50/50 xl:ml-auto">
-                <StatSlot label="Prior Exit" value="10 units" />
-                <StatSlot label="Physical Entry" value="10 units" />
-                <StatSlot label="Operational Gain" value="--" italic />
-                <StatSlot label="Total Liquidity" value="10 units" valueColor="text-[#3B59DA]" />
-            </div>
-
-            <div className="flex items-center gap-6 w-full xl:w-auto justify-end pt-6 xl:pt-0 border-t xl:border-none border-slate-50">
-                <Button variant="ghost" className="h-16 px-10 rounded-[28px] font-black text-slate-400 hover:text-[#3B59DA] hover:bg-indigo-50 transition-all font-inria text-lg italic">Modify</Button>
-                <motion.div whileTap={{ scale: 0.95 }}>
+                <div className="flex items-center gap-3 w-full lg:w-auto shrink-0 p-3 bg-[#F8FAFC] rounded-2xl">
+                    <Button 
+                        variant="ghost" 
+                        className="h-11 px-6 rounded-xl border border-slate-200 font-bold bg-white hover:bg-slate-50 transition-all text-slate-600 flex-1 lg:flex-none"
+                        onClick={onEdit}
+                    >
+                        Edit Amount
+                    </Button>
                     <Button 
                         className={cn(
-                            "h-16 px-12 rounded-[28px] font-black transition-all font-inria text-xl italic group/btn",
+                            "h-11 px-8 rounded-xl font-bold shadow-md transition-all flex-1 lg:flex-none min-w-[110px] border-none",
                             isConfirmed 
-                                ? "bg-emerald-50 text-emerald-600 border-2 border-emerald-100 hover:bg-emerald-100" 
-                                : "bg-[#1E293B] hover:bg-[#0F172A] text-white shadow-xl shadow-slate-900/10 border-none"
+                                ? "bg-emerald-500 text-white hover:bg-emerald-600" 
+                                : "bg-[#3B59DA] hover:bg-[#2D46B2] text-white"
                         )}
                         onClick={onConfirm}
                     >
                         {isConfirmed ? (
-                            <span className="flex items-center gap-2">Signed <CheckCircle2 className="h-5 w-5" /></span>
-                        ) : "Validate Asset"}
+                            <span className="flex items-center gap-2">Confirmed <CheckCircle2 className="h-4 w-4" /></span>
+                        ) : "Confirm"}
                     </Button>
-                </motion.div>
+                </div>
             </div>
         </motion.div>
     );
 }
 
-function StatSlot({ label, value, valueColor = "text-slate-900", italic = false }: { label: string, value: string, valueColor?: string, italic?: boolean }) {
+function UpdateItemModal({ isOpen, onClose, item, onUpdate }: { 
+    isOpen: boolean, 
+    onClose: () => void, 
+    item: OpeningStockItem | null,
+    onUpdate: (item: OpeningStockItem) => void
+}) {
+    const [incoming, setIncoming] = useState("");
+    const [total, setTotal] = useState(0);
+
+    useEffect(() => {
+        if (item) {
+            setIncoming(String(item.amountAddedToday || ""));
+            setTotal(item.totalOpening || (item.todayOpening ?? 0));
+        }
+    }, [item, isOpen]);
+
+    const handleIncomingChange = (val: string) => {
+        setIncoming(val);
+        const added = parseFloat(val) || 0;
+        const base = item?.todayOpening ?? 0;
+        setTotal(base + added);
+    };
+
+    if (!item) return null;
+
     return (
-        <div className="space-y-2">
-            <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none mb-1">{label}</p>
-            <p className={cn("text-2xl font-black tracking-tighter font-inria group-hover:scale-105 transition-transform origin-left", valueColor, italic && "italic opacity-30")}>{value}</p>
-        </div>
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="w-[95%] sm:max-w-[540px] p-0 rounded-2xl overflow-hidden border-none shadow-2xl bg-white font-figtree">
+                <div className="p-5 md:p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                        <DialogTitle className="text-xl font-bold text-[#1E293B] tracking-tight">Update Item</DialogTitle>
+                        <p className="text-slate-400 font-medium text-[13px]">Manually adjust the inventory level</p>
+                    </div>
+                </div>
+                
+                <div className="p-5 md:p-6 space-y-6">
+                    <div className="bg-[#F8FAFF] border border-indigo-100/50 rounded-xl p-4 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="h-14 w-14 rounded-lg border border-white bg-white shadow-sm flex items-center justify-center shrink-0">
+                                <Package className="h-6 w-6 text-indigo-200" />
+                            </div>
+                            <div className="space-y-0.5">
+                                <h4 className="text-lg font-bold text-[#1E293B]">{item.name}</h4>
+                                <Badge className="bg-indigo-50 text-indigo-500 border-none font-bold text-[10px] rounded-full uppercase px-2 py-0">{item.category}</Badge>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Current</p>
+                             <p className="text-xl font-bold text-[#1E293B]">{item.yesterdayClosing} <span className="text-slate-400 text-xs">{item.unit}</span></p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Incoming</label>
+                            <Input 
+                                type="number"
+                                value={incoming} 
+                                onChange={(e) => handleIncomingChange(e.target.value)}
+                                placeholder={`0 ${item.unit}`} 
+                                className="h-12 text-xl font-bold border-slate-200 bg-[#F8FAFC] rounded-xl px-4 focus:ring-indigo-100 text-[#1E293B]" 
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest">New Total</label>
+                            <div className="h-12 border border-emerald-200 rounded-xl bg-white px-4 flex items-center justify-between">
+                                <span className="text-xl font-bold text-emerald-500">{total} <span className="text-emerald-300 text-xs font-semibold">{item.unit}</span></span>
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-indigo-50/50 border border-indigo-100/50 rounded-xl p-3 flex items-center gap-3 text-indigo-600 font-bold text-[12px]">
+                        <RotateCcw className="h-4 w-4 shrink-0" />
+                        <p>Updating from <span className="font-black">{item.yesterdayClosing}</span> to <span className="font-black">{total} {item.unit}</span></p>
+                    </div>
+                </div>
+
+                <DialogFooter className="p-4 md:p-5 bg-slate-50/50 border-t border-slate-100 gap-3">
+                    <Button variant="ghost" onClick={onClose} className="h-11 px-6 rounded-xl font-bold text-slate-500 hover:bg-white border-transparent hover:border-slate-200 flex-1">
+                        Cancel
+                    </Button>
+                    <Button 
+                        onClick={() => onUpdate({
+                            ...item,
+                            amountAddedToday: parseFloat(incoming) || 0,
+                            totalOpening: total,
+                            todayOpening: item.todayOpening ?? item.yesterdayClosing
+                        })} 
+                        className="h-11 px-8 rounded-xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[15px] shadow-sm flex-[1.5] border-none"
+                    >
+                        Confirm Update
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
-function CircularProgress({ percentage }: { percentage: number }) {
-    const radius = 64;
+function CircularProgress({ percentage }: { percentage: number, count: number, total: number }) {
+    const radius = 32;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percentage / 100) * circumference;
 
     return (
-        <div className="relative h-48 w-48 flex items-center justify-center bg-white/5 rounded-none shadow-2xl border border-white/10 group-hover:bg-white/10 transition-colors">
-            <svg className="h-40 w-40 -rotate-90 overflow-visible">
-                {/* Background path */}
+        <div className="relative h-[80px] w-[80px] flex items-center justify-center shrink-0">
+            <svg className="h-[80px] w-[80px] -rotate-90">
                 <circle
-                    cx="80"
-                    cy="80"
+                    cx="40"
+                    cy="40"
                     r={radius}
-                    stroke="currentColor"
-                    strokeWidth="12"
+                    stroke="#F1F5F9"
+                    strokeWidth="6"
                     fill="transparent"
-                    className="text-white/5"
                 />
-                {/* Progress path */}
                 <motion.circle
                     initial={{ strokeDashoffset: circumference }}
                     animate={{ strokeDashoffset: offset }}
-                    transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
-                    cx="80"
-                    cy="80"
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                    cx="40"
+                    cy="40"
                     r={radius}
-                    stroke="currentColor"
-                    strokeWidth="12"
+                    stroke="#3B59DA"
+                    strokeWidth="6"
                     fill="transparent"
                     strokeDasharray={circumference}
-                    className="text-indigo-500"
                     strokeLinecap="round"
-                    style={{
-                        filter: "drop-shadow(0 0 12px rgba(99, 102, 241, 0.8))"
-                    }}
                 />
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[44px] font-black text-white font-inria italic leading-none">{percentage}%</span>
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-1">Status</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <p className="text-[15px] font-bold text-[#1E293B] leading-none">{percentage}%</p>
             </div>
         </div>
     );
@@ -433,12 +603,15 @@ function CircularProgress({ percentage }: { percentage: number }) {
 function OpeningSkeleton() {
     return (
         <div className="p-10 space-y-12 bg-[#F8FAFC] min-h-screen">
-            <Skeleton className="h-12 w-64 rounded-none" />
-            <Skeleton className="h-[280px] w-full rounded-none" />
+            <div className="flex justify-between items-center">
+                <Skeleton className="h-6 w-32 rounded-xl" />
+                <Skeleton className="h-10 w-24 rounded-xl" />
+            </div>
+            <Skeleton className="h-[240px] w-full rounded-[32px]" />
             <div className="space-y-6">
-                 <Skeleton className="h-32 w-full rounded-none" />
-                 <Skeleton className="h-32 w-full rounded-none" />
-                 <Skeleton className="h-32 w-full rounded-none" />
+                 <Skeleton className="h-32 w-full rounded-[28px]" />
+                 <Skeleton className="h-32 w-full rounded-[28px]" />
+                 <Skeleton className="h-32 w-full rounded-[28px]" />
             </div>
         </div>
     );

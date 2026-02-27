@@ -18,7 +18,7 @@ export const SignupHeader: React.FC<{
           <LucideArrowLeft className="mr-1 md:block hidden" />
           <span className="font-medium">Back</span>
         </Button>
-        <span className="font-medium font-inter text-lg">{text}</span>
+        <span className="font-semibold text-lg">{text}</span>
       </div>
     </header>
   );

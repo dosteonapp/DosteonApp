@@ -59,7 +59,7 @@ export function DashboardHeader() {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <div className="bg-white/95 backdrop-blur-md border-b border-slate-50 px-4 md:px-6 lg:px-8 h-[120px] flex items-center justify-between sticky top-0 z-40 transition-all">
+    <div className="bg-white border-b border-slate-50 px-6 h-[90px] flex items-center justify-between sticky top-0 z-40 transition-all font-figtree">
       <div className="flex items-center gap-12 flex-1">
         <div className="flex items-center gap-6 min-w-fit">
           {breadcrumbs.length > 1 && (
@@ -77,7 +77,7 @@ export function DashboardHeader() {
               <React.Fragment key={idx}>
                 {idx > 0 && <ChevronRight className="h-4 w-4 text-slate-200 stroke-[4px]" />}
                 <span className={cn(
-                  "text-[17px] font-black tracking-tight transition-colors font-outfit",
+                  "text-[17px] font-semibold tracking-tight transition-colors font-figtree",
                   idx === breadcrumbs.length - 1 ? "text-[#1E293B]" : "text-slate-300 hover:text-slate-400 cursor-default"
                 )}>
                   {crumb}
@@ -101,7 +101,7 @@ export function DashboardHeader() {
       <div className="flex items-center gap-6 shrink-0">
         <div className="flex items-center gap-4 bg-indigo-50/30 px-6 py-3.5 rounded-[22px] border border-indigo-100/30 shadow-sm hover:bg-white hover:border-indigo-100 transition-all group cursor-default">
           <Calendar className="h-5 w-5 text-[#3B59DA] group-hover:scale-110 transition-transform stroke-[2.5px]" />
-          <div className="flex items-center gap-3 text-[14px] font-black text-slate-500 font-outfit">
+          <div className="flex items-center gap-3 text-[14px] font-semibold text-slate-500 font-figtree">
             <span className="group-hover:text-slate-900 transition-colors">Tuesday, Jan 24, 2026</span>
             <div className="h-1.5 w-1.5 rounded-full bg-slate-200 group-hover:bg-[#3B59DA] transition-colors" />
             <span className="tabular-nums text-[#3B59DA] group-hover:scale-105 transition-transform">09:43:23 AM</span>

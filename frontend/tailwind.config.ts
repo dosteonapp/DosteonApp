@@ -79,8 +79,8 @@ const config = {
         inter: ["var(--font-inter)", "sans-serif"],
         inria: ["var(--font-inria-serif)", "serif"],
         figtree: ["var(--font-figtree)", "sans-serif"],
-        sans: ["var(--font-inter)", "sans-serif"],
-        heading: ["var(--font-outfit)", "sans-serif"],
+        sans: ["var(--font-figtree)", "sans-serif"],
+        heading: ["var(--font-inria-serif)", "serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

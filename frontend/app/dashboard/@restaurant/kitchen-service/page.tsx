@@ -5,26 +5,21 @@ import {
   ArrowRight, 
   Search, 
   Package, 
-  ArrowUp,
-  ArrowDown,
   Trash2,
   Plus,
   Minus,
   CheckCircle2,
   Clock,
-  LayoutGrid,
   History,
-  AlertTriangle,
   Lock,
-  Utensils,
-  Sun,
-  X,
-  PlusCircle,
-  AlertCircle,
-  Terminal,
   ChevronRight,
   ChefHat,
-  ClipboardList
+  ClipboardList,
+  PlusCircle,
+  AlertCircle,
+  Utensils,
+  Users,
+  ClipboardCheck
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -43,10 +38,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
 export default function KitchenServicePage() {
-  const { isOpen, isLocked } = useRestaurantDayLifecycle();
+  const { isOpen } = useRestaurantDayLifecycle();
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -80,7 +76,6 @@ export default function KitchenServicePage() {
 
   const handleSubmitLog = async () => {
     if (!selectedItem || !amount) return;
-    
     setIsSubmitting(true);
     try {
       const val = parseFloat(amount);
@@ -89,22 +84,12 @@ export default function KitchenServicePage() {
       } else {
         await restaurantOpsService.createWasteLog(selectedItem.id, val, "Kitchen service log");
       }
-      
-      toast({
-        title: "Success",
-        description: `Successfully logged ${logType} for ${selectedItem.name}`,
-      });
-      
+      toast({ title: "Success", description: `Successfully logged ${logType} for ${selectedItem.name}` });
       setLogModalOpen(false);
-      // Refresh items
       const items = await restaurantOpsService.getInventoryItems();
       setInventoryItems(items);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to log entry. Please try again.",
-        variant: "destructive",
-      });
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to log usage. Please try again.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -120,222 +105,172 @@ export default function KitchenServicePage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 w-full pb-20 max-w-[1850px] mx-auto px-1 md:px-2 relative">
-        {/* Hero Variant Toggle */}
-        {isOpen ? <KitchenServiceOpenHeader /> : <KitchenServiceLockedHero />}
+    <div className="flex flex-col gap-2 w-full pb-8 relative font-figtree">
+      
 
-        {/* Main Content Area */}
-        <div className="relative">
-            <div className={cn("space-y-6 md:space-y-8 bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-6 md:p-10 relative overflow-hidden shadow-sm transition-all duration-500", !isOpen && "blur-md pointer-events-none")}>
-                <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-4 md:mb-8">
-                    <div className="space-y-1 md:space-y-2">
-                        <h3 className="text-2xl md:text-3xl font-black text-[#1E293B] tracking-tight leading-none">Track Product Usage</h3>
-                        <p className="text-xs md:text-sm text-slate-400 font-bold leading-relaxed">Enter how much of each product you've used, or use +/- buttons to adjust</p>
-                    </div>
-                    <Button variant="ghost" className="text-slate-500 hover:text-[#4F46E5] font-black text-xs md:text-sm p-0 md:p-2" asChild>
-                        <Link href="/dashboard/kitchen-service/history">View Log History</Link>
-                    </Button>
-                </div>
-                
-                <div className="flex items-center gap-6 mb-6 md:mb-10">
-                    <div className="relative w-full max-w-md">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                        <Input 
-                            placeholder="Search for an item..." 
-                            className="pl-11 h-12 md:h-14 rounded-xl md:rounded-2xl border-slate-100 bg-[#F8FAFC]/50 font-bold focus-visible:ring-indigo-100 text-sm md:text-base"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
-                    {filteredItems.map((item) => (
-                        <Card key={item.id} className="group border border-slate-100 rounded-[24px] md:rounded-[32px] overflow-hidden bg-white hover:border-[#3B59DA]/10 hover:shadow-[0_20px_50px_-12px_rgba(59,89,218,0.1)] transition-all duration-500 shadow-sm">
-                            <CardContent className="p-6 md:p-8 space-y-6 md:space-y-8">
-                                <div className="flex items-start justify-between min-h-[48px]">
-                                    <div className="space-y-1 flex-1 min-w-0 pr-2">
-                                        <h4 className="font-black text-[18px] md:text-[22px] text-[#1E293B] group-hover:text-[#3B59DA] transition-colors font-inria tracking-tight leading-tight italic truncate">{item.name}</h4>
-                                        <p className="text-[11px] md:text-[13px] font-bold text-slate-400">{item.currentStock} {item.unit} remaining</p>
-                                    </div>
-                                    <Badge className={cn(
-                                        "rounded-lg px-2 py-0.5 md:px-2.5 md:py-1 text-[8px] md:text-[9px] font-black uppercase tracking-widest border-none shrink-0",
-                                        item.status === 'Critical' ? "bg-red-50 text-red-500" : 
-                                        item.status === 'Low' ? "bg-amber-50 text-amber-500" : 
-                                        "bg-emerald-50 text-emerald-500"
-                                    )}>
-                                        {item.status}
-                                    </Badge>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-3 md:gap-4">
-                                    <button 
-                                        className="flex flex-col items-center justify-center gap-2 md:gap-3 h-28 md:h-32 rounded-xl md:rounded-2xl bg-white border border-slate-100 text-slate-600 hover:bg-slate-50 transition-all group/btn shadow-sm"
-                                        onClick={() => handleLogClick(item, 'usage')}
-                                    >
-                                        <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl bg-[#F0FDF4] flex items-center justify-center group-hover/btn:scale-110 transition-transform">
-                                            <ChefHat className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
-                                        </div>
-                                        <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Log Usage</span>
-                                    </button>
-                                    <button 
-                                        className="flex flex-col items-center justify-center gap-2 md:gap-3 h-28 md:h-32 rounded-xl md:rounded-2xl bg-white border border-slate-100 text-slate-600 hover:bg-slate-50 transition-all group/btn shadow-sm"
-                                        onClick={() => handleLogClick(item, 'waste')}
-                                    >
-                                        <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl bg-[#FEF2F2] flex items-center justify-center group-hover/btn:scale-110 transition-transform">
-                                            <Trash2 className="h-4 w-4 md:h-5 md:w-5 text-red-500" />
-                                        </div>
-                                        <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Log Waste</span>
-                                    </button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </div>
-
-            {!isOpen && (
-                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center text-center p-6 pointer-events-auto">
-                    <div className="h-16 w-16 bg-[#E2E8F0] rounded-none flex items-center justify-center mb-6 shadow-sm">
-                        <Lock className="h-8 w-8 text-slate-600" />
-                    </div>
-                    <h4 className="text-2xl md:text-3xl font-black text-[#1E293B] tracking-tight mb-3">Kitchen Service is Locked</h4>
-                    <p className="text-slate-500 text-sm md:text-base max-w-md mx-auto leading-relaxed mb-8">
-                        The Kitchen Service workflow is not yet available. Please do your daily stock count before you proceed to Kitchen Service.
-                    </p>
-                    <Button className="h-12 px-10 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-xl font-black gap-3 shadow-[0_10px_25px_rgba(59,89,218,0.2)]" asChild>
-                        <Link href="/dashboard/inventory/daily-stock-count">
-                            Count Daily Stock <ArrowRight className="h-5 w-5" />
-                        </Link>
-                    </Button>
-                </div>
-            )}
+      {/* Page Header Outside Hero */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-0 mt-0 mb-4">
+        <div className="space-y-1">
+          <h2 className="text-[24px] md:text-[30px] font-semibold text-[#1E293B] tracking-tight leading-none font-inria italic">Kitchen Service</h2>
+          <p className="text-[14px] font-semibold text-slate-400">Service not started</p>
         </div>
+        <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 font-bold text-[11px] shadow-sm uppercase tracking-wider">
+          <div className="h-2 w-2 rounded-full bg-slate-300 animate-pulse" />
+          Closed Service
+        </div>
+      </div>
 
-        {/* Log Modal */}
-        <Dialog open={logModalOpen} onOpenChange={setLogModalOpen}>
-            <DialogContent className="sm:max-w-md rounded-[32px] md:rounded-[40px] p-6 md:p-10 border-none shadow-2xl">
-                <DialogHeader>
-                    <DialogTitle className="text-2xl md:text-3xl font-black text-[#1E293B] tracking-tight">
-                        {logType === 'usage' ? 'Log Usage' : 'Log Waste'}
-                    </DialogTitle>
-                </DialogHeader>
-                <div className="py-6 md:py-8 space-y-6 md:space-y-8">
-                    <div className="flex items-center justify-between p-4 md:p-6 bg-[#F8FAFC] rounded-2xl md:rounded-3xl border border-slate-50">
-                        <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0 mr-2">
-                            <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg md:rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
-                                <Package className="h-5 w-5 md:h-6 md:w-6 text-[#4F46E5]" />
-                            </div>
-                            <div className="min-w-0">
-                                <h4 className="font-black text-slate-900 truncate">{selectedItem?.name}</h4>
-                                <p className="text-[10px] md:text-xs font-bold text-slate-400 capitalize truncate">{selectedItem?.category}</p>
-                            </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                            <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">In Stock</p>
-                            <p className="text-base md:text-lg font-black text-[#1E293B]">{selectedItem?.currentStock} {selectedItem?.unit}</p>
-                        </div>
-                    </div>
+      {/* Hero Section */}
+      <div className="w-full">
+        {isOpen ? <KitchenServiceOpenHeader /> : <KitchenServiceLockedHero />}
+      </div>
 
-                    <div className="space-y-3 md:space-y-4">
-                        <label className="text-[11px] md:text-sm font-black text-slate-900 uppercase tracking-widest pl-2">Amount to Log</label>
-                        <div className="relative">
-                            <Input 
-                                type="number"
-                                placeholder={`Enter amount in ${selectedItem?.unit}`}
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                className="h-14 md:h-16 rounded-xl md:rounded-[24px] border-slate-200 bg-white font-black text-lg md:text-xl pl-5 md:pl-6 focus-visible:ring-indigo-100"
-                            />
-                            <div className="absolute right-5 md:right-6 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs md:text-base">
-                                {selectedItem?.unit}
-                            </div>
-                        </div>
+      {/* Track Product Usage Section */}
+      <div className="w-full mt-8">
+        <div className="bg-white border border-slate-100 rounded-[32px] p-8 md:p-10 pb-[14px] md:pb-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] relative z-10 space-y-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-40">
+            <div className="space-y-1.5">
+              <h2 className="text-[22px] md:text-[26px] font-semibold text-[#1E293B] tracking-tight font-figtree">Track Product Usage</h2>
+              <p className="text-slate-400 font-semibold text-[13px] md:text-sm font-figtree">Enter how much of each product you've used, or use +/- buttons to adjust</p>
+            </div>
+            <Button variant="link" className="text-slate-400 font-bold hover:text-[#3B59DA] transition-colors text-xs uppercase tracking-widest font-figtree" asChild>
+              <Link href="/dashboard/kitchen-service/history">View Log History</Link>
+            </Button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-40">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Input 
+                placeholder="Search items..." 
+                className="pl-12 h-12 md:h-[52px] border-slate-100 rounded-xl bg-slate-50/50 focus:ring-indigo-100 placeholder:font-semibold placeholder:text-slate-400" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 md:gap-8">
+            {filteredItems.map((item) => (
+              <Card key={item.id} className="rounded-[24px] border border-slate-100 overflow-hidden bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                <div className="p-6 md:p-8 space-y-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-[#1E293B] text-[18px] md:text-[20px] leading-tight group-hover:text-[#3B59DA] transition-colors">{item.name}</h4>
+                      <p className="text-[13px] text-slate-400 font-semibold">{item.currentStock} {item.unit}s remaining</p>
                     </div>
+                    <Badge className={cn(
+                      "border-none rounded-full font-bold text-[10px] px-3 py-1 uppercase tracking-wider",
+                      item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" : 
+                      item.status === 'Low' || item.status === 'Running Low' ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"
+                    )}>
+                      {item.status === 'Low' ? 'Critical' : item.status}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div 
+                      className="flex flex-col items-center justify-center gap-3 py-6 rounded-[20px] bg-slate-50 border border-slate-100/50 cursor-pointer hover:bg-emerald-50 hover:border-emerald-100 transition-all duration-300 group/action" 
+                      onClick={() => handleLogClick(item, 'usage')}
+                    >
+                      <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center group-hover/action:bg-white shadow-sm transition-colors">
+                        <ChefHat className="h-5 w-5 text-emerald-500" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight group-hover/action:text-emerald-600">Log Usage</span>
+                    </div>
+                    <div 
+                      className="flex flex-col items-center justify-center gap-3 py-6 rounded-[20px] bg-slate-50 border border-slate-100/50 cursor-pointer hover:bg-red-50 hover:border-red-100 transition-all duration-300 group/action" 
+                      onClick={() => handleLogClick(item, 'waste')}
+                    >
+                      <div className="h-10 w-10 rounded-xl bg-red-50 flex items-center justify-center group-hover/action:bg-white shadow-sm transition-colors">
+                        <Trash2 className="h-5 w-5 text-red-500" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight group-hover/action:text-red-600">Log Waste</span>
+                    </div>
+                  </div>
                 </div>
-                <DialogFooter className="flex-col sm:flex-row gap-3 md:gap-4">
-                    <Button 
-                        variant="ghost" 
-                        size="lg" 
-                        className="rounded-xl h-12 md:h-14 px-6 md:px-8 font-black text-slate-500 hover:bg-slate-50 w-full sm:w-auto text-xs md:text-base"
-                        onClick={() => setLogModalOpen(false)}
-                    >
-                        Cancel
-                    </Button>
-                    <Button 
-                        disabled={isSubmitting || !amount}
-                        className={cn(
-                            "grow h-12 md:h-14 rounded-xl md:rounded-2xl px-8 md:px-10 font-black transition-all shadow-xl shadow-indigo-100 w-full sm:w-auto text-xs md:text-base",
-                            logType === 'usage' ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-red-600 hover:bg-red-700 text-white"
-                        )}
-                        onClick={handleSubmitLog}
-                    >
-                        {isSubmitting ? "Processing..." : `Confirm ${logType === 'usage' ? 'Usage' : 'Waste'}`}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+
+
+      {/* Modals & Dialogs */}
+      <Dialog open={logModalOpen} onOpenChange={setLogModalOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className={cn("p-10 text-white", logType === 'usage' ? "bg-[#3B59DA]" : "bg-red-500")}>
+            <DialogTitle className="text-3xl font-semibold italic font-inria tracking-tight">
+              Log {logType === 'usage' ? 'Usage' : 'Waste'}
+            </DialogTitle>
+            <p className="text-white/80 font-bold text-sm mt-2 uppercase tracking-widest">
+              Recording logs for {selectedItem?.name}
+            </p>
+          </DialogHeader>
+          <div className="p-10 space-y-8">
+            <div className="space-y-4">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Enter Amount ({selectedItem?.unit})</label>
+              <Input 
+                type="number"
+                placeholder="0.00"
+                className="h-16 md:h-20 text-3xl font-semibold border-slate-100 bg-slate-50/50 rounded-2xl focus:ring-[#3B59DA] px-8"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter className="p-8 bg-slate-50/50 border-t border-slate-100 gap-4">
+            <Button variant="ghost" onClick={() => setLogModalOpen(false)} className="rounded-xl font-bold h-14 px-8 flex-1">Cancel</Button>
+            <Button 
+              className={cn("rounded-xl font-semibold h-14 px-10 border-none flex-[2] text-lg shadow-xl animate-in zoom-in-95", logType === 'usage' ? "bg-[#3B59DA] hover:bg-[#2D46B2] shadow-indigo-900/10" : "bg-red-500 hover:bg-red-600 shadow-red-900/10")}
+              onClick={handleSubmitLog}
+              disabled={isSubmitting || !amount}
+            >
+              {isSubmitting ? "Logging..." : `Confirm ${logType}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function KitchenServiceOpenHeader() {
+function KitchenServiceLockedOverlay() {
     return (
-        <div className="relative overflow-hidden rounded-none p-6 md:p-10 lg:p-12 border border-white/10 bg-gradient-to-r from-[#1E3A8A] via-[#2D46B2] to-[#4F46E5] text-white flex flex-col lg:flex-row gap-8 md:gap-10 items-center justify-start min-h-[250px] md:min-h-[280px] shadow-2xl">
-            {/* Live Service Badge - Precisely positioned top-right */}
-            <div className="absolute top-4 right-4 md:top-6 md:right-6 lg:top-8 lg:right-8 flex items-center gap-1.5 md:gap-2 px-2.5 py-1 md:px-3.5 md:py-1.5 rounded-full border border-[#10B981] bg-white text-[#10B981] font-bold text-[11px] md:text-[13px] tracking-tight shadow-sm shrink-0">
-                <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-                Live Service
-            </div>
-
-            <div className="space-y-4 md:space-y-6 max-w-full lg:max-w-xs shrink-0 text-center lg:text-left mt-6 lg:mt-0 relative z-10">
-                <h2 className="text-[clamp(32px,5.5vw,64px)] font-black tracking-tighter leading-[0.9] font-inria italic">Hello, Sherry</h2>
-                <p className="text-white/70 font-medium text-[13px] md:text-[15px] leading-relaxed max-w-[280px] mx-auto lg:mx-0">
-                    Do your opening stock count before starting your restaurant operations.
-                </p>
-            </div>
+        <div className="absolute -left-6 -right-6 top-0 bottom-0 z-50 flex flex-col items-center justify-center p-8 text-center select-none overflow-hidden">
+            {/* Gradient Blur Background - Clear at top (header area), foggy at cards, blurry at bottom */}
+            <div 
+                className="absolute inset-0 backdrop-blur-[44px] bg-white/20" 
+                style={{ 
+                    maskImage: 'linear-gradient(to bottom, transparent 0px, transparent 420px, rgba(0,0,0,0.1) 480px, rgba(0,0,0,0.8) 700px, black 100%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, transparent 420px, rgba(0,0,0,0.1) 480px, rgba(0,0,0,0.8) 700px, black 100%)'
+                }}
+            />
             
-            <div className="flex flex-row overflow-x-auto pb-4 lg:pb-0 gap-4 md:gap-5 items-stretch lg:items-center w-full lg:w-auto no-scrollbar scroll-smooth">
-                <div className="shrink-0 w-[240px] md:w-[260px] lg:w-auto">
-                    <KitchenSummaryCard 
-                        label="Kitchen Health" 
-                        value="Healthy" 
-                        subtext="Lunch service in progress"
-                        icon={<Utensils className="h-4 w-4 text-[#10B981]" />}
-                        accentColor="#F0FDF4"
-                    />
+            {/* Content Container (Sharp) - Positioned over the grid area */}
+            <div className="relative z-50 flex flex-col items-center justify-center mt-[450px]">
+                <div className="w-20 h-20 bg-[#D1D5DB]/80 rounded-[24px] flex items-center justify-center mb-6 shadow-sm backdrop-blur-md">
+                    <Lock className="h-8 w-8 text-slate-600" />
                 </div>
-                <div className="shrink-0 w-[240px] md:w-[260px] lg:w-auto">
-                    <KitchenSummaryCard 
-                        label="Critical Ingredients" 
-                        value="0" 
-                        subtext="Nothing urgent right now"
-                        icon={<AlertCircle className="h-4 w-4 text-[#10B981]" />}
-                        accentColor="#F0FDF4"
-                    />
+                
+                <div className="space-y-4 max-w-sm">
+                    <h3 className="text-[24px] md:text-[28px] font-bold text-[#111827] tracking-tight font-figtree">Kitchen Service is Locked</h3>
+                    <p className="text-slate-500 text-[14px] md:text-sm leading-relaxed font-semibold max-w-[300px] mx-auto font-figtree">
+                        The Kitchen Service workflow is not yet available. Please do your daily stock count before you proceed to Kitchen Service.
+                    </p>
                 </div>
-            </div>
-        </div>
-    );
-}
 
-function KitchenSummaryCard({ label, value, subtext, icon, accentColor }: { label: string, value: string, subtext: string, icon: any, accentColor: string }) {
-    return (
-        <div className="bg-white rounded-[24px] md:rounded-[28px] p-6 lg:p-8 w-full lg:w-[260px] border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between items-start space-y-6 md:space-y-8 hover:shadow-xl hover:border-indigo-100 transition-all h-[180px] md:h-[200px] lg:h-[220px] group active:scale-[0.98]">
-            <div className="flex items-center gap-3 md:gap-4">
-                <div 
-                    className="h-10 w-10 md:h-11 md:w-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-all group-hover:scale-110 group-hover:rotate-3"
-                    style={{ backgroundColor: accentColor }}
-                >
-                    {icon}
+                <div className="mt-8">
+                    <Button 
+                        className="h-12 px-8 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-xl font-bold gap-3 shadow-lg shadow-indigo-900/10 transition-all active:scale-95 group border-none font-figtree" 
+                        asChild
+                    >
+                        <Link href="/dashboard/inventory/daily-stock-count">
+                            Count Daily Stock <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                    </Button>
                 </div>
-                <div className="text-[clamp(11px,1.2vw,14px)] font-bold text-slate-500 tracking-tight whitespace-nowrap group-hover:text-slate-700 transition-colors">
-                    {label}
-                </div>
-            </div>
-            <div className="space-y-2 md:space-y-3">
-                <div className="text-[clamp(24px,2.5vw,36px)] font-black text-[#10B981] tracking-tight leading-none group-hover:translate-x-1 transition-transform">{value}</div>
-                <div className="text-[clamp(10px,1.1vw,12px)] font-bold text-slate-400 tracking-tight leading-tight uppercase group-hover:text-slate-500 transition-colors">{subtext}</div>
             </div>
         </div>
     );
@@ -343,72 +278,97 @@ function KitchenSummaryCard({ label, value, subtext, icon, accentColor }: { labe
 
 function KitchenServiceLockedHero() {
     return (
-        <div className="relative overflow-hidden rounded-none p-6 md:p-10 lg:p-12 border border-white/10 bg-gradient-to-r from-[#2B46CC] via-[#4A3AFF] to-[#7C3AED] text-white flex flex-col lg:flex-row gap-8 md:gap-10 items-start justify-between min-h-[250px] md:min-h-[280px] shadow-2xl transition-all duration-500">
-             {/* Locked Badge - Top Right */}
-             <div className="absolute top-4 right-4 md:top-6 md:right-6 lg:top-8 lg:right-8 flex items-center gap-1.5 md:gap-2 px-2.5 py-1 md:px-3.5 md:py-1.5 rounded-none border border-[#EF4444] bg-white text-[#EF4444] font-bold text-[11px] md:text-[13px] tracking-tight shadow-sm shrink-0 uppercase">
-                <Lock className="h-3 w-3 md:h-4 md:w-4" />
-                Service Locked
-            </div>
+        <div className="relative rounded-[24px] p-8 md:p-10 border border-slate-100 bg-white text-[#1E293B] flex flex-col lg:flex-row items-center justify-between shadow-sm transition-all duration-700 w-full overflow-hidden group">
+            <div className="flex flex-col justify-between text-left w-full lg:w-[60%] shrink-0 z-10">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                         <div className="h-2 w-2 rounded-full bg-slate-300 animate-pulse" />
+                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Awaiting Prep</span>
+                    </div>
+                    <h2 className="text-[32px] md:text-[40px] font-bold tracking-tight leading-none text-[#1E293B]">Hello, Sherry</h2>
+                    <p className="text-slate-400 text-[15px] font-medium leading-relaxed max-w-sm">
+                        Do your opening stock count before starting your restaurant operations.
+                    </p>
+                </div>
+                
+                <div className="flex flex-col gap-6 mt-8">
+                    <div className="w-fit inline-flex items-center gap-2 text-slate-500 font-bold text-[13px]">
+                        <ClipboardCheck className="h-4 w-4 text-[#3B59DA]" />
+                        <span>16 items need counting</span>
+                    </div>
 
-            <div className="space-y-4 md:space-y-6 max-w-full lg:max-w-xs shrink-0 text-center lg:text-left mt-6 lg:mt-0 relative z-10">
-                <h2 className="text-[clamp(32px,5.5vw,64px)] font-black tracking-tighter leading-[0.9] font-inria italic">Hello, Sherry</h2>
-                <p className="text-white/70 font-medium text-[13px] md:text-[15px] leading-relaxed max-w-[280px] mx-auto lg:mx-0">
-                    Do your opening stock count before starting your restaurant operations.
-                </p>
-                <div className="flex justify-center lg:justify-start">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                        <Button className="h-10 md:h-12 px-6 md:px-8 bg-white text-[#3B59DA] hover:bg-slate-50 rounded-none font-black gap-3 text-xs md:text-sm shadow-xl shadow-indigo-900/10 transition-all group font-figtree border-none active:scale-95" asChild>
-                            <Link href="/dashboard/inventory/daily-stock-count">
-                                Count Daily Stock <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
-                            </Link>
-                        </Button>
-                    </motion.div>
+                    <Button className="w-fit h-11 px-10 bg-[#3B59DA] text-white hover:bg-[#2D46B2] transition-all rounded-xl font-bold gap-3 text-sm shadow-sm border-none active:scale-95 group/btn" asChild>
+                        <Link href="/dashboard/inventory/daily-stock-count">
+                            Count Daily Stock <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+                        </Link>
+                    </Button>
                 </div>
             </div>
             
-            <div className="hidden lg:block relative mr-12 opacity-80 lg:ml-auto">
-                 <ChefHat className="h-48 w-48 text-white/5 stroke-[1px]" />
+            <div className="hidden lg:flex flex-1 items-center justify-center p-8">
+                 <div className="h-56 w-56 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100/50">
+                    <ChefHat className="h-28 w-28 text-slate-200 stroke-[1px]" />
+                 </div>
             </div>
         </div>
     );
 }
 
-function HeroStatCard({ label, value, icon: Icon, accent }: { label: string, value: string, icon: any, accent: string }) {
+function KitchenServiceOpenHeader() {
     return (
-      <div className="rounded-none p-6 md:p-[22px] h-[140px] md:h-[150px] bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between transition-all hover:shadow-lg group relative overflow-hidden active:scale-[0.98] font-figtree">
-        <div className="flex items-center gap-3">
-          <div 
-            className="h-9 w-9 rounded-none flex items-center justify-center shrink-0"
-            style={{ backgroundColor: `${accent}10`, color: accent }}
-          >
-              <Icon className="h-4 w-4 stroke-[2.5px]" />
-          </div>
-          <span className="text-[12px] md:text-[13px] font-bold text-slate-500 tracking-tight leading-tight">
-            {label}
-          </span>
+        <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative rounded-[24px] p-8 md:p-10 border border-slate-100 bg-white text-[#1E293B] flex flex-col lg:flex-row items-center justify-between shadow-sm transition-all duration-700 w-full overflow-hidden"
+        >
+            <div className="flex flex-col gap-4 text-left w-full lg:w-[48%] shrink-0 z-10">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                         <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                         <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Live Service Active</span>
+                    </div>
+                    <h2 className="text-[28px] md:text-[36px] font-bold tracking-tight leading-tight text-[#1E293B]">Welcome back! Kitchen service is now in progress.</h2>
+                    <p className="text-slate-400 text-[14px] font-medium leading-relaxed max-w-sm">
+                        Service is active. Monitor ingredient usage and track production in real-time. Keep your kitchen efficient.
+                    </p>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 flex-1 w-full lg:min-w-0 z-10 mt-8 lg:mt-0">
+                <KitchenSummaryCard label="Kitchen Status" value="Live" subtext="In Production" icon={<Clock className="h-4 w-4 text-emerald-500" />} />
+                <KitchenSummaryCard label="Staff on Duty" value="08" subtext="Staff Members" icon={<Users className="h-4 w-4 text-[#3B59DA]" />} />
+                <KitchenSummaryCard label="Ingredients Used" value="45" subtext="Items Today" icon={<Package className="h-4 w-4 text-orange-400" />} />
+                <KitchenSummaryCard label="Production Count" value="120" subtext="Units Produced" icon={<Utensils className="h-4 w-4 text-indigo-400" />} />
+            </div>
+        </motion.div>
+    );
+}
+
+function KitchenSummaryCard({ label, value, subtext, icon }: { label: string, value: string, subtext: string, icon: React.ReactNode }) {
+    return (
+        <div className="rounded-[20px] border border-slate-100 bg-[#FBFDFF] p-5 flex flex-col justify-between h-[130px] shadow-sm hover:border-indigo-100 transition-all group font-figtree">
+            <div className="flex items-start justify-between">
+                <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center border border-slate-100 shadow-xs">
+                    {icon}
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</span>
+            </div>
+            <div className="space-y-0.5">
+                <div className="text-2xl font-bold tracking-tight text-[#1E293B] group-hover:text-[#3B59DA] transition-colors">{value}</div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{subtext}</div>
+            </div>
         </div>
-        <div>
-          <p className="text-[clamp(28px,4vw,36px)] font-bold text-[#1E293B] tracking-tighter leading-none transition-colors">
-            {value}
-          </p>
-        </div>
-      </div>
     );
 }
 
 function KitchenSkeleton() {
     return (
-        <div className="max-w-7xl mx-auto w-full p-10 space-y-12">
-            
-            <div className="h-80 w-full bg-slate-50 rounded-none animate-pulse" />
-            
-            <div className="space-y-8">
-                <div className="h-10 w-48 bg-slate-100 rounded-none animate-pulse" />
-                <div className="grid grid-cols-4 gap-6">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                        <div key={i} className="h-64 bg-slate-50 rounded-none animate-pulse" />
-                    ))}
-                </div>
+        <div className="p-10 space-y-12 min-h-screen bg-white">
+            <Skeleton className="h-[360px] w-full rounded-2xl" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {[...Array(8)].map((_, i) => (
+                    <Skeleton key={i} className="h-96 w-full rounded-2xl" />
+                ))}
             </div>
         </div>
     );

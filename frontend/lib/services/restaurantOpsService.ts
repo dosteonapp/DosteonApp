@@ -18,6 +18,7 @@ export interface InventoryItem {
   lastUpdated: string;
   imageUrl?: string;
   location?: string;
+  avgPrice?: number;
 }
 
 export interface InventoryActivity {
@@ -274,12 +275,18 @@ export const restaurantOpsService = {
   getItemActivities: async (id: string): Promise<InventoryActivity[]> => {
     if (useMocks) {
       return [
-        { id: "1", action: "Replenishment", change: "+50", performer: "Supplier: FreshFarm", activity: "Regular Restock", timestamp: "Today, 10:00 AM" },
-        { id: "2", action: "Usage", change: "-5", performer: "Kitchen Team", activity: "Lunch Service", timestamp: "Today, 2:30 PM" },
-        { id: "3", action: "Waste", change: "-2", performer: "Kitchen Team", activity: "Spoilage", timestamp: "Yesterday, 4:00 PM" },
+        { id: "1", action: "Updated", change: "-", performer: "Procurement Officer", activity: "Manual (Inventory Setup)", timestamp: "Oct 06, 2025; 14:32" },
+        { id: "2", action: "Received", change: "+25kg", performer: "Procurement Officer", activity: "Delivery", timestamp: "Oct 06, 2025; 14:32" },
+        { id: "3", action: "Received", change: "+25kg", performer: "Procurement Officer", activity: "Delivery", timestamp: "Oct 06, 2025; 14:32" },
+        { id: "4", action: "Updated", change: "-", performer: "Procurement Officer", activity: "Updated supplier unit price from 3,500 > 3,800 RWF.", timestamp: "Oct 06, 2025; 14:32" },
+        { id: "5", action: "Removed", change: "-10kg", performer: "Kitchen Staff", activity: "Waste Management", timestamp: "Oct 06, 2025; 14:32" },
+        { id: "6", action: "Auto-Alert", change: "-10kg (discrepancy)", performer: "System Agent", activity: "System Forecast", timestamp: "Oct 06, 2025; 14:32" },
+        { id: "7", action: "Removed", change: "-10kg", performer: "Kitchen Staff", activity: "Waste Management", timestamp: "Oct 06, 2025; 14:32" },
+        { id: "8", action: "System Sync", change: "-", performer: "System Agent", activity: "POS Integration", timestamp: "Oct 06, 2025; 14:32" },
+        { id: "9", action: "Received", change: "+25kg", performer: "Procurement Officer", activity: "Delivery", timestamp: "Oct 06, 2025; 14:32" },
       ];
     }
     const { data } = await axiosInstance.get(`/restaurant/inventory/items/${id}/activities`);
     return data;
   }
-};
+}

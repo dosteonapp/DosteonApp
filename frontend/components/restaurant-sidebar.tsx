@@ -128,7 +128,7 @@ export function RestaurantSidebar() {
           {/* Operations Section */}
           <div className="space-y-6">
             {!collapsed && (
-              <h3 className="px-5 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400/80 font-outfit">
+              <h3 className="px-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400/80 font-figtree">
                 Operations
               </h3>
             )}
@@ -149,7 +149,7 @@ export function RestaurantSidebar() {
           {/* Systems Section */}
           <div className="space-y-6">
             {!collapsed && (
-              <h3 className="px-5 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400/80 font-outfit">
+              <h3 className="px-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400/80 font-figtree">
                 Systems
               </h3>
             )}
@@ -180,8 +180,8 @@ export function RestaurantSidebar() {
                 />
             </div>
             <div className="flex flex-col min-w-0">
-                <span className="text-[15px] font-black text-[#1E293B] truncate tracking-tight">Sherry Harper</span>
-                <span className="text-[11px] font-bold text-slate-400 capitalize flex items-center gap-1.5">
+                <span className="text-[15px] font-semibold text-[#1E293B] truncate tracking-tight">Sherry Harper</span>
+                <span className="text-[11px] font-semibold text-slate-400 capitalize flex items-center gap-1.5">
                     Admin Manager
                 </span>
             </div>
@@ -191,10 +191,10 @@ export function RestaurantSidebar() {
           variant="outline"
           redirectPath="/auth/restaurant/signin"
           className={cn(
-            "h-14 rounded-2xl transition-all font-black text-sm group border-2",
+            "h-14 rounded-[20px] transition-all font-semibold text-sm group border-2",
             collapsed 
                 ? "w-full justify-center px-0 border-transparent text-slate-400 hover:text-red-500 hover:bg-red-50" 
-                : "w-full border-red-50 bg-white text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 justify-center shadow-lg shadow-red-500/5 transition-all duration-300"
+                : "w-full border-red-200 bg-white text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 justify-center shadow-lg shadow-red-500/5 transition-all duration-300"
           )}
         >
           <LogOut className={cn("h-5 w-5 transition-transform", !collapsed && "mr-3 group-hover:-translate-x-1")} />
@@ -224,17 +224,20 @@ function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock }: { ro
             className={cn(
                 "flex items-center gap-4 rounded-2xl px-5 py-4 transition-all text-[15px] group relative font-semibold",
                 isActive 
-                    ? "bg-[#3B59DA] text-white shadow-xl shadow-indigo-100" 
+                    ? "bg-indigo-50 text-[#3B59DA]" 
                     : "text-slate-500 hover:text-[#3B59DA] hover:bg-indigo-50/50",
                 collapsed && "justify-center px-0 mx-2",
                 isLocked && "opacity-40 cursor-not-allowed grayscale-[0.5]"
             )}
             title={collapsed ? route.title : undefined}
         >
+            {isActive && !collapsed && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-[#3B59DA] rounded-r-full" />
+            )}
             <route.icon className={cn(
                 "h-5 w-5 transition-colors duration-300 group-hover:scale-110", 
                 isActive 
-                    ? "text-white stroke-[3px]" 
+                    ? "text-[#3B59DA] stroke-[3px]" 
                     : "text-slate-400 stroke-[2px] group-hover:text-[#3B59DA]",
                 isLocked && "text-slate-300"
             )} />
@@ -244,7 +247,7 @@ function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock }: { ro
                     initial={{ opacity: 0, x: -5 }}
                     animate={{ opacity: 1, x: 0 }}
                  >
-                    <ChevronRight className="h-4 w-4 ml-auto text-white/50 stroke-[3px]" />
+                    <ChevronRight className="h-4 w-4 ml-auto text-[#3B59DA]/50 stroke-[3px]" />
                  </motion.div>
             )}
             {isLocked && !collapsed && (

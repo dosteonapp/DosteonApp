@@ -54,7 +54,7 @@ export default function SupplierDashboard() {
       </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight font-inria italic">
             Supplier Dashboard
           </h1>
           <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export default function SupplierDashboard() {
         {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"> */}
         {/* <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-semibold">
                 Projected Orders (Next Week)
               </CardTitle>
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -97,7 +97,7 @@ export default function SupplierDashboard() {
         {/* 
           <Card className="bg-secondary/5 border-secondary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-semibold">
                 Recommended Production
               </CardTitle>
               <Package className="h-4 w-4 text-secondary" />
@@ -113,7 +113,7 @@ export default function SupplierDashboard() {
         {/* 
           <Card className="bg-green-500/5 border-green-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-semibold">
                 Expected Revenue
               </CardTitle>
               <DollarSign className="h-4 w-4 text-green-500" />
@@ -129,7 +129,7 @@ export default function SupplierDashboard() {
 
         {/* <Card className="bg-blue-500/5 border-blue-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Reliability Score</CardTitle>
+              <CardTitle className="text-sm font-semibold">Reliability Score</CardTitle>
               <CheckCircle2 className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
@@ -205,7 +205,7 @@ export default function SupplierDashboard() {
                     className="flex items-start justify-between"
                   >
                     <div>
-                      <h3 className="font-medium">{customer.name}</h3>
+                      <h3 className="font-semibold">{customer.name}</h3>
                       <div className="flex items-center mt-1">
                         <Badge
                           variant="outline"
@@ -219,7 +219,7 @@ export default function SupplierDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium">
+                      <div className="font-semibold">
                         {customer.consistencyScore}%
                       </div>
                       <div className="text-sm text-muted-foreground">
@@ -268,14 +268,14 @@ export default function SupplierDashboard() {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-medium">{payment.customer}</h3>
+                        <h3 className="font-semibold">{payment.customer}</h3>
                         <p className="text-sm text-muted-foreground">
                           Invoice #{payment.invoiceId} • {payment.date}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium">
+                      <div className="font-semibold">
                         RWF {payment.amount.toLocaleString()}
                       </div>
                       <div
@@ -321,40 +321,40 @@ export default function SupplierDashboard() {
             <CardContent className="space-y-6">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-medium">
+                  <div className="text-sm font-semibold">
                     On-Time Delivery Rate
                   </div>
-                  <div className="text-sm font-medium">94%</div>
+                  <div className="text-sm font-semibold">94%</div>
                 </div>
                 <Progress value={94} className="h-2" />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-medium">
+                  <div className="text-sm font-semibold">
                     Order Fulfillment Rate
                   </div>
-                  <div className="text-sm font-medium">98%</div>
+                  <div className="text-sm font-semibold">98%</div>
                 </div>
                 <Progress value={98} className="h-2" />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-medium">
+                  <div className="text-sm font-semibold">
                     Customer Satisfaction
                   </div>
-                  <div className="text-sm font-medium">4.8/5</div>
+                  <div className="text-sm font-semibold">4.8/5</div>
                 </div>
                 <Progress value={96} className="h-2" />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-medium">
+                  <div className="text-sm font-semibold">
                     Product Quality Rating
                   </div>
-                  <div className="text-sm font-medium">4.7/5</div>
+                  <div className="text-sm font-semibold">4.7/5</div>
                 </div>
                 <Progress value={94} className="h-2" />
               </div>
@@ -395,7 +395,7 @@ export default function SupplierDashboard() {
                     >
                       <div className="flex items-center gap-4">
                         <div>
-                          <p className="font-medium">Order #{order.id}</p>
+                          <p className="font-semibold">Order #{order.id}</p>
                           <p className="text-sm text-muted-foreground">
                             {order.restaurant} • {order.date}
                           </p>
@@ -437,7 +437,7 @@ export default function SupplierDashboard() {
                     >
                       <div className="flex items-center gap-4">
                         <div>
-                          <p className="font-medium">Order #{order.id}</p>
+                          <p className="font-semibold">Order #{order.id}</p>
                           <p className="text-sm text-muted-foreground">
                             {order.restaurant} • Confirmed:{" "}
                             {order.confirmedDate}
@@ -488,7 +488,7 @@ export default function SupplierDashboard() {
                     >
                       <div className="flex items-center gap-4">
                         <div>
-                          <p className="font-medium">{product.name}</p>
+                          <p className="font-semibold">{product.name}</p>
                           <p className="text-sm text-muted-foreground">
                             RWF {product.price.toLocaleString()} /{" "}
                             {product.unit} • {product.orders} orders

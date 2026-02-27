@@ -41,8 +41,8 @@ export default function OrdersPage() {
       <main className="flex-1 space-y-8 max-w-[1700px] mx-auto w-full pb-20 transition-all duration-500">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1 text-center sm:text-left">
-            <h2 className="text-[28px] md:text-3xl font-bold text-[#1E293B] tracking-tight">Orders</h2>
-            <p className="text-[13px] md:text-sm font-medium text-slate-400">Manage and track your procurement orders</p>
+            <h2 className="text-[28px] md:text-3xl font-semibold text-[#1E293B] tracking-tight font-inria italic">Orders</h2>
+            <p className="text-[13px] md:text-sm font-semibold text-slate-400">Manage and track your procurement orders</p>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button 
@@ -130,7 +130,7 @@ export default function OrdersPage() {
                           <TableCell className="font-bold text-slate-700 text-xs md:text-sm">{order.supplier}</TableCell>
                           <TableCell className="text-slate-500 text-xs md:text-sm">{order.date}</TableCell>
                           <TableCell className="text-slate-500 font-bold text-xs md:text-sm">{order.totalItems}</TableCell>
-                          <TableCell className="font-black text-slate-900 text-xs md:text-sm">${order.totalAmount.toFixed(2)}</TableCell>
+                          <TableCell className="font-semibold text-slate-900 text-xs md:text-sm">${order.totalAmount.toFixed(2)}</TableCell>
                           <TableCell>
                             <Badge className={getOrderStatusVariant(order.status)}>
                               {order.status}
@@ -202,7 +202,7 @@ export default function OrdersPage() {
                           <TableCell className="text-slate-500 font-bold text-xs md:text-sm">{order.scheduledDate}</TableCell>
                           <TableCell className="text-slate-500 text-xs md:text-sm">{order.timeSlot}</TableCell>
                           <TableCell className="text-slate-500 text-xs md:text-sm">{order.totalItems}</TableCell>
-                          <TableCell className="font-black text-slate-900 text-xs md:text-sm">${order.totalAmount.toFixed(2)}</TableCell>
+                          <TableCell className="font-semibold text-slate-900 text-xs md:text-sm">${order.totalAmount.toFixed(2)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-lg border-slate-200 font-bold text-[10px] md:text-xs">
@@ -294,7 +294,7 @@ export default function OrdersPage() {
                           <TableCell className="font-bold text-slate-700 text-xs md:text-sm">{order.supplier}</TableCell>
                           <TableCell className="text-slate-500 text-xs md:text-sm">{order.date}</TableCell>
                           <TableCell className="text-slate-500 font-bold text-xs md:text-sm">{order.totalItems}</TableCell>
-                          <TableCell className="font-black text-slate-900 text-xs md:text-sm">${order.totalAmount.toFixed(2)}</TableCell>
+                          <TableCell className="font-semibold text-slate-900 text-xs md:text-sm">${order.totalAmount.toFixed(2)}</TableCell>
                           <TableCell>
                             <Badge className={getOrderStatusVariant(order.status)}>
                               {order.status}
@@ -331,7 +331,7 @@ export default function OrdersPage() {
 
 // Update the getOrderStatusVariant function to use the new color scheme
 function getOrderStatusVariant(status: string) {
-  const commonStyles = "rounded-full px-2.5 md:px-3 py-1 text-[9px] md:text-[10px] font-black uppercase tracking-widest border-none whitespace-nowrap shadow-none";
+  const commonStyles = "rounded-full px-2.5 md:px-3 py-1 text-[9px] md:text-[10px] font-semibold uppercase tracking-widest border-none whitespace-nowrap shadow-none";
   switch (status) {
     case "Pending":
       return `${commonStyles} bg-amber-50 text-amber-600`;

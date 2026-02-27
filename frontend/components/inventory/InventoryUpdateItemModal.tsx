@@ -76,94 +76,86 @@ export function InventoryUpdateItemModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-3xl rounded-[32px] p-0 border-none shadow-2xl overflow-hidden bg-white">
-                <div className="relative p-12 space-y-10">
-                    <button 
-                        onClick={() => onOpenChange(false)}
-                        className="absolute right-10 top-10 text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                        <X className="h-8 w-8" />
-                    </button>
-
+            <DialogContent className="sm:max-w-2xl rounded-[28px] p-0 border-none shadow-2xl overflow-hidden bg-white font-figtree">
+                <div className="p-8 md:p-10 space-y-8">
                     <div className="space-y-1">
-                        <DialogTitle className="text-[32px] font-black text-[#1E293B] tracking-tight">Update Item</DialogTitle>
-                        <p className="text-sm font-bold text-slate-400">
-                            Manually adjust the inventory level for <span className="text-slate-900 font-extrabold">{restaurantName}</span>
+                        <DialogTitle className="text-[28px] font-bold text-[#1E293B] tracking-tight">Update Item</DialogTitle>
+                        <p className="text-[13px] font-medium text-slate-400">
+                            Manually adjust the inventory level for <span className="text-slate-900 font-bold">{restaurantName}</span>
                         </p>
                     </div>
 
                     {/* Product Preview Card */}
-                    <div className="bg-white border border-slate-100 rounded-[24px] p-8 flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-6">
-                            <div className="h-24 w-24 rounded-2xl overflow-hidden border border-slate-50 bg-slate-50 shrink-0">
+                    <div className="bg-[#F8FAFF] border border-indigo-100/50 rounded-[20px] p-6 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-5">
+                            <div className="h-20 w-20 rounded-xl overflow-hidden border border-white bg-white shrink-0 shadow-sm">
                                 {item.imageUrl ? (
                                     <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                                 ) : (
-                                    <div className="h-full w-full flex items-center justify-center text-slate-300">
+                                    <div className="h-full w-full flex items-center justify-center text-slate-200">
                                         <Package className="h-10 w-10" />
                                     </div>
                                 )}
                             </div>
-                            <div className="space-y-2">
-                                <h4 className="text-2xl font-black text-[#1E293B] tracking-tight">{item.name}</h4>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">SKU ID: {item.sku || '001ABC'}</span>
-                                    <div className="h-1 w-1 rounded-full bg-slate-300" />
-                                    <Badge variant="outline" className="border-slate-200 text-slate-500 font-bold text-[11px] px-4 py-1 rounded-full">
+                            <div className="space-y-1.5">
+                                <h4 className="text-xl font-bold text-[#1E293B] tracking-tight">{item.name}</h4>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SKU: {item.sku || '001ABC'}</span>
+                                    <Badge className="bg-white text-indigo-500 font-bold text-[9px] px-2 py-0.5 rounded-md border-indigo-50">
                                         {item.category}
                                     </Badge>
                                 </div>
                             </div>
                         </div>
-                        <div className="text-right space-y-1">
-                            <p className="text-sm font-bold text-slate-400">Current Quantity</p>
-                            <p className="text-[28px] font-black text-[#1E293B] tabular-nums">{item.currentStock} <span className="text-lg font-bold text-slate-400 uppercase">{item.unit}</span></p>
+                        <div className="text-right space-y-0.5">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current</p>
+                            <p className="text-2xl font-bold text-[#1E293B] tabular-nums">{item.currentStock} <span className="text-sm font-bold text-slate-400 uppercase">{item.unit}</span></p>
                         </div>
                     </div>
 
                     {/* Inputs Row */}
-                    <div className="grid grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                            <label className="text-[14px] font-bold text-slate-500 ml-1">Incoming Quantity</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Incoming</label>
                             <Input 
                                 type="number"
                                 placeholder={`0 ${item.unit}`}
                                 value={incomingQuantity}
                                 onChange={(e) => setIncomingQuantity(e.target.value)}
-                                className="h-[76px] rounded-[24px] border-slate-100 bg-[#F8FAFC] px-8 font-black text-[#1E293B] text-xl focus-visible:ring-indigo-100 placeholder:text-slate-300"
+                                className="h-14 rounded-xl border-slate-100 bg-slate-50/50 px-6 font-bold text-[#1E293B] text-lg focus-visible:ring-indigo-100 placeholder:text-slate-300"
                             />
                         </div>
-                        <div className="space-y-4">
-                            <label className="text-[14px] font-bold text-emerald-500 ml-1">New Quantity</label>
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest ml-1">New Total</label>
                             <div className="relative">
                                 <Input 
                                     readOnly
                                     value={`${newQuantity} ${item.unit}`}
-                                    className="h-[76px] rounded-[24px] border-emerald-500 bg-white px-8 font-black text-[#1E293B] text-xl focus-visible:ring-emerald-100"
+                                    className="h-14 rounded-xl border-emerald-100 bg-white px-6 font-bold text-[#1E293B] text-lg focus-visible:ring-emerald-50 shadow-sm"
                                 />
-                                <div className="absolute right-6 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-100">
-                                    <Check className="h-4 w-4 stroke-[4px]" />
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-emerald-500 flex items-center justify-center text-white">
+                                    <Check className="h-3 w-3 stroke-[3px]" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Summary Info Box */}
-                    <div className="border-2 border-dashed border-[#E0E7FF] rounded-[20px] p-6 bg-[#F8FAFF] flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-white border border-[#E0E7FF] flex items-center justify-center text-[#3B59DA] shadow-sm">
-                            <ArrowRight className="h-5 w-5" />
+                    <div className="border border-indigo-100/50 rounded-xl p-4 bg-indigo-50/30 flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-[#3B59DA] shadow-sm shrink-0">
+                            <ArrowRight className="h-4 w-4" />
                         </div>
-                        <p className="text-base font-bold text-slate-500 leading-none">
-                            Stock will update from <span className="text-[#1E293B] font-black">{item.currentStock} {item.unit}</span> to 
+                        <p className="text-[13px] font-bold text-slate-500">
+                            Updating stock from <span className="text-[#1E293B] font-black">{item.currentStock}</span> to 
                             <span className="text-[#3B59DA] font-black ml-1.5">{newQuantity} {item.unit}</span>
                         </p>
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="flex items-center gap-6 pt-4">
+                    <div className="flex items-center gap-4 pt-2">
                         <Button 
                             variant="outline" 
-                            className="flex-1 h-[76px] rounded-[24px] border-slate-200 font-black text-lg text-slate-500 hover:bg-slate-50 transition-all"
+                            className="flex-1 h-12 rounded-xl border-slate-200 font-bold text-slate-500 hover:bg-slate-50 transition-all text-sm"
                             onClick={() => onOpenChange(false)}
                         >
                             Cancel
@@ -171,12 +163,12 @@ export function InventoryUpdateItemModal({
                         <Button 
                             disabled={isSubmitting || !incomingQuantity}
                             className={cn(
-                                "flex-1 h-[76px] rounded-[24px] font-black text-lg shadow-[0_20px_50px_rgba(59,89,218,0.2)] transition-all border-none text-white",
-                                incomingQuantity ? "bg-[#3B59DA] hover:bg-[#2D46B2]" : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                "flex-1 h-12 rounded-xl font-bold text-sm shadow-xl transition-all border-none text-white",
+                                incomingQuantity ? "bg-[#3B59DA] hover:bg-[#2D46B2] shadow-indigo-900/10" : "bg-slate-100 text-slate-400 cursor-not-allowed"
                             )}
                             onClick={handleConfirm}
                         >
-                            {isSubmitting ? "Updating Registry..." : "Confirm Update"}
+                            {isSubmitting ? "Updating..." : "Confirm Update"}
                         </Button>
                     </div>
                 </div>
