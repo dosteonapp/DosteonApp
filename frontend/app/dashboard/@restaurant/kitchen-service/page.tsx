@@ -366,25 +366,8 @@ function KitchenServiceLockedHero() {
                 </div>
             </div>
             
-            <div className="flex flex-row overflow-x-auto pb-4 lg:pb-0 gap-4 md:gap-5 items-stretch lg:items-center w-full lg:w-auto lg:ml-auto no-scrollbar scroll-smooth relative z-10">
-                <div className="shrink-0 w-[240px] md:w-[260px] lg:w-auto">
-                    <KitchenSummaryCard 
-                        label="Shift Status" 
-                        value="Inactive" 
-                        subtext="Stock count required"
-                        icon={<Clock className="h-4 w-4 text-[#EF4444]" />}
-                        accentColor="#FEF2F2"
-                    />
-                </div>
-                <div className="shrink-0 w-[240px] md:w-[260px] lg:w-auto">
-                    <KitchenSummaryCard 
-                        label="Opening Prep" 
-                        value="Locked" 
-                        subtext="Pre-service phase"
-                        icon={<Lock className="h-4 w-4 text-[#EF4444]" />}
-                        accentColor="#FEF2F2"
-                    />
-                </div>
+            <div className="hidden lg:block relative mr-12 opacity-80 lg:ml-auto">
+                 <ChefHat className="h-48 w-48 text-white/5 stroke-[1px]" />
             </div>
         </div>
     );
