@@ -19,6 +19,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Menu, Download, ArrowUpRight, FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   Line,
   LineChart,
@@ -47,247 +49,148 @@ export default function FinancePage() {
   const { guard } = useRestaurantDayActionGuard();
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* <header ... */}
-      <main className="flex-1 space-y-4">
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            className="gap-1"
-            onClick={() => guard(() => setReportsModalOpen(true), { actionName: "daily reports" })}
-          >
-            <FileText className="h-4 w-4" />
-            Daily Reports
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/dashboard/finance/export">
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Link>
-          </Button>
+    <div className="flex flex-col min-h-screen bg-white">
+      <main className="flex-1 space-y-8 max-w-[1700px] mx-auto w-full pb-20 transition-all duration-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1 text-center sm:text-left">
+            <h2 className="text-[28px] md:text-3xl font-bold text-[#1E293B] tracking-tight">Finance</h2>
+            <p className="text-[13px] md:text-sm font-medium text-slate-400">Track spending, invoices, and budgets</p>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              className="gap-2 flex-1 sm:flex-none h-11 rounded-xl border-slate-200 font-bold text-xs md:text-sm"
+              onClick={() => guard(() => setReportsModalOpen(true), { actionName: "daily reports" })}
+            >
+              <FileText className="h-4 w-4" />
+              Daily Reports
+            </Button>
+            <Button variant="outline" className="gap-2 flex-1 sm:flex-none h-11 rounded-xl border-slate-200 font-bold text-xs md:text-sm" asChild>
+              <Link href="/dashboard/finance/export">
+                <Download className="h-4 w-4" />
+                Export
+              </Link>
+            </Button>
+          </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Spend (MTD)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">RWF 12,450,000</div>
-              <p className="text-xs text-muted-foreground">
-                +8% from last month
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Outstanding Payments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">RWF 3,250,000</div>
-              <p className="text-xs text-muted-foreground">
-                5 invoices pending
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Average Order Value
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">RWF 245,000</div>
-              <p className="text-xs text-muted-foreground">
-                +12% from last month
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Payment Due</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">RWF 1,800,000</div>
-              <p className="text-xs text-muted-foreground">Due in 7 days</p>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Total Spend (MTD)" value="RWF 12,450,000" subtext="+8% from last month" />
+          <StatCard label="Outstanding Payments" value="RWF 3,250,000" subtext="5 invoices pending" />
+          <StatCard label="Average Order Value" value="RWF 245,000" subtext="+12% from last month" />
+          <StatCard label="Payment Due" value="RWF 1,800,000" subtext="Due in 7 days" />
         </div>
 
-        <Tabs defaultValue={defaultTab}>
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="invoices">Invoices</TabsTrigger>
-            <TabsTrigger value="budget">Budget</TabsTrigger>
-            <TabsTrigger value="petty-cash">Petty Cash</TabsTrigger>
+        <Tabs defaultValue={defaultTab} className="space-y-6">
+          <TabsList className="bg-slate-100 p-1 rounded-xl flex flex-wrap h-auto gap-1">
+            <TabsTrigger value="overview" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="transactions" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm">Transactions</TabsTrigger>
+            <TabsTrigger value="invoices" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm">Invoices</TabsTrigger>
+            <TabsTrigger value="budget" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm">Budget</TabsTrigger>
+            <TabsTrigger value="petty-cash" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm">Petty Cash</TabsTrigger>
           </TabsList>
-          <TabsContent value="overview" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Spending Overview</CardTitle>
-                <CardDescription>
-                  Your spending trends over time
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <ChartContainer
-                  config={{
-                    spending: {
-                      label: "Spending",
-                      color: "hsl(var(--chart-1))",
-                    },
-                    budget: {
-                      label: "Budget",
-                      color: "hsl(var(--chart-2))",
-                    },
-                  }}
-                  className="h-[300px]"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={spendingData}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="spending"
-                        stroke="var(--color-spending)"
-                        name="Spending"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="budget"
-                        stroke="var(--color-budget)"
-                        name="Budget"
-                        strokeDasharray="5 5"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+          <TabsContent value="overview" className="space-y-6 outline-none">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="rounded-[24px] border-slate-100 shadow-sm overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Spending Overview</CardTitle>
+                  <CardDescription>Your spending trends over time</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <ChartContainer
+                    config={{
+                      spending: { label: "Spending", color: "hsl(var(--chart-1))" },
+                      budget: { label: "Budget", color: "hsl(var(--chart-2))" },
+                    }}
+                    className="h-[300px] w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={spendingData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Legend />
+                        <Line type="monotone" dataKey="spending" stroke="var(--color-spending)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                        <Line type="monotone" dataKey="budget" stroke="var(--color-budget)" strokeWidth={2} strokeDasharray="5 5" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Spending by Category</CardTitle>
-                <CardDescription>
-                  Breakdown of your spending by category
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <ChartContainer
-                  config={{
-                    produce: {
-                      label: "Produce",
-                      color: "hsl(var(--chart-1))",
-                    },
-                    meat: {
-                      label: "Meat & Poultry",
-                      color: "hsl(var(--chart-2))",
-                    },
-                    dairy: {
-                      label: "Dairy",
-                      color: "hsl(var(--chart-3))",
-                    },
-                    dryGoods: {
-                      label: "Dry Goods",
-                      color: "hsl(var(--chart-4))",
-                    },
-                  }}
-                  className="h-[300px]"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={categoryData}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Legend />
-                      <Bar
-                        dataKey="produce"
-                        fill="var(--color-produce)"
-                        name="Produce"
-                      />
-                      <Bar
-                        dataKey="meat"
-                        fill="var(--color-meat)"
-                        name="Meat & Poultry"
-                      />
-                      <Bar
-                        dataKey="dairy"
-                        fill="var(--color-dairy)"
-                        name="Dairy"
-                      />
-                      <Bar
-                        dataKey="dryGoods"
-                        fill="var(--color-dryGoods)"
-                        name="Dry Goods"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+              <Card className="rounded-[24px] border-slate-100 shadow-sm overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Spending by Category</CardTitle>
+                  <CardDescription>Breakdown of your spending by category</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <ChartContainer
+                    config={{
+                      produce: { label: "Produce", color: "hsl(var(--chart-1))" },
+                      meat: { label: "Meat & Poultry", color: "hsl(var(--chart-2))" },
+                      dairy: { label: "Dairy", color: "hsl(var(--chart-3))" },
+                      dryGoods: { label: "Dry Goods", color: "hsl(var(--chart-4))" },
+                    }}
+                    className="h-[300px] w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={categoryData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Legend />
+                        <Bar dataKey="produce" fill="var(--color-produce)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="meat" fill="var(--color-meat)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="dairy" fill="var(--color-dairy)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="dryGoods" fill="var(--color-dryGoods)" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
-          <TabsContent value="transactions" className="space-y-4">
-            <Card>
+          <TabsContent value="transactions" className="outline-none">
+            <Card className="rounded-[24px] border-slate-100 shadow-sm overflow-hidden">
               <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
+                <CardTitle className="text-xl font-bold">Recent Transactions</CardTitle>
                 <CardDescription>Your recent payment activity</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-slate-50">
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Supplier</TableHead>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="font-bold py-4">Date</TableHead>
+                        <TableHead className="font-bold py-4">Supplier</TableHead>
+                        <TableHead className="font-bold py-4">Order ID</TableHead>
+                        <TableHead className="font-bold py-4">Amount</TableHead>
+                        <TableHead className="font-bold py-4">Status</TableHead>
+                        <TableHead className="text-right font-bold py-4">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {transactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>{transaction.date}</TableCell>
-                          <TableCell>{transaction.supplier}</TableCell>
-                          <TableCell>{transaction.orderId}</TableCell>
+                        <TableRow key={transaction.id} className="hover:bg-slate-50/50">
+                          <TableCell className="font-medium text-xs md:text-sm">{transaction.date}</TableCell>
+                          <TableCell className="font-bold text-slate-700 text-xs md:text-sm">{transaction.supplier}</TableCell>
+                          <TableCell className="text-slate-500 font-mono text-[10px] md:text-xs">{transaction.orderId}</TableCell>
+                          <TableCell className="font-black text-xs md:text-sm text-slate-900">RWF {transaction.amount.toLocaleString()}</TableCell>
                           <TableCell>
-                            RWF {transaction.amount.toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                transaction.status === "Paid"
-                                  ? "bg-green-100 text-green-800"
-                                  : transaction.status === "Pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
+                            <Badge className={cn(
+                              "rounded-full px-2.5 md:px-3 py-1 text-[9px] md:text-[10px] font-black uppercase tracking-widest border-none whitespace-nowrap",
+                              transaction.status === "Paid" ? "bg-emerald-50 text-emerald-600" : 
+                              transaction.status === "Pending" ? "bg-amber-50 text-amber-600" : 
+                              "bg-red-50 text-red-600"
+                            )}>
                               {transaction.status}
-                            </span>
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" asChild>
-                              <Link
-                                href={`/dashboard/finance/transactions/${transaction.id}`}
-                              >
+                            <Button size="icon" variant="ghost" className="h-8 w-8 md:h-9 md:w-9 rounded-full" asChild>
+                              <Link href={`/dashboard/finance/transactions/${transaction.id}`}>
                                 <ArrowUpRight className="h-4 w-4" />
                               </Link>
                             </Button>
@@ -300,56 +203,51 @@ export default function FinancePage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="invoices" className="space-y-4">
-            <Card>
+          <TabsContent value="invoices" className="outline-none">
+            <Card className="rounded-[24px] border-slate-100 shadow-sm overflow-hidden">
               <CardHeader>
-                <CardTitle>Invoices</CardTitle>
+                <CardTitle className="text-xl font-bold">Invoices</CardTitle>
                 <CardDescription>Manage your invoices</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-slate-50">
                       <TableRow>
-                        <TableHead>Invoice #</TableHead>
-                        <TableHead>Supplier</TableHead>
-                        <TableHead>Issue Date</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="font-bold py-4">Invoice #</TableHead>
+                        <TableHead className="font-bold py-4">Supplier</TableHead>
+                        <TableHead className="font-bold py-4">Issue Date</TableHead>
+                        <TableHead className="font-bold py-4">Due Date</TableHead>
+                        <TableHead className="font-bold py-4">Amount</TableHead>
+                        <TableHead className="font-bold py-4">Status</TableHead>
+                        <TableHead className="text-right font-bold py-4">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {invoices.map((invoice) => (
-                        <TableRow key={invoice.id}>
-                          <TableCell>{invoice.id}</TableCell>
-                          <TableCell>{invoice.supplier}</TableCell>
-                          <TableCell>{invoice.issueDate}</TableCell>
-                          <TableCell>{invoice.dueDate}</TableCell>
+                        <TableRow key={invoice.id} className="hover:bg-slate-50/50">
+                          <TableCell className="font-mono text-[10px] md:text-xs font-bold text-indigo-600 uppercase tracking-wider">{invoice.id}</TableCell>
+                          <TableCell className="font-bold text-slate-700 text-xs md:text-sm">{invoice.supplier}</TableCell>
+                          <TableCell className="text-slate-500 text-xs md:text-sm">{invoice.issueDate}</TableCell>
+                          <TableCell className="text-slate-500 font-bold text-xs md:text-sm">{invoice.dueDate}</TableCell>
+                          <TableCell className="font-black text-slate-900 text-xs md:text-sm">RWF {invoice.amount.toLocaleString()}</TableCell>
                           <TableCell>
-                            RWF {invoice.amount.toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                invoice.status === "Paid"
-                                  ? "bg-green-100 text-green-800"
-                                  : invoice.status === "Pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
+                            <Badge className={cn(
+                              "rounded-full px-2.5 md:px-3 py-1 text-[9px] md:text-[10px] font-black uppercase tracking-widest border-none whitespace-nowrap",
+                              invoice.status === "Paid" ? "bg-emerald-50 text-emerald-600" : 
+                              invoice.status === "Pending" ? "bg-amber-50 text-amber-600" : 
+                              "bg-red-50 text-red-600"
+                            )}>
                               {invoice.status}
-                            </span>
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button size="sm" variant="outline">
+                              <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-lg border-slate-200 font-bold text-[10px] md:text-xs">
                                 View
                               </Button>
                               {invoice.status === "Pending" && (
-                                <Button size="sm" onClick={() => guard(() => console.log("Pay invoice"), { actionName: "invoice payment" })}>Pay</Button>
+                                <Button size="sm" className="h-8 md:h-9 px-3 md:px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-bold text-[10px] md:text-xs shadow-md shadow-indigo-100 text-white" onClick={() => guard(() => console.log("Pay invoice"), { actionName: "invoice payment" })}>Pay</Button>
                               )}
                             </div>
                           </TableCell>
@@ -361,243 +259,108 @@ export default function FinancePage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="budget" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Budget Planning</CardTitle>
-                <CardDescription>
-                  Manage your procurement budget
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">
-                          Monthly Budget
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">RWF 15,000,000</div>
-                        <p className="text-xs text-muted-foreground">
-                          RWF 12,450,000 spent this month
-                        </p>
-                        <div className="mt-2 h-2 w-full bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="bg-primary h-full"
-                            style={{ width: "83%" }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          83% of budget used
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">
-                          Annual Budget
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          RWF 180,000,000
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          RWF 65,230,000 spent this year
-                        </p>
-                        <div className="mt-2 h-2 w-full bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="bg-primary h-full"
-                            style={{ width: "36%" }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          36% of budget used
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Budget by Category</CardTitle>
-                      <CardDescription>
-                        Track spending against budget by category
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">Produce</span>
-                            <span>RWF 3,500,000 / RWF 5,000,000</span>
-                          </div>
-                          <div className="mt-2 h-2 w-full bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="bg-green-500 h-full"
-                              style={{ width: "70%" }}
-                            ></div>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">Meat & Poultry</span>
-                            <span>RWF 4,200,000 / RWF 5,000,000</span>
-                          </div>
-                          <div className="mt-2 h-2 w-full bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="bg-yellow-500 h-full"
-                              style={{ width: "84%" }}
-                            ></div>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">Dairy</span>
-                            <span>RWF 1,800,000 / RWF 2,500,000</span>
-                          </div>
-                          <div className="mt-2 h-2 w-full bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="bg-blue-500 h-full"
-                              style={{ width: "72%" }}
-                            ></div>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">Dry Goods</span>
-                            <span>RWF 2,950,000 / RWF 2,500,000</span>
-                          </div>
-                          <div className="mt-2 h-2 w-full bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="bg-red-500 h-full"
-                              style={{ width: "100%" }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+          <TabsContent value="budget" className="outline-none space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="rounded-[24px] border-slate-100 shadow-sm p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-widest">Monthly Budget</h4>
+                  <Badge variant="outline" className="rounded-full bg-slate-50 border-slate-200 font-bold text-indigo-600">83% Used</Badge>
                 </div>
+                <div className="space-y-1">
+                  <div className="text-2xl md:text-3xl font-black text-[#1E293B]">RWF 15,000,000</div>
+                  <p className="text-[10px] md:text-xs font-bold text-slate-400">RWF 12,450,000 spent this month</p>
+                </div>
+                <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="bg-indigo-600 h-full rounded-full shadow-[0_0_10px_rgba(79,70,229,0.3)] transition-all duration-1000" style={{ width: "83%" }}></div>
+                </div>
+              </Card>
+              <Card className="rounded-[24px] border-slate-100 shadow-sm p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-widest">Annual Budget</h4>
+                  <Badge variant="outline" className="rounded-full bg-slate-50 border-slate-200 font-bold text-indigo-600">36% Used</Badge>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-2xl md:text-3xl font-black text-[#1E293B]">RWF 180,000,000</div>
+                  <p className="text-[10px] md:text-xs font-bold text-slate-400">RWF 65,230,000 spent this year</p>
+                </div>
+                <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all duration-1000" style={{ width: "36%" }}></div>
+                </div>
+              </Card>
+            </div>
+
+            <Card className="rounded-[24px] border-slate-100 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold">Budget by Category</CardTitle>
+                <CardDescription>Track spending against budget by category</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <BudgetProgress label="Produce" current={3500000} total={5000000} color="bg-emerald-500" />
+                <BudgetProgress label="Meat & Poultry" current={4200000} total={5000000} color="bg-amber-500" />
+                <BudgetProgress label="Dairy" current={1800000} total={2500000} color="bg-blue-500" />
+                <BudgetProgress label="Dry Goods" current={2950000} total={2500000} color="bg-red-500" />
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="petty-cash" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Petty Cash Management</CardTitle>
-                <CardDescription>
-                  Track and manage your petty cash expenses
-                </CardDescription>
+          <TabsContent value="petty-cash" className="outline-none space-y-6">
+            <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Current Balance" value="RWF 125,000" subtext="Last updated: Today" />
+              <StatCard label="Monthly Expenses" value="RWF 350,000" subtext="In May 2023" />
+              <StatCard label="Last Replenishment" value="RWF 200,000" subtext="May 15, 2023" />
+              <StatCard label="Pending Approvals" value="3" subtext="Awaiting approval" />
+            </div>
+
+            <Card className="rounded-[24px] border-slate-100 shadow-sm overflow-hidden">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl font-bold">Petty Cash Transactions</CardTitle>
+                  <CardDescription>Track and manage your petty cash expenses</CardDescription>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button variant="outline" className="h-9 px-4 rounded-xl border-slate-200 font-bold text-[10px] md:text-xs flex-1 sm:flex-none" onClick={() => guard(() => console.log("Add expense"), { actionName: "petty cash expense" })}>
+                    Add Expense
+                  </Button>
+                  <Button className="h-9 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-[10px] md:text-xs flex-1 sm:flex-none shadow-md shadow-indigo-100 text-white" onClick={() => guard(() => console.log("Replenish"), { actionName: "petty cash replenishment" })}>
+                    Replenish
+                  </Button>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Current Balance
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">RWF 125,000</div>
-                      <p className="text-xs text-muted-foreground">
-                        Last updated: Today
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Monthly Expenses
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">RWF 350,000</div>
-                      <p className="text-xs text-muted-foreground">
-                        This month
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Last Replenishment
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">RWF 200,000</div>
-                      <p className="text-xs text-muted-foreground">
-                        May 15, 2023
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Pending Approvals
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">3</div>
-                      <p className="text-xs text-muted-foreground">
-                        Expenses awaiting approval
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <div className="flex justify-between mb-4">
-                  <h3 className="text-lg font-medium">Recent Transactions</h3>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => guard(() => console.log("Add expense"), { actionName: "petty cash expense" })}>
-                      Add Expense
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => guard(() => console.log("Replenish"), { actionName: "petty cash replenishment" })}>
-                      Replenish
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="rounded-md border">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-slate-50">
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Recorded By</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="font-bold py-4">Date</TableHead>
+                        <TableHead className="font-bold py-4">Description</TableHead>
+                        <TableHead className="font-bold py-4">Category</TableHead>
+                        <TableHead className="font-bold py-4">Amount</TableHead>
+                        <TableHead className="font-bold py-4">Recorded By</TableHead>
+                        <TableHead className="font-bold py-4">Status</TableHead>
+                        <TableHead className="text-right font-bold py-4">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {pettyCashTransactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>{transaction.date}</TableCell>
-                          <TableCell>{transaction.description}</TableCell>
-                          <TableCell>{transaction.category}</TableCell>
+                        <TableRow key={transaction.id} className="hover:bg-slate-50/50">
+                          <TableCell className="text-slate-500 font-medium text-xs md:text-sm">{transaction.date}</TableCell>
+                          <TableCell className="font-bold text-slate-700 max-w-[200px] truncate text-xs md:text-sm">{transaction.description}</TableCell>
                           <TableCell>
-                            RWF {transaction.amount.toLocaleString()}
+                            <Badge variant="outline" className="rounded-lg bg-slate-50 text-slate-500 font-bold border-slate-200 text-[9px] md:text-[10px] whitespace-nowrap">{transaction.category}</Badge>
                           </TableCell>
-                          <TableCell>{transaction.recordedBy}</TableCell>
+                          <TableCell className="font-black text-xs md:text-sm text-slate-900">RWF {transaction.amount.toLocaleString()}</TableCell>
+                          <TableCell className="text-slate-500 text-xs md:text-sm">{transaction.recordedBy}</TableCell>
                           <TableCell>
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                transaction.status === "Approved"
-                                  ? "bg-green-100 text-green-800"
-                                  : transaction.status === "Pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
+                            <Badge className={cn(
+                              "rounded-full px-2.5 md:px-3 py-1 text-[9px] md:text-[10px] font-black uppercase tracking-widest border-none whitespace-nowrap",
+                              transaction.status === "Approved" ? "bg-emerald-50 text-emerald-600" : 
+                              transaction.status === "Pending" ? "bg-amber-50 text-amber-600" : 
+                              "bg-red-50 text-red-600"
+                            )}>
                               {transaction.status}
-                            </span>
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button size="sm" variant="ghost">
+                            <Button size="icon" variant="ghost" className="h-8 w-8 md:h-9 md:w-9 rounded-full">
                               <ArrowUpRight className="h-4 w-4" />
                             </Button>
                           </TableCell>
@@ -616,6 +379,37 @@ export default function FinancePage() {
           type="finance"
         />
       </main>
+    </div>
+  );
+}
+
+function StatCard({ label, value, subtext }: { label: string, value: string, subtext: string }) {
+  return (
+    <Card className="rounded-[24px] md:rounded-[28px] border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] p-6 md:p-8 space-y-4 bg-white hover:border-indigo-100 hover:shadow-xl transition-all group active:scale-[0.98]">
+      <h4 className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] group-hover:text-indigo-500 transition-colors">{label}</h4>
+      <div className="space-y-1.5">
+        <div className="text-[clamp(20px,2vw,30px)] font-black text-[#1E293B] tracking-tight leading-none">{value}</div>
+        <p className="text-[clamp(10px,1.1vw,12px)] font-bold text-slate-400 group-hover:text-slate-500 transition-colors uppercase tracking-wider">{subtext}</p>
+      </div>
+    </Card>
+  );
+}
+
+function BudgetProgress({ label, current, total, color }: { label: string, current: number, total: number, color: string }) {
+  const percentage = Math.min((current / total) * 100, 100);
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+        <span className="font-bold text-[#1E293B] text-sm md:text-[15px]">{label}</span>
+        <div className="text-left sm:text-right">
+          <span className="text-xs md:text-sm font-black text-slate-900">RWF {current.toLocaleString()}</span>
+          <span className="text-[10px] md:text-xs font-bold text-slate-400 mx-1">/</span>
+          <span className="text-[10px] md:text-xs font-bold text-slate-400">RWF {total.toLocaleString()}</span>
+        </div>
+      </div>
+      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+        <div className={cn(color, "h-full rounded-full transition-all duration-1000")} style={{ width: `${percentage}%` }}></div>
+      </div>
     </div>
   );
 }

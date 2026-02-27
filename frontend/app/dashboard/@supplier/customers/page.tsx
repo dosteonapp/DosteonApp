@@ -86,10 +86,10 @@ export default function CustomersPage() {
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       }
       if (sortBy === "value") {
-        const valueMap = { High: 3, Medium: 2, Low: 1, Unknown: 0 };
+        const valueMap: Record<string, number> = { High: 3, Medium: 2, Low: 1, Unknown: 0 };
         return sortOrder === "asc"
-          ? valueMap[a.value] - valueMap[b.value]
-          : valueMap[b.value] - valueMap[a.value];
+          ? (valueMap[a.value] || 0) - (valueMap[b.value] || 0)
+          : (valueMap[b.value] || 0) - (valueMap[a.value] || 0);
       }
       return 0;
     });

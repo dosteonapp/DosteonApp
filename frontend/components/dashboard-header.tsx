@@ -35,7 +35,20 @@ export function DashboardHeader() {
     if (path.startsWith("/dashboard/inventory")) return ["Inventory"];
     if (path.startsWith("/dashboard/closing")) return ["Closing"];
     if (path.startsWith("/dashboard/notifications")) return ["Notifications"];
-    if (path.startsWith("/dashboard/settings")) return ["Settings"];
+    if (path.startsWith("/dashboard/settings")) {
+      const parts = ["Settings"];
+      if (path.includes("/personal")) parts.push("Personal Details");
+      if (path.includes("/business")) parts.push("Business Settings");
+      if (path.includes("/notifications")) parts.push("Notification Settings");
+      
+      if (path.includes("/profile")) parts.push("Profile");
+      if (path.includes("/security")) parts.push("Security");
+      if (path.includes("/preferences")) parts.push("Preferences");
+      if (path.includes("/team")) parts.push("Team Management");
+      if (path.includes("/operations")) parts.push("Operations");
+      
+      return parts;
+    }
     if (path.startsWith("/dashboard/orders")) return ["Orders"];
     if (path.startsWith("/dashboard/finance")) return ["Finance"];
     if (path.startsWith("/dashboard/suppliers")) return ["Suppliers"];
@@ -46,26 +59,26 @@ export function DashboardHeader() {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <div className="bg-white border-b border-[#F1F5F9] px-10 py-5 flex items-center justify-between sticky top-0 z-40 h-[100px]">
-      <div className="flex items-center gap-14 flex-1">
+    <div className="bg-white/95 backdrop-blur-md border-b border-slate-50 px-4 md:px-6 lg:px-8 h-[120px] flex items-center justify-between sticky top-0 z-40 transition-all">
+      <div className="flex items-center gap-12 flex-1">
         <div className="flex items-center gap-6 min-w-fit">
           {breadcrumbs.length > 1 && (
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-10 w-10 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-all active:scale-95"
+              className="h-12 w-12 rounded-[20px] hover:bg-slate-50 text-slate-400 hover:text-[#3B59DA] transition-all active:scale-95 border border-slate-100/50 shadow-sm"
               onClick={() => router.back()}
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-6 w-6 stroke-[3px]" />
             </Button>
           )}
           <div className="flex items-center gap-3">
             {breadcrumbs.map((crumb, idx) => (
               <React.Fragment key={idx}>
-                {idx > 0 && <ChevronRight className="h-4 w-4 text-slate-300" />}
+                {idx > 0 && <ChevronRight className="h-4 w-4 text-slate-200 stroke-[4px]" />}
                 <span className={cn(
-                  "text-sm font-black tracking-tight",
-                  idx === breadcrumbs.length - 1 ? "text-slate-900" : "text-slate-400"
+                  "text-[17px] font-black tracking-tight transition-colors font-outfit",
+                  idx === breadcrumbs.length - 1 ? "text-[#1E293B]" : "text-slate-300 hover:text-slate-400 cursor-default"
                 )}>
                   {crumb}
                 </span>
@@ -74,32 +87,30 @@ export function DashboardHeader() {
           </div>
         </div>
 
-        <div className="flex-1 max-w-2xl px-4">
+        <div className="flex-1 max-w-2xl mx-auto px-8">
           <div className="relative group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-300 group-focus-within:text-[#3B59DA] transition-colors" />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 group-focus-within:text-[#3B59DA] transition-all" />
             <Input 
-              placeholder="Search" 
-              className="pl-16 h-14 bg-white border border-slate-100 rounded-2xl w-full text-lg font-bold text-[#1E293B] focus-visible:ring-indigo-100/50 shadow-sm"
+              placeholder="Search anything..." 
+              className="pl-16 h-[60px] bg-slate-50/50 border-slate-100/80 rounded-[22px] w-full text-lg font-bold text-slate-700 focus-visible:ring-[#3B59DA]/5 focus-visible:bg-white focus-visible:border-[#3B59DA]/30 transition-all placeholder:text-slate-300 placeholder:font-bold shadow-none focus:shadow-xl focus:shadow-indigo-500/5"
             />
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-6">
-        <DayStatusBadge />
-        
-        <div className="flex items-center gap-4 bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm">
-          <Calendar className="h-5 w-5 text-[#3B59DA]" />
-          <div className="flex items-center gap-3 text-sm font-black text-[#3B59DA]">
-            <span>Tuesday, Jan 24, 2026</span>
-            <div className="h-1.5 w-1.5 rounded-full bg-indigo-200" />
-            <span className="tabular-nums italic font-inria">09:43:23 AM</span>
+      <div className="flex items-center gap-6 shrink-0">
+        <div className="flex items-center gap-4 bg-indigo-50/30 px-6 py-3.5 rounded-[22px] border border-indigo-100/30 shadow-sm hover:bg-white hover:border-indigo-100 transition-all group cursor-default">
+          <Calendar className="h-5 w-5 text-[#3B59DA] group-hover:scale-110 transition-transform stroke-[2.5px]" />
+          <div className="flex items-center gap-3 text-[14px] font-black text-slate-500 font-outfit">
+            <span className="group-hover:text-slate-900 transition-colors">Tuesday, Jan 24, 2026</span>
+            <div className="h-1.5 w-1.5 rounded-full bg-slate-200 group-hover:bg-[#3B59DA] transition-colors" />
+            <span className="tabular-nums text-[#3B59DA] group-hover:scale-105 transition-transform">09:43:23 AM</span>
           </div>
         </div>
         
-        <Button variant="ghost" size="icon" className="h-[52px] w-[52px] rounded-2xl bg-white border border-slate-100 relative group shadow-sm hover:border-indigo-100">
-          <Bell className="h-6 w-6 text-slate-400 group-hover:text-[#3B59DA] transition-colors" />
-          <span className="absolute top-3.5 right-3.5 h-3 w-3 bg-[#EF4444] border-2 border-white rounded-full shadow-sm" />
+        <Button variant="ghost" size="icon" className="h-14 w-14 rounded-[22px] bg-white border border-slate-100 relative group shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 transition-all active:scale-95 shrink-0">
+          <Bell className="h-6 w-6 text-slate-400 group-hover:text-[#3B59DA] transition-colors stroke-[2.5px]" />
+          <span className="absolute top-4 right-4 h-3 w-3 bg-[#EF4444] border-[3px] border-white rounded-full shadow-sm animate-pulse" />
         </Button>
       </div>
     </div>

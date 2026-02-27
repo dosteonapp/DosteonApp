@@ -75,10 +75,12 @@ const config = {
         },
       },
       fontFamily: {
-        figTree: ["var(--font-figtree)", "sans-serif"],
-        inria: ["var(--font-inria)", "serif"],
-        sans: ["var(--font-figtree)", "sans-serif"],
-        serif: ["var(--font-inria)", "serif"],
+        outfit: ["var(--font-outfit)", "sans-serif"],
+        inter: ["var(--font-inter)", "sans-serif"],
+        inria: ["var(--font-inria-serif)", "serif"],
+        figtree: ["var(--font-figtree)", "sans-serif"],
+        sans: ["var(--font-inter)", "sans-serif"],
+        heading: ["var(--font-outfit)", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -35,6 +35,8 @@ import { cn } from "@/lib/utils";
 
 import { motion, AnimatePresence } from "framer-motion";
 
+import { ReviewOpeningChecklist } from "@/components/day/ReviewOpeningChecklist";
+
 export default function DailyStockCountPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -43,6 +45,7 @@ export default function DailyStockCountPage() {
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showReview, setShowReview] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,7 +78,15 @@ export default function DailyStockCountPage() {
   };
 
   const handleComplete = async () => {
-    router.push("/dashboard/opening");
+    if (confirmedIds.size < items.length) {
+      toast({
+        title: "Incomplete Registry",
+        description: "Please validate all assets before finalizing.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setShowReview(true);
   };
 
   const progressCount = confirmedIds.size;
@@ -85,7 +96,20 @@ export default function DailyStockCountPage() {
   if (isLoading) return <OpeningSkeleton />;
 
   return (
-    <div className="flex flex-col gap-10 bg-white min-h-screen pb-48">
+    <div className={cn(
+      "flex flex-col gap-10 bg-white min-h-screen pb-48 transition-all duration-500",
+      showReview && "blur-xl scale-[0.98] pointer-events-none"
+    )}>
+      {/* Review Modal Overlay */}
+      {showReview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-in fade-in duration-300 pointer-events-auto">
+          <ReviewOpeningChecklist 
+            onBack={() => setShowReview(false)} 
+            onConfirm={() => router.push("/dashboard")}
+          />
+        </div>
+      )}
+
       <div className="space-y-10 px-6 mt-6">
         <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -239,6 +263,7 @@ export default function DailyStockCountPage() {
     </div>
   );
 }
+
 
 function StockRow({ item, isConfirmed, onConfirm, idx }: { item: OpeningStockItem, isConfirmed: boolean, onConfirm: () => void, idx: number }) {
     return (

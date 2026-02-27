@@ -68,6 +68,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { DailyReportsModal } from "@/components/daily-reports-modal";
+import { cn } from "@/lib/utils";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30days");
@@ -75,104 +76,56 @@ export default function AnalyticsPage() {
   const [reportsModalOpen, setReportsModalOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
-        <Menu className="h-6 w-6" />
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">Analytics</h1>
-        </div>
-      </header> */}
-      <main className="flex-1 space-y-4">
-        <div className="flex items-center justify-end gap-2 flex-wrap">
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[180px] rounded-xl border-slate-200">
-              <SelectValue placeholder="Select time range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7days">Last 7 days</SelectItem>
-              <SelectItem value="30days">Last 30 days</SelectItem>
-              <SelectItem value="90days">Last 90 days</SelectItem>
-              <SelectItem value="year">Last year</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            className="gap-1 rounded-xl border-slate-200"
-            onClick={() => setReportsModalOpen(true)}
-          >
-            <FileText className="h-4 w-4" />
-            Daily Reports
-          </Button>
-          <Button variant="outline" className="gap-1 rounded-xl border-slate-200">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
+    <div className="flex flex-col min-h-screen bg-white">
+      <main className="flex-1 space-y-8 max-w-[1700px] mx-auto w-full pb-20 transition-all duration-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1 text-center sm:text-left">
+            <h2 className="text-[28px] md:text-3xl font-bold text-[#1E293B] tracking-tight">Analytics</h2>
+            <p className="text-[13px] md:text-sm font-medium text-slate-400">Track consumption, wastage, and predictive trends</p>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-[140px] md:w-[180px] h-11 rounded-xl border-slate-200 font-bold text-xs md:text-sm">
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7days">Last 7 days</SelectItem>
+                <SelectItem value="30days">Last 30 days</SelectItem>
+                <SelectItem value="90days">Last 90 days</SelectItem>
+                <SelectItem value="year">Last year</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              className="gap-2 h-11 rounded-xl border-slate-200 font-bold text-xs md:text-sm px-4 md:px-5"
+              onClick={() => setReportsModalOpen(true)}
+            >
+              <FileText className="h-4 w-4" />
+              <span className="whitespace-nowrap">Daily Reports</span>
+            </Button>
+            <Button variant="outline" className="gap-2 h-11 rounded-xl border-slate-200 font-bold text-xs md:text-sm px-4 md:px-5">
+              <Download className="h-4 w-4" />
+              <span className="whitespace-nowrap">Export</span>
+            </Button>
+          </div>
         </div>
 
-        <Tabs defaultValue="consumption">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="consumption">Consumption</TabsTrigger>
-            <TabsTrigger value="wastage">Wastage</TabsTrigger>
-            <TabsTrigger value="predictive">Predictive</TabsTrigger>
-            <TabsTrigger value="esg">ESG Metrics</TabsTrigger>
-            <TabsTrigger value="savings">Cost Savings</TabsTrigger>
+        <Tabs defaultValue="consumption" className="space-y-6">
+          <TabsList className="bg-slate-100 p-1 rounded-xl flex flex-wrap h-auto gap-1">
+            <TabsTrigger value="consumption" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm">Consumption</TabsTrigger>
+            <TabsTrigger value="wastage" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm">Wastage</TabsTrigger>
+            <TabsTrigger value="predictive" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm">Predictive</TabsTrigger>
+            <TabsTrigger value="esg" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm whitespace-nowrap">ESG Metrics</TabsTrigger>
+            <TabsTrigger value="savings" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm whitespace-nowrap">Cost Savings</TabsTrigger>
           </TabsList>
 
           {/* Consumption Trends Tab */}
-          <TabsContent value="consumption" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="bg-gradient-to-br from-primary-50 to-white border-primary-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Avg. Daily Usage
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">32.5 kg</div>
-                  <p className="text-xs text-muted-foreground">
-                    +2.5% from last period
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-primary-50 to-white border-primary-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Avg. Weekly Usage
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">227.5 kg</div>
-                  <p className="text-xs text-muted-foreground">
-                    +1.8% from last period
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Most Consumed Item
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">Tomatoes</div>
-                  <p className="text-xs text-muted-foreground">
-                    45.2 kg this month
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Fastest Growing Usage
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">Chicken</div>
-                  <p className="text-xs text-muted-foreground">
-                    +12.3% this month
-                  </p>
-                </CardContent>
-              </Card>
+          <TabsContent value="consumption" className="space-y-6 outline-none">
+            <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Avg. Daily Usage" value="32.5 kg" subtext="+2.5% from last period" variant="primary" />
+              <StatCard label="Avg. Weekly Usage" value="227.5 kg" subtext="+1.8% from last period" variant="primary" />
+              <StatCard label="Most Consumed Item" value="Tomatoes" subtext="45.2 kg this month" variant="secondary" />
+              <StatCard label="Fastest Growing" value="Chicken" subtext="+12.3% this month" variant="secondary" />
             </div>
 
             <Card>
@@ -382,60 +335,12 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           {/* Wastage Tab */}
-          <TabsContent value="wastage" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="bg-gradient-to-br from-destructive-50 to-white border-destructive-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Total Wastage
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">32.8 kg</div>
-                  <p className="text-xs text-muted-foreground">
-                    -5.2% from last month
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-destructive-50 to-white border-destructive-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Wastage Cost
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">RWF 78,500</div>
-                  <p className="text-xs text-muted-foreground">
-                    -3.8% from last month
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Most Wasted Item
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">Lettuce</div>
-                  <p className="text-xs text-muted-foreground">
-                    8.2 kg this month
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Wastage Reduction
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">12.3%</div>
-                  <p className="text-xs text-muted-foreground">
-                    Since using Dosteon
-                  </p>
-                </CardContent>
-              </Card>
+          <TabsContent value="wastage" className="space-y-6 outline-none">
+            <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Total Wastage" value="32.8 kg" subtext="-5.2% from last month" variant="destructive" />
+              <StatCard label="Wastage Cost" value="RWF 78,500" subtext="-3.8% from last month" variant="destructive" />
+              <StatCard label="Most Wasted Item" value="Lettuce" subtext="8.2 kg this month" variant="secondary" />
+              <StatCard label="Wastage Reduction" value="12.3%" subtext="Since using Dosteon" variant="secondary" />
             </div>
 
             <Card>
@@ -593,110 +498,51 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           {/* Predictive Analytics Tab */}
-          <TabsContent value="predictive" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="bg-gradient-to-br from-primary-50 to-white border-primary-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Items Needing Restock
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">8</div>
-                  <p className="text-xs text-muted-foreground">
-                    Within next 7 days
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-destructive-50 to-white border-destructive-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Critical Stockouts
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">3</div>
-                  <p className="text-xs text-muted-foreground">
-                    Within next 48 hours
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Forecasted Demand
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">+12%</div>
-                  <p className="text-xs text-muted-foreground">
-                    Next week vs. current
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-secondary-50 to-white border-secondary-100">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Optimal Order Value
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">RWF 245,000</div>
-                  <p className="text-xs text-muted-foreground">For next week</p>
-                </CardContent>
-              </Card>
+          <TabsContent value="predictive" className="space-y-6 outline-none">
+            <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Needs Restock" value="8 Items" subtext="Within next 7 days" variant="primary" />
+              <StatCard label="Critical Stockouts" value="3 Items" subtext="Within next 48 hours" variant="destructive" />
+              <StatCard label="Forecasted Demand" value="+12%" subtext="Next week vs current" variant="secondary" />
+              <StatCard label="Optimal Order" value="RWF 245,000" subtext="For next week" variant="secondary" />
             </div>
 
-            <Card>
+            <Card className="rounded-[24px] border-slate-100 shadow-sm overflow-hidden">
               <CardHeader>
-                <CardTitle>Predicted Stockout Dates</CardTitle>
-                <CardDescription>
-                  When you'll need to reorder based on current usage
-                </CardDescription>
+                <CardTitle className="text-xl font-bold">Predicted Stockout Dates</CardTitle>
+                <CardDescription>When you'll need to reorder based on current usage</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-slate-50">
                       <TableRow>
-                        <TableHead>Item</TableHead>
-                        <TableHead>Current Stock</TableHead>
-                        <TableHead>Daily Usage</TableHead>
-                        <TableHead>Stockout Date</TableHead>
-                        <TableHead>Days Left</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead className="font-bold py-4">Item</TableHead>
+                        <TableHead className="font-bold py-4">Current Stock</TableHead>
+                        <TableHead className="font-bold py-4">Daily Usage</TableHead>
+                        <TableHead className="font-bold py-4">Stockout Date</TableHead>
+                        <TableHead className="font-bold py-4">Days Left</TableHead>
+                        <TableHead className="text-right font-bold py-4">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {predictedStockouts.map((item) => (
-                        <TableRow key={item.name}>
-                          <TableCell className="font-medium">
-                            {item.name}
-                          </TableCell>
+                        <TableRow key={item.name} className="hover:bg-slate-50/50">
+                          <TableCell className="font-bold text-slate-700 text-xs md:text-sm">{item.name}</TableCell>
+                          <TableCell className="text-slate-500 text-xs md:text-sm">{item.currentStock} {item.unit}</TableCell>
+                          <TableCell className="text-slate-500 text-xs md:text-sm">{item.dailyUsage} {item.unit}</TableCell>
+                          <TableCell className="font-medium text-xs md:text-sm">{item.stockoutDate}</TableCell>
                           <TableCell>
-                            {item.currentStock} {item.unit}
+                            <Badge className={cn(
+                              "rounded-full px-2.5 md:px-3 py-1 text-[9px] md:text-[10px] font-black uppercase tracking-widest border-none whitespace-nowrap",
+                              item.daysLeft <= 2 ? "bg-red-50 text-red-600" : 
+                              item.daysLeft <= 5 ? "bg-amber-50 text-amber-600" : 
+                              "bg-emerald-50 text-emerald-600"
+                            )}>
+                              {item.daysLeft} days
+                            </Badge>
                           </TableCell>
-                          <TableCell>
-                            {item.dailyUsage} {item.unit}
-                          </TableCell>
-                          <TableCell>{item.stockoutDate}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Badge
-                                variant={
-                                  item.daysLeft <= 2
-                                    ? "destructive"
-                                    : item.daysLeft <= 5
-                                    ? "warning"
-                                    : "secondary"
-                                }
-                              >
-                                {item.daysLeft} days
-                              </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Button size="sm" variant="outline" className="h-8">
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-lg border-slate-200 font-bold text-[10px] md:text-xs">
                               Order Now
                             </Button>
                           </TableCell>
@@ -1803,3 +1649,25 @@ const reorderSuggestions = [
     price: 90000,
   },
 ];
+
+function StatCard({ label, value, subtext, variant = "default" }: { label: string, value: string, subtext: string, variant?: "default" | "primary" | "secondary" | "destructive" }) {
+  const variantStyles = {
+    default: "border-slate-100 hover:border-indigo-100 bg-white",
+    primary: "border-indigo-100 bg-indigo-50/5 hover:border-indigo-200",
+    secondary: "border-emerald-100 bg-emerald-50/5 hover:border-emerald-200",
+    destructive: "border-red-100 bg-red-50/5 hover:border-red-200"
+  };
+
+  return (
+    <Card className={cn(
+      "rounded-[24px] md:rounded-[28px] border shadow-[0_2px_15px_rgba(0,0,0,0.02)] p-6 md:p-8 space-y-4 transition-all group active:scale-[0.98]",
+      variantStyles[variant]
+    )}>
+      <h4 className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] group-hover:text-indigo-500 transition-colors">{label}</h4>
+      <div className="space-y-1.5">
+        <div className="text-[clamp(20px,2vw,32px)] font-black text-[#1E293B] tracking-tight leading-none">{value}</div>
+        <p className="text-[clamp(10px,1.1vw,12px)] font-bold text-slate-400 group-hover:text-slate-500 transition-colors uppercase tracking-wider">{subtext}</p>
+      </div>
+    </Card>
+  );
+}

@@ -71,10 +71,13 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-figTree;
+    @apply bg-background text-foreground font-inter;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-inria;
+    @apply font-outfit;
+    letter-spacing: -0.01em;
   }
 }
 

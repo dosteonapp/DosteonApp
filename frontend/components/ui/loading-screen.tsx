@@ -1,5 +1,5 @@
 import { LoaderCircle } from "lucide-react";
-import { Logo } from "../icons/Logo";
+
 
 interface LoadingScreenProps {
   message?: string;
@@ -11,7 +11,11 @@ export function LoadingScreen({ message = "Loading..." }: LoadingScreenProps) {
       <div className="flex flex-col items-center space-y-4">
         {/* <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">{message}</p> */}
-        <Logo className="w-10 h-10" />
+        <img 
+          src="/images/logo-full.png" 
+          alt="Dosteon" 
+          className="h-10 w-auto"
+        />
       </div>
     </div>
   );

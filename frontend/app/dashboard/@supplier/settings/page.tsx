@@ -232,10 +232,21 @@ const permissionCategories = {
   ],
 };
 
+interface TeamMember {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  status: string;
+  lastActive: string;
+  avatar?: string;
+}
+
 export default function SupplierSettingsPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(null);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   const getRoleInfo = (roleId: string) => {
     return supplierRoles.find((role) => role.id === roleId);
@@ -564,13 +575,12 @@ export default function SupplierSettingsPage() {
                                         key={permission}
                                         className="flex items-center space-x-2"
                                       >
-                                        <Switch
-                                          checked={role.permissions.includes(
-                                            permission
-                                          )}
-                                          disabled
-                                          size="sm"
-                                        />
+                                          <Switch
+                                            checked={role.permissions.includes(
+                                              permission
+                                            )}
+                                            disabled
+                                          />
                                         <span className="text-sm">
                                           {permission.replace(/_/g, " ")}
                                         </span>

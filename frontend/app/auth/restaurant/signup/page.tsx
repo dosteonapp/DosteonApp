@@ -21,6 +21,7 @@ import { toast } from "sonner";
 
 import { EmailCheckScreen } from "@/components/auth/EmailCheckScreen";
 import Image from "next/image";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -198,11 +199,7 @@ export default function RegisterPage() {
                         </button>
                       </div>
                     </FormikFormControl>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Password must be at least <b>8 Characters</b> and must
-                      contain at least a <b>Capital Letter</b>, a{" "}
-                      <b>Number</b> and a <b>Special Character</b>.
-                    </p>
+                    <PasswordStrengthMeter password={values.password} />
                     <FormikFormMessage name="password" />
                   </FormikFormItem>
                   <FormikFormItem>

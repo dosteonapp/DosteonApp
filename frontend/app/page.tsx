@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, ChefHat, Truck } from "lucide-react";
+import { ChevronRight, ChefHat, Truck, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Footer from "@/components/auth/Footer";
 
 export default function Home() {
   const [selectedUserType, setSelectedUserType] = useState<"restaurant" | "supplier" | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
   const handleGetStarted = (userType: "restaurant" | "supplier") => {
@@ -22,39 +23,76 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <header className="fixed top-3 rounded-xl left-3 right-3 z-50 bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="flex justify-between items-center h-16">
+      <header className="fixed top-3 rounded-xl left-3 right-3 z-50 bg-white shadow-md border border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20">
             <div className="flex items-center">
-              <img
-                src="/images/logo-full.png"
-                alt="Dosteon Logo"
-                className="h-8 w-auto mr-2"
-              />
+              <Link href="/">
+                <img
+                  src="/images/logo-full.png"
+                  alt="Dosteon Logo"
+                  className="h-6 sm:h-8 w-auto"
+                />
+              </Link>
             </div>
-            <div className="flex gap-4">
+            
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex gap-4">
               <Button
-                className="bg-[#00a13e] hover:bg-[#00a13e] text-white px-6 py-2 rounded-xl text-base font-medium shadow-none"
-                style={{ boxShadow: "none" }}
+                className="bg-[#00a13e] hover:bg-[#00a13e] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-none transition-all active:scale-95"
                 asChild
               >
                 <Link href="/auth/supplier/signin">Supplier Login</Link>
               </Button>
 
               <Button
-                className="bg-[#3851DD] hover:bg-[#2c3fa0] text-white px-6 py-2 rounded-xl text-base font-medium shadow-none"
-                style={{ boxShadow: "none" }}
+                className="bg-[#3851DD] hover:bg-[#2c3fa0] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-none transition-all active:scale-95"
+                asChild
+              >
+                <Link href="/auth/restaurant/signin">Restaurant Login</Link>
+              </Button>
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <div className="md:hidden">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="text-gray-600"
+              >
+                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Navigation Dropdown */}
+        {isMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-100 rounded-b-xl overflow-hidden shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex flex-col p-4 gap-3">
+              <Button
+                className="bg-[#00a13e] hover:bg-[#00a13e] text-white w-full py-6 rounded-xl text-base font-bold shadow-none"
+                onClick={() => setIsMenuOpen(false)}
+                asChild
+              >
+                <Link href="/auth/supplier/signin">Supplier Login</Link>
+              </Button>
+
+              <Button
+                className="bg-[#3851DD] hover:bg-[#2c3fa0] text-white w-full py-6 rounded-xl text-base font-bold shadow-none"
+                onClick={() => setIsMenuOpen(false)}
                 asChild
               >
                 <Link href="/auth/restaurant/signin">Restaurant Login</Link>
               </Button>
             </div>
           </div>
-        </div>
+        )}
       </header>
 
       {/* Hero Section */}
-      <section className="relative text-white pt-16 flex-1">
+      <section className="relative text-white pt-24 sm:pt-32 flex-1">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/images/background.png')" }}

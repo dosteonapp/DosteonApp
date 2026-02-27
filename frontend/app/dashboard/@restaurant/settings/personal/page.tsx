@@ -3,12 +3,12 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function SettingsRedirect() {
+export default function PersonalSettingsRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/dashboard/settings/business/profile");
+    router.replace("/dashboard/settings/personal/profile");
   }, [router]);
 
-  return <div className="h-screen bg-white" />;
+  return null;
 }

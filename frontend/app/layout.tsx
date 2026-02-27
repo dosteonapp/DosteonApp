@@ -1,6 +1,6 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Figtree, Inria_Serif } from "next/font/google";
+import { Inter, Outfit, Inria_Serif, Figtree } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppProvider } from "@/context/AppContext";
@@ -11,12 +11,24 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/sonner";
 import { MockWarningBanner } from "@/components/mock-warning-banner";
 
-const inria = Inria_Serif({ 
+const outfit = Outfit({ 
   subsets: ["latin"], 
-  weight: ["300", "400", "700"],
-  variable: "--font-inria" 
+  variable: "--font-outfit" 
 });
-const figTree = Figtree({
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const inriaSerif = Inria_Serif({
+  subsets: ["latin"],
+  weight: ["300", "400", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-inria-serif",
+});
+
+const figtree = Figtree({
   subsets: ["latin"],
   variable: "--font-figtree",
 });
@@ -35,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${figTree.className} ${inria.variable} ${figTree.variable}`}
+        className={`${inter.className} ${outfit.variable} ${inter.variable} ${inriaSerif.variable} ${figtree.variable}`}
         suppressHydrationWarning
       >
         <AppProvider>
