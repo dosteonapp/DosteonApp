@@ -65,35 +65,35 @@ export default function ClosingPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 bg-white min-h-screen pb-32 w-full">
+    <div className="flex flex-col gap-8 bg-white min-h-screen pb-48 w-full">
         <ReviewClosingChecklistModal 
             open={isReviewModalOpen}
             onOpenChange={setIsReviewModalOpen}
             summary={closingSummary}
         />
-    <div className="space-y-10 max-w-[1700px] mx-auto w-full pb-32">
+    <div className="space-y-10 max-w-[1850px] mx-auto w-full pb-48 px-1 md:px-2">
         {/* State Conditional Render */}
         {!isOpen ? (
           <ClosingLockedUI />
         ) : (
           <>
             <ClosingHeroOpen />
-            <div className="space-y-6 bg-white border border-slate-100 rounded-[24px] md:rounded-[32px] p-5 md:p-8 lg:p-10 relative overflow-hidden shadow-sm">
+            <div className="space-y-6 bg-white border border-slate-100 rounded-none p-5 md:p-8 lg:p-10 relative overflow-hidden shadow-sm">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-4">
                     <div className="relative w-full max-w-md">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                         <Input 
                             placeholder="Search items..." 
-                            className="pl-11 h-12 md:h-14 rounded-xl md:rounded-2xl border-slate-100 bg-[#F8FAFC] shadow-sm font-medium focus-visible:ring-indigo-100 text-sm md:text-base"
+                            className="pl-11 h-12 md:h-14 rounded-none border-slate-100 bg-[#F8FAFC] shadow-sm font-medium focus-visible:ring-indigo-100 text-sm md:text-base"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                        <Button variant="outline" className="h-10 md:h-12 px-4 md:px-5 rounded-lg md:rounded-xl border-slate-200 font-bold text-slate-500 gap-2 text-xs md:text-sm">
+                        <Button variant="outline" className="h-10 md:h-12 px-4 md:px-5 rounded-none border-slate-200 font-bold text-slate-500 gap-2 text-xs md:text-sm">
                             All Categories <ChevronDown className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" className="h-10 md:h-12 px-4 md:px-5 rounded-lg md:rounded-xl border-slate-200 font-bold text-slate-500 gap-2 text-xs md:text-sm">
+                        <Button variant="outline" className="h-10 md:h-12 px-4 md:px-5 rounded-none border-slate-200 font-bold text-slate-500 gap-2 text-xs md:text-sm">
                             All Levels <ChevronDown className="h-4 w-4" />
                         </Button>
                     </div>
@@ -107,13 +107,16 @@ export default function ClosingPage() {
             </div>
 
             {/* Sticky Bottom Bar - Pinned to Bottom, Responding to Sidebar */}
-            <div className="fixed bottom-0 right-0 z-50 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.04)] left-0 lg:left-[280px] transition-[left] duration-300">
-                <div className="w-full px-4 md:px-10 h-20 md:h-24 lg:h-32 flex items-center justify-end gap-3 md:gap-4 max-w-7xl mx-auto">
-                    <Button variant="outline" className="h-12 md:h-14 px-6 md:px-8 rounded-lg md:rounded-xl border-[#3B59DA]/20 text-[#3B59DA] font-bold hover:bg-slate-50 shadow-sm transition-all text-sm md:text-base">
+            <div 
+                className="fixed bottom-0 right-0 z-50 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.04)] transition-all duration-500"
+                style={{ left: 'var(--sidebar-width, 300px)' }}
+            >
+                <div className="w-full px-4 md:px-10 h-20 md:h-24 lg:h-32 flex items-center justify-end gap-3 md:gap-4 max-w-[1850px] mx-auto">
+                    <Button variant="outline" className="h-12 md:h-14 px-6 md:px-8 rounded-none border-[#3B59DA]/20 text-[#3B59DA] font-bold hover:bg-slate-50 shadow-sm transition-all text-sm md:text-base">
                         Save a draft
                     </Button>
                     <Button 
-                        className="h-12 md:h-14 px-6 md:px-10 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-lg md:rounded-xl font-bold gap-2 md:gap-3 shadow-lg shadow-indigo-100 transition-all border-none text-sm md:text-base"
+                        className="h-12 md:h-14 px-6 md:px-10 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-none font-bold gap-2 md:gap-3 shadow-lg shadow-indigo-100 transition-all border-none text-sm md:text-base font-figtree"
                         onClick={() => setIsReviewModalOpen(true)}
                     >
                         Review & Close Kitchen <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
@@ -207,7 +210,7 @@ function RequirementRow({ title, subtitle, completed }: { title: string, subtitl
 
 function ClosingHeroOpen() {
     return (
-        <div className="relative overflow-hidden rounded-[24px] md:rounded-[40px] p-6 md:p-10 lg:p-14 shadow-2xl bg-gradient-to-r from-[#172554] via-[#3730A3] to-[#4F46E5] text-white min-h-[300px] md:min-h-[340px] flex items-center w-full">
+        <div className="relative overflow-hidden rounded-none p-6 md:p-10 lg:p-14 shadow-2xl bg-gradient-to-r from-[#2B46CC] via-[#4A3AFF] to-[#7C3AED] text-white min-h-[300px] md:min-h-[340px] flex items-center w-full">
             {/* Design Watermark hide on mobile */}
             <div className="hidden md:block absolute -bottom-20 -right-20 opacity-[0.05] pointer-events-none scale-150">
                 <ClipboardCheck className="h-[400px] w-[400px] -rotate-12" />
@@ -250,7 +253,7 @@ function ClosingHeroOpen() {
 
 function HeroStatSmall({ label, value, description, accent }: { label: string, value: string, description: string, accent: string }) {
     return (
-        <div className="bg-white rounded-[16px] p-5 md:p-6 w-full sm:w-[180px] md:w-[200px] lg:w-[220px] h-[160px] md:h-[180px] lg:h-[200px] shadow-lg flex flex-col justify-between group hover:translate-y-[-4px] transition-all duration-300">
+        <div className="bg-white rounded-none p-5 md:p-6 w-full sm:w-[180px] md:w-[200px] lg:w-[220px] h-[160px] md:h-[180px] lg:h-[200px] shadow-lg flex flex-col justify-between group hover:translate-y-[-4px] transition-all duration-300">
             <div className="flex items-center gap-3">
                 <div 
                     className="h-8 w-8 md:h-10 md:w-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-50 shadow-sm"
@@ -270,7 +273,7 @@ function HeroStatSmall({ label, value, description, accent }: { label: string, v
 
 function ClosingCountRow({ item }: { item: InventoryItem }) {
     return (
-        <div className="p-5 md:p-6 lg:p-8 flex flex-col md:flex-row items-start md:items-center justify-between bg-white border border-slate-100 rounded-[16px] hover:shadow-sm transition-all group gap-6 md:gap-8">
+        <div className="p-5 md:p-6 lg:p-8 flex flex-col md:flex-row items-start md:items-center justify-between bg-white border border-slate-100 rounded-none hover:shadow-sm transition-all group gap-6 md:gap-8">
             <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8 flex-1 w-full">
                 {/* Product Info Section */}
                 <div className="flex items-center gap-4 lg:gap-8 min-w-full lg:min-w-[260px]">
@@ -306,10 +309,10 @@ function ClosingCountRow({ item }: { item: InventoryItem }) {
                     <p className="text-[18px] lg:text-[20px] font-black text-[#3B59DA]">10 units</p>
                 </div>
                 <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
-                    <Button variant="outline" className="flex-1 sm:flex-none h-10 md:h-12 px-4 md:px-6 rounded-lg md:rounded-xl border-slate-200 font-bold text-[#1E293B]/70 hover:bg-slate-50 text-xs md:text-sm">
+                    <Button variant="outline" className="flex-1 sm:flex-none h-10 md:h-12 px-4 md:px-6 rounded-none border-slate-200 font-bold text-[#1E293B]/70 hover:bg-slate-50 text-xs md:text-sm">
                         Edit Amount
                     </Button>
-                    <Button className="flex-1 sm:flex-none h-10 md:h-12 px-6 md:px-8 rounded-lg md:rounded-xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold shadow-md shadow-indigo-100/30 text-xs md:text-sm">
+                    <Button className="flex-1 sm:flex-none h-10 md:h-12 px-6 md:px-8 rounded-none bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold shadow-md shadow-indigo-100/30 text-xs md:text-sm">
                         Confirm
                     </Button>
                 </div>

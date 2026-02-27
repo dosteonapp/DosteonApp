@@ -36,7 +36,7 @@ export function RestaurantSidebar() {
   const { status, isUserUnlocked } = useRestaurantDayLifecycle();
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--sidebar-width', collapsed ? '80px' : '260px');
+    document.documentElement.style.setProperty('--sidebar-width', collapsed ? '90px' : '300px');
   }, [collapsed]);
 
   const operationsRoutes = [
