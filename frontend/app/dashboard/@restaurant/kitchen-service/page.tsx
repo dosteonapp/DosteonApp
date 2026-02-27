@@ -343,7 +343,7 @@ function KitchenSummaryCard({ label, value, subtext, icon, accentColor }: { labe
 
 function KitchenServiceLockedHero() {
     return (
-        <div className="relative overflow-hidden rounded-none p-6 md:p-10 lg:p-12 border border-white/10 bg-gradient-to-r from-[#2B46CC] via-[#4A3AFF] to-[#7C3AED] text-white flex flex-col lg:flex-row gap-8 md:gap-10 items-center justify-start min-h-[250px] md:min-h-[280px] shadow-2xl transition-all duration-500">
+        <div className="relative overflow-hidden rounded-none p-6 md:p-10 lg:p-12 border border-white/10 bg-gradient-to-r from-[#2B46CC] via-[#4A3AFF] to-[#7C3AED] text-white flex flex-col lg:flex-row gap-8 md:gap-10 items-start justify-between min-h-[250px] md:min-h-[280px] shadow-2xl transition-all duration-500">
              {/* Locked Badge - Top Right */}
              <div className="absolute top-4 right-4 md:top-6 md:right-6 lg:top-8 lg:right-8 flex items-center gap-1.5 md:gap-2 px-2.5 py-1 md:px-3.5 md:py-1.5 rounded-none border border-[#EF4444] bg-white text-[#EF4444] font-bold text-[11px] md:text-[13px] tracking-tight shadow-sm shrink-0 uppercase">
                 <Lock className="h-3 w-3 md:h-4 md:w-4" />
@@ -366,7 +366,7 @@ function KitchenServiceLockedHero() {
                 </div>
             </div>
             
-            <div className="flex flex-row overflow-x-auto pb-4 lg:pb-0 gap-4 md:gap-5 items-stretch lg:items-center w-full lg:w-auto no-scrollbar scroll-smooth relative z-10">
+            <div className="flex flex-row overflow-x-auto pb-4 lg:pb-0 gap-4 md:gap-5 items-stretch lg:items-center w-full lg:w-auto lg:ml-auto no-scrollbar scroll-smooth relative z-10">
                 <div className="shrink-0 w-[240px] md:w-[260px] lg:w-auto">
                     <KitchenSummaryCard 
                         label="Shift Status" 
