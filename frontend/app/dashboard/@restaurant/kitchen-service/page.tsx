@@ -162,9 +162,9 @@ export default function KitchenServicePage() {
                     <Badge className={cn(
                       "border-none rounded-full font-bold text-[10px] px-3 py-1 uppercase tracking-wider",
                       item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" : 
-                      item.status === 'Low' || item.status === 'Running Low' ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"
+                      item.status === 'Low' ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"
                     )}>
-                      {item.status === 'Low' ? 'Critical' : item.status}
+                      {item.status === 'Low' ? 'Running Low' : item.status === 'Critical' ? 'Critical' : item.status}
                     </Badge>
                   </div>
 
