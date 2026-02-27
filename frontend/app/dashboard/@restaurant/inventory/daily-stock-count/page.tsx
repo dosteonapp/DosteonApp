@@ -11,9 +11,10 @@ import {
   Calendar as CalendarIcon,
   Search as SearchIcon,
   RotateCcw,
-  CheckCircle2,
   Package,
-  ArrowRight
+  ArrowRight,
+  Lock,
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -128,7 +129,7 @@ export default function DailyStockCountPage() {
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[56px] bg-[#1E293B] p-12 lg:p-16 flex flex-col xl:flex-row items-center gap-16 shadow-2xl shadow-indigo-500/10 relative overflow-hidden text-white"
+            className="rounded-none bg-gradient-to-r from-[#1E3A8A] via-[#2D46B2] to-[#3B59DA] p-8 md:p-10 lg:p-12 flex flex-col xl:flex-row items-center gap-10 md:gap-14 shadow-2xl relative overflow-hidden text-white w-full"
         >
             {/* Animated Background Decor */}
             <div className="absolute inset-0 pointer-events-none opacity-40">
@@ -179,29 +180,55 @@ export default function DailyStockCountPage() {
 
         {/* List Grid Header */}
         <div className="space-y-8">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-                <div className="space-y-1">
-                    <h2 className="text-3xl font-black text-[#1E293B] tracking-tight font-inria italic">Pending Validations</h2>
-                    <p className="text-sm font-bold text-slate-400">Inventory assets requiring manual verification</p>
-                </div>
-                <div className="flex items-center gap-4 w-full lg:w-auto">
-                    <div className="relative flex-1 lg:w-80">
-                         <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
-                         <Input 
-                            placeholder="Filter registry..." 
-                            className="pl-14 h-16 rounded-[24px] border-slate-100 bg-white font-bold text-[#1E293B] focus-visible:ring-indigo-100 shadow-sm"
-                         />
+            {!isLocked && (
+                <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+                    <div className="space-y-1">
+                        <h2 className="text-3xl font-black text-[#1E293B] tracking-tight font-inria italic">Pending Validations</h2>
+                        <p className="text-sm font-bold text-slate-400">Inventory assets requiring manual verification</p>
                     </div>
-                    <Select defaultValue="all">
-                        <SelectTrigger className="h-16 lg:w-48 rounded-[24px] border-slate-100 bg-white font-black text-slate-500 hover:shadow-md transition-all">
-                            <SelectValue placeholder="All Assets" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-slate-100">
-                            <SelectItem value="all">All Assets</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-4 w-full lg:w-auto">
+                        <div className="relative flex-1 lg:w-80">
+                            <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
+                            <Input 
+                                placeholder="Filter registry..." 
+                                className="pl-14 h-16 rounded-[24px] border-slate-100 bg-white font-bold text-[#1E293B] focus-visible:ring-indigo-100 shadow-sm"
+                            />
+                        </div>
+                        <Select defaultValue="all">
+                            <SelectTrigger className="h-16 lg:w-48 rounded-[24px] border-slate-100 bg-white font-black text-slate-500 hover:shadow-md transition-all">
+                                <SelectValue placeholder="All Assets" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-2xl border-slate-100">
+                                <SelectItem value="all">All Assets</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
-            </div>
+            )}
+            {isLocked && (
+                <div className="relative z-20 w-full">
+                    <div className="bg-gradient-to-br from-[#1E3A8A] via-[#2D46B2] to-[#3B59DA] backdrop-blur-xl rounded-none p-12 md:p-20 lg:p-24 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] border border-white/10 flex flex-col items-center text-center w-full space-y-8 md:space-y-10 relative overflow-hidden">
+                        {/* Premium Decor */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px] pointer-events-none" />
+                        
+                        <div className="h-20 w-20 md:h-24 md:w-24 rounded-[32px] bg-white/5 text-white flex items-center justify-center shadow-inner border border-white/10 relative z-10 transition-transform hover:scale-110">
+                            <Lock className="h-10 w-10 md:h-12 md:w-12 text-indigo-400" />
+                        </div>
+                        <div className="space-y-4 md:space-y-6 relative z-10 max-w-2xl">
+                            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter font-inria italic">Kitchen Service is Locked</h2>
+                            <p className="text-slate-400 text-lg md:text-xl font-bold leading-relaxed px-4">
+                                The Kitchen Service workflow is not yet available. Please synchronize your physical stock levels by completing the Daily Stock Count before you proceed.
+                            </p>
+                        </div>
+                        <Button className="h-16 md:h-20 px-12 md:px-16 bg-white text-[#3B59DA] hover:bg-slate-50 rounded-[28px] font-black gap-3 md:gap-4 text-lg md:text-xl shadow-2xl transition-all group relative z-10 border-none font-inria italic" asChild>
+                            <Link href="/dashboard/inventory/daily-stock-count">
+                                Begin Daily Registry <ArrowRight className="h-6 w-6 md:h-8 md:w-8 transition-transform group-hover:translate-x-2" />
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 gap-6 pb-20">
                 <AnimatePresence mode="popLayout" initial={false}>
@@ -220,12 +247,13 @@ export default function DailyStockCountPage() {
       </div>
 
       {/* Sticky Bottom Bar - Enhanced Glassmorphism */}
-      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-5xl px-8 z-50">
-        <motion.div 
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="bg-[#1E293B]/95 backdrop-blur-3xl border border-white/10 rounded-[44px] p-6 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] flex items-center justify-between"
-        >
+      <div className="fixed bottom-6 md:bottom-10 left-0 right-0 z-50 flex justify-center">
+        <div className="w-full max-w-[1700px] px-4 md:px-6 lg:px-8">
+            <motion.div 
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="bg-[#1E293B]/95 backdrop-blur-3xl border border-white/10 rounded-none p-4 md:p-6 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] flex flex-col sm:flex-row items-center justify-between gap-4"
+            >
             <Button 
                 variant="ghost" 
                 className="h-14 px-10 rounded-[20px] text-slate-400 hover:text-white hover:bg-white/5 font-black transition-all"
@@ -261,6 +289,7 @@ export default function DailyStockCountPage() {
         </motion.div>
       </div>
     </div>
+    </div>
   );
 }
 
@@ -277,7 +306,7 @@ function StockRow({ item, isConfirmed, onConfirm, idx }: { item: OpeningStockIte
                 ease: [0.16, 1, 0.3, 1]
             }}
             className={cn(
-                "rounded-[44px] border-2 p-10 flex flex-col xl:flex-row items-center justify-between gap-10 transition-all group relative overflow-hidden",
+                "rounded-none border-2 p-10 flex flex-col xl:flex-row items-center justify-between gap-10 transition-all group relative overflow-hidden",
                 isConfirmed 
                     ? "bg-emerald-50/10 border-emerald-100 shadow-[0_20px_50px_rgba(16,185,129,0.04)]" 
                     : "bg-white border-slate-50 hover:border-indigo-100 hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-1"
@@ -362,7 +391,7 @@ function CircularProgress({ percentage }: { percentage: number }) {
     const offset = circumference - (percentage / 100) * circumference;
 
     return (
-        <div className="relative h-48 w-48 flex items-center justify-center bg-white/5 rounded-[48px] shadow-2xl border border-white/10 group-hover:bg-white/10 transition-colors">
+        <div className="relative h-48 w-48 flex items-center justify-center bg-white/5 rounded-none shadow-2xl border border-white/10 group-hover:bg-white/10 transition-colors">
             <svg className="h-40 w-40 -rotate-90 overflow-visible">
                 {/* Background path */}
                 <circle
@@ -404,12 +433,12 @@ function CircularProgress({ percentage }: { percentage: number }) {
 function OpeningSkeleton() {
     return (
         <div className="p-10 space-y-12 bg-[#F8FAFC] min-h-screen">
-            <Skeleton className="h-12 w-64 rounded-xl" />
-            <Skeleton className="h-[280px] w-full rounded-[48px]" />
+            <Skeleton className="h-12 w-64 rounded-none" />
+            <Skeleton className="h-[280px] w-full rounded-none" />
             <div className="space-y-6">
-                 <Skeleton className="h-32 w-full rounded-[32px]" />
-                 <Skeleton className="h-32 w-full rounded-[32px]" />
-                 <Skeleton className="h-32 w-full rounded-[32px]" />
+                 <Skeleton className="h-32 w-full rounded-none" />
+                 <Skeleton className="h-32 w-full rounded-none" />
+                 <Skeleton className="h-32 w-full rounded-none" />
             </div>
         </div>
     );

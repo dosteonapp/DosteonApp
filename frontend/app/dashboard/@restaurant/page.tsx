@@ -27,6 +27,8 @@ import { dayModeStyles } from "@/lib/dayLifecycle/dayModeStyles";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
+import { motion, AnimatePresence } from "framer-motion";
+
 export default function RestaurantDashboardPage() {
   const { status, isOpen, isLoading: isStatusLoading } = useRestaurantDayLifecycle();
   const [activities, setActivities] = useState<ActivityType[]>([]);
@@ -85,7 +87,7 @@ export default function RestaurantDashboardPage() {
   }
 
   return (
-    <div className="space-y-10 w-full pb-20 transition-all duration-500 max-w-[1700px] mx-auto">
+    <div className="space-y-8 w-full pb-20 transition-all duration-500 max-w-[1850px] mx-auto px-1 md:px-2">
       {/* Hero Variant Selection */}
       <div className="w-full">
         {isOpen ? (
@@ -107,7 +109,7 @@ export default function RestaurantDashboardPage() {
           </Button>
         </div>
         
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-4 w-full">
           {activities.map((activity) => (
             <div 
               key={activity.id} 
@@ -142,36 +144,41 @@ export default function RestaurantDashboardPage() {
 
 function HomeHeroOpening({ name }: { name: string }) {
   return (
-    <div className="relative overflow-hidden rounded-[40px] p-10 md:p-14 lg:p-16 shadow-2xl bg-gradient-to-r from-[#020617] via-[#2F29A3] to-[#4F46E5] text-white min-h-[400px] flex items-center border border-white/5 w-full">
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[120px] -mr-40 -mt-40" />
+    <div className="relative overflow-hidden rounded-none p-6 md:p-10 lg:p-12 border border-white/10 bg-gradient-to-r from-[#2B46CC] via-[#4A3AFF] to-[#7C3AED] text-white min-h-[280px] md:min-h-[320px] flex items-center w-full shadow-2xl transition-all duration-500">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 right-0 w-2/3 h-full bg-indigo-500/10 rounded-full blur-[120px] -mr-40 -mt-40 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[100px] -ml-20 -mb-20 pointer-events-none" />
       
-      <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 relative z-10 w-full items-center justify-between">
-        <div className="space-y-8 text-left lg:w-[45%]">
-          <div className="space-y-6">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.9] font-inria italic">
-              Welcome <br />
-              back, <span className="text-indigo-200">{name}</span>
+      <div className="flex flex-col lg:flex-row gap-6 md:gap-8 lg:gap-10 relative z-10 w-full items-start justify-between">
+        <div className="flex flex-col gap-3 md:gap-5 text-left w-full lg:w-[35%] xl:w-[32%] shrink-0">
+          <div className="space-y-3 md:space-y-4">
+            <h1 className="text-[clamp(32px,5.5vw,72px)] font-black tracking-tighter leading-[0.9] font-inria italic">
+              Welcome back, <br className="hidden xl:block" /> {name}
             </h1>
-            <div className="inline-flex items-center gap-3 bg-[#EF4444] px-5 py-2 rounded-full shadow-lg border border-white/10">
-                <ClipboardList className="h-4 w-4 text-white" />
-                <span className="text-[11px] font-black uppercase tracking-wider text-white">16 items need counting</span>
+            <div className="inline-flex items-center gap-2 bg-[#EF4444]/10 text-[#EF4444] px-4 py-1.5 rounded-none border border-[#EF4444]/20 font-bold text-xs shadow-sm w-fit transition-transform hover:scale-105">
+                <div className="h-4 w-4 bg-[#EF4444] rounded-none flex items-center justify-center text-[10px] font-bold text-white">!</div>
+                <span className="uppercase tracking-widest text-[10px]">16 items need counting</span>
             </div>
+            <p className="text-white/70 text-[clamp(12px,1.2vw,14px)] font-medium leading-relaxed max-w-sm">
+              Do your opening stock count before starting your restaurant operations for today.
+            </p>
           </div>
-          <p className="text-indigo-100/70 text-lg md:text-xl font-bold leading-relaxed max-w-md">
-            Do your opening stock count before starting your restaurant operations.
-          </p>
-          <Button className="h-16 px-10 bg-white text-[#3B59DA] hover:bg-indigo-50 rounded-2xl font-black gap-4 text-lg shadow-xl transition-all group font-inria italic" asChild>
-            <Link href="/dashboard/inventory/daily-stock-count">
-              Count Daily Stock <ArrowRight className="h-5 w-5 stroke-[3px] group-hover:translate-x-2 transition-transform" />
-            </Link>
-          </Button>
+          <div className="flex justify-start">
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+               <Button className="h-10 md:h-12 px-6 md:px-8 bg-white text-[#3B59DA] hover:bg-slate-50 rounded-none font-black gap-3 text-xs md:text-sm shadow-xl shadow-indigo-900/10 transition-all group font-figtree border-none active:scale-95" asChild>
+                <Link href="/dashboard/inventory/daily-stock-count">
+                    Count Daily Stock <ArrowRight className="h-4 w-4 md:h-5 md:w-5 stroke-[2.5px] group-hover:translate-x-2 transition-transform" />
+                </Link>
+              </Button>
+            </motion.div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 w-full lg:w-[50%]">
-          <HeroStatCard label="Total Inventory Items" value="24" icon={Package} accent="#FFFFFF" />
-          <HeroStatCard label="Critical Stock Items" value="6" icon={AlertCircle} accent="#EF4444" />
-          <HeroStatCard label="Low Stock Items" value="6" icon={AlertTriangle} accent="#F59E0B" />
-          <HeroStatCard label="Shift Status" value="Inactive" icon={Clock} accent="#FFFFFF" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-4 gap-3 md:gap-4 flex-1 w-full lg:min-w-0">
+          <HeroStatCard label="Total Inventory" value="24" icon={Package} accent="#3B59DA" />
+          <HeroStatCard label="Critical Items" value="6" icon={AlertCircle} accent="#EF4444" />
+          <HeroStatCard label="Low Stock" value="6" icon={AlertTriangle} accent="#F59E0B" />
+          <HeroStatCard label="Shift Status" value="Inactive" icon={Clock} accent="#10B981" />
         </div>
       </div>
     </div>
@@ -180,22 +187,22 @@ function HomeHeroOpening({ name }: { name: string }) {
 
 function HomeHeroActive({ name }: { name: string }) {
   return (
-    <div className="relative overflow-hidden rounded-[24px] md:rounded-[40px] p-6 md:p-8 lg:p-10 border border-indigo-100 bg-[#F8FAFF] min-h-[300px] md:min-h-[350px] flex items-center w-full shadow-[0_4px_30px_rgba(59,89,218,0.03)] group/hero">
+    <div className="relative overflow-hidden rounded-none p-6 md:p-10 lg:p-12 border border-white/10 bg-gradient-to-r from-[#2B46CC] via-[#4A3AFF] to-[#7C3AED] text-white min-h-[280px] md:min-h-[320px] flex items-center w-full shadow-2xl group/hero">
       {/* Enhanced decorative background elements */}
       <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-indigo-50/70 via-indigo-50/30 to-transparent pointer-events-none transition-all duration-1000 group-hover/hero:opacity-80" />
       <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-indigo-200/20 rounded-full blur-[80px] pointer-events-none" />
       
-      <div className="flex flex-col lg:flex-row gap-8 md:gap-10 lg:gap-12 relative z-10 w-full items-start justify-between">
-        <div className="flex flex-col gap-4 md:gap-6 text-left w-full lg:w-[32%] xl:w-[30%] shrink-0">
+      <div className="flex flex-col lg:flex-row gap-6 md:gap-8 lg:gap-10 relative z-10 w-full items-start justify-between">
+        <div className="flex flex-col gap-3 md:gap-5 text-left w-full lg:w-[35%] xl:w-[32%] shrink-0">
           <div className="space-y-3 md:space-y-4">
-            <h1 className="text-[clamp(26px,3.5vw,40px)] font-medium text-[#1E293B] leading-[1.15] font-inria tracking-tight">
-              Welcome back, <br className="hidden xl:block" /> {name}
+            <h1 className="text-[clamp(32px,5.5vw,72px)] font-black tracking-tighter leading-[0.9] font-inria italic">
+              Welcome back, <br className="hidden xl:block" /> Sherry
             </h1>
-            <div className="inline-flex items-center gap-2 bg-white text-[#3B59DA] px-4 py-1.5 rounded-full border border-indigo-100 font-bold text-[clamp(10px,1vw,12px)] shadow-sm w-fit transition-transform hover:scale-105">
+            <div className="inline-flex items-center gap-2 bg-white/10 text-white px-4 py-1.5 rounded-none border border-white/10 font-bold text-[clamp(10px,1vw,12px)] shadow-sm w-fit transition-transform hover:scale-105">
                 <Lock className="h-3 w-3" />
                 Opening Prep Locked
             </div>
-            <p className="text-slate-500 text-[clamp(12px,1.2vw,14px)] font-medium leading-relaxed max-w-sm">
+            <p className="text-white/70 text-[clamp(12px,1.2vw,14px)] font-medium leading-relaxed max-w-sm">
               Closing Stock Count will be enabled at 7 PM. To change the time, your admin can change it in settings.
             </p>
           </div>
@@ -212,31 +219,35 @@ function HomeHeroActive({ name }: { name: string }) {
           <HeroStatCard label="Total Inventory Items" value="24" icon={Package} accent="#3B59DA" />
           <HeroStatCard label="Critical Stock Items" value="6" icon={AlertCircle} accent="#EF4444" />
           <HeroStatCard label="Low Stock Items" value="6" icon={AlertTriangle} accent="#F59E0B" />
-          <HeroStatCard label="Shift Status" value="Active" icon={Clock} accent="#10B981" />
+          <HeroStatCard label="Shift Status" value="Inactive" icon={Clock} accent="#10B981" />
         </div>
       </div>
     </div>
   );
 }
 
-function HeroStatCard({ label, value, icon: Icon, accent }: { label: string, value: string, icon: any, accent: string }) {
+function HeroStatCard({ label, value, icon: Icon, accent, trend }: { label: string, value: string, icon: any, accent: string, trend?: string }) {
   return (
-    <div className="rounded-[12px] p-5 h-[135px] bg-white border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col gap-4 transition-all hover:shadow-md hover:border-slate-200 group relative overflow-hidden active:scale-[0.98] font-figtree">
-      <div className="flex items-center gap-2.5">
+    <div className="rounded-none p-6 h-[150px] md:h-[160px] bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between transition-all hover:shadow-lg group relative overflow-hidden active:scale-[0.98] font-figtree">
+      <div className="flex items-center gap-3">
         <div 
-          className="h-7 w-7 rounded-[8px] flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${accent}15`, color: accent }}
+          className="h-9 w-9 rounded-none flex items-center justify-center shrink-0"
+          style={{ backgroundColor: `${accent}10`, color: accent }}
         >
-            <Icon className="h-3.5 w-3.5 stroke-[2.5px]" />
+            <Icon className="h-4 w-4 stroke-[2.5px]" />
         </div>
-        <span className="text-[14px] font-medium text-slate-500 tracking-tight">
+        <span className="text-[11px] md:text-[12px] font-bold text-slate-400 uppercase tracking-tight">
           {label}
         </span>
       </div>
-      <div className="mt-1">
-        <p className="text-[30px] font-bold text-[#334155] tracking-tight leading-none group-hover:text-[#1E293B] transition-colors">
+      <div>
+        <p className="text-[clamp(28px,4vw,36px)] font-bold text-[#1E293B] tracking-tighter leading-none mb-1">
           {value}
         </p>
+        <div className="flex items-center gap-1.5 text-[#10B981] font-bold text-[10px]">
+          <ArrowRight className="h-3 w-3 -rotate-45" />
+          <span>{trend || "up by 8% from last week"}</span>
+        </div>
       </div>
     </div>
   );

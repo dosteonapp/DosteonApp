@@ -93,71 +93,49 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="flex flex-col gap-10 bg-white min-h-screen pb-20 w-full max-w-[1700px] mx-auto">
+    <div className="flex flex-col gap-8 bg-white min-h-screen pb-20 w-full max-w-[1850px] mx-auto px-1 md:px-2">
         {/* Responsive Content Area */}
         <div className="space-y-10 w-full mt-4">
             {!isOpen ? (
                 /* Locked Hero - Pre-Open State */
                 <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className="relative overflow-hidden rounded-[40px] p-6 md:p-10 lg:p-12 shadow-2xl bg-[#0F172A] text-white flex flex-col xl:flex-row items-stretch gap-10 min-h-[400px]"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="rounded-none p-6 md:p-10 lg:p-12 border border-white/10 bg-gradient-to-r from-[#2B46CC] via-[#4A3AFF] to-[#7C3AED] text-white space-y-8 md:space-y-10 shadow-2xl min-h-[280px] md:min-h-[320px] flex flex-col justify-center relative overflow-hidden"
                 >
-                    {/* Abstract Background Design */}
-                    <div className="absolute top-0 right-0 w-full h-full pointer-events-none overflow-hidden opacity-40">
-                         <motion.div 
-                            animate={{ 
-                                x: [0, 50, 0],
-                                y: [0, 30, 0],
-                                scale: [1, 1.1, 1]
-                            }}
-                            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                            className="absolute -top-1/4 -right-1/4 w-[600px] h-[600px] bg-[#3B59DA] rounded-full blur-[120px]" 
-                         />
-                    </div>
+                     {/* Decorative Elements matching Unlocked */}
+                     <div className="absolute top-0 right-0 w-2/3 h-full bg-indigo-500/10 rounded-full blur-[120px] -mr-40 -mt-40 pointer-events-none" />
 
-                    <div className="space-y-6 md:space-y-8 max-w-sm shrink-0 flex flex-col justify-center relative z-10 text-center xl:text-left mx-auto xl:mx-0">
-                        <div className="space-y-4 md:space-y-5">
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 }}
-                            >
-                                <h2 className="text-[40px] md:text-[48px] lg:text-[54px] font-black tracking-tight font-inria italic mb-1 leading-none">Opening Prep</h2>
-                                <p className="text-slate-300 text-sm md:text-base font-bold leading-relaxed">
-                                    Do your opening stock count before starting your restaurant operations.
-                                </p>
-                            </motion.div>
-                            
-                            <motion.div 
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.4 }}
-                                className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10 w-fit mx-auto xl:mx-0"
-                            >
-                                <ClipboardList className="h-4 w-4 text-indigo-400" />
-                                <span className="text-[10px] md:text-[11px] font-black uppercase tracking-widest text-white whitespace-nowrap">16 items need counting</span>
+                    {/* Header Lane: Title Left, Buttons Right (Structural Clone of Unlocked) */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                        <div className="space-y-2">
+                             <h2 className="text-[clamp(32px,4vw,48px)] font-black tracking-tighter leading-none font-inria italic">Opening Prep</h2>
+                             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                <div className="inline-flex items-center gap-2 bg-[#EF4444]/20 text-white px-3 py-1 rounded-none border border-[#EF4444]/30 font-bold text-[10px] uppercase tracking-widest shadow-sm">
+                                    <div className="h-3 w-3 bg-[#EF4444] rounded-none flex items-center justify-center text-[8px] font-bold">!</div>
+                                    <span>16 items need counting</span>
+                                </div>
+                                <span className="text-[13px] md:text-[15px] font-medium text-indigo-100/60 font-figtree">Opening stock count required before service</span>
+                             </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
+                                <Button className="h-[48px] md:h-[54px] w-full sm:w-auto px-6 md:px-10 bg-white text-[#3B59DA] hover:bg-slate-50 rounded-none font-black gap-3 text-sm md:text-base border-none shadow-xl shadow-indigo-900/10 group font-figtree" asChild>
+                                    <Link href="/dashboard/inventory/daily-stock-count">
+                                        Count Daily Stock <ArrowIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                    </Link>
+                                </Button>
                             </motion.div>
                         </div>
-                        
-                        <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                        >
-                            <Button className="h-14 px-8 bg-white text-[#3B59DA] hover:bg-slate-50 rounded-2xl font-black gap-3 text-base shadow-xl transition-all border-none group w-full sm:w-fit" asChild>
-                                <Link href="/dashboard/inventory/daily-stock-count">
-                                    Count Daily Stock <ArrowIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                                </Link>
-                            </Button>
-                        </motion.div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 relative z-10">
-                        <HeroStockCard label="Total Inventory" value="100" icon={PackageIcon} accent="#4F46E5" delay={0.3} />
-                        <HeroStockCard label="Healthy Stock" value="56" icon={SuccessIcon} accent="#10B981" delay={0.4} />
-                        <HeroStockCard label="Low Stock" value="23" icon={WarningIcon} accent="#F59E0B" delay={0.5} />
-                        <HeroStockCard label="Critical" value="4" icon={AlertIcon} accent="#EF4444" delay={0.6} />
+                    {/* Stat Grid (Structural Clone of Unlocked) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+                        <InventoryStatCard label="Total Inventory" value="100" icon={PackageIcon} accent="#3B59DA" />
+                        <InventoryStatCard label="Healthy Stock" value="56" icon={SuccessIcon} accent="#10B981" />
+                        <InventoryStatCard label="Low Stock" value="23" icon={WarningIcon} accent="#F59E0B" />
+                        <InventoryStatCard label="Critical" value="4" icon={AlertIcon} accent="#EF4444" />
                     </div>
                 </motion.div>
             ) : (
@@ -166,6 +144,8 @@ export default function InventoryPage() {
             )}
 
             {isOpen && <RunningLowPanel items={runningLowItems} />}
+            
+            <InventoryTableSection items={inventoryItems} isLocked={!isOpen} />
         </div>
 
         {/* Global Action - See All Items at Bottom Right */}
@@ -190,8 +170,93 @@ function InventoryTableView({ items, isLocked, isLoading }: { items: InventoryIt
     return null;
 }
 
-function InventoryHeroClosed() {
-    return null; // Integrated into main render
+function InventoryTableSection({ items, isLocked }: { items: InventoryItem[], isLocked: boolean }) {
+    return (
+        <div className="relative rounded-none border border-slate-100 bg-white overflow-hidden shadow-sm">
+            <div className={cn("p-6 space-y-6 transition-all duration-500", isLocked && "blur-md pointer-events-none")}>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="relative w-full max-w-sm">
+                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input placeholder="Search items..." className="pl-10 h-11 border-slate-200 rounded-none bg-slate-50/50" />
+                    </div>
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <Select defaultValue="all">
+                            <SelectTrigger className="h-11 border-slate-200 rounded-none w-full sm:w-40">
+                                <SelectValue placeholder="All Categories" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Categories</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select defaultValue="all">
+                            <SelectTrigger className="h-11 border-slate-200 rounded-none w-full sm:w-40">
+                                <SelectValue placeholder="All Levels" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Levels</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-slate-100 bg-slate-50/50 hover:bg-slate-50/50">
+                                <TableHead className="font-bold text-slate-500">Item Name</TableHead>
+                                <TableHead className="font-bold text-slate-500">Category</TableHead>
+                                <TableHead className="font-bold text-slate-500">Brand</TableHead>
+                                <TableHead className="font-bold text-slate-500">Stock Unit</TableHead>
+                                <TableHead className="font-bold text-slate-500">Current Stock</TableHead>
+                                <TableHead className="font-bold text-slate-500">Min. Level</TableHead>
+                                <TableHead className="font-bold text-slate-500">Status</TableHead>
+                                <TableHead className="font-bold text-slate-500 text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {items.slice(0, 8).map((item) => (
+                                <TableRow key={item.id} className="border-slate-50 hover:bg-slate-50/30 transition-colors">
+                                    <TableCell className="font-bold text-[#1E293B]">{item.name}</TableCell>
+                                    <TableCell className="text-slate-500">Produce</TableCell>
+                                    <TableCell className="text-slate-500">Best Farm</TableCell>
+                                    <TableCell className="text-slate-500">kg</TableCell>
+                                    <TableCell className="font-bold text-slate-700">120</TableCell>
+                                    <TableCell className="text-slate-500">50</TableCell>
+                                    <TableCell>
+                                        <Badge className="bg-emerald-50 text-emerald-600 border-none rounded-none font-bold text-[10px] px-2 py-0.5 uppercase tracking-tight">Healthy</Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-none hover:bg-indigo-50 text-indigo-600">
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+
+            {isLocked && (
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center text-center p-6 sm:p-10 pointer-events-auto">
+                    <div className="mb-6 flex flex-col items-center">
+                        <div className="h-16 w-16 bg-[#E2E8F0] rounded-none flex items-center justify-center mb-6 shadow-sm">
+                            <LockIcon className="h-8 w-8 text-slate-600" />
+                        </div>
+                        <h3 className="text-2xl md:text-3xl font-bold text-[#1E293B] tracking-tight mb-3">Kitchen Service is Locked</h3>
+                        <p className="text-slate-500 text-sm md:text-base max-w-md mx-auto leading-relaxed mb-8">
+                            The Kitchen Service workflow is not yet available. Please do your daily stock count before you proceed to Kitchen Service.
+                        </p>
+                        <Button className="h-12 px-10 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-none font-bold gap-3 shadow-[0_10px_25px_rgba(59,89,218,0.2)]" asChild>
+                            <Link href="/dashboard/inventory/daily-stock-count">
+                                Count Daily Stock <ArrowIcon className="h-5 w-5" />
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }
 
 function InventoryHeaderUnlocked() {
@@ -199,7 +264,7 @@ function InventoryHeaderUnlocked() {
         <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-[24px] p-6 md:p-8 lg:p-10 border border-[#3B59DA]/10 bg-white space-y-8 md:space-y-10 shadow-sm"
+            className="rounded-none p-6 md:p-10 lg:p-12 border border-white/10 bg-gradient-to-r from-[#2B46CC] via-[#4A3AFF] to-[#7C3AED] text-white space-y-8 md:space-y-10 shadow-2xl min-h-[280px] md:min-h-[320px] flex flex-col justify-center"
         >
             {/* Header Lane: Title Left, Buttons Right */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -209,10 +274,10 @@ function InventoryHeaderUnlocked() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    <Button variant="outline" className="h-[48px] md:h-[54px] flex-1 sm:flex-none px-4 md:px-6 lg:px-8 rounded-xl md:rounded-[18px] border-[#3B59DA]/20 bg-white text-[#3B59DA] hover:bg-slate-50 font-bold gap-2 transition-all shadow-sm text-xs md:text-base">
+                    <Button variant="outline" className="h-[48px] md:h-[54px] flex-1 sm:flex-none px-4 md:px-6 lg:px-8 rounded-none border-white/20 bg-white/10 text-white hover:bg-white/20 font-bold gap-2 transition-all shadow-sm text-xs md:text-base">
                          <RefreshIcon className="h-4 w-4 md:h-5 md:w-5" /> Update Inventory
                     </Button>
-                    <Button className="h-[48px] md:h-[54px] flex-1 sm:flex-none px-4 md:px-6 lg:px-8 rounded-xl md:rounded-[18px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold gap-2 shadow-lg shadow-indigo-100 transition-all border-none text-xs md:text-base" asChild>
+                    <Button className="h-[48px] md:h-[54px] flex-1 sm:flex-none px-4 md:px-6 lg:px-8 rounded-none bg-white text-[#3B59DA] hover:bg-indigo-50 font-bold gap-2 shadow-lg transition-all border-none text-xs md:text-base" asChild>
                         <Link href="/dashboard/inventory/new">
                             <PlusIcon className="h-4 w-4 md:h-5 md:w-5" /> Add New Product
                         </Link>
@@ -223,8 +288,8 @@ function InventoryHeaderUnlocked() {
             {/* Content Lane: Description Left, Cards Right */}
             <div className="flex flex-col xl:flex-row gap-8 xl:gap-10 items-start xl:items-center">
                 <div className="w-full xl:w-[260px] shrink-0">
-                    <p className="text-[14px] md:text-[15px] font-medium text-slate-500 leading-relaxed italic border-l-2 border-indigo-100 pl-4">
-                        Closing Stock Count will be enabled at <span className="text-slate-900 font-extrabold whitespace-nowrap">7 PM</span>. Settings for reset times can be adjusted by admins in Store Settings.
+                    <p className="text-white/70 text-[14px] md:text-[15px] font-medium leading-relaxed italic border-l-2 border-white/20 pl-4">
+                        Closing Stock Count will be enabled at <span className="text-white font-extrabold whitespace-nowrap">7 PM</span>. Settings for reset times can be adjusted by admins in Store Settings.
                     </p>
                 </div>
                 
@@ -292,24 +357,24 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
 
 function InventoryStatCard({ label, value, icon: Icon, accent }: { label: string, value: string, icon: any, accent: string }) {
     return (
-        <div className="bg-white rounded-[16px] md:rounded-[20px] p-5 md:p-6 flex flex-col justify-between border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] hover:shadow-md transition-all h-[150px] md:h-[180px]">
-            <div className="space-y-4 lg:space-y-5">
-                <div className="flex items-start lg:items-center gap-3">
-                    <div 
-                        className="h-8 w-8 lg:h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 lg:mt-0"
-                        style={{ backgroundColor: `${accent}10`, color: accent }}
-                    >
-                        <Icon className="h-4 w-4 lg:h-5 text-current" />
-                    </div>
-                    <span className="text-[12px] lg:text-[14px] font-bold text-slate-600 tracking-tight leading-tight">
-                        {label}
-                    </span>
+        <div className="bg-white rounded-none p-6 flex flex-col justify-between border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-lg transition-all h-[150px] md:h-[180px] group relative overflow-hidden active:scale-[0.98] font-figtree">
+            <div className="flex items-center gap-3">
+                <div 
+                    className="h-9 w-9 rounded-none flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${accent}10`, color: accent }}
+                >
+                    <Icon className="h-4 w-4 stroke-[2.5px]" />
                 </div>
-                <p className="text-[26px] md:text-[36px] font-bold tracking-tight text-[#1E293B] leading-none">{value}</p>
+                <span className="text-[12px] md:text-[14px] font-bold text-slate-500 tracking-tight leading-tight">
+                    {label}
+                </span>
             </div>
-            <div className="flex items-center gap-1.5 text-[#10B981] font-bold text-[10px] md:text-[12px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                <TrendUpIcon className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0" />
-                <span className="truncate">up by 8% from last week</span>
+            <div>
+                <p className="text-[clamp(28px,4vw,36px)] font-bold tracking-tight text-[#1E293B] leading-none mb-3">{value}</p>
+                <div className="flex items-center gap-1.5 text-[#10B981] font-bold text-[10px] md:text-[12px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                    <TrendUpIcon className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0" />
+                    <span className="truncate">up by 8% from last week</span>
+                </div>
             </div>
         </div>
     );
@@ -322,7 +387,7 @@ function HeroStockCard({ label, value, icon: Icon, accent, delay = 0 }: { label:
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay, duration: 0.5 }}
             whileHover={{ y: -5 }}
-            className="bg-white/10 backdrop-blur-2xl rounded-2xl md:rounded-3xl p-5 md:p-6 h-full border border-white/10 flex flex-col justify-between group transition-all hover:bg-white/15 hover:border-white/20 min-h-[140px]"
+            className="bg-white/10 backdrop-blur-2xl rounded-none p-5 md:p-6 h-full border border-white/10 flex flex-col justify-between group transition-all hover:bg-white/15 hover:border-white/20 min-h-[140px]"
         >
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -362,7 +427,7 @@ function InventoryLockedTableOverlay() {
                 initial={{ opacity: 0, scale: 0.9, y: 30 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="bg-white/80 backdrop-blur-3xl p-8 md:p-10 lg:p-14 rounded-[40px] md:rounded-[56px] border border-white/40 shadow-[0_40px_100px_rgba(0,0,0,0.08),0_10px_30px_rgba(0,0,0,0.04)] flex flex-col items-center text-center space-y-6 md:space-y-8 max-w-lg mx-auto relative z-10"
+                className="bg-gradient-to-br from-[#1E3A8A] via-[#2D46B2] to-[#3B59DA] backdrop-blur-3xl p-8 md:p-14 lg:p-20 rounded-none border border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.2)] flex flex-col items-center text-center space-y-6 md:space-y-10 w-full max-w-2xl mx-auto relative z-10 text-white"
             >
                 <div className="relative">
                     <motion.div 

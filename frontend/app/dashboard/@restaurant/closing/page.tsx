@@ -172,7 +172,7 @@ function ClosingLockedUI() {
                 </div>
 
                 <Button className="w-full h-14 md:h-16 rounded-xl md:rounded-2xl bg-[#4F46E5] hover:bg-[#4338CA] text-white font-black text-lg md:text-xl shadow-xl shadow-indigo-100 transition-all font-outfit" asChild>
-                    <Link href="/dashboard/home">Return to Home</Link>
+                    <Link href="/dashboard">Return to Home</Link>
                 </Button>
             </Card>
         </div>

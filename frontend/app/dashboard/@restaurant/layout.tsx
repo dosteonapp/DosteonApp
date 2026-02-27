@@ -31,7 +31,7 @@ export default function RestaurantLayout({
           </Suspense>
           <RestaurantDayLifecycleOverlay />
           <RestaurantDayRouteGuard>
-            <div className="p-4 md:p-6 lg:p-8">
+            <div className="p-1 md:p-2 lg:p-3">
                 {children}
             </div>
           </RestaurantDayRouteGuard>
