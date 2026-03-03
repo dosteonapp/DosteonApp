@@ -30,14 +30,16 @@ import { isModuleLocked, shouldBlockModuleAccess } from "@/lib/dayLifecycle/rest
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
+import { useSidebar } from "@/context/SidebarContext";
+
 export function RestaurantSidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const { isSidebarOpen, isSidebarCollapsed, toggleCollapse } = useSidebar();
   const { status, isUserUnlocked } = useRestaurantDayLifecycle();
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--sidebar-width', collapsed ? '90px' : '300px');
-  }, [collapsed]);
+    document.documentElement.style.setProperty('--sidebar-width', isSidebarCollapsed ? '90px' : '300px');
+  }, [isSidebarCollapsed]);
 
   const operationsRoutes = [
     {
@@ -78,44 +80,49 @@ export function RestaurantSidebar() {
   return (
     <div
       className={cn(
-        "flex h-full flex-col border-r border-slate-100 bg-white transition-all duration-500 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-50",
-        collapsed ? "w-[90px]" : "w-[300px]"
+        "h-screen flex-col border-r border-slate-100 bg-white transition-all duration-500 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-[120] flex",
+        isSidebarCollapsed ? "w-[90px]" : "w-[300px]",
+        "fixed inset-y-0 left-0 lg:translate-x-0 transition-transform",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}
     >
-      <div className="flex h-[101px] items-center justify-between px-10 border-b border-slate-50 relative shrink-0">
-        {!collapsed && (
+      <div className="flex h-[100px] items-center justify-between px-6 border-b border-slate-50 relative shrink-0 transition-all duration-500">
+        {!isSidebarCollapsed ? (
           <Link
             href="/dashboard"
-            className="flex items-center group transition-transform active:scale-95"
+            className="flex items-center group transition-all duration-500 active:scale-95 px-4"
           >
             <img 
               src="/images/logo-full.png" 
               alt="Dosteon" 
-              className="h-10 w-auto group-hover:drop-shadow-sm transition-all"
+              className="h-9 w-auto group-hover:drop-shadow-sm transition-all"
             />
           </Link>
-        )}
-        {collapsed && (
-          <Link href="/dashboard" className="mx-auto group transition-transform active:scale-95">
-            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center border border-indigo-100/50 overflow-hidden">
-                <img 
-                    src="/images/logo-full.png" 
-                    alt="Dosteon" 
-                    className="h-8 min-w-[80px] object-left object-cover ml-4"
-                />
-            </div>
-          </Link>
+        ) : (
+          <div className="flex-1 flex justify-center py-2">
+             <Link href="/dashboard" className="group transition-all duration-500 active:scale-95">
+                <div className="w-14 h-14 bg-gradient-to-br from-indigo-50/80 to-white rounded-2xl flex items-center justify-center border border-indigo-100/50 overflow-hidden shadow-sm group-hover:shadow-md transition-all">
+                    <div className="w-10 h-10 relative overflow-hidden flex items-center justify-center">
+                        <img 
+                            src="/images/logo-full.png" 
+                            alt="D" 
+                            className="absolute left-0 h-10 w-auto max-w-none -translate-x-1.5 object-cover"
+                        />
+                    </div>
+                </div>
+              </Link>
+          </div>
         )}
         <Button
           variant="ghost"
           size="icon"
           className={cn(
-            "h-8 w-8 rounded-xl border border-slate-100 bg-white shadow-sm absolute -right-4 top-[38px] z-50 transition-all hover:shadow-md hover:border-indigo-100 active:scale-90", 
-            collapsed && "static mt-2"
+            "h-8 w-8 rounded-xl border border-slate-100 bg-white shadow-sm absolute -right-4 top-[36px] z-50 transition-all hover:shadow-md hover:border-indigo-100 active:scale-90 hidden lg:flex", 
+            isSidebarCollapsed && "static mt-0"
           )}
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapse}
         >
-          {collapsed ? (
+          {isSidebarCollapsed ? (
             <ChevronRight className="h-4 w-4 text-[#3B59DA] stroke-[3px]" />
           ) : (
             <ChevronLeft className="h-4 w-4 text-slate-400 stroke-[3px]" />
@@ -123,83 +130,82 @@ export function RestaurantSidebar() {
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar py-8">
-        <nav className="flex flex-col gap-10 px-6">
-          {/* Operations Section */}
-          <div className="space-y-6">
-            {!collapsed && (
-              <h3 className="px-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400/80 font-figtree">
-                Operations
-              </h3>
-            )}
-            <div className="flex flex-col gap-2">
-                {operationsRoutes.map((route) => (
-                <SidebarLink 
-                    key={route.href} 
-                    route={route} 
-                    pathname={pathname} 
-                    collapsed={collapsed} 
-                    isLocked={status ? (isModuleLocked(route.href, status.state) && !isUserUnlocked) : false}
-                    shouldBlock={status ? (shouldBlockModuleAccess(route.href, status.state) && !isUserUnlocked) : false}
-                />
-                ))}
-            </div>
-          </div>
-
-          {/* Systems Section */}
-          <div className="space-y-6">
-            {!collapsed && (
-              <h3 className="px-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400/80 font-figtree">
-                Systems
-              </h3>
-            )}
-            <div className="flex flex-col gap-2">
-                {systemsRoutes.map((route) => (
-                <SidebarLink 
-                    key={route.href} 
-                    route={route} 
-                    pathname={pathname} 
-                    collapsed={collapsed} 
-                    isLocked={status ? isModuleLocked(route.href, status.state) : false}
-                    shouldBlock={status ? shouldBlockModuleAccess(route.href, status.state) : false}
-                />
-                ))}
-            </div>
-          </div>
-        </nav>
-      </div>
-
-      <div className="mt-auto p-6 space-y-8 border-t border-slate-50">
-        {!collapsed && (
-          <div className="flex items-center gap-4 px-2 group cursor-pointer transition-all hover:translate-x-1">
-            <div className="h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-                <img 
-                    src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=100" 
-                    alt="User" 
-                    className="object-cover h-full w-full"
-                />
-            </div>
-            <div className="flex flex-col min-w-0">
-                <span className="text-[15px] font-semibold text-[#1E293B] truncate tracking-tight">Sherry Harper</span>
-                <span className="text-[11px] font-semibold text-slate-400 capitalize flex items-center gap-1.5">
-                    Admin Manager
-                </span>
-            </div>
-          </div>
-        )}
-        <LogoutButton
-          variant="outline"
-          redirectPath="/auth/restaurant/signin"
-          className={cn(
-            "h-14 rounded-[20px] transition-all font-semibold text-sm group border-2",
-            collapsed 
-                ? "w-full justify-center px-0 border-transparent text-slate-400 hover:text-red-500 hover:bg-red-50" 
-                : "w-full border-red-200 bg-white text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 justify-center shadow-lg shadow-red-500/5 transition-all duration-300"
+      <div className="flex-1 flex flex-col justify-between overflow-y-auto no-scrollbar py-10 px-6">
+        {/* Tier 1: Operations Section */}
+        <div className="space-y-4">
+          {!isSidebarCollapsed && (
+            <h3 className="px-5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-4 font-figtree">
+              Operations
+            </h3>
           )}
-        >
-          <LogOut className={cn("h-5 w-5 transition-transform", !collapsed && "mr-3 group-hover:-translate-x-1")} />
-          {!collapsed && "Log Out"}
-        </LogoutButton>
+          <div className="flex flex-col gap-2">
+              {operationsRoutes.map((route) => (
+              <SidebarLink 
+                  key={route.href} 
+                  route={route} 
+                  pathname={pathname} 
+                  collapsed={isSidebarCollapsed} 
+                  isLocked={status ? (isModuleLocked(route.href, status.state) && !isUserUnlocked) : false}
+                  shouldBlock={status ? (shouldBlockModuleAccess(route.href, status.state) && !isUserUnlocked) : false}
+              />
+              ))}
+          </div>
+        </div>
+
+        {/* Tier 2: Administrative Section (Space shared equally) */}
+        <div className="space-y-4">
+          {!isSidebarCollapsed && (
+            <h3 className="px-5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300 font-figtree">
+              Systems
+            </h3>
+          )}
+          <div className="flex flex-col gap-2">
+              {systemsRoutes.map((route) => (
+              <SidebarLink 
+                  key={route.href} 
+                  route={route} 
+                  pathname={pathname} 
+                  collapsed={isSidebarCollapsed} 
+                  isLocked={status ? isModuleLocked(route.href, status.state) : false}
+                  shouldBlock={status ? shouldBlockModuleAccess(route.href, status.state) : false}
+              />
+              ))}
+          </div>
+        </div>
+
+        {/* Tier 3: User Section */}
+        <div className="space-y-8 pt-6 border-t border-slate-50">
+          {!isSidebarCollapsed && (
+            <div className="flex items-center gap-4 px-2 group cursor-pointer transition-all hover:translate-x-1">
+              <div className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+                  <img 
+                      src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=100" 
+                      alt="User" 
+                      className="object-cover h-full w-full"
+                  />
+              </div>
+              <div className="flex flex-col min-w-0">
+                  <span className="text-[14px] font-bold text-[#1E293B] truncate tracking-tight">Sherry Harper</span>
+                  <span className="text-[11px] font-bold text-slate-400 capitalize flex items-center gap-1.5">
+                      Admin Manager
+                  </span>
+              </div>
+            </div>
+          )}
+          <LogoutButton
+            variant="outline"
+            redirectPath="/auth/restaurant/signin"
+            className={cn(
+              "h-14 rounded-[20px] transition-all font-bold text-sm group border-2",
+              isSidebarCollapsed 
+                  ? "w-full justify-center px-0 border-transparent text-slate-400 hover:text-red-500 hover:bg-red-50" 
+                  : "w-full border-red-100 bg-white text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 justify-center shadow-lg shadow-red-500/5 transition-all duration-300"
+            )}
+          >
+            <LogOut className={cn("h-5 w-5 transition-transform", !isSidebarCollapsed && "mr-3 group-hover:-translate-x-1")} />
+            {!isSidebarCollapsed && "Log Out"}
+          </LogoutButton>
+        </div>
       </div>
     </div>
   );

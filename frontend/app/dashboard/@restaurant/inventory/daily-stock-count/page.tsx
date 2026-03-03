@@ -4,46 +4,21 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
-  ChevronLeft, 
-  Search as SearchIcon,
-  RotateCcw,
   Package,
   ArrowRight,
-  Lock,
   CheckCircle2,
   X,
-  TrendingUp,
-  History,
-  Info,
-  ChevronRight,
-  ArrowLeft
+  ArrowLeft,
+  Search as SearchIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import { OpeningStockItem } from "@/mocks/openingStock.mock";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +27,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReviewOpeningChecklist } from "@/components/day/ReviewOpeningChecklist";
+import { 
+    UnifiedHeroSurface, 
+    UnifiedStatCard, 
+    AppContainer, 
+    InriaHeading, 
+    FigtreeText,
+    UnifiedListRow,
+    UnifiedModal,
+    PrimarySurfaceCard
+} from "@/components/ui/dosteon-ui";
 
 export default function DailyStockCountPage() {
   const router = useRouter();
@@ -88,7 +73,6 @@ export default function DailyStockCountPage() {
         return next;
     });
     
-    // Update the item in the list as well
     setItems(current => current.map(item => 
         item.id === id ? { ...item, isConfirmed: !confirmedIds.has(id) } : item
     ));
@@ -134,243 +118,126 @@ export default function DailyStockCountPage() {
   if (isLoading) return <OpeningSkeleton />;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-figtree pb-48">
-      {/* Dynamic Background */}
-      <div className="fixed inset-0 pointer-events-none opacity-30">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-200/20 rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-200/10 rounded-full blur-[100px]" />
-      </div>
-
+    <AppContainer className="pb-48">
+      {/* Main Content Container */}
       <div className={cn(
-        "relative flex flex-col gap-8 px-6 py-6 transition-all duration-500 max-w-[1600px] mx-auto",
-        showReview && "blur-xl scale-[0.98] pointer-events-none"
+        "relative flex flex-col gap-10 px-0 transition-all duration-500 w-full",
+        showReview && "blur-2xl scale-[0.98] pointer-events-none"
       )}>
         {/* Navigation */}
         <div className="flex items-center">
             <Button 
-                variant="ghost" 
-                className="h-10 px-4 rounded-xl font-bold bg-white border border-slate-200 shadow-sm transition-all hover:bg-slate-50 text-slate-600 gap-2"
+                variant="outline" 
+                className="h-12 px-6 rounded-xl font-bold border-slate-200 text-[#1E293B] hover:bg-slate-50 transition-all gap-3 shadow-sm font-figtree"
                 onClick={() => router.back()}
             >
-                <ArrowLeft className="h-4 w-4" /> Back
+                <ArrowLeft className="h-5 w-5" /> Back
             </Button>
         </div>
 
         {/* Hero Progress Header */}
-        <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white border border-[#EEF2FF] rounded-[24px] p-8 shadow-[0_8px_30px_rgb(238,242,255,0.4)] flex flex-col md:flex-row items-center gap-10 relative overflow-hidden"
+        <UnifiedHeroSurface
+            title="Daily Stock Count"
+            subtitle="Check each product and confirm the quantity in stock to unlock Kitchen Service dashboard."
+            isLocked={true}
         >
-            <CircularProgress percentage={progressPercent} count={progressCount} total={totalCount} />
-            
-            <div className="flex-1 space-y-4">
-                <div className="space-y-1">
-                    <h1 className="text-2xl md:text-[28px] font-semibold text-[#1E293B] tracking-tight">Daily Stock Count</h1>
-                    <p className="text-slate-400 font-medium text-sm md:text-base">Check each product and confirm the quantity in stock</p>
-                </div>
-                <div className="flex flex-col gap-1">
-                    <h3 className="text-[17px] font-semibold text-[#1E293B]">Progress: {progressCount} of {totalCount} Items Counted</h3>
-                    <p className="text-slate-400 font-medium text-[13px]">Finish stock counts to unlock Kitchen Service dashboard.</p>
+            <div className="flex items-center gap-14 col-span-2">
+                <CircularProgress percentage={progressPercent} />
+                <div className="space-y-4">
+                    <InriaHeading className="text-[34px] font-bold text-white tracking-tight leading-loose">Opening Checklist Progress</InriaHeading>
+                    <FigtreeText className="text-white/60 font-semibold text-[17px] leading-relaxed max-w-sm">Complete all counts to verify inventory levels and start service operations.</FigtreeText>
                 </div>
             </div>
-        </motion.div>
 
-        {/* Toolbar */}
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 px-0">
-            <div className="relative w-full max-w-[340px]">
-                <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input 
-                    placeholder="Search items..." 
-                    className="pl-11 h-12 border-slate-200 rounded-lg bg-white focus:ring-slate-100 placeholder:text-slate-400 text-sm"
-                />
-            </div>
-            <div className="flex items-center gap-4 w-full md:w-auto">
-                <Select defaultValue="all">
-                    <SelectTrigger className="h-12 border-slate-200 rounded-lg w-full md:w-[180px] bg-white font-medium text-slate-600 text-[13px] shadow-sm">
-                        <SelectValue placeholder="All Categories" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-200">
-                        <SelectItem value="all">All Categories</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Select defaultValue="all">
-                    <SelectTrigger className="h-12 border-slate-200 rounded-lg w-full md:w-[180px] bg-white font-medium text-slate-600 text-[13px] shadow-sm">
-                        <SelectValue placeholder="All Levels" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-200">
-                        <SelectItem value="all">All Levels</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
+            <UnifiedStatCard 
+              label="Completed" 
+              value={String(progressCount)} 
+              subtext={`of ${totalCount} items`} 
+              icon={CheckCircle2}
+              variant="neutral"
+            />
+            <UnifiedStatCard 
+              label="Remaining" 
+              value={String(totalCount - progressCount)} 
+              subtext="Needs counting" 
+              icon={Package}
+              variant="neutral"
+            />
+        </UnifiedHeroSurface>
 
-        {/* Items Table Section */}
-        <div className="bg-white border border-slate-100 rounded-[28px] overflow-hidden shadow-sm">
-            <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-50">
-                <div className="flex items-center gap-4">
-                    <div className="h-6 w-6 rounded-md border-2 border-slate-200 flex items-center justify-center cursor-pointer hover:border-indigo-400 transition-all">
-                        <div className="h-3 w-3 rounded-sm bg-indigo-500 opacity-0" />
-                    </div>
-                    <span className="text-sm font-bold text-slate-500">Check All</span>
+        {/* Items List */}
+        <PrimarySurfaceCard className="p-10 md:p-14 space-y-12">
+            {/* Toolbar inside surface */}
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-10">
+                <div className="relative w-full max-w-[500px]">
+                    <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-400" />
+                    <Input 
+                        placeholder="Filter items by name or SKU..." 
+                        className="pl-16 h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] focus:ring-slate-100 placeholder:text-slate-400 font-bold text-[17px] font-figtree shadow-inner"
+                    />
                 </div>
-                
-                <div className="flex flex-col lg:flex-row items-center gap-4 flex-1 justify-end">
-                    <div className="relative w-full max-w-[280px]">
-                        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input 
-                            placeholder="Search items..." 
-                            className="pl-11 h-11 border-slate-100 rounded-xl bg-[#F8FAFC] focus:ring-slate-100 placeholder:text-slate-400 text-xs font-medium"
-                        />
-                    </div>
+                <div className="flex flex-wrap items-center gap-6">
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-11 border-slate-100 rounded-xl w-full md:w-[160px] bg-[#F8FAFC] font-bold text-slate-500 text-xs shadow-none">
-                            <SelectValue placeholder="Category" />
+                        <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl w-full sm:w-[240px] bg-white font-black text-slate-500 text-sm shadow-md px-8">
+                            <SelectValue placeholder="Categories" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border-slate-100">
-                            <SelectItem value="all">Category: All</SelectItem>
-                        </SelectContent>
                     </Select>
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-11 border-slate-100 rounded-xl w-full md:w-[140px] bg-[#F8FAFC] font-bold text-slate-500 text-xs shadow-none">
-                            <SelectValue placeholder="Level" />
+                        <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl w-full sm:w-[240px] bg-white font-black text-slate-500 text-sm shadow-md px-8">
+                            <SelectValue placeholder="Stock Level" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border-slate-100">
-                            <SelectItem value="all">Level: All</SelectItem>
-                        </SelectContent>
                     </Select>
                 </div>
             </div>
 
-            <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-slate-50 bg-[#FBFDFF] hover:bg-[#FBFDFF]">
-                            <TableHead className="py-5 pl-8 w-[40px]"></TableHead>
-                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest py-5">Item Name</TableHead>
-                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Measurement Unit</TableHead>
-                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Current Stock</TableHead>
-                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Status</TableHead>
-                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Updated On</TableHead>
-                            <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest text-right pr-8">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {items.map((item, idx) => (
-                            <TableRow 
-                                key={item.id} 
-                                className={cn(
-                                    "border-slate-50 transition-colors group",
-                                    confirmedIds.has(item.id) ? "bg-emerald-50/20" : "hover:bg-slate-50/50"
-                                )}
-                            >
-                                <TableCell className="pl-8">
-                                    <div 
-                                        className={cn(
-                                            "h-5 w-5 rounded-md border-2 transition-all flex items-center justify-center cursor-pointer",
-                                            confirmedIds.has(item.id) 
-                                                ? "bg-[#3B59DA] border-[#3B59DA]" 
-                                                : "border-slate-200 hover:border-indigo-400 bg-white"
-                                        )}
-                                        onClick={() => handleConfirm(item.id)}
-                                    >
-                                        <CheckCircle2 className={cn("h-3 w-3 text-white transition-opacity", confirmedIds.has(item.id) ? "opacity-100" : "opacity-0")} />
-                                    </div>
-                                </TableCell>
-                                <TableCell className="py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-300">
-                                            <Package className="h-5 w-5" />
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-[#1E293B] text-sm">{item.name}</span>
-                                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{item.id}</span>
-                                        </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-slate-500 font-bold text-xs uppercase">{item.unit}</TableCell>
-                                <TableCell className="font-bold text-[#1E293B] text-sm">
-                                    {confirmedIds.has(item.id) ? item.totalOpening : (item.todayOpening ?? '--')}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge 
-                                        className={cn(
-                                            "border-none rounded-full font-bold text-[9px] px-2.5 py-0.5 uppercase tracking-tight",
-                                            confirmedIds.has(item.id) ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400"
-                                        )}
-                                    >
-                                        {confirmedIds.has(item.id) ? "Confirmed" : "Incomplete"}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-slate-400 text-[11px] font-bold">Oct 06, 2025; 14:32</TableCell>
-                                <TableCell className="text-right pr-8">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="h-8 rounded-lg font-bold text-xs text-indigo-600 hover:bg-indigo-50 px-3"
-                                            onClick={() => handleEditAmount(item)}
-                                        >
-                                            Edit
-                                        </Button>
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg hover:bg-slate-50 text-slate-300 group-hover:text-[#3B59DA] transition-all">
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+            <div className="space-y-4">
+                {items.map((item, idx) => (
+                    <StockRow 
+                        key={item.id} 
+                        item={item} 
+                        isConfirmed={confirmedIds.has(item.id)}
+                        onConfirm={() => handleConfirm(item.id)}
+                        onEdit={() => handleEditAmount(item)}
+                        idx={idx}
+                    />
+                ))}
             </div>
-        </div>
+        </PrimarySurfaceCard>
       </div>
 
       {/* Sticky Bottom Bar */}
       <div 
-        className="fixed bottom-0 right-0 z-50 p-6 md:p-8 bg-white/80 backdrop-blur-xl border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] transition-[left] duration-300"
+        className="fixed bottom-0 right-0 z-[60] p-10 bg-white/95 backdrop-blur-xl border-t border-slate-100 shadow-[0_-20px_60px_rgba(0,0,0,0.05)] transition-[left] duration-500"
         style={{ left: 'var(--sidebar-width)' }}
       >
           <motion.div 
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6"
+            className="max-w-[1600px] mx-auto flex items-center justify-end gap-6"
           >
-              <div className="flex items-center gap-6">
-                <Button 
-                    variant="ghost" 
-                    className="h-14 px-8 rounded-2xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 font-bold transition-all gap-2"
-                    onClick={handleSaveDraft}
-                >
-                    <RotateCcw className="h-5 w-5" /> Save a draft
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-8 w-full md:w-auto">
-                <div className="hidden xl:block text-right">
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">Finalization Status</p>
-                    <p className="text-[#1E293B] font-bold text-xl tracking-tight leading-none">{progressPercent}% Progress Counted</p>
-                </div>
-                <Button 
-                    className={cn(
-                        "h-16 px-12 rounded-2xl font-bold gap-3 transition-all border-none text-lg shadow-xl w-full md:w-auto",
-                        progressPercent === 100 
-                            ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-900/20" 
-                            : "bg-indigo-600/90 hover:bg-indigo-700 text-white/90"
-                    )}
-                    onClick={handleComplete}
-                >
-                    Review & Complete Opening
-                    <ArrowRight className="h-5 w-5" />
-                </Button>
-              </div>
+              <Button 
+                  variant="outline" 
+                  className="h-16 px-12 rounded-2xl border-slate-200 text-slate-500 hover:text-[#3B59DA] font-bold transition-all text-[17px] shadow-md font-figtree"
+                  onClick={handleSaveDraft}
+              >
+                  Save a draft
+              </Button>
+              <Button 
+                  className={cn(
+                      "h-16 px-14 rounded-2xl font-black gap-4 transition-all border-none text-[18px] shadow-2xl flex items-center bg-[#3B59DA] hover:bg-[#2D46B2] text-white"
+                  )}
+                  onClick={handleComplete}
+              >
+                  Review & Complete Opening
+                  <ArrowRight className="h-6 w-6" />
+              </Button>
           </motion.div>
       </div>
 
-      {/* Modals */}
+      {/* Overlay Modals */}
       <AnimatePresence>
         {showReview && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4">
                 <ReviewOpeningChecklist 
                     onBack={() => setShowReview(false)} 
                     onConfirm={() => router.push("/dashboard")}
@@ -385,7 +252,7 @@ export default function DailyStockCountPage() {
         item={editingItem} 
         onUpdate={handleUpdateItem}
       />
-    </div>
+    </AppContainer>
   );
 }
 
@@ -397,70 +264,68 @@ function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
     idx: number 
 }) {
     return (
-        <motion.div 
-            layout
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(idx * 0.05, 0.3) }}
+        <UnifiedListRow 
             className={cn(
-                "group bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all overflow-hidden",
-                isConfirmed && "bg-slate-50/50"
+                "transition-all",
+                isConfirmed && "bg-[#F8FAFF] border-blue-100/50"
             )}
         >
-            <div className="flex flex-col lg:flex-row items-center gap-8 justify-between">
-                <div className="flex items-center gap-6 w-full lg:w-auto min-w-[280px]">
-                    <div className="h-16 w-16 rounded-full border border-slate-200 bg-white shrink-0 flex items-center justify-center">
-                        <div className="h-12 w-12 rounded-full border border-slate-100 bg-slate-50/50" />
+            <div className="flex flex-col xl:flex-row xl:items-center gap-12 justify-between w-full">
+                <div className="flex items-center gap-10 w-full xl:w-auto min-w-[380px]">
+                    <div className="h-28 w-28 rounded-full border-4 border-white bg-white shadow-xl shrink-0 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-500">
+                        {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                        ) : (
+                            <div className="h-full w-full bg-slate-50 p-6 text-slate-100">
+                                <Package className="h-full w-full" />
+                            </div>
+                        )}
                     </div>
-                    <div className="space-y-0.5 overflow-hidden">
-                        <h4 className="text-lg font-semibold text-[#1E293B] tracking-tight truncate">{item.name}</h4>
-                        <p className="text-[13px] font-medium text-slate-400">
-                            Yesterday's Closing: <span className="font-semibold text-slate-500">{item.yesterdayClosing} {item.unit}</span>
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex-1 w-full grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-10">
-                    <div className="space-y-1">
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Today's Opening</p>
-                        <p className="text-lg font-bold text-[#1E293B]">{item.todayOpening ?? '10'} <span className="text-sm font-semibold">{item.unit}</span></p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Amount Added Today</p>
-                        <p className="text-lg font-bold text-[#1E293B]">{item.amountAddedToday ?? '--'}</p>
-                    </div>
-                    <div className="flex items-center gap-8 border-l-2 border-slate-100 pl-8">
-                        <div className="space-y-1">
-                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Total Opening Stock:</p>
-                            <p className="text-lg font-bold text-[#3B59DA]">{item.totalOpening ?? '10'} <span className="text-sm font-semibold">{item.unit}</span></p>
-                        </div>
+                    <div className="space-y-3 overflow-hidden">
+                        <InriaHeading className="text-[28px] font-bold truncate leading-none mb-1 text-[#1E293B] group-hover:text-[#3B59DA] transition-colors">{item.name}</InriaHeading>
+                        <FigtreeText className="text-[14px] font-black uppercase tracking-[0.15em] leading-none text-slate-400">
+                            YESTERDAY: <span className="text-[#1E293B]">{item.yesterdayClosing} {item.unit}</span>
+                        </FigtreeText>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 w-full lg:w-auto shrink-0 p-3 bg-[#F8FAFC] rounded-2xl">
+                <div className="flex-1 w-auto grid grid-cols-2 md:grid-cols-3 gap-12 items-center border-l-0 xl:border-l border-slate-100 xl:pl-12">
+                    <div className="space-y-3">
+                        <FigtreeText className="text-[12px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none">Today's Balance</FigtreeText>
+                        <p className="text-[24px] font-black text-[#1E293B] font-figtree leading-none tabular-nums">{item.todayOpening ?? '10'} <span className="text-[15px] font-bold text-slate-400 uppercase ml-1">{item.unit}</span></p>
+                    </div>
+                    <div className="space-y-3">
+                        <FigtreeText className="text-[12px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none">Amount Added</FigtreeText>
+                        <p className="text-[24px] font-black text-[#1E293B] font-figtree leading-none tabular-nums">+{item.amountAddedToday ?? '0'} <span className="text-[15px] font-bold text-slate-400 uppercase ml-1">{item.unit}</span></p>
+                    </div>
+                    <div className="flex flex-col text-left space-y-3">
+                        <FigtreeText className="text-[12px] font-black text-[#3B59DA] uppercase tracking-[0.2em] leading-none">Verified Total</FigtreeText>
+                        <p className="text-[32px] font-black text-[#3B59DA] font-figtree leading-none tabular-nums">{item.totalOpening || (item.todayOpening ?? '10')} <span className="text-[16px] font-bold text-[#3B59DA]/40 uppercase ml-1">{item.unit}</span></p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-5 w-full xl:w-auto shrink-0 border-t xl:border-t-0 pt-8 xl:pt-0 xl:border-l border-slate-100 xl:pl-12">
                     <Button 
-                        variant="ghost" 
-                        className="h-11 px-6 rounded-xl border border-slate-200 font-bold bg-white hover:bg-slate-50 transition-all text-slate-600 flex-1 lg:flex-none"
+                        variant="outline" 
+                        className="h-[72px] px-10 rounded-2xl border-slate-200 font-bold bg-white text-slate-600 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[17px] flex-1 xl:flex-none font-figtree shadow-sm active:scale-95"
                         onClick={onEdit}
                     >
-                        Edit Amount
+                        Edit Count
                     </Button>
                     <Button 
                         className={cn(
-                            "h-11 px-8 rounded-xl font-bold shadow-md transition-all flex-1 lg:flex-none min-w-[110px] border-none",
+                            "h-[72px] px-14 rounded-2xl font-black shadow-2xl transition-all flex-1 xl:flex-none min-w-[180px] border-none font-figtree text-[18px] active:scale-95",
                             isConfirmed 
-                                ? "bg-emerald-500 text-white hover:bg-emerald-600" 
-                                : "bg-[#3B59DA] hover:bg-[#2D46B2] text-white"
+                                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-900/20" 
+                                : "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-indigo-900/20"
                         )}
                         onClick={onConfirm}
                     >
-                        {isConfirmed ? (
-                            <span className="flex items-center gap-2">Confirmed <CheckCircle2 className="h-4 w-4" /></span>
-                        ) : "Confirm"}
+                        {isConfirmed ? "Verified" : "Verify Stock"}
                     </Button>
                 </div>
             </div>
-        </motion.div>
+        </UnifiedListRow>
     );
 }
 
@@ -490,60 +355,14 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
     if (!item) return null;
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="w-[95%] sm:max-w-[540px] p-0 rounded-2xl overflow-hidden border-none shadow-2xl bg-white font-figtree">
-                <div className="p-5 md:p-6 border-b border-slate-100 flex items-center justify-between">
-                    <div className="space-y-0.5">
-                        <DialogTitle className="text-xl font-bold text-[#1E293B] tracking-tight">Update Item</DialogTitle>
-                        <p className="text-slate-400 font-medium text-[13px]">Manually adjust the inventory level</p>
-                    </div>
-                </div>
-                
-                <div className="p-5 md:p-6 space-y-6">
-                    <div className="bg-[#F8FAFF] border border-indigo-100/50 rounded-xl p-4 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="h-14 w-14 rounded-lg border border-white bg-white shadow-sm flex items-center justify-center shrink-0">
-                                <Package className="h-6 w-6 text-indigo-200" />
-                            </div>
-                            <div className="space-y-0.5">
-                                <h4 className="text-lg font-bold text-[#1E293B]">{item.name}</h4>
-                                <Badge className="bg-indigo-50 text-indigo-500 border-none font-bold text-[10px] rounded-full uppercase px-2 py-0">{item.category}</Badge>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Current</p>
-                             <p className="text-xl font-bold text-[#1E293B]">{item.yesterdayClosing} <span className="text-slate-400 text-xs">{item.unit}</span></p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Incoming</label>
-                            <Input 
-                                type="number"
-                                value={incoming} 
-                                onChange={(e) => handleIncomingChange(e.target.value)}
-                                placeholder={`0 ${item.unit}`} 
-                                className="h-12 text-xl font-bold border-slate-200 bg-[#F8FAFC] rounded-xl px-4 focus:ring-indigo-100 text-[#1E293B]" 
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest">New Total</label>
-                            <div className="h-12 border border-emerald-200 rounded-xl bg-white px-4 flex items-center justify-between">
-                                <span className="text-xl font-bold text-emerald-500">{total} <span className="text-emerald-300 text-xs font-semibold">{item.unit}</span></span>
-                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-indigo-50/50 border border-indigo-100/50 rounded-xl p-3 flex items-center gap-3 text-indigo-600 font-bold text-[12px]">
-                        <RotateCcw className="h-4 w-4 shrink-0" />
-                        <p>Updating from <span className="font-black">{item.yesterdayClosing}</span> to <span className="font-black">{total} {item.unit}</span></p>
-                    </div>
-                </div>
-
-                <DialogFooter className="p-4 md:p-5 bg-slate-50/50 border-t border-slate-100 gap-3">
-                    <Button variant="ghost" onClick={onClose} className="h-11 px-6 rounded-xl font-bold text-slate-500 hover:bg-white border-transparent hover:border-slate-200 flex-1">
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Update Item"
+            subtitle={<>Manually adjust the inventory level for <b>Dosteon Restaurant</b></>}
+            footer={
+                <>
+                    <Button variant="outline" onClick={onClose} className="h-16 px-12 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 text-lg flex-1 font-figtree active:scale-95 transition-all shadow-md">
                         Cancel
                     </Button>
                     <Button 
@@ -553,48 +372,115 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
                             totalOpening: total,
                             todayOpening: item.todayOpening ?? item.yesterdayClosing
                         })} 
-                        className="h-11 px-8 rounded-xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[15px] shadow-sm flex-[1.5] border-none"
+                        className="h-16 px-16 rounded-2xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black text-[19px] shadow-2xl shadow-indigo-900/10 border-none flex-[2] font-figtree active:scale-95 transition-all"
                     >
                         Confirm Update
                     </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                </>
+            }
+        >
+            <div className="space-y-10">
+                {/* Item Preview Card */}
+                <div className="bg-white border border-slate-100 rounded-[24px] p-8 flex items-center justify-between gap-10 shadow-sm relative overflow-hidden group">
+                    <div className="flex items-center gap-8 relative z-10">
+                        <div className="h-28 w-28 rounded-[24px] overflow-hidden border border-slate-50 shadow-xl shrink-0 transition-transform group-hover:scale-105 duration-500">
+                            {item.imageUrl ? (
+                                <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                            ) : (
+                                <div className="h-full w-full bg-slate-50 flex items-center justify-center text-slate-200">
+                                    <Package className="h-12 w-12" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="space-y-3">
+                            <InriaHeading className="text-[28px] font-bold leading-none">{item.name}</InriaHeading>
+                            <div className="flex items-center gap-3">
+                                <FigtreeText className="text-[13px] font-bold uppercase tracking-widest leading-none">SKU ID: {item.id}</FigtreeText>
+                                <div className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+                                <Badge className="bg-[#EFF6FF] text-[#3B59DA] border-none font-bold text-[11px] rounded-lg uppercase px-3 py-1 font-figtree tracking-widest leading-none">{item.category}</Badge>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="text-right shrink-0 relative z-10">
+                         <FigtreeText className="text-[13px] font-black uppercase tracking-[0.2em] mb-2 leading-none">Current Quantity</FigtreeText>
+                         <p className="text-[42px] font-black text-[#1E293B] tracking-tighter leading-none font-figtree">{item.yesterdayClosing} <span className="text-[20px] text-slate-300 ml-1">kg</span></p>
+                    </div>
+                </div>
+
+                {/* Inputs */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                        <FigtreeText className="text-[14px] font-bold uppercase tracking-widest ml-1 leading-none">Incoming Quantity</FigtreeText>
+                        <Input 
+                            type="number"
+                            value={incoming} 
+                            onChange={(e) => handleIncomingChange(e.target.value)}
+                            placeholder={`24 kg`} 
+                            className="h-[72px] text-[24px] font-bold border-slate-200 bg-white rounded-[18px] px-8 focus:ring-[#3B59DA]/10 focus:border-[#3B59DA] text-[#1E293B] font-figtree transition-all shadow-sm" 
+                        />
+                    </div>
+                    <div className="space-y-4">
+                        <FigtreeText className="text-[14px] font-bold text-[#10B981] uppercase tracking-widest ml-1 leading-none">New Quantity</FigtreeText>
+                        <div className="relative">
+                            <Input 
+                                readOnly
+                                value={`${total} kg`} 
+                                className="h-[72px] text-[24px] font-bold border-[#10B981] bg-white rounded-[18px] px-8 text-[#10B981] font-figtree shadow-sm border-2" 
+                            />
+                            <div className="absolute right-6 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-[#ECFDF5] flex items-center justify-center border border-[#D1FAE5]">
+                                <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Summary Info */}
+                <div className="bg-[#F5F8FF] border border-blue-200 border-dashed rounded-[24px] p-6 flex items-center gap-6 text-[#3B59DA] font-bold text-[18px] shadow-sm font-figtree relative overflow-hidden group/info">
+                    <div className="absolute inset-0 bg-blue-50/50 opacity-0 group-hover/info:opacity-100 transition-opacity duration-500" />
+                    <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center border border-blue-100 shadow-md shrink-0 relative z-10">
+                        <ArrowRight className="h-6 w-6 text-[#3B59DA]" />
+                    </div>
+                    <p className="relative z-10 leading-relaxed">Stock will update from <span className="text-slate-400">{item.yesterdayClosing} kg</span> to <span className="text-[#3B59DA] underline decoration-2 underline-offset-4 decoration-blue-200 font-black">{total} kg</span></p>
+                </div>
+            </div>
+        </UnifiedModal>
     );
 }
 
-function CircularProgress({ percentage }: { percentage: number, count: number, total: number }) {
-    const radius = 32;
+function CircularProgress({ percentage }: { percentage: number }) {
+    const radius = 64;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percentage / 100) * circumference;
 
     return (
-        <div className="relative h-[80px] w-[80px] flex items-center justify-center shrink-0">
-            <svg className="h-[80px] w-[80px] -rotate-90">
+        <div className="relative h-[160px] w-[160px] flex items-center justify-center shrink-0">
+            <svg className="h-[160px] w-[160px] -rotate-90">
                 <circle
-                    cx="40"
-                    cy="40"
+                    cx="80"
+                    cy="80"
                     r={radius}
-                    stroke="#F1F5F9"
-                    strokeWidth="6"
+                    stroke="#E2E8F0"
+                    strokeWidth="10"
                     fill="transparent"
+                    className="opacity-40"
                 />
                 <motion.circle
                     initial={{ strokeDashoffset: circumference }}
                     animate={{ strokeDashoffset: offset }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
-                    cx="40"
-                    cy="40"
+                    cx="80"
+                    cy="80"
                     r={radius}
-                    stroke="#3B59DA"
-                    strokeWidth="6"
+                    stroke="white"
+                    strokeWidth="12"
                     fill="transparent"
                     strokeDasharray={circumference}
                     strokeLinecap="round"
+                    className="drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]"
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <p className="text-[15px] font-bold text-[#1E293B] leading-none">{percentage}%</p>
+                <p className="text-[42px] font-black text-white leading-none font-figtree">{percentage}%</p>
             </div>
         </div>
     );
@@ -602,12 +488,11 @@ function CircularProgress({ percentage }: { percentage: number, count: number, t
 
 function OpeningSkeleton() {
     return (
-        <div className="p-10 space-y-12 bg-[#F8FAFC] min-h-screen">
+        <div className="p-10 space-y-12 bg-white min-h-screen">
             <div className="flex justify-between items-center">
-                <Skeleton className="h-6 w-32 rounded-xl" />
-                <Skeleton className="h-10 w-24 rounded-xl" />
+                <Skeleton className="h-12 w-40 rounded-xl" />
             </div>
-            <Skeleton className="h-[240px] w-full rounded-[32px]" />
+            <Skeleton className="h-[360px] w-full rounded-[32px]" />
             <div className="space-y-6">
                  <Skeleton className="h-32 w-full rounded-[28px]" />
                  <Skeleton className="h-32 w-full rounded-[28px]" />

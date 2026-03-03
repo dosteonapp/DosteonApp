@@ -100,7 +100,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/30"></div>
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-24 md:py-32">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold mb-6 leading-tight font-inria italic">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold mb-6 leading-tight">
               Welcome to Dosteon
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto opacity-90 leading-relaxed">

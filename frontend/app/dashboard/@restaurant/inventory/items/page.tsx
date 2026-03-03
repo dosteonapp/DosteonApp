@@ -6,13 +6,7 @@ import { useRouter } from "next/navigation";
 import { 
   Plus as PlusIcon, 
   Search as SearchIcon, 
-  RotateCcw as RefreshIcon, 
   Package as PackageIcon, 
-  AlertCircle as AlertIcon, 
-  AlertTriangle as WarningIcon, 
-  CheckCircle2 as SuccessIcon, 
-  Lock as LockIcon, 
-  ArrowRight as ArrowIcon,
   ChevronRight,
   ArrowLeft
 } from "lucide-react";
@@ -38,7 +32,13 @@ import { restaurantOpsService, InventoryItem } from "@/lib/services/restaurantOp
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+    AppContainer, 
+    InriaHeading, 
+    FigtreeText, 
+    PrimarySurfaceCard 
+} from "@/components/ui/dosteon-ui";
 
 export default function AllInventoryItemsPage() {
   const router = useRouter();
@@ -65,123 +65,137 @@ export default function AllInventoryItemsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 w-full pb-20 font-figtree">
+    <AppContainer className="pb-24">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-0">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
+        <div className="flex items-center gap-6">
             <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-10 w-10 p-0 rounded-xl"
+                className="h-14 w-14 p-0 rounded-2xl border-slate-200 bg-white shadow-md hover:bg-slate-50 transition-all active:scale-95"
                 onClick={() => router.back()}
             >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-6 w-6 text-slate-400" />
             </Button>
             <div className="space-y-1">
-                <h2 className="text-[24px] md:text-[28px] font-bold text-[#1E293B] tracking-tight leading-none">All Inventory Items</h2>
-                <p className="text-[13px] font-medium text-slate-400">View and manage your entire product registry</p>
+                <FigtreeText className="text-[14px] font-bold text-slate-400 uppercase tracking-widest leading-none">Inventory Registry</FigtreeText>
+                <InriaHeading className="text-[38px] md:text-[46px] font-bold text-[#1E293B] tracking-tight leading-none">All Products</InriaHeading>
             </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button className="h-11 px-6 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-xl font-bold gap-2 text-sm shadow-sm border-none" asChild>
+        <div className="flex items-center gap-4">
+          <Button className="h-16 px-10 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-2xl font-black gap-4 text-lg shadow-2xl shadow-indigo-900/10 border-none transition-all active:scale-95 font-figtree" asChild>
             <Link href="/dashboard/inventory/new">
-              <PlusIcon className="h-4 w-4" /> Add New Product
+              <PlusIcon className="h-6 w-6" /> Create New Product
             </Link>
           </Button>
         </div>
       </div>
 
-      {/* Main Table Container */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white border border-slate-100 rounded-[32px] p-8 md:p-10 shadow-sm space-y-8"
       >
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="relative w-full max-w-md">
-                <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <Input placeholder="Search records..." className="pl-12 h-12 border-slate-100 rounded-xl bg-slate-50/30 focus:ring-indigo-100 placeholder:text-slate-400 font-medium text-sm" />
+        <PrimarySurfaceCard className="p-10 md:p-12 space-y-12">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-10">
+                <div className="relative w-full max-w-[520px]">
+                    <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-400" />
+                    <Input placeholder="Search your product registry..." className="pl-16 h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] focus:ring-slate-100 placeholder:text-slate-400 font-bold text-[17px] font-figtree shadow-inner transition-all" />
+                </div>
+                <div className="flex flex-wrap items-center gap-6">
+                    <Select defaultValue="all">
+                        <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl w-full sm:w-60 bg-white font-black text-slate-500 text-sm shadow-md px-8">
+                            <SelectValue placeholder="All Categories" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-slate-200 p-2">
+                            <SelectItem value="all" className="font-bold py-3">All Categories</SelectItem>
+                            <SelectItem value="produce" className="font-bold py-3">Produce</SelectItem>
+                            <SelectItem value="meat" className="font-bold py-3">Meat & Poultry</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select defaultValue="all">
+                        <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl w-full sm:w-60 bg-white font-black text-slate-500 text-sm shadow-md px-8">
+                            <SelectValue placeholder="All Stock Status" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-slate-200 p-2">
+                            <SelectItem value="all" className="font-bold py-3">All Status</SelectItem>
+                            <SelectItem value="healthy" className="font-bold py-3">Healthy</SelectItem>
+                            <SelectItem value="low" className="font-bold py-3 text-amber-500">Low Stock</SelectItem>
+                            <SelectItem value="critical" className="font-bold py-3 text-red-500">Critical</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
-            <div className="flex items-center gap-4 w-full sm:w-auto">
-                <Select defaultValue="all">
-                    <SelectTrigger className="h-12 border-slate-100 rounded-xl w-full sm:w-40 bg-white font-bold text-slate-500 text-xs">
-                        <SelectValue placeholder="Category" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-100">
-                        <SelectItem value="all">Category: All</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Select defaultValue="all">
-                    <SelectTrigger className="h-12 border-slate-100 rounded-xl w-full sm:w-40 bg-white font-bold text-slate-500 text-xs">
-                        <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-100">
-                        <SelectItem value="all">Status: All</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
 
-        <div className="overflow-x-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow className="border-slate-50 bg-[#FBFDFF] hover:bg-[#FBFDFF]">
-                        <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest py-5 pl-8">Item Name</TableHead>
-                        <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Category</TableHead>
-                        <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Brand</TableHead>
-                        <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Stock Unit</TableHead>
-                        <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Current Stock</TableHead>
-                        <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Status</TableHead>
-                        <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest text-right pr-8">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {inventoryItems.map((item) => (
-                        <TableRow key={item.id} className="border-slate-50 hover:bg-slate-50/50 transition-all group">
-                            <TableCell className="py-5 pl-8">
-                                <div className="flex items-center gap-4">
-                                    <div className="h-11 w-11 rounded-xl border border-slate-100 bg-slate-50 overflow-hidden flex items-center justify-center shrink-0">
-                                        {item.imageUrl ? (
-                                            <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
-                                        ) : (
-                                            <PackageIcon className="h-5 w-5 text-slate-300" />
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-[#1E293B] text-sm">{item.name}</span>
-                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item.sku}</span>
-                                    </div>
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-slate-500 font-bold text-xs">{item.category}</TableCell>
-                            <TableCell className="text-slate-500 font-bold text-xs">{item.brand}</TableCell>
-                            <TableCell className="text-slate-500 font-bold text-xs uppercase">{item.unit}</TableCell>
-                            <TableCell className="font-bold text-[#1E293B] text-sm">{item.currentStock}</TableCell>
-                            <TableCell>
-                                <Badge 
-                                    className={cn(
-                                        "border-none rounded-full font-bold text-[9px] px-2.5 py-0.5 uppercase tracking-tight",
-                                        item.status === 'Healthy' ? "bg-emerald-100 text-emerald-600" : 
-                                        item.status === 'Low' ? "bg-amber-100 text-amber-600" : "bg-red-100 text-red-600"
-                                    )}
-                                >
-                                    {item.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell className="text-right pr-8">
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg hover:bg-[#F1F5F9] text-slate-300 hover:text-[#3B59DA] transition-all" asChild>
-                                    <Link href={`/dashboard/inventory/${item.id}`}>
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </TableCell>
+            <div className="border border-slate-100 rounded-[28px] overflow-hidden bg-white shadow-inner">
+                <Table>
+                    <TableHeader className="bg-[#F8FAFC]">
+                        <TableRow className="border-b border-slate-100/50 hover:bg-transparent uppercase h-20">
+                            <TableHead className="font-black text-slate-400 text-[11px] tracking-[0.2em] py-5 pl-10 font-figtree">Product Information</TableHead>
+                            <TableHead className="font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree">Category</TableHead>
+                            <TableHead className="font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree text-center">Brand</TableHead>
+                            <TableHead className="font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree text-center">Unit</TableHead>
+                            <TableHead className="font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree text-right">Current Stock</TableHead>
+                            <TableHead className="font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree text-center">Status</TableHead>
+                            <TableHead className="font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree text-right pr-10">Actions</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
+                    </TableHeader>
+                    <TableBody>
+                        <AnimatePresence mode="popLayout">
+                        {inventoryItems.map((item) => (
+                            <TableRow key={item.id} className="border-slate-50 hover:bg-[#F8FAFF] transition-all group h-[110px]">
+                                <TableCell className="pl-10">
+                                    <div className="flex items-center gap-6">
+                                        <div className="h-20 w-20 rounded-[22px] border-2 border-white bg-white overflow-hidden flex items-center justify-center shrink-0 shadow-xl group-hover:scale-110 transition-transform duration-500">
+                                            {item.imageUrl ? (
+                                                <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <div className="p-4 text-slate-100">
+                                                    <PackageIcon className="h-full w-full" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col space-y-1">
+                                            <InriaHeading className="font-bold text-[#1E293B] text-[20px] group-hover:text-[#3B59DA] transition-colors">{item.name}</InriaHeading>
+                                            <FigtreeText className="text-[12px] text-slate-400 font-bold uppercase tracking-[0.2em] leading-none">{item.sku}</FigtreeText>
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-[#64748B] font-black text-sm font-figtree uppercase tracking-wider">{item.category}</TableCell>
+                                <TableCell className="text-[#64748B] font-black text-sm font-figtree text-center">{item.brand || '—'}</TableCell>
+                                <TableCell className="text-[#64748B] font-black text-xs uppercase font-figtree tracking-widest text-center">{item.unit}</TableCell>
+                                <TableCell className="text-right">
+                                    <div className="flex flex-col items-end">
+                                        <FigtreeText className="font-black text-[#1E293B] text-[20px] tabular-nums leading-none">{item.currentStock}</FigtreeText>
+                                        <FigtreeText className="text-[11px] font-black text-slate-300 uppercase tracking-widest mt-1">{item.unit}</FigtreeText>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                    <Badge 
+                                        className={cn(
+                                            "border-none rounded-lg font-black text-[10px] px-3.5 py-1.5 uppercase tracking-[0.15em] font-figtree shadow-sm",
+                                            item.status === 'Healthy' ? "bg-[#DCFCE7] text-[#166534]" : 
+                                            item.status === 'Low' ? "bg-[#FEF3C7] text-[#92400E]" : "bg-[#FEE2E2] text-[#991B1B]"
+                                        )}
+                                    >
+                                        {item.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-right pr-10">
+                                    <Button variant="ghost" className="h-12 w-12 p-0 rounded-2xl hover:bg-white hover:shadow-2xl text-slate-200 hover:text-[#3B59DA] transition-all active:scale-90 border border-transparent hover:border-slate-50" asChild>
+                                        <Link href={`/dashboard/inventory/${item.id}`}>
+                                            <ChevronRight className="h-6 w-6" />
+                                        </Link>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        </AnimatePresence>
+                    </TableBody>
+                </Table>
+            </div>
+        </PrimarySurfaceCard>
       </motion.div>
-    </div>
+    </AppContainer>
   );
 }
 

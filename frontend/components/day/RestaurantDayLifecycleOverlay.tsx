@@ -112,8 +112,8 @@ function PreOpenCard({ onStart }: { onStart: () => void }) {
         </div>
         
         <div className="space-y-4">
-            <h2 className="text-5xl font-black text-slate-900 tracking-tight">Morning Shift Prep</h2>
-            <p className="text-slate-500 font-bold text-xl max-w-md mx-auto leading-relaxed">
+            <h2 className="text-5xl font-bold text-slate-900 tracking-tight font-inria">Morning Shift Prep</h2>
+            <p className="text-slate-500 font-bold text-xl max-w-md mx-auto leading-relaxed font-figtree">
                 The restaurant is currently pre-open. Ready to start your sequence and open the doors?
             </p>
         </div>
@@ -139,8 +139,8 @@ function ClosedCard({ onStartNext }: { onStartNext: () => void }) {
           </div>
           
           <div className="space-y-4">
-              <h2 className="text-5xl font-black text-slate-900 tracking-tight">Day is Finished</h2>
-              <p className="text-slate-500 font-bold text-xl max-w-md mx-auto leading-relaxed">
+              <h2 className="text-5xl font-bold text-slate-900 tracking-tight font-inria">Day is Finished</h2>
+              <p className="text-slate-500 font-bold text-xl max-w-md mx-auto leading-relaxed font-figtree">
                   All operations for today are successfully reconciled. We'll see you tomorrow!
               </p>
           </div>
@@ -179,8 +179,8 @@ function ChecklistCard({ title, description, steps, onCompleteStep, onFinish, ic
               <Icon className="h-6 w-6 stroke-[3px]" />
           </div>
           <div className="flex flex-col">
-              <h2 className="text-[32px] font-[800] text-slate-900 tracking-tight leading-none">{title}</h2>
-              <p className="text-[#64748B] font-bold text-[15px] mt-2 tracking-tight uppercase">
+              <h2 className="text-[32px] font-bold text-slate-900 tracking-tight leading-none font-inria">{title}</h2>
+              <p className="text-[#64748B] font-bold text-[15px] mt-2 tracking-tight uppercase font-figtree">
                 {description}
               </p>
           </div>
@@ -204,7 +204,7 @@ function ChecklistCard({ title, description, steps, onCompleteStep, onFinish, ic
                   >
                       {/* Step Number */}
                       <div className={cn(
-                          "h-[56px] w-[56px] rounded-[18px] flex items-center justify-center text-xl font-black transition-all shrink-0",
+                          "h-[56px] w-[56px] rounded-[18px] flex items-center justify-center text-xl font-bold transition-all shrink-0 font-figtree",
                           step.done ? "bg-emerald-500 text-white" :
                           isNext ? "bg-[#4F46E5] text-white shadow-lg shadow-indigo-200" :
                           "bg-slate-200 text-slate-400"
@@ -215,7 +215,7 @@ function ChecklistCard({ title, description, steps, onCompleteStep, onFinish, ic
                       {/* Title & Link */}
                       <div className="flex-1 min-w-0 flex flex-col justify-center">
                           <h4 className={cn(
-                              "text-[22px] font-bold tracking-tight",
+                              "text-[22px] font-bold tracking-tight font-inria",
                               step.done ? "text-slate-400 line-through" : 
                               isNext ? "text-[#1E293B]" : "text-slate-300"
                           )}>
@@ -225,7 +225,7 @@ function ChecklistCard({ title, description, steps, onCompleteStep, onFinish, ic
                               <Link 
                                   href={step.targetPath}
                                   className={cn(
-                                    "text-[11px] font-black flex items-center gap-1.5 transition-colors uppercase tracking-[0.15em] mt-2",
+                                    "text-[11px] font-bold flex items-center gap-1.5 transition-colors uppercase tracking-[0.15em] mt-2 font-figtree",
                                     isNext ? "text-[#4F46E5]/60 hover:text-[#4F46E5]" : "text-slate-300 pointer-events-none"
                                   )}
                               >

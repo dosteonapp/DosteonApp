@@ -9,6 +9,7 @@ export interface OpeningStockItem {
   level: "low" | "normal" | "critical";
   unit: string;
   isConfirmed?: boolean;
+  imageUrl?: string;
 }
 
 export const openingStockItems: OpeningStockItem[] = [
@@ -23,6 +24,7 @@ export const openingStockItems: OpeningStockItem[] = [
     category: "Vegetables",
     level: "normal",
     isConfirmed: true,
+    imageUrl: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80&w=200",
   },
   {
     id: "os-002",
@@ -35,6 +37,7 @@ export const openingStockItems: OpeningStockItem[] = [
     category: "Vegetables",
     level: "normal",
     isConfirmed: true,
+    imageUrl: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?auto=format&fit=crop&q=80&w=200",
   },
   {
     id: "os-003",

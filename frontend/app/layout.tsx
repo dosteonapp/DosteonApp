@@ -1,6 +1,6 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter, Outfit, Inria_Serif, Figtree } from "next/font/google";
+import { Inria_Serif, Figtree } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppProvider } from "@/context/AppContext";
@@ -10,16 +10,6 @@ import { AuthProvider } from "@/context/AuthContext";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/sonner";
 import { MockWarningBanner } from "@/components/mock-warning-banner";
-
-const outfit = Outfit({ 
-  subsets: ["latin"], 
-  variable: "--font-outfit" 
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 const inriaSerif = Inria_Serif({
   subsets: ["latin"],
@@ -47,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.className} ${outfit.variable} ${inter.variable} ${inriaSerif.variable} ${figtree.variable}`}
+        className={`${figtree.className} ${inriaSerif.variable} ${figtree.variable}`}
         suppressHydrationWarning
       >
         <AppProvider>

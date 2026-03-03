@@ -83,10 +83,10 @@ export default function NotificationsPage() {
     <div className="max-w-4xl mx-auto w-full pb-20 font-figtree animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* Header Area */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold text-[#1E293B] tracking-tight">Notifications</h2>
-          <p className="text-[13px] font-medium text-slate-400">Stay updated with your kitchen and inventory alerts</p>
+      <div className="flex items-center justify-between mb-8 relative z-10">
+        <div className="space-y-2">
+          <h2 className="text-[34px] font-bold text-[#1E293B] tracking-tight font-inria">Notifications</h2>
+          <p className="text-[14px] font-medium text-slate-400">Stay updated with your kitchen and inventory alerts</p>
         </div>
         <div className="flex bg-[#F8FAFC] p-1 rounded-xl border border-slate-100">
           {filters.map((f) => (

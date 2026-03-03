@@ -58,6 +58,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { 
+    AppContainer, 
+    InriaHeading, 
+    FigtreeText, 
+    UnifiedStatCard,
+    PrimarySurfaceCard 
+} from "@/components/ui/dosteon-ui";
 import { InventoryUpdateItemModal } from "@/components/inventory/InventoryUpdateItemModal";
 
 interface PageProps {
@@ -95,76 +102,79 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
   }
 
   return (
-    <div className="flex flex-col gap-8 bg-white min-h-screen pb-40">
-        
-        <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-        >
+    <AppContainer className="pb-40">
+        <div className="flex items-center mb-8">
             <Button 
                 variant="outline" 
-                className="h-12 px-8 rounded-xl border-slate-200 bg-white font-bold text-slate-600 gap-2 hover:bg-slate-50 shadow-sm transition-all w-fit"
+                className="h-12 px-6 rounded-xl font-bold border-slate-200 text-[#1E293B] hover:bg-slate-50 transition-all gap-3 shadow-sm font-figtree"
                 onClick={() => router.back()}
             >
-                <ChevronLeft className="h-4 w-4" /> Back
+                <ChevronLeft className="h-5 w-5" /> Back
             </Button>
-        </motion.div>
+        </div>
 
         {/* Header: Item Summary Card */}
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#F8FAFF] border border-[#EEF2FF] rounded-[24px] p-8 lg:p-10 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-10"
         >
-            <div className="flex flex-col md:flex-row items-center gap-8">
-                {/* Item Image */}
-                <div className="h-44 w-44 rounded-[20px] overflow-hidden border border-slate-200 bg-white flex items-center justify-center shrink-0 shadow-sm relative group">
-                    {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    ) : (
-                        <div className="text-slate-200">
-                            <Package className="h-20 w-20" />
-                        </div>
-                    )}
+            <PrimarySurfaceCard className="p-8 lg:p-12 flex flex-col lg:flex-row items-center justify-between gap-12 relative overflow-hidden bg-[#F8FAFF] border-[#EEF2FF]">
+                {/* Background decorative elements */}
+                <div className="absolute top-0 right-0 w-full h-full pointer-events-none opacity-[0.03] z-0">
+                    <Utensils className="absolute bottom-[-40px] right-[40px] h-64 w-64 stroke-[1px]" />
                 </div>
 
-                <div className="space-y-4 text-center md:text-left">
-                    <div className="space-y-1">
-                        <h1 className="text-[28px] font-bold text-[#475569] tracking-tight">{item.name || 'Organic Tomatoes'}</h1>
-                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                            <Badge className="bg-[#DCFCE7] text-[#166534] hover:bg-[#DCFCE7] font-bold text-[10px] px-2 py-0.5 rounded-md border-none uppercase">
-                                In Stock
-                            </Badge>
-                            <Badge variant="outline" className="text-slate-400 font-medium text-[10px] px-2 py-0.5 rounded-md border-slate-300 bg-white">
-                                {item.category || 'Vegetables'}
-                            </Badge>
-                        </div>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">SKU-ID-{item.sku?.slice(-4).toUpperCase() || '0002'}</p>
+                <div className="flex flex-col md:flex-row items-center gap-10 lg:w-[60%] z-10">
+                    {/* Item Image */}
+                    <div className="h-44 w-44 md:h-56 md:w-56 rounded-[32px] overflow-hidden border-2 border-white bg-white flex items-center justify-center shrink-0 shadow-2xl relative group">
+                        {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        ) : (
+                            <div className="text-slate-100 p-10">
+                                <Package className="h-full w-full" />
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                        <Button variant="outline" className="h-11 px-6 rounded-lg border-slate-300 bg-white font-semibold text-[#475569] gap-2 hover:bg-slate-50 transition-all text-sm" asChild>
-                            <Link href={`/dashboard/inventory/new?edit=${item.id}`}>
-                                <Settings className="h-4 w-4" /> Edit Item Details
-                            </Link>
-                        </Button>
-                        <Button 
-                            className="h-11 px-6 rounded-lg bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-semibold gap-2 shadow-sm transition-all border-none text-sm"
-                            onClick={() => setIsUpdateModalOpen(true)}
-                        >
-                            <RotateCcw className="h-4 w-4" /> Restock Now
-                        </Button>
+                    <div className="space-y-6 text-center md:text-left">
+                        <div className="space-y-3">
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+                                <Badge className="bg-[#DCFCE7] text-[#166534] hover:bg-[#DCFCE7] font-black text-[10px] px-3.5 py-1 rounded-lg border-none uppercase tracking-[0.15em] font-figtree shadow-sm">
+                                    Healthy Stock
+                                </Badge>
+                                <div className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+                                <FigtreeText className="text-slate-400 font-bold text-[11px] tracking-[0.15em] uppercase">SKU ID: {item.sku?.toUpperCase() || '001ABC'}</FigtreeText>
+                            </div>
+                            <InriaHeading className="text-[42px] md:text-[52px] font-bold text-[#1E293B] tracking-tight leading-[1.05] mb-2">{item.name || 'Organic Tomatoes'}</InriaHeading>
+                            <Badge variant="outline" className="text-slate-400 font-bold text-[11px] px-4 py-2 rounded-xl border-slate-200 bg-white uppercase tracking-[0.15em] font-figtree shadow-sm w-fit border-none shadow-indigo-900/5">
+                                Category: {item.category || 'Produce'}
+                            </Badge>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-5 pt-2">
+                            <Button variant="outline" className="h-14 px-8 rounded-2xl border-slate-200 bg-white font-bold text-slate-500 gap-3 hover:text-[#3B59DA] transition-all text-base font-figtree shadow-md active:scale-95" asChild>
+                                <Link href={`/dashboard/inventory/new?edit=${item.id}`}>
+                                    <Settings className="h-5 w-5" /> Edit Details
+                                </Link>
+                            </Button>
+                            <Button 
+                                className="h-14 px-10 rounded-2xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black gap-3 shadow-2xl shadow-indigo-900/10 transition-all border-none text-[17px] font-figtree active:scale-95 group"
+                                onClick={() => setIsUpdateModalOpen(true)}
+                            >
+                                <RotateCcw className="h-5 w-5 transition-transform group-hover:rotate-180 duration-700" /> Restock Now
+                            </Button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            {/* Right Side Stats */}
-            <div className="grid grid-cols-2 gap-4 xl:w-[420px]">
-                <StatBox label="Current Stock" value={item.currentStock || '45'} unit={item.unit || 'units'} />
-                <StatBox label="Avg Market Price" value={item.avgPrice || '3000'} unit="/kg" prefix="RWF" />
-                <StatBox label="Minimum Stock" value={item.minLevel || '20'} unit={item.unit || 'units'} />
-                <StatBox label="Reorder Point" value={item.restockPoint || '24'} unit={item.unit || 'units'} />
-            </div>
+                
+                {/* Right Side Stats */}
+                <div className="grid grid-cols-2 gap-4 lg:w-[38%] z-10 w-full lg:mb-auto mt-4 lg:mt-0">
+                    <UnifiedStatCard label="Current Stock" value={String(item.currentStock || '45')} subtext={item.unit || 'units'} icon={Package} variant="neutral" />
+                    <UnifiedStatCard label="Market Price" value={String(item.avgPrice || '3000')} subtext="RWF / kg" icon={TrendingUp} variant="neutral" />
+                    <UnifiedStatCard label="Minimum Stock" value={String(item.minLevel || '20')} subtext={item.unit || 'units'} icon={ShieldCheck} variant="neutral" />
+                    <UnifiedStatCard label="Reorder Point" value={String(item.restockPoint || '24')} subtext={item.unit || 'units'} icon={Zap} variant="neutral" />
+                </div>
+            </PrimarySurfaceCard>
         </motion.div>
 
         <InventoryUpdateItemModal 
@@ -181,120 +191,117 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white border border-slate-100 rounded-[24px] p-6 lg:p-8 space-y-6 shadow-sm"
+            className="mt-12"
         >
-            <div className="space-y-4">
-                <h2 className="text-[18px] font-bold text-[#475569]">Stock Activity History</h2>
-                
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="relative flex-1 max-w-lg">
-                        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input 
-                            placeholder="Search stock history..." 
-                            className="pl-11 h-12 rounded-lg border-slate-200 bg-white font-medium text-slate-600 text-sm"
-                        />
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Select defaultValue="all">
-                            <SelectTrigger className="w-44 h-12 rounded-lg border-slate-200 bg-white font-medium text-slate-500 text-sm">
-                                <SelectValue placeholder="All Activities" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl border-slate-200">
-                                <SelectItem value="all">All Activities</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select defaultValue="all">
-                            <SelectTrigger className="w-44 h-12 rounded-lg border-slate-200 bg-white font-medium text-slate-500 text-sm">
-                                <SelectValue placeholder="All Time" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl border-slate-200">
-                                <SelectItem value="all">All Time</SelectItem>
-                            </SelectContent>
-                        </Select>
+            <PrimarySurfaceCard className="p-8 lg:p-12 space-y-10">
+                <div className="space-y-6">
+                    <InriaHeading className="text-[34px] font-bold text-[#1E293B] tracking-tight">Stock Activity History</InriaHeading>
+                    
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        <div className="relative flex-1 max-w-[420px]">
+                            <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                            <Input 
+                                placeholder="Search stock history..." 
+                                className="pl-14 h-[64px] rounded-2xl border-slate-200 bg-[#F8FAFC] font-bold text-slate-600 text-[15px] font-figtree shadow-sm focus:ring-slate-100 transition-all"
+                            />
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <Select defaultValue="all">
+                                <SelectTrigger className="w-52 h-[64px] rounded-2xl border-slate-200 bg-white font-bold text-slate-500 text-sm shadow-sm px-6">
+                                    <SelectValue placeholder="All Activities" />
+                                </SelectTrigger>
+                            </Select>
+                            <Select defaultValue="all">
+                                <SelectTrigger className="w-52 h-[64px] rounded-2xl border-slate-200 bg-white font-bold text-slate-500 text-sm shadow-sm px-6">
+                                    <SelectValue placeholder="All Time" />
+                                </SelectTrigger>
+                            </Select>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="border border-slate-100 rounded-xl overflow-hidden bg-white">
-                <Table>
-                    <TableHeader className="bg-[#F1F5F9]">
-                        <TableRow className="border-none hover:bg-transparent uppercase">
-                            <TableHead className="py-4 pl-6 font-semibold text-slate-500 text-[11px] tracking-tight">Action</TableHead>
-                            <TableHead className="py-4 font-semibold text-slate-500 text-[11px] tracking-tight">Quantity Change</TableHead>
-                            <TableHead className="py-4 font-semibold text-slate-500 text-[11px] tracking-tight">Performed By</TableHead>
-                            <TableHead className="py-4 font-semibold text-slate-500 text-[11px] tracking-tight">Status</TableHead>
-                            <TableHead className="py-4 font-semibold text-slate-500 text-[11px] tracking-tight">Activity</TableHead>
-                            <TableHead className="py-4 pr-6 font-semibold text-slate-500 text-[11px] tracking-tight">Timestamp</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        <AnimatePresence mode="popLayout">
-                        {activities.map((act, idx) => (
-                            <TableRow 
-                                key={act.id}
-                                className="border-b border-slate-100 hover:bg-slate-50/50 transition-all font-medium text-[13px]"
-                            >
-                                <TableCell className="py-4 pl-6">
-                                    <Badge className={cn(
-                                        "text-[10px] font-bold px-2 py-0.5 rounded-md border-none flex items-center gap-1.5 w-fit",
-                                        act.action === 'Updated' ? "bg-[#EEF2FF] text-[#3B59DA]" :
-                                        act.action === 'Received' ? "bg-[#F0FDF4] text-[#16A34A]" :
-                                        act.action === 'Removed' ? "bg-[#FEF2F2] text-[#EF4444]" :
-                                        act.action === 'Auto-Alert' ? "bg-[#FFFBEB] text-[#D97706]" :
-                                        "bg-[#F1F5F9] text-slate-500"
-                                    )}>
-                                        <div className="h-3 w-3 flex items-center justify-center">
-                                            {act.action === 'Updated' ? <Settings className="h-full w-full" /> :
-                                             act.action === 'Received' ? <TrendingUp className="h-full w-full" /> :
-                                             act.action === 'Removed' ? <Trash2 className="h-full w-full" /> :
-                                             <AlertTriangle className="h-full w-full" />}
-                                        </div>
-                                        {act.action}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-[#475569]">
-                                    {act.change === '-' || act.change === '0' ? '-' : act.change}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge className={cn(
-                                        "text-[10px] font-bold px-2 py-0.5 rounded-md border-none flex items-center gap-2 w-fit bg-[#F8FAFC] text-slate-500 border border-slate-200",
-                                        act.performer === 'System Agent' ? "bg-slate-100 text-slate-500" : 
-                                        act.performer === 'Kitchen Staff' ? "bg-[#FEF3C7] text-[#92400E]" :
-                                        "bg-[#EDE9FE] text-[#5B21B6]"
-                                    )}>
-                                        {act.performer === 'Kitchen Staff' ? <Utensils className="h-3 w-3" /> : 
-                                         act.performer === 'System Agent' ? <RefreshCcw className="h-3 w-3" /> : 
-                                         <ShieldCheck className="h-3 w-3" />}
-                                        {act.performer}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-1.5 text-[#16A34A] font-bold">
-                                        <CheckCircle2 className="h-4 w-4 fill-[#16A34A] text-white" />
-                                        Verified
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-slate-500 max-w-[200px] truncate">{act.activity}</TableCell>
-                                <TableCell className="pr-6 text-slate-400">Oct 06, 2025; 14:32</TableCell>
+                <div className="border border-slate-100 rounded-[24px] overflow-hidden bg-white shadow-inner">
+                    <Table>
+                        <TableHeader className="bg-[#F8FAFC]">
+                            <TableRow className="border-b border-slate-100/50 hover:bg-transparent uppercase">
+                                <TableHead className="py-6 pl-8 font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree">Action Status</TableHead>
+                                <TableHead className="py-6 font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree">Quantity Change</TableHead>
+                                <TableHead className="py-6 font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree">Performed By</TableHead>
+                                <TableHead className="py-6 font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree">Verification</TableHead>
+                                <TableHead className="py-6 font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree">Activity Details</TableHead>
+                                <TableHead className="py-6 pr-8 font-black text-slate-400 text-[11px] tracking-[0.2em] font-figtree">Timestamp</TableHead>
                             </TableRow>
-                        ))}
-                        </AnimatePresence>
-                    </TableBody>
-                </Table>
-            </div>
+                        </TableHeader>
+                        <TableBody>
+                            <AnimatePresence mode="popLayout">
+                            {activities.map((act, idx) => (
+                                <TableRow 
+                                    key={act.id}
+                                    className="border-b border-slate-50 hover:bg-[#F8FAFF] transition-all font-bold text-[15px] h-20"
+                                >
+                                    <TableCell className="py-2 pl-8">
+                                        <Badge className={cn(
+                                            "text-[10px] font-black px-3 py-1.5 rounded-lg border-none flex items-center gap-2 w-fit uppercase tracking-widest font-figtree shadow-sm",
+                                            act.action === 'Updated' ? "bg-[#EFF6FF] text-[#3B59DA]" :
+                                            act.action === 'Received' ? "bg-[#ECFDF5] text-[#16A34A]" :
+                                            act.action === 'Removed' ? "bg-[#FEF2F2] text-[#EF4444]" :
+                                            act.action === 'Auto-Alert' ? "bg-[#FFFBEB] text-[#D97706]" :
+                                            "bg-[#F8FAFC] text-slate-500"
+                                        )}>
+                                            <div className="h-3 w-3 flex items-center justify-center">
+                                                {act.action === 'Updated' ? <Settings className="h-full w-full" /> :
+                                                 act.action === 'Received' ? <TrendingUp className="h-full w-full" /> :
+                                                 act.action === 'Removed' ? <Trash2 className="h-full w-full" /> :
+                                                 <AlertTriangle className="h-full w-full" />}
+                                            </div>
+                                            {act.action}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-[#1E293B] font-black font-figtree tabular-nums">
+                                        {act.change === '-' || act.change === '0' ? '-' : act.change}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
+                                                {act.performer === 'Kitchen Staff' ? <Utensils className="h-4 w-4" /> : 
+                                                 act.performer === 'System Agent' ? <RefreshCcw className="h-4 w-4" /> : 
+                                                 <User className="h-4 w-4" />}
+                                            </div>
+                                            <FigtreeText className="text-slate-500 font-bold text-sm tracking-tight">{act.performer}</FigtreeText>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 text-[#10B981] font-black font-figtree text-[13px] uppercase tracking-wider">
+                                            <div className="bg-[#ECFDF5] h-6 w-6 rounded-full flex items-center justify-center border border-[#D1FAE5]">
+                                                <CheckCircle2 className="h-4 w-4" />
+                                            </div>
+                                            Verified
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-slate-500 max-w-[280px] truncate font-medium font-figtree">{act.activity}</TableCell>
+                                    <TableCell className="pr-8 text-slate-400 font-bold tabular-nums text-sm font-figtree">Tuesday, Oct 06, 2025; 14:32</TableCell>
+                                </TableRow>
+                            ))}
+                            </AnimatePresence>
+                        </TableBody>
+                    </Table>
+                </div>
+            </PrimarySurfaceCard>
         </motion.div>
-    </div>
+    </AppContainer>
   );
 }
 
 function StatBox({ label, value, unit, prefix }: { label: string, value: string | number, unit?: string, prefix?: string }) {
     return (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col justify-between shadow-sm transition-all hover:border-slate-300">
-            <p className="text-[13px] font-medium text-slate-400 mb-2">{label}</p>
-            <div className="flex items-baseline gap-1">
-                {prefix && <span className="text-sm font-bold text-slate-900">{prefix}</span>}
-                <span className="text-[24px] font-bold text-[#475569] tracking-tight">{value}</span>
-                {unit && <span className="text-xs font-medium text-slate-400 ml-1">{unit}</span>}
+        <div className="bg-white border border-slate-100 rounded-[18px] p-6 h-[140px] md:h-[155px] flex flex-col justify-between shadow-sm transition-all hover:scale-[1.02] hover:shadow-xl hover:border-indigo-100 active:scale-[0.98] font-figtree group overflow-hidden">
+            <p className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-tight line-clamp-1">{label}</p>
+            <div className="mt-auto overflow-hidden">
+                <div className="flex items-baseline gap-1">
+                    {prefix && <span className="text-sm font-bold text-slate-400 uppercase tracking-tight">{prefix}</span>}
+                    <span className="text-[32px] md:text-[38px] lg:text-[42px] font-bold text-[#1E293B] group-hover:text-[#3B59DA] transition-colors tracking-tighter leading-none truncate">{value}</span>
+                    {unit && <span className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-tight ml-1 truncate">{unit}</span>}
+                </div>
             </div>
         </div>
     );

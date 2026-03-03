@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 @layer base {
   :root {
@@ -71,15 +71,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-figtree font-semibold;
+    @apply bg-background text-foreground font-figtree;
     -webkit-font-smoothing: antialiased;
   }
-  h1 {
+  h1, h2, h3, h4, h5, h6 {
     @apply font-inria;
-    letter-spacing: -0.01em;
-  }
-  h2, h3, h4, h5, h6 {
-    @apply font-figtree font-semibold;
     letter-spacing: -0.01em;
   }
 }

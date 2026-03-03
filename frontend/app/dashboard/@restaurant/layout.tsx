@@ -7,6 +7,8 @@ import { RestaurantDayLifecycleOverlay } from "@/components/day/RestaurantDayLif
 import { RestaurantDayRouteGuard } from "@/components/day/RestaurantDayRouteGuard";
 import { DashboardHeader } from "@/components/dashboard-header";
 
+import { SidebarProvider } from "@/context/SidebarContext";
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Dosteon - Restaurant Dashboard",
@@ -21,23 +23,31 @@ export default function RestaurantLayout({
 }) {
   return (
     <RestaurantDayLifecycleProvider>
-      <div className="flex h-screen overflow-hidden bg-[#F8FAFF]">
-        <div className="h-full">
+      <SidebarProvider>
+        <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
+          {/* Fixed Sidebar */}
           <RestaurantSidebar />
-        </div>
-        <div className="flex-1 overflow-auto relative">
-          <Suspense fallback={<div className="h-[100px] bg-white border-b border-[#F1F5F9]" />}>
-            <DashboardHeader />
-          </Suspense>
-          <RestaurantDayLifecycleOverlay />
-          <RestaurantDayRouteGuard>
-            <div className="pt-4 px-6 pb-6 w-full">
-                {children}
+          
+          {/* Spacer for fixed sidebar on desktop */}
+          <div 
+            className="hidden lg:block shrink-0 transition-all duration-500" 
+            style={{ width: 'var(--sidebar-width, 300px)' }}
+          />
+
+          <main className="flex-1 overflow-auto relative flex flex-col">
+            <Suspense fallback={<div className="h-[100px] bg-white border-b border-slate-100" />}>
+              <DashboardHeader />
+            </Suspense>
+            <div className="p-8 space-y-8">
+                <RestaurantDayLifecycleOverlay />
+                <RestaurantDayRouteGuard>
+                    {children}
+                </RestaurantDayRouteGuard>
             </div>
-          </RestaurantDayRouteGuard>
-          <ToastContainer />
+            <ToastContainer />
+          </main>
         </div>
-      </div>
+      </SidebarProvider>
     </RestaurantDayLifecycleProvider>
   );
 }
