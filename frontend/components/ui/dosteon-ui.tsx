@@ -127,7 +127,7 @@ export const UnifiedHeroSurface = ({
       )}
 
       <div className="flex flex-col xl:flex-row items-center justify-between gap-8 w-full z-10">
-          <div className="space-y-8 flex flex-col justify-center text-left max-w-lg shrink-0">
+          <div className="space-y-8 flex flex-col justify-center text-left max-w-lg xl:max-w-2xl shrink-0">
              <div className="space-y-4">
                 {badge && <div className="w-fit">{badge}</div>}
                 <InriaHeading className={cn("text-[38px] md:text-[42px] lg:text-[44px] leading-[1.1] font-bold tracking-tight", isLocked && "text-white")}>{title}</InriaHeading>
@@ -136,7 +136,7 @@ export const UnifiedHeroSurface = ({
              {action && <div className="mt-2">{action}</div>}
           </div>
           {children && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 flex-1 w-full items-center">
+            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center xl:justify-end gap-5 flex-1 w-full z-10">
                 {children}
             </div>
           )}

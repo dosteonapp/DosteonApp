@@ -104,8 +104,8 @@ export default function ClosingPage() {
             ) : (
                 <div className="space-y-12">
                     <UnifiedHeroSurface
-                        title="Daily Closing"
-                        subtitle="Review and finalize today's usage and waste logs before archiving inventory."
+                        title="End of Day Count"
+                        subtitle="Verify remaining stock to finalize daily usage reports."
                         isLocked={true}
                         badge={
                             <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-indigo-100 bg-white/80 backdrop-blur-sm shadow-sm w-fit">
@@ -113,87 +113,83 @@ export default function ClosingPage() {
                                 <FigtreeText className="text-[11px] font-black text-[#3B59DA] uppercase tracking-[0.1em]">CLOSING IN PROGRESS</FigtreeText>
                             </div>
                         }
-                    >
-                        <div className="flex flex-col sm:flex-row items-center gap-10 lg:gap-14 col-span-1 sm:col-span-2">
-                            <div className="relative h-[140px] w-[140px] md:h-[160px] md:w-[160px] flex items-center justify-center shrink-0">
-                                <svg className="h-full w-full -rotate-90">
-                                    <circle
-                                        cx="50%"
-                                        cy="50%"
-                                        r="40%"
-                                        stroke="rgba(255,255,255,0.1)"
-                                        strokeWidth="10"
-                                        fill="transparent"
-                                    />
-                                    <motion.circle
-                                        initial={{ strokeDashoffset: 402 }}
-                                        animate={{ strokeDashoffset: 402 - (402 * 68) / 100 }}
-                                        transition={{ duration: 1.5, ease: "easeOut" }}
-                                        cx="50%"
-                                        cy="50%"
-                                        r="40%"
-                                        stroke="white"
-                                        strokeWidth="12"
-                                        fill="transparent"
-                                        strokeDasharray={402}
-                                        strokeLinecap="round"
-                                        className="drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]"
-                                    />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <FigtreeText className="text-[32px] md:text-[42px] font-black text-white leading-none">68%</FigtreeText>
+                        action={
+                            <div className="flex items-center gap-8 mt-4">
+                                <div className="relative h-[110px] w-[110px] flex items-center justify-center shrink-0">
+                                    <svg className="h-full w-full -rotate-90">
+                                        <circle
+                                            cx="50%"
+                                            cy="50%"
+                                            r="40%"
+                                            stroke="rgba(255,255,255,0.1)"
+                                            strokeWidth="8"
+                                            fill="transparent"
+                                        />
+                                        <motion.circle
+                                            initial={{ strokeDashoffset: 276 }}
+                                            animate={{ strokeDashoffset: 276 - (276 * 30) / 100 }}
+                                            transition={{ duration: 1.5, ease: "easeOut" }}
+                                            cx="50%"
+                                            cy="50%"
+                                            r="40%"
+                                            stroke="white"
+                                            strokeWidth="10"
+                                            fill="transparent"
+                                            strokeDasharray={276}
+                                            strokeLinecap="round"
+                                            className="drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]"
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <FigtreeText className="text-[20px] font-black text-white leading-none">30%</FigtreeText>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <FigtreeText className="text-[20px] font-bold text-white tracking-tight leading-none">Progress: 6 of 9 Items Counted</FigtreeText>
+                                    <FigtreeText className="text-white/60 font-medium text-[14px] leading-relaxed max-w-[400px] xl:max-w-none">Finish closing stock count to complete your restaurant operations for the day</FigtreeText>
                                 </div>
                             </div>
-                            <div className="space-y-3 text-center sm:text-left">
-                                <InriaHeading className="text-[28px] md:text-[34px] font-bold text-white tracking-tight leading-tight">Closing Verification</InriaHeading>
-                                <FigtreeText className="text-white/60 font-semibold text-[15px] md:text-[17px] leading-relaxed max-w-sm">Complete final items count to finalize the daily reports and archives.</FigtreeText>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 flex-1 w-full lg:max-w-xl z-10 overflow-x-auto custom-scrollbar pb-2">
-                            <div className="flex sm:grid sm:grid-cols-2 gap-8 min-w-fit sm:min-w-0">
-                                <UnifiedStatCard 
-                                  label="Consumption" 
-                                  value="124" 
-                                  subtext="Items reported used" 
-                                  icon={Activity}
-                                  variant="neutral"
-                                  className="min-w-[240px] sm:min-w-0"
-                                />
-                                <UnifiedStatCard 
-                                  label="Reported Waste" 
-                                  value="18" 
-                                  subtext="Items marked unusable" 
-                                  icon={Trash2}
-                                  variant="red"
-                                  className="min-w-[240px] sm:min-w-0"
-                                />
-                            </div>
-                        </div>
+                        }
+                    >
+                        <UnifiedStatCard 
+                          label="Items Used" 
+                          value="17" 
+                          subtext="Usage intensity" 
+                          icon={Activity}
+                          variant="neutral"
+                          className="h-[160px] p-6 w-full sm:w-auto min-w-[240px]"
+                        />
+                        <UnifiedStatCard 
+                          label="Items Wasted" 
+                          value="5" 
+                          icon={Trash2}
+                          variant="red"
+                          className="h-[160px] p-6 w-full sm:w-auto min-w-[240px]"
+                        />
                     </UnifiedHeroSurface>
                     
                     {/* Items Section */}
                     <PrimarySurfaceCard className="p-8 md:p-10 space-y-10">
                         {/* Toolbar */}
-                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-                            <div className="relative w-full">
-                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-300" />
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                            <div className="relative w-full xl:max-w-md">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                                 <Input 
-                                    placeholder="Quick search closing inventory..." 
-                                    className="pl-16 h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC]/50 text-lg font-black text-slate-700 placeholder:text-slate-300 placeholder:font-black focus-visible:ring-[#3B59DA]/5 transition-all shadow-none focus:shadow-xl focus:shadow-indigo-500/5"
+                                    placeholder="Search items..." 
+                                    className="pl-12 h-[52px] border-slate-200 rounded-xl bg-slate-50/50 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus-visible:ring-indigo-500/10 transition-all shadow-none"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
                             </div>
-                            <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
                                 <Select>
-                                    <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl w-full sm:w-[220px] bg-white font-black text-slate-700 text-sm shadow-sm px-8 hover:border-[#3B59DA]/20 transition-all focus:ring-0">
-                                        <SelectValue placeholder="Categories" />
+                                    <SelectTrigger className="h-[52px] border-slate-200 rounded-xl w-full sm:w-[200px] bg-white font-semibold text-slate-600 text-sm shadow-sm px-5 hover:border-indigo-100 transition-all focus:ring-0">
+                                        <SelectValue placeholder="All Categories" />
                                     </SelectTrigger>
                                 </Select>
                                 <Select>
-                                    <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl w-full sm:w-[220px] bg-white font-black text-slate-700 text-sm shadow-sm px-8 hover:border-[#3B59DA]/20 transition-all focus:ring-0">
-                                        <SelectValue placeholder="Item Status" />
+                                    <SelectTrigger className="h-[52px] border-slate-200 rounded-xl w-full sm:w-[200px] bg-white font-semibold text-slate-600 text-sm shadow-sm px-5 hover:border-indigo-100 transition-all focus:ring-0">
+                                        <SelectValue placeholder="All Levels" />
                                     </SelectTrigger>
                                 </Select>
                             </div>
