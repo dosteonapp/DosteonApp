@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
+  SelectContent,
+  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -119,63 +121,74 @@ export default function DailyStockCountPage() {
 
   return (
     <AppContainer className="pb-48">
+      {/* Back Button */}
+      <div className="mb-6">
+        <Button 
+          variant="outline" 
+          onClick={() => router.back()}
+          className="h-10 px-6 rounded-xl border-slate-200 bg-white text-slate-600 hover:text-[#3B59DA] font-semibold gap-2 transition-all shadow-sm active:scale-95 font-figtree"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </Button>
+      </div>
+
       {/* Main Content Container */}
       <div className={cn(
-        "relative flex flex-col gap-10 px-0 transition-all duration-500 w-full",
+        "relative flex flex-col gap-8 px-0 transition-all duration-500 w-full",
         showReview && "blur-2xl scale-[0.98] pointer-events-none"
       )}>
 
         {/* Hero Progress Header */}
         <UnifiedHeroSurface
+            backgroundColor="bg-[#f5f6ff]"
+            borderColor="border-[#98a6f9]"
             title="Daily Stock Count"
-            subtitle="Check each product and confirm the quantity in stock to unlock Kitchen Service dashboard."
-            isLocked={true}
+            description="Check each product and confirm the quantity in stock to unlock Kitchen Service dashboard."
+            padding="px-8 py-10 md:px-12 md:py-10"
+            isLocked={false}
         >
-            <div className="flex items-center gap-14 col-span-2">
-                <CircularProgress percentage={progressPercent} />
-                <div className="space-y-4">
-                    <InriaHeading className="text-[34px] font-bold text-white tracking-tight leading-loose">Opening Checklist Progress</InriaHeading>
-                    <FigtreeText className="text-white/60 font-semibold text-[17px] leading-relaxed max-w-sm">Complete all counts to verify inventory levels and start service operations.</FigtreeText>
+            <div className="flex flex-col gap-8 w-full">
+                <div className="flex items-center gap-6 justify-start">
+                    <CircularProgress percentage={progressPercent} />
+                    <div className="space-y-1 text-left">
+                        <h2 className="text-[18px] md:text-[20px] font-bold text-[#1E293B] tracking-tight font-figtree">Progress: {progressCount} of {totalCount} Items Counted</h2>
+                        <FigtreeText className="text-slate-400 font-medium text-[14px]">Finish counts to verify inventory levels.</FigtreeText>
+                    </div>
                 </div>
             </div>
-
-            <UnifiedStatCard 
-              label="Completed" 
-              value={String(progressCount)} 
-              subtext={`of ${totalCount} items`} 
-              icon={CheckCircle2}
-              variant="neutral"
-            />
-            <UnifiedStatCard 
-              label="Remaining" 
-              value={String(totalCount - progressCount)} 
-              subtext="Needs counting" 
-              icon={Package}
-              variant="neutral"
-            />
         </UnifiedHeroSurface>
 
         {/* Items List */}
-        <PrimarySurfaceCard className="p-10 md:p-14 space-y-12">
-            {/* Toolbar inside surface */}
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-10">
-                <div className="relative w-full max-w-[500px]">
-                    <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-400" />
+        <div className="space-y-8">
+            {/* Toolbar outside card to match design */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-4">
+                <div className="relative w-full md:max-w-md">
+                    <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                     <Input 
-                        placeholder="Filter items by name or SKU..." 
-                        className="pl-16 h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] focus:ring-slate-100 placeholder:text-slate-400 font-bold text-[17px] font-figtree shadow-inner"
+                        placeholder="Search items..." 
+                        className="pl-14 h-[60px] border-slate-200 rounded-xl bg-white focus:ring-indigo-100 placeholder:text-slate-400 font-medium text-[15px] font-figtree shadow-sm"
                     />
                 </div>
-                <div className="flex flex-wrap items-center gap-6">
+                <div className="flex items-center gap-4 w-full md:w-auto">
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl w-full sm:w-[240px] bg-white font-black text-slate-500 text-sm shadow-md px-8">
-                            <SelectValue placeholder="Categories" />
+                        <SelectTrigger className="h-[60px] border-slate-200 rounded-xl w-full sm:w-[200px] bg-white font-semibold text-slate-500 text-[15px] px-8 shadow-sm">
+                            <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            <SelectItem value="fresh">Fresh Products</SelectItem>
+                            <SelectItem value="dry">Dry Stock</SelectItem>
+                        </SelectContent>
                     </Select>
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl w-full sm:w-[240px] bg-white font-black text-slate-500 text-sm shadow-md px-8">
-                            <SelectValue placeholder="Stock Level" />
+                        <SelectTrigger className="h-[60px] border-slate-200 rounded-xl w-full sm:w-[200px] bg-white font-semibold text-slate-500 text-[15px] px-8 shadow-sm">
+                            <SelectValue placeholder="All Levels" />
                         </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Levels</SelectItem>
+                            <SelectItem value="healthy">Healthy Stock</SelectItem>
+                            <SelectItem value="low">Low Stock</SelectItem>
+                        </SelectContent>
                     </Select>
                 </div>
             </div>
@@ -192,7 +205,7 @@ export default function DailyStockCountPage() {
                     />
                 ))}
             </div>
-        </PrimarySurfaceCard>
+        </div>
       </div>
 
       {/* Sticky Bottom Bar */}
@@ -203,11 +216,11 @@ export default function DailyStockCountPage() {
           <motion.div 
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="max-w-[1600px] mx-auto flex items-center justify-end gap-6"
+            className="w-full flex items-center justify-end gap-6"
           >
               <Button 
                   variant="outline" 
-                  className="h-16 px-12 rounded-2xl border-slate-200 text-slate-500 hover:text-[#3B59DA] font-bold transition-all text-[17px] shadow-md font-figtree"
+                  className="h-16 px-12 rounded-2xl border-[#3B59DA] text-[#3B59DA] hover:bg-slate-50 font-semibold transition-all text-[17px] shadow-sm font-figtree"
                   onClick={handleSaveDraft}
               >
                   Save a draft
@@ -256,62 +269,63 @@ function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
     return (
         <UnifiedListRow 
             className={cn(
-                "transition-all",
-                isConfirmed && "bg-[#F8FAFF] border-blue-100/50"
+                "transition-all p-4 md:p-8",
+                isConfirmed && "bg-[#F8FAFF] border-blue-100/30 shadow-none ring-1 ring-blue-50/50"
             )}
         >
-            <div className="flex flex-col xl:flex-row xl:items-center gap-12 justify-between w-full">
-                <div className="flex items-center gap-10 w-full xl:w-auto min-w-[380px]">
-                    <div className="h-28 w-28 rounded-full border-4 border-white bg-white shadow-xl shrink-0 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-500">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-8 justify-between w-full">
+                {/* Product Info */}
+                <div className="flex items-center gap-8 flex-1 min-w-[280px]">
+                    <div className="h-20 w-20 md:h-24 md:w-24 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden shadow-sm">
                         {item.imageUrl ? (
                             <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                         ) : (
-                            <div className="h-full w-full bg-slate-50 p-6 text-slate-100">
-                                <Package className="h-full w-full" />
-                            </div>
+                            <Package className="h-10 w-10 text-slate-200" />
                         )}
                     </div>
-                    <div className="space-y-3 overflow-hidden">
-                        <InriaHeading className="text-[28px] font-bold truncate leading-none mb-1 text-[#1E293B] group-hover:text-[#3B59DA] transition-colors">{item.name}</InriaHeading>
-                        <FigtreeText className="text-[14px] font-black uppercase tracking-[0.15em] leading-none text-slate-400">
-                            YESTERDAY: <span className="text-[#1E293B]">{item.yesterdayClosing} {item.unit}</span>
-                        </FigtreeText>
+                    <div className="space-y-2">
+                        <h3 className="text-[18px] md:text-[20px] font-bold text-[#1E293B] font-figtree leading-tight group-hover:text-[#3B59DA] transition-colors">{item.name}</h3>
+                        <p className="text-[13px] font-medium text-slate-400 font-figtree">Yesterday's Closing: {item.yesterdayClosing} {item.unit}</p>
                     </div>
                 </div>
 
-                <div className="flex-1 w-auto grid grid-cols-2 md:grid-cols-3 gap-12 items-center border-l-0 xl:border-l border-slate-100 xl:pl-12">
-                    <div className="space-y-3">
-                        <FigtreeText className="text-[12px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none">Today's Balance</FigtreeText>
-                        <p className="text-[24px] font-black text-[#1E293B] font-figtree leading-none tabular-nums">{item.todayOpening ?? '10'} <span className="text-[15px] font-bold text-slate-400 uppercase ml-1">{item.unit}</span></p>
+                {/* Metrics with Vertical Lines */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-14 flex-[2] relative overflow-hidden">
+                    <div className="space-y-2 md:pl-10 lg:border-l border-slate-200">
+                        <FigtreeText className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] leading-none">Today's Opening</FigtreeText>
+                        <p className="text-[18px] md:text-[20px] font-bold text-[#1E293B] font-figtree leading-none">{item.todayOpening ?? '--'} units</p>
                     </div>
-                    <div className="space-y-3">
-                        <FigtreeText className="text-[12px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none">Amount Added</FigtreeText>
-                        <p className="text-[24px] font-black text-[#1E293B] font-figtree leading-none tabular-nums">+{item.amountAddedToday ?? '0'} <span className="text-[15px] font-bold text-slate-400 uppercase ml-1">{item.unit}</span></p>
+                    <div className="space-y-2 md:pl-10 border-l border-slate-200">
+                        <FigtreeText className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] leading-none">Amount Added Today</FigtreeText>
+                        <p className="text-[18px] md:text-[20px] font-bold text-[#1E293B] font-figtree leading-none">--</p>
                     </div>
-                    <div className="flex flex-col text-left space-y-3">
-                        <FigtreeText className="text-[12px] font-black text-[#3B59DA] uppercase tracking-[0.2em] leading-none">Verified Total</FigtreeText>
-                        <p className="text-[32px] font-black text-[#3B59DA] font-figtree leading-none tabular-nums">{item.totalOpening || (item.todayOpening ?? '10')} <span className="text-[16px] font-bold text-[#3B59DA]/40 uppercase ml-1">{item.unit}</span></p>
+                    <div className="space-y-2 md:pl-10 border-l border-slate-200 col-span-2 md:col-span-1">
+                        <FigtreeText className="text-[11px] font-bold text-slate-600 uppercase tracking-[0.1em] leading-none">Total Opening Stock:</FigtreeText>
+                        <p className="text-[18px] md:text-[20px] font-black text-[#3B59DA] font-figtree leading-none">{item.totalOpening || (item.todayOpening ?? '10')} units</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-5 w-full xl:w-auto shrink-0 border-t xl:border-t-0 pt-8 xl:pt-0 xl:border-l border-slate-100 xl:pl-12">
+                {/* Actions */}
+                <div className="flex items-center gap-4 w-full lg:w-auto shrink-0 mt-2 lg:mt-0">
                     <Button 
                         variant="outline" 
-                        className="h-[72px] px-10 rounded-2xl border-slate-200 font-bold bg-white text-slate-600 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[17px] flex-1 xl:flex-none font-figtree shadow-sm active:scale-95"
+                        className="h-14 px-8 rounded-2xl border-slate-200 font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[15px] flex-1 lg:flex-none font-figtree bg-white shadow-sm"
                         onClick={onEdit}
                     >
-                        Edit Count
+                        Edit Amount
                     </Button>
                     <Button 
                         className={cn(
-                            "h-[72px] px-14 rounded-2xl font-black shadow-2xl transition-all flex-1 xl:flex-none min-w-[180px] border-none font-figtree text-[18px] active:scale-95",
+                            "h-14 px-10 rounded-2xl font-black transition-all flex-1 lg:flex-none min-w-[140px] font-figtree text-[15px] border-none",
                             isConfirmed 
-                                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-900/20" 
-                                : "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-indigo-900/20"
+                                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" 
+                                : "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-lg shadow-indigo-900/10"
                         )}
                         onClick={onConfirm}
                     >
-                        {isConfirmed ? "Verified" : "Verify Stock"}
+                        {isConfirmed ? (
+                            <span className="flex items-center gap-2">Confirmed <CheckCircle2 className="h-4 w-4" /></span>
+                        ) : "Confirm"}
                     </Button>
                 </div>
             </div>
@@ -438,39 +452,38 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
 }
 
 function CircularProgress({ percentage }: { percentage: number }) {
-    const radius = 64;
+    const radius = 32;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percentage / 100) * circumference;
 
     return (
-        <div className="relative h-[160px] w-[160px] flex items-center justify-center shrink-0">
-            <svg className="h-[160px] w-[160px] -rotate-90">
+        <div className="relative h-[80px] w-[80px] flex items-center justify-center shrink-0">
+            <svg className="h-[80px] w-[80px] -rotate-90">
                 <circle
-                    cx="80"
-                    cy="80"
+                    cx="40"
+                    cy="40"
                     r={radius}
                     stroke="#E2E8F0"
-                    strokeWidth="10"
+                    strokeWidth="6"
                     fill="transparent"
-                    className="opacity-40"
                 />
                 <motion.circle
                     initial={{ strokeDashoffset: circumference }}
                     animate={{ strokeDashoffset: offset }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
-                    cx="80"
-                    cy="80"
+                    cx="40"
+                    cy="40"
                     r={radius}
-                    stroke="white"
-                    strokeWidth="12"
+                    stroke="#3B59DA"
+                    strokeWidth="8"
                     fill="transparent"
                     strokeDasharray={circumference}
                     strokeLinecap="round"
-                    className="drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]"
+                    className="drop-shadow-[0_0_4px_rgba(59,89,218,0.2)]"
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <p className="text-[42px] font-black text-white leading-none font-figtree">{percentage}%</p>
+                <p className="text-[20px] font-bold text-[#1E293B] leading-none font-figtree">{percentage}%</p>
             </div>
         </div>
     );
