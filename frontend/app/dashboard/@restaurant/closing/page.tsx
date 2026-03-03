@@ -104,18 +104,22 @@ export default function ClosingPage() {
             ) : (
                 <div className="space-y-12">
                     <UnifiedHeroSurface
+                        variant="standard"
+                        centerContent={true}
+                        padding="px-6 py-8 md:px-10 md:py-8"
+                        minHeight="min-h-[320px]"
                         title="End of Day Count"
                         subtitle="Verify remaining stock to finalize daily usage reports."
                         isLocked={true}
                         badge={
-                            <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-indigo-100 bg-white/80 backdrop-blur-sm shadow-sm w-fit">
-                                <Clock className="h-3.5 w-3.5 text-[#3B59DA]" />
-                                <FigtreeText className="text-[11px] font-black text-[#3B59DA] uppercase tracking-[0.1em]">CLOSING IN PROGRESS</FigtreeText>
+                            <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm shadow-sm w-fit">
+                                <Clock className="h-3.5 w-3.5 text-white" />
+                                <FigtreeText className="text-[12px] font-semibold text-white uppercase tracking-[0.1em]">CLOSING IN PROGRESS</FigtreeText>
                             </div>
                         }
                         action={
-                            <div className="flex items-center gap-8 mt-4">
-                                <div className="relative h-[110px] w-[110px] flex items-center justify-center shrink-0">
+                            <div className="flex items-center gap-6">
+                                <div className="relative h-20 w-20 flex items-center justify-center shrink-0">
                                     <svg className="h-full w-full -rotate-90">
                                         <circle
                                             cx="50%"
@@ -126,27 +130,27 @@ export default function ClosingPage() {
                                             fill="transparent"
                                         />
                                         <motion.circle
-                                            initial={{ strokeDashoffset: 276 }}
-                                            animate={{ strokeDashoffset: 276 - (276 * 30) / 100 }}
+                                            initial={{ strokeDashoffset: 251 }}
+                                            animate={{ strokeDashoffset: 251 - (251 * 30) / 100 }}
                                             transition={{ duration: 1.5, ease: "easeOut" }}
                                             cx="50%"
                                             cy="50%"
                                             r="40%"
                                             stroke="white"
-                                            strokeWidth="10"
+                                            strokeWidth="8"
                                             fill="transparent"
-                                            strokeDasharray={276}
+                                            strokeDasharray={251}
                                             strokeLinecap="round"
                                             className="drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]"
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <FigtreeText className="text-[20px] font-black text-white leading-none">30%</FigtreeText>
+                                        <FigtreeText className="text-[18px] font-semibold text-white leading-none">30%</FigtreeText>
                                     </div>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <FigtreeText className="text-[20px] font-bold text-white tracking-tight leading-none">Progress: 6 of 9 Items Counted</FigtreeText>
-                                    <FigtreeText className="text-white/60 font-medium text-[14px] leading-relaxed max-w-[400px] xl:max-w-none">Finish closing stock count to complete your restaurant operations for the day</FigtreeText>
+                                <div className="space-y-1 align-middle">
+                                    <FigtreeText className="text-[20px] font-semibold text-white tracking-tight leading-none whitespace-nowrap">Progress: 6 of 9 Items Counted</FigtreeText>
+                                    <FigtreeText className="text-white/60 font-normal text-[14px] leading-relaxed lg:whitespace-nowrap">Finish closing stock count to complete your restaurant operations for the day</FigtreeText>
                                 </div>
                             </div>
                         }
@@ -155,16 +159,16 @@ export default function ClosingPage() {
                           label="Items Used" 
                           value="17" 
                           subtext="Usage intensity" 
-                          icon={Activity}
-                          variant="neutral"
-                          className="h-[160px] p-6 w-full sm:w-auto min-w-[240px]"
+                          icon={Package}
+                          variant="indigo"
+                          className="flex-1 min-w-[280px] max-w-[450px] h-[180px] md:h-[220px] lg:h-[260px]"
                         />
                         <UnifiedStatCard 
                           label="Items Wasted" 
                           value="5" 
                           icon={Trash2}
                           variant="red"
-                          className="h-[160px] p-6 w-full sm:w-auto min-w-[240px]"
+                          className="flex-1 min-w-[280px] max-w-[450px] h-[180px] md:h-[220px] lg:h-[260px]"
                         />
                     </UnifiedHeroSurface>
                     

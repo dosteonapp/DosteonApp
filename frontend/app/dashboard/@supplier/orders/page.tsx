@@ -154,18 +154,18 @@ export default function OrdersPage() {
 }
 
 // Update the getOrderStatusVariant function to use the new color scheme
-function getOrderStatusVariant(status: string) {
+function getOrderStatusVariant(status: string): "default" | "destructive" | "outline" | "secondary" | "warning" | "success" | "info" | "pending" {
   switch (status) {
     case "Pending":
-      return "bg-red-500 text-white hover:bg-red-600";
+      return "pending";
     case "Confirmed":
-      return "bg-green-500 text-white hover:bg-green-600";
+      return "success";
     case "In Transit":
-      return "bg-blue-500 text-white hover:bg-blue-600";
+      return "info";
     case "Delivered":
-      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90";
+      return "secondary";
     case "Cancelled":
-      return "bg-destructive text-destructive-foreground hover:bg-destructive/90";
+      return "destructive";
     default:
       return "outline";
   }

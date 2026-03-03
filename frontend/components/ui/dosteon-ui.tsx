@@ -69,22 +69,39 @@ export const UnifiedStatCard = ({
     neutral: "bg-slate-50 text-slate-400 border-slate-100"
   };
 
+  const textColors = {
+    indigo: "text-[#3B59DA]",
+    green: "text-emerald-600",
+    red: "text-rose-600",
+    amber: "text-amber-600",
+    neutral: "text-[#1E293B]"
+  };
+
   return (
     <div className={cn(
-      "bg-white rounded-[20px] p-4 pt-4 pb-2 h-[112px] border border-slate-100 transition-all font-figtree w-full min-w-0 shadow-[0_2px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)] active:scale-[0.98] flex flex-col gap-2",
+      "bg-white rounded-[24px] p-5 md:p-7 min-h-[120px] border border-slate-100 transition-all font-figtree w-full min-w-0 shadow-[0_2px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)] active:scale-[0.98] flex flex-col justify-between overflow-hidden",
       className
     )}>
-      <div className="flex items-center gap-2.5 shrink-0">
-        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shadow-sm", colors[variant])}>
-          <Icon className="h-4 w-4 stroke-[2.5px]" />
+      <div className="flex items-center gap-3 shrink-0">
+        <div className={cn("h-8 w-8 md:h-10 md:w-10 rounded-xl flex items-center justify-center shadow-sm shrink-0", colors[variant])}>
+          <Icon className="h-4 w-4 md:h-5 md:w-5 stroke-[2px]" />
         </div>
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] leading-tight line-clamp-1">{label}</span>
+        <span className="text-[12px] md:text-[14px] font-semibold text-slate-500 leading-tight line-clamp-1">{label}</span>
       </div>
-      <div className="flex items-baseline justify-between overflow-hidden">
-        <div className={cn("text-[32px] md:text-[34px] font-black tracking-tighter leading-none truncate", variant === 'neutral' ? "text-[#1E293B]" : colors[variant].split(' ')[1])}>
+
+      <div className="flex flex-col gap-2 py-2">
+        <div className={cn(
+          "font-semibold tracking-tight leading-none",
+          "text-[18px] md:text-[20px]",
+          textColors[variant]
+        )}>
           {value}
         </div>
-        {subtext && <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate opacity-60 pb-0.5">{subtext}</div>}
+        {subtext && (
+          <div className="text-[12px] font-normal text-slate-400 leading-tight mt-1 line-clamp-1">
+            {subtext}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -96,23 +113,49 @@ export const UnifiedStatCard = ({
 export const UnifiedHeroSurface = ({ 
   title, 
   subtitle, 
+  description,
   children, 
   badge, 
   action,
+  topAction,
   isLocked = false,
-  className 
+  className,
+  size = 'default',
+  alignItems = 'start',
+  variant = 'standard',
+  centerContent = false,
+  centerStats = false,
+  padding,
+  minHeight
 }: { 
   title: string, 
-  subtitle: string, 
+  subtitle?: string, 
+  description?: string,
   children?: React.ReactNode, 
   badge?: React.ReactNode, 
   action?: React.ReactNode,
+  topAction?: React.ReactNode,
   isLocked?: boolean,
-  className?: string
+  className?: string,
+  size?: 'default' | 'dense',
+  alignItems?: 'start' | 'center',
+  variant?: 'standard' | 'split' | 'inline',
+  centerContent?: boolean,
+  centerStats?: boolean,
+  padding?: string,
+  minHeight?: string
 }) => {
+  const isDense = size === 'dense';
+  const isSplit = variant === 'split';
+  const isInline = variant === 'inline';
+
   return (
     <div className={cn(
-      "relative rounded-[28px] p-8 md:px-12 md:py-10 border transition-all duration-700 w-full min-h-[380px] flex items-center",
+      "relative rounded-[28px] border transition-all duration-700 w-full flex overflow-hidden",
+      padding ? padding : (isDense ? "p-4 md:p-6" : "p-6 md:p-10"),
+      minHeight ? minHeight : (isDense ? "min-h-[300px]" : "min-h-[340px]"),
+      isInline && !isDense && !padding && "lg:pr-6", // Getting that 24px right margin on desktop
+      alignItems === 'center' ? "items-center" : "items-stretch",
       isLocked 
         ? "bg-gradient-to-br from-[#3B59DA] via-[#7C3AED] to-[#1E3A8A] border-indigo-400/20 text-white shadow-2xl" 
         : "bg-white border-indigo-100 text-[#1E293B] shadow-sm",
@@ -126,21 +169,133 @@ export const UnifiedHeroSurface = ({
         </div>
       )}
 
-      <div className="flex flex-col xl:flex-row items-center justify-between gap-8 w-full z-10">
-          <div className="space-y-8 flex flex-col justify-center text-left max-w-lg xl:max-w-2xl shrink-0">
-             <div className="space-y-4">
-                {badge && <div className="w-fit">{badge}</div>}
-                <InriaHeading className={cn("text-[38px] md:text-[42px] lg:text-[44px] leading-[1.1] font-bold tracking-tight", isLocked && "text-white")}>{title}</InriaHeading>
-                <FigtreeText className={cn("text-[15px] md:text-[16px] font-semibold leading-relaxed max-w-sm ml-0.5", isLocked && "text-white/80")}>{subtitle}</FigtreeText>
+      {/* Inline Layout (Kitchen/Home Style) */}
+      {isInline ? (
+        <div className={cn(
+          "relative flex flex-col md:flex-row w-full flex-1 z-10 gap-5 md:gap-8 lg:gap-14",
+          alignItems === 'center' ? "items-center" : (padding ? "items-start pt-0" : "items-start pt-2 md:pt-4")
+        )}>
+           {/* Section 1: Text */}
+           <div className="flex flex-col space-y-4 max-w-[320px] shrink-0">
+              <div className="space-y-3">
+                 <h1 className={cn(
+                   "font-figtree text-[18px] md:text-[20px] font-semibold tracking-tight leading-tight",
+                   isLocked ? "text-white" : "text-[#1E293B]"
+                 )}>{title}</h1>
+                 {badge && <div className="w-fit">{badge}</div>}
+              </div>
+              
+              {description && (
+                <FigtreeText className={cn(
+                  "font-normal leading-relaxed text-[12px] md:text-[14px]",
+                  isLocked ? "text-white/60" : "text-slate-400"
+                )}>{description}</FigtreeText>
+              )}
+
+              {action && <div className="w-fit pt-2">{action}</div>}
+           </div>
+
+           {/* Section 2: Cards next to text */}
+           <div className={cn(
+             "flex flex-col sm:flex-row flex-wrap gap-2 flex-1 justify-start",
+             alignItems === 'center' ? "items-center" : "items-start"
+           )}>
+              {children}
+           </div>
+
+           {/* Section 3: Status Badge Fallback */}
+           {topAction && (
+             <div className="absolute top-6 right-6 md:top-8 md:right-10 z-20">
+               {topAction}
              </div>
-             {action && <div className="mt-2">{action}</div>}
+           )}
+        </div>
+      ) : (
+        /* Standard & Split Layouts */
+        <div className="relative flex flex-col justify-between w-full flex-1 z-10">
+          
+          {/* Row 1: Header (Title, Subtitle, Badge, TopAction) */}
+          <div className={cn(
+            "flex flex-col md:flex-row items-start justify-between w-full gap-8",
+            padding ? "pt-0" : (isSplit ? "pt-12 md:pt-16" : "pt-2")
+          )}>
+             <div className="flex flex-col items-start space-y-3">
+                <h1 className={cn(
+                  "font-figtree leading-[1.1] font-semibold tracking-tight", 
+                  "text-[18px] md:text-[20px]",
+                  isLocked ? "text-white" : "text-[#1E293B]"
+                )}>{title}</h1>
+                
+                {/* Standard Variant: Badge below title */}
+                {!isSplit && badge && <div className="py-1">{badge}</div>}
+                
+                <FigtreeText className={cn(
+                  "font-semibold leading-tight", 
+                  "text-[14px]",
+                  isLocked ? "text-white/60" : "text-slate-400"
+                )}>{subtitle}</FigtreeText>
+             </div>
+
+             {/* Top Right Content */}
+             {(topAction || (isSplit && badge)) && (
+               <div className="flex items-center gap-3 shrink-0 pt-2">
+                 {topAction}
+                 {isSplit && badge && <div className="shrink-0">{badge}</div>}
+               </div>
+             )}
           </div>
-          {children && (
-            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center xl:justify-end gap-5 flex-1 w-full z-10">
+
+          {/* Special Layer: Independent Centered Cards (Only if centerContent is true) */}
+          {centerContent && !isSplit && children && (
+            <div className="absolute inset-0 hidden lg:flex items-center justify-end pointer-events-none pr-10">
+              <div className={cn(
+                "flex flex-col sm:flex-row flex-wrap gap-4 pointer-events-auto",
+                centerStats ? "justify-center" : "justify-end"
+              )}>
                 {children}
+              </div>
             </div>
           )}
-      </div>
+
+          {/* Row 2: Bottom Content Area (Description/Action on Left, Stats on Right) */}
+          <div className={cn(
+            "mt-auto flex flex-col lg:flex-row gap-10 w-full justify-between items-end",
+            padding ? "pb-0 mb-0" : (isSplit ? "pb-4 mb-0" : "pb-4 mb-2")
+          )}>
+             {/* Left Bottom: Description and Action */}
+             {(description || action) && (
+                <div className={cn(
+                  "flex flex-col space-y-6 shrink-0",
+                  isSplit ? "mb-[50px] max-w-[180px] sm:max-w-xs" : (padding ? "max-w-xl mb-0" : "max-w-xl mb-2")
+                )}>
+                   {description && (
+                      <FigtreeText className={cn(
+                        "font-normal leading-relaxed text-[12px] md:text-[14px]", 
+                        isLocked ? "text-white/80" : "text-slate-500"
+                      )}>{description}</FigtreeText>
+                   )}
+                   {action && <div className="w-fit">{action}</div>}
+                </div>
+             )}
+
+             {/* Right Bottom: Stat Cards (Only if NOT centered via absolute layer) */}
+             {children && (!centerContent || isSplit) && (
+                <div className={cn(
+                  "flex flex-col sm:flex-row flex-wrap gap-4 flex-1 w-full lg:w-auto justify-start lg:justify-end items-end"
+                )}>
+                    {children}
+                </div>
+             )}
+             
+             {/* Mobile/Tablet Fallback for Centered Cards (stays in flow) */}
+             {children && centerContent && !isSplit && (
+                <div className="flex lg:hidden flex-col sm:flex-row flex-wrap gap-4 w-full justify-start items-end">
+                    {children}
+                </div>
+             )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

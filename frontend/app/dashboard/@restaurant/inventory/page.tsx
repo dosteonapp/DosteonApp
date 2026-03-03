@@ -61,42 +61,31 @@ export default function InventoryPage() {
 
       {/* Hero Section / Main Stats Card */}
       <UnifiedHeroSurface
-        title={isOpen ? "Inventory Control" : "Opening Prep"}
-        subtitle={isOpen ? "Manage your item stock levels, categories, and inventory performance." : "Do your opening stock count before starting your restaurant operations."}
+        variant="split"
+        padding="px-6 py-4 md:px-10 md:py-4"
+        minHeight="min-h-[240px]"
+        title="Inventory"
+        subtitle="Manage your item stock levels and categories"
+        description="Closing Stock Count will be enabled at 7 PM. If you want to change the Closing Stock Count time, your can admin change it in the store management settings."
         isLocked={!isOpen}
-        badge={!isOpen ? (
-            <div className="flex items-center gap-2.5 px-5 py-2 rounded-full bg-[#EF4444] w-fit shadow-lg shadow-red-900/20">
-                <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                <FigtreeText className="text-[11px] font-black text-white uppercase tracking-[0.1em]">16 items need counting</FigtreeText>
-            </div>
-        ) : undefined}
-        action={
-            <div className="flex flex-wrap items-center gap-5">
-                {isOpen ? (
-                    <>
-                        <Button variant="outline" className="h-14 px-8 rounded-2xl border-slate-200 text-[#1E293B] bg-white hover:bg-slate-50 font-bold gap-3 text-base transition-all shadow-md active:scale-95 font-figtree">
-                            <RefreshIcon className="h-5 w-5" /> Update Count
-                        </Button>
-                        <Button className="h-14 px-10 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-2xl font-black gap-3 text-[17px] transition-all border-none shadow-2xl shadow-indigo-900/10 active:scale-95 font-figtree" asChild>
-                            <Link href="/dashboard/inventory/new">
-                                <PlusIcon className="h-5 w-5" /> Add Product
-                            </Link>
-                        </Button>
-                    </>
-                ) : (
-                    <Button className="h-16 px-12 bg-white text-[#3B59DA] hover:bg-slate-50 rounded-2xl font-black gap-4 text-[18px] shadow-2xl shadow-indigo-900/20 border-none transition-all active:scale-95 group font-figtree" asChild>
-                        <Link href="/dashboard/inventory/daily-stock-count">
-                            Count Daily Stock <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
-                        </Link>
-                    </Button>
-                )}
+        size="dense"
+        topAction={
+            <div className="flex items-center gap-3">
+                <Button variant="outline" className="h-12 px-6 rounded-xl border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-semibold gap-2.5 transition-all shadow-sm active:scale-95 font-figtree">
+                    <RefreshIcon className="h-4 w-4" /> Update Inventory
+                </Button>
+                <Button className="h-12 px-8 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-xl font-semibold gap-2.5 transition-all border-none shadow-indigo-200 active:scale-95 font-figtree" asChild>
+                    <Link href="/dashboard/inventory/new">
+                        <PlusIcon className="h-4 w-4" /> Add New Product
+                    </Link>
+                </Button>
             </div>
         }
       >
-        <UnifiedStatCard label="Total Products" value="1.2k" icon={PackageIcon} variant="neutral" />
-        <UnifiedStatCard label="Healthy Stock" value="560" icon={SuccessIcon} variant="green" />
-        <UnifiedStatCard label="Low Stock" value="23" icon={WarningIcon} variant="amber" />
-        <UnifiedStatCard label="Out of Stock" value="04" icon={AlertIcon} variant="red" />
+        <UnifiedStatCard label="Total Inventory Items" value="100" subtext="up by 8% from last week" icon={PackageIcon} variant="neutral" className="flex-1 min-w-[200px]" />
+        <UnifiedStatCard label="Healthy Stock" value="56" subtext="up by 8% from last week" icon={SuccessIcon} variant="green" className="flex-1 min-w-[200px]" />
+        <UnifiedStatCard label="Low Stock" value="23" subtext="up by 8% from last week" icon={WarningIcon} variant="amber" className="flex-1 min-w-[200px]" />
+        <UnifiedStatCard label="Critical" value="4" subtext="up by 8% from last week" icon={AlertIcon} variant="red" className="flex-1 min-w-[200px]" />
       </UnifiedHeroSurface>
 
       {/* What's Running Low Section */}

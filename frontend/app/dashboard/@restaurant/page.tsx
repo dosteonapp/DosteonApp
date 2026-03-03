@@ -89,51 +89,59 @@ export default function RestaurantDashboardPage() {
         <div className="w-full">
             {isOpen ? (
                 <UnifiedHeroSurface
+                    variant="inline"
+                    alignItems="start"
+                    padding="px-6 py-6 md:px-10 md:py-6"
+                    minHeight="min-h-[260px]"
                     title={`Welcome back, ${name}`}
-                    subtitle="Closing Stock Count will be enabled at 7 PM. To change the Closing Stock Count time, your admin can change it in the store management settings."
+                    description="Closing Stock Count will be enabled at 7 PM. To change the Closing Stock Count time, your admin can change it in the store management settings."
                     isLocked={false}
                     badge={
                         <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-indigo-100 bg-white/80 backdrop-blur-sm shadow-sm w-fit">
                             <Lock className="h-3.5 w-3.5 text-[#3B59DA]" />
-                            <FigtreeText className="text-[11px] font-black text-[#3B59DA] uppercase tracking-[0.1em]">OPERATIONS ACTIVE</FigtreeText>
+                            <FigtreeText className="text-[12px] font-semibold text-[#3B59DA] uppercase tracking-[0.1em]">Operations Active</FigtreeText>
                         </div>
                     }
                     action={
-                        <Button className="w-fit h-14 px-10 rounded-2xl border-2 border-[#3B59DA] bg-white hover:bg-slate-50 text-[#3B59DA] font-black gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-lg" asChild>
+                        <Button className="w-fit h-14 px-10 rounded-2xl border-2 border-[#3B59DA] bg-white hover:bg-slate-50 text-[#3B59DA] font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
                             <Link href="/dashboard/kitchen-service">
-                                Kitchen Service Dashboard <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
+                                Proceed to Kitchen Service <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                             </Link>
                         </Button>
                     }
                 >
-                    <UnifiedStatCard label="Total Products" value="1.2k" icon={Package} variant="neutral" />
-                    <UnifiedStatCard label="Critical Items" value="06" icon={AlertCircle} variant="red" />
-                    <UnifiedStatCard label="Low Stock" value="12" icon={AlertTriangle} variant="amber" />
-                    <UnifiedStatCard label="Shift Status" value="Active" icon={Clock} variant="green" />
+                    <UnifiedStatCard label="Total Inventory Items" value="24" icon={Package} variant="indigo" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Critical Stock Items" value="6" icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Low Stock Items" value="6" icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Shift Status" value="Active" icon={Clock} variant="green" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                 </UnifiedHeroSurface>
             ) : (
                 <UnifiedHeroSurface
+                    variant="inline"
+                    alignItems="start"
+                    padding="px-6 py-6 md:px-10 md:py-6"
+                    minHeight="min-h-[260px]"
                     title={`Welcome back, ${name}`}
-                    subtitle="Do your opening stock count before starting your restaurant operations."
+                    description="Closing Stock Count will be enabled at 7 PM. To change the Closing Stock Count time, your admin can change it in the store management settings."
                     isLocked={true}
                     badge={
-                        <div className="flex items-center gap-2.5 px-5 py-2 rounded-full bg-[#EF4444] w-fit shadow-2xl shadow-red-900/40">
-                            <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                            <FigtreeText className="text-[11px] font-black text-white uppercase tracking-[0.1em]">16 items need counting</FigtreeText>
+                        <div className="flex items-center gap-2.5 px-5 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md w-fit shadow-2xl">
+                            <Lock className="h-3.5 w-3.5 text-white" />
+                            <FigtreeText className="text-[12px] font-semibold text-white uppercase tracking-[0.1em]">Opening Prep Locked</FigtreeText>
                         </div>
                     }
                     action={
-                        <Button className="w-fit h-16 px-12 rounded-2xl bg-white text-[#3B59DA] hover:bg-slate-50 font-black gap-4 transition-all shadow-2xl shadow-indigo-900/20 font-figtree border-none active:scale-95 group text-xl" asChild>
+                        <Button className="w-fit h-14 px-10 rounded-2xl bg-white text-[#3B59DA] hover:bg-slate-50 font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
                             <Link href="/dashboard/inventory/daily-stock-count">
-                                Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-3" />
+                                Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                             </Link>
                         </Button>
                     }
                 >
-                    <UnifiedStatCard label="Total Products" value="1.2k" icon={Package} variant="neutral" />
-                    <UnifiedStatCard label="Critical Items" value="06" icon={AlertCircle} variant="red" />
-                    <UnifiedStatCard label="Low Stock" value="12" icon={AlertTriangle} variant="amber" />
-                    <UnifiedStatCard label="Shift Status" value="Inactive" icon={Clock} variant="neutral" />
+                    <UnifiedStatCard label="Total Inventory Items" value="24" icon={Package} variant="indigo" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Critical Stock Items" value="6" icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Low Stock Items" value="6" icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Shift Status" value="Active" icon={Clock} variant="green" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                 </UnifiedHeroSurface>
             )}
         </div>

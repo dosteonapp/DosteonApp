@@ -442,7 +442,7 @@ export default function SupplierDetailsPage({
 }
 
 // Helper function to get badge variant based on rating
-function getRatingVariant(rating: string) {
+function getRatingVariant(rating: string): "default" | "destructive" | "outline" | "secondary" | "warning" | "success" | "info" | "pending" {
   switch (rating) {
     case "Excellent":
       return "success";
@@ -458,7 +458,7 @@ function getRatingVariant(rating: string) {
 }
 
 // Helper function to get badge variant based on price index
-function getPriceVariant(priceIndex: number) {
+function getPriceVariant(priceIndex: number): "default" | "destructive" | "outline" | "secondary" | "warning" | "success" | "info" | "pending" {
   if (priceIndex < 0.95) return "success";
   if (priceIndex <= 1.05) return "default";
   if (priceIndex <= 1.15) return "warning";
@@ -466,7 +466,7 @@ function getPriceVariant(priceIndex: number) {
 }
 
 // Helper function to get badge variant based on flexibility rate
-function getFlexibilityVariant(rate: number) {
+function getFlexibilityVariant(rate: number): "default" | "destructive" | "outline" | "secondary" | "warning" | "success" | "info" | "pending" {
   if (rate >= 90) return "success";
   if (rate >= 75) return "default";
   if (rate >= 60) return "warning";
@@ -482,18 +482,18 @@ function getFlexibilityRating(rate: number) {
 }
 
 // Helper function to get badge variant based on order status
-function getOrderStatusVariant(status: string) {
+function getOrderStatusVariant(status: string): "default" | "destructive" | "outline" | "secondary" | "warning" | "success" | "info" | "pending" {
   switch (status) {
     case "Delivered":
-      return "bg-secondary-500 text-secondary-foreground hover:bg-secondary-500/90";
+      return "secondary";
     case "In Transit":
-      return "bg-blue-500 text-white hover:bg-blue-600";
+      return "info";
     case "Confirmed":
-      return "bg-green-500 text-white hover:bg-green-600";
+      return "success";
     case "Pending":
-      return "bg-red-500 text-white hover:bg-red-600";
+      return "pending";
     case "Cancelled":
-      return "bg-destructive text-destructive-foreground hover:bg-destructive/90";
+      return "destructive";
     default:
       return "outline";
   }

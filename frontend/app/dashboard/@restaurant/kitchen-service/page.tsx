@@ -114,36 +114,34 @@ export default function KitchenServicePage() {
       <div className="w-full">
         {isOpen ? (
             <UnifiedHeroSurface
-                title="Live Operations In Progress"
-                subtitle="Your kitchen is currently active. Record ingredient usage, track production, and manage waste in real-time."
+                variant="inline"
+                padding="px-6 py-4 md:px-10 md:py-4"
+                minHeight="min-h-[240px]"
+                title="Kitchen Service"
+                description="Manage your kitchen service here, including ingredient usage as you prepare food for your customers."
                 isLocked={false}
-                badge={
-                    <div className="flex items-center gap-3 px-5 py-2 rounded-full border border-emerald-100 bg-white/80 backdrop-blur-sm w-fit shadow-md text-emerald-600">
+                topAction={
+                    <div className="flex items-center gap-2.5 px-4 py-2 lg:px-5 lg:py-2.5 rounded-full border border-emerald-500/20 bg-emerald-50 text-emerald-600 shadow-sm border-none backdrop-blur-sm">
                         <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <FigtreeText className="font-black text-[11px] uppercase tracking-widest leading-none">Live Service</FigtreeText>
+                        <FigtreeText className="font-semibold text-[12px] uppercase tracking-[0.15em] leading-none text-emerald-600">Live Service</FigtreeText>
                     </div>
                 }
             >
                 <UnifiedStatCard 
-                  label="Kitchen Status" 
+                  label="Kitchen Health" 
                   value="Healthy" 
-                  subtext="Lunch shift running" 
-                  icon={Activity}
+                  subtext="Lunch service in progress" 
+                  icon={Utensils}
                   variant="green"
+                  className="w-36 md:w-52 lg:w-60 h-[150px] md:h-[200px] lg:h-[240px] shadow-sm"
                 />
                 <UnifiedStatCard 
-                  label="Urgent Alerts" 
-                  value="00" 
-                  subtext="No issues detected" 
-                  icon={AlertTriangle}
+                  label="Critical Ingredients" 
+                  value="0" 
+                  subtext="Nothing urgent right now" 
+                  icon={Package}
                   variant="neutral"
-                />
-                <UnifiedStatCard 
-                  label="Usage Logs" 
-                  value="124" 
-                  subtext="Entries today" 
-                  icon={HistoryIcon}
-                  variant="neutral"
+                  className="w-36 md:w-52 lg:w-60 h-[150px] md:h-[200px] lg:h-[240px] shadow-sm"
                 />
             </UnifiedHeroSurface>
         ) : (
@@ -181,40 +179,38 @@ export default function KitchenServicePage() {
           !isOpen && "blur-2xl grayscale scale-[0.96] opacity-30 pointer-events-none"
         )}>
           {/* Section Header */}
-          <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 px-4 pt-4">
-            <div className="space-y-2.5">
-              <FigtreeText className="text-[12px] font-black text-slate-400 uppercase tracking-[0.25em] leading-none mb-3">Manual Registry</FigtreeText>
-              <InriaHeading className="text-[34px] md:text-[42px] font-bold text-[#1E293B] tracking-tight leading-none">Stock Consumption Tracker</InriaHeading>
+          <div className="flex flex-row items-start justify-between gap-4 px-1">
+            <div className="space-y-1">
+              <h2 className="text-[20px] md:text-[22px] font-bold text-[#1E293B] tracking-tight font-figtree">Track Product Usage</h2>
+              <FigtreeText className="text-[13px] md:text-[14px] text-slate-400 font-medium">Enter how much of each product you&apos;ve used, or use +/- buttons to adjust</FigtreeText>
             </div>
-            <Button variant="link" className="text-[#3B59DA] font-black hover:text-[#2D46B2] transition-colors text-[15px] font-figtree p-0 h-auto gap-2" asChild>
-              <Link href="/dashboard/kitchen-service/history">View Detailed Consumption History <ArrowRight className="h-4 w-4" /></Link>
-            </Button>
+            <Link href="/dashboard/kitchen-service/history" className="text-slate-500 font-bold hover:text-indigo-600 transition-colors text-[14px] font-figtree flex items-center shrink-0">
+                View Log History
+            </Link>
           </div>
 
           {/* Search Bar */}
-          <div className="relative w-full">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-300 px-0" />
+          <div className="relative w-full xl:max-w-md my-3">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
             <Input 
-              placeholder="Quick search products..." 
-              className="pl-16 h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC]/50 focus:ring-[#3B59DA]/5 placeholder:text-slate-300 placeholder:font-black font-black text-[17px] font-figtree shadow-none focus:shadow-xl focus:shadow-indigo-500/5 transition-all"
+              placeholder="Search items..." 
+              className="pl-12 h-[52px] border-slate-200 rounded-xl bg-slate-50 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus-visible:ring-indigo-500/10 transition-all shadow-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           
           {/* Order Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
-              <Card key={item.id} className="rounded-[40px] border border-slate-100/50 overflow-hidden bg-white shadow-sm hover:border-[#3B59DA]/30 hover:shadow-2xl transition-all group p-8 space-y-10">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2 overflow-hidden">
-                      <InriaHeading className="font-bold text-[#1E293B] text-[26px] md:text-[28px] tracking-tight group-hover:text-[#3B59DA] transition-colors truncate">{item.name}</InriaHeading>
-                      <div className="flex items-center gap-3">
-                        <FigtreeText className="text-[14px] text-slate-400 font-bold tabular-nums uppercase tracking-tight">{item.currentStock} {item.unit} READY</FigtreeText>
-                      </div>
+              <Card key={item.id} className="rounded-[24px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:border-indigo-100 hover:shadow-xl transition-all group p-5 space-y-6">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1 overflow-hidden">
+                      <h3 className="font-bold text-[#1E293B] text-[17px] md:text-[18px] tracking-tight font-figtree truncate">{item.name}</h3>
+                      <FigtreeText className="text-[13px] text-slate-400 font-semibold">{item.currentStock} units remaining</FigtreeText>
                     </div>
                     <Badge className={cn(
-                      "border-none rounded-lg font-black text-[9px] px-3.5 py-1.5 uppercase tracking-[0.2em] font-figtree shadow-inner",
+                      "border-none rounded-lg font-bold text-[10px] px-2.5 py-1 uppercase tracking-tight font-figtree shrink-0 shadow-sm",
                       item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" : 
                       item.status === 'Low' ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
                     )}>
@@ -222,24 +218,24 @@ export default function KitchenServicePage() {
                     </Badge>
                   </div>
  
-                  <div className="grid grid-cols-2 gap-5">
+                  <div className="grid grid-cols-2 gap-4">
                     <button 
-                      className="flex flex-col items-center justify-center gap-4 py-10 rounded-[28px] bg-[#F8FAFC] border border-slate-100/30 hover:bg-[#3B59DA] hover:text-white transition-all duration-500 group/btn shadow-sm active:scale-95" 
+                      className="flex flex-col items-center justify-center gap-3 py-6 rounded-2xl bg-slate-50/80 hover:bg-emerald-50 hover:text-emerald-700 transition-all duration-300 group/btn active:scale-95" 
                       onClick={() => handleLogClick(item, 'usage')}
                     >
-                      <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center shadow-lg group-hover/btn:scale-110 transition-transform">
-                        <Package className="h-7 w-7 text-[#3B59DA]" />
+                      <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-sm group-hover/btn:scale-110 transition-transform">
+                        <Package className="h-5 w-5 text-emerald-500" />
                       </div>
-                      <FigtreeText className="text-[12px] font-black uppercase tracking-[0.15em] leading-none">Log Usage</FigtreeText>
+                      <FigtreeText className="text-[11px] font-bold text-slate-500 group-hover/btn:text-emerald-700">Log Usage</FigtreeText>
                     </button>
                     <button 
-                      className="flex flex-col items-center justify-center gap-4 py-10 rounded-[28px] bg-[#F8FAFC] border border-slate-100/30 hover:bg-rose-500 hover:text-white transition-all duration-500 group/btn shadow-sm active:scale-95" 
+                      className="flex flex-col items-center justify-center gap-3 py-6 rounded-2xl bg-slate-50/80 hover:bg-rose-50 hover:text-rose-700 transition-all duration-300 group/btn active:scale-95" 
                       onClick={() => handleLogClick(item, 'waste')}
                     >
-                      <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center shadow-lg group-hover/btn:scale-110 transition-transform">
-                        <Trash2 className="h-7 w-7 text-rose-500" />
+                      <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-sm group-hover/btn:scale-110 transition-transform">
+                        <Trash2 className="h-5 w-5 text-rose-500" />
                       </div>
-                      <FigtreeText className="text-[12px] font-black uppercase tracking-[0.15em] leading-none">Log Waste</FigtreeText>
+                      <FigtreeText className="text-[11px] font-bold text-slate-500 group-hover/btn:text-rose-700">Log Waste</FigtreeText>
                     </button>
                   </div>
               </Card>
