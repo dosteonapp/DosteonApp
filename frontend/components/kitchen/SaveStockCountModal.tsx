@@ -3,7 +3,8 @@
 import { ClipboardCheck } from "lucide-react";
 import { 
     Dialog, 
-    DialogContent 
+    DialogContent,
+    DialogTitle
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -29,7 +30,9 @@ export function SaveStockCountModal({ open, onOpenChange }: SaveStockCountModalP
                 </div>
                 
                 <div className="space-y-3">
-                    <h2 className="text-3xl font-black text-[#1E293B] tracking-tight">Progress Saved!</h2>
+                    <DialogTitle asChild>
+                        <h2 className="text-3xl font-black text-[#1E293B] tracking-tight">Progress Saved!</h2>
+                    </DialogTitle>
                     <p className="text-slate-500 font-bold leading-relaxed text-sm px-4">
                         Your stock count has been saved as a draft. You can come back at any time to finish your opening prep.
                     </p>

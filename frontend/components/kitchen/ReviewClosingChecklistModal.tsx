@@ -80,7 +80,9 @@ export function ReviewClosingChecklistModal({
                     <DialogHeader className="space-y-4">
                         <div className="flex items-center justify-between">
                             <div className="space-y-1.5">
-                                <InriaHeading className="text-[32px] font-bold text-[#1E293B] tracking-tight leading-none">Review Closing Checklist</InriaHeading>
+                                <DialogTitle asChild>
+                                    <InriaHeading className="text-[32px] font-bold text-[#1E293B] tracking-tight leading-none">Review Closing Checklist</InriaHeading>
+                                </DialogTitle>
                                 <FigtreeText className="text-[15px] font-bold text-slate-500 max-w-sm leading-relaxed">
                                     Confirm today's inventory reconciliation to finalize local operations.
                                 </FigtreeText>

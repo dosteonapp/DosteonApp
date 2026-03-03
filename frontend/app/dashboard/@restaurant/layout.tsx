@@ -26,15 +26,17 @@ export default function RestaurantLayout({
       <SidebarProvider>
         <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
           <RestaurantSidebar />
-          <main className="flex-1 min-w-0 overflow-auto relative flex flex-col">
+          <main className="flex-1 min-w-0 relative flex flex-col overflow-hidden">
             <Suspense fallback={<div className="h-[100px] bg-white border-b border-slate-100" />}>
               <DashboardHeader />
             </Suspense>
-            <div className="p-8 space-y-8">
-                <RestaurantDayLifecycleOverlay />
-                <RestaurantDayRouteGuard>
-                    {children}
-                </RestaurantDayRouteGuard>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                <div className="p-8 space-y-8">
+                    <RestaurantDayLifecycleOverlay />
+                    <RestaurantDayRouteGuard>
+                        {children}
+                    </RestaurantDayRouteGuard>
+                </div>
             </div>
             <ToastContainer />
           </main>

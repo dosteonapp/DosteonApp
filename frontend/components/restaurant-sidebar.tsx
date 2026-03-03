@@ -82,8 +82,8 @@ export function RestaurantSidebar() {
       className={cn(
         "h-screen flex-col border-r border-slate-100 bg-white transition-all duration-500 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-[120] flex shrink-0",
         isSidebarCollapsed ? "w-[90px]" : "w-[300px]",
-        "fixed inset-y-0 left-0 lg:relative lg:translate-x-0 transition-transform",
-        isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        "fixed inset-y-0 left-0 md:relative md:translate-x-0 transition-transform",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}
     >
       <div className="flex h-[100px] items-center justify-between px-6 border-b border-slate-50 relative shrink-0 transition-all duration-500">
@@ -117,7 +117,7 @@ export function RestaurantSidebar() {
           variant="ghost"
           size="icon"
           className={cn(
-            "h-8 w-8 rounded-xl border border-slate-100 bg-white shadow-sm absolute -right-4 top-[36px] z-50 transition-all hover:shadow-md hover:border-indigo-100 active:scale-90 hidden lg:flex", 
+            "h-8 w-8 rounded-xl border border-slate-100 bg-white shadow-sm absolute -right-4 top-[36px] z-50 transition-all hover:shadow-md hover:border-indigo-100 active:scale-90 hidden md:flex", 
             isSidebarCollapsed && "static mt-0"
           )}
           onClick={toggleCollapse}

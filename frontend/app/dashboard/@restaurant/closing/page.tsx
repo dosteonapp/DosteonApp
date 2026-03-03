@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ReviewClosingChecklistModal } from "@/components/kitchen/ReviewClosingChecklistModal";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSidebar } from "@/context/SidebarContext";
 import { 
     UnifiedHeroSurface, 
     UnifiedStatCard, 
@@ -54,6 +55,7 @@ import {
 
 export default function ClosingPage() {
   const { isOpen } = useRestaurantDayLifecycle();
+  const { isSidebarCollapsed } = useSidebar();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -148,20 +150,26 @@ export default function ClosingPage() {
                             </div>
                         </div>
 
-                        <UnifiedStatCard 
-                          label="Consumption" 
-                          value="124" 
-                          subtext="Items reported used" 
-                          icon={Activity}
-                          variant="neutral"
-                        />
-                        <UnifiedStatCard 
-                          label="Reported Waste" 
-                          value="18" 
-                          subtext="Items marked unusable" 
-                          icon={Trash2}
-                          variant="red"
-                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 flex-1 w-full lg:max-w-xl z-10 overflow-x-auto custom-scrollbar pb-2">
+                            <div className="flex sm:grid sm:grid-cols-2 gap-8 min-w-fit sm:min-w-0">
+                                <UnifiedStatCard 
+                                  label="Consumption" 
+                                  value="124" 
+                                  subtext="Items reported used" 
+                                  icon={Activity}
+                                  variant="neutral"
+                                  className="min-w-[240px] sm:min-w-0"
+                                />
+                                <UnifiedStatCard 
+                                  label="Reported Waste" 
+                                  value="18" 
+                                  subtext="Items marked unusable" 
+                                  icon={Trash2}
+                                  variant="red"
+                                  className="min-w-[240px] sm:min-w-0"
+                                />
+                            </div>
+                        </div>
                     </UnifiedHeroSurface>
                     
                     {/* Items Section */}
@@ -191,11 +199,13 @@ export default function ClosingPage() {
                             </div>
                         </div>
 
-                        {/* List */}
-                        <div className="space-y-4">
-                            {items.slice(0, 6).map((item) => (
-                                <ClosingCountRow key={item.id} item={item} />
-                            ))}
+                        {/* List - Wrapped in local horizontal scroll to prevent page overflow issues */}
+                        <div className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar pb-6 -mx-2 px-2">
+                            <div className="space-y-4 min-w-[1000px] xl:min-w-0">
+                                {items.slice(0, 6).map((item) => (
+                                    <ClosingCountRow key={item.id} item={item} />
+                                ))}
+                            </div>
                         </div>
                     </PrimarySurfaceCard>
                 </div>
@@ -205,7 +215,10 @@ export default function ClosingPage() {
         {/* Fixed Closing Action Footer */}
         {isOpen && (
             <div 
-                className="fixed bottom-0 right-0 left-0 lg:left-[var(--sidebar-width,300px)] z-[100] p-0 bg-white/90 backdrop-blur-2xl border-t border-slate-100 flex items-center justify-end shadow-[0_-20px_50px_rgba(0,0,0,0.05)] transition-all duration-300"
+                className={cn(
+                    "fixed bottom-0 right-0 left-0 transition-all duration-500 z-[100] p-0 bg-white/90 backdrop-blur-2xl border-t border-slate-100 flex items-center justify-end shadow-[0_-20px_50px_rgba(0,0,0,0.05)]",
+                    isSidebarCollapsed ? "md:left-[90px]" : "md:left-[300px]"
+                )}
             >
                 <div className="w-full h-24 px-8 flex items-center justify-end gap-6">
                     <Button 
