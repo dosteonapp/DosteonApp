@@ -134,7 +134,7 @@ export default function DailyStockCountPage() {
 
       {/* Main Content Container */}
       <div className={cn(
-        "relative flex flex-col gap-8 px-0 transition-all duration-500 w-full",
+        "relative flex flex-col gap-4 px-0 transition-all duration-500 w-full",
         showReview && "blur-2xl scale-[0.98] pointer-events-none"
       )}>
 
@@ -142,26 +142,33 @@ export default function DailyStockCountPage() {
         <UnifiedHeroSurface
             backgroundColor="bg-[#f5f6ff]"
             borderColor="border-[#98a6f9]"
-            title="Daily Stock Count"
-            description="Check each product and confirm the quantity in stock to unlock Kitchen Service dashboard."
-            padding="px-8 py-10 md:px-12 md:py-10"
+            title=""
+            description=""
+            padding="px-8 py-8 md:px-12 md:py-10"
             isLocked={false}
         >
             <div className="flex flex-col gap-8 w-full">
+                <div className="space-y-3">
+                    <h1 className="text-[28px] md:text-[32px] font-bold text-[#1E293B] tracking-tight leading-none font-figtree">Daily Stock Count</h1>
+                    <p className="text-slate-500 font-medium text-[15px] max-w-lg leading-relaxed font-figtree">
+                        Check each product and confirm the quantity in stock to unlock Kitchen Service dashboard.
+                    </p>
+                </div>
+
                 <div className="flex items-center gap-6 justify-start">
                     <CircularProgress percentage={progressPercent} />
                     <div className="space-y-1 text-left">
-                        <h2 className="text-[18px] md:text-[20px] font-bold text-[#1E293B] tracking-tight font-figtree">Progress: {progressCount} of {totalCount} Items Counted</h2>
+                        <h2 className="text-[17px] md:text-[19px] font-bold text-[#1E293B] tracking-tight font-figtree">Progress: {progressCount} of {totalCount} Items Counted</h2>
                         <FigtreeText className="text-slate-400 font-medium text-[14px]">Finish counts to verify inventory levels.</FigtreeText>
                     </div>
                 </div>
             </div>
         </UnifiedHeroSurface>
 
-        {/* Items List */}
-        <div className="space-y-8">
-            {/* Toolbar outside card to match design */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-4">
+        {/* Items List Card */}
+        <PrimarySurfaceCard className="border-black/5 shadow-sm p-4 md:p-8 space-y-8">
+            {/* Toolbar inside card */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="relative w-full md:max-w-md">
                     <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                     <Input 
@@ -205,7 +212,7 @@ export default function DailyStockCountPage() {
                     />
                 ))}
             </div>
-        </div>
+        </PrimarySurfaceCard>
       </div>
 
       {/* Sticky Bottom Bar */}
