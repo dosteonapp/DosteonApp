@@ -93,6 +93,8 @@ export default function RestaurantDashboardPage() {
                     alignItems="start"
                     padding="px-6 py-6 md:px-10 md:py-6"
                     minHeight="min-h-[260px]"
+                    backgroundColor="bg-[#f5f6ff]"
+                    borderColor="border-[#98a6f9]"
                     title={`Welcome back, ${name}`}
                     description="Closing Stock Count will be enabled at 7 PM. To change the Closing Stock Count time, your admin can change it in the store management settings."
                     isLocked={false}
@@ -121,6 +123,8 @@ export default function RestaurantDashboardPage() {
                     alignItems="start"
                     padding="px-6 py-6 md:px-10 md:py-6"
                     minHeight="min-h-[260px]"
+                    backgroundColor="bg-[#f5f6ff]"
+                    borderColor="border-[#f5f6ff]"
                     title={`Welcome back, ${name}`}
                     description="Closing Stock Count will be enabled at 7 PM. To change the Closing Stock Count time, your admin can change it in the store management settings."
                     isLocked={true}

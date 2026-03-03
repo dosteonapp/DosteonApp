@@ -64,6 +64,8 @@ export default function InventoryPage() {
         variant="split"
         padding="px-6 py-4 md:px-10 md:py-4"
         minHeight="min-h-[240px]"
+        backgroundColor="bg-[#f5f6ff]"
+        borderColor="border-[#98a6f9]"
         title="Inventory"
         subtitle="Manage your item stock levels and categories"
         description="Closing Stock Count will be enabled at 7 PM. If you want to change the Closing Stock Count time, your can admin change it in the store management settings."

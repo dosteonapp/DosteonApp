@@ -117,6 +117,8 @@ export default function KitchenServicePage() {
                 variant="inline"
                 padding="px-6 py-4 md:px-10 md:py-4"
                 minHeight="min-h-[240px]"
+                backgroundColor="bg-[#f5f6ff]"
+                borderColor="border-[#98a6f9]"
                 title="Kitchen Service"
                 description="Manage your kitchen service here, including ingredient usage as you prepare food for your customers."
                 isLocked={false}

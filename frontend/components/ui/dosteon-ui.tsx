@@ -126,7 +126,9 @@ export const UnifiedHeroSurface = ({
   centerContent = false,
   centerStats = false,
   padding,
-  minHeight
+  minHeight,
+  backgroundColor,
+  borderColor
 }: { 
   title: string, 
   subtitle?: string, 
@@ -143,7 +145,9 @@ export const UnifiedHeroSurface = ({
   centerContent?: boolean,
   centerStats?: boolean,
   padding?: string,
-  minHeight?: string
+  minHeight?: string,
+  backgroundColor?: string,
+  borderColor?: string
 }) => {
   const isDense = size === 'dense';
   const isSplit = variant === 'split';
@@ -156,9 +160,10 @@ export const UnifiedHeroSurface = ({
       minHeight ? minHeight : (isDense ? "min-h-[300px]" : "min-h-[340px]"),
       isInline && !isDense && !padding && "lg:pr-6", // Getting that 24px right margin on desktop
       alignItems === 'center' ? "items-center" : "items-stretch",
-      isLocked 
-        ? "bg-gradient-to-br from-[#3B59DA] via-[#7C3AED] to-[#1E3A8A] border-indigo-400/20 text-white shadow-2xl" 
-        : "bg-white border-indigo-100 text-[#1E293B] shadow-sm",
+      backgroundColor ? backgroundColor : (isLocked 
+        ? "bg-gradient-to-br from-[#3B59DA] via-[#7C3AED] to-[#1E3A8A] text-white shadow-2xl" 
+        : "bg-white text-[#1E293B] shadow-sm"),
+      borderColor ? borderColor : (isLocked ? "border-indigo-400/20" : "border-indigo-100"),
       className
     )}>
       {/* Background Decor */}
