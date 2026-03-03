@@ -103,15 +103,6 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
 
   return (
     <AppContainer className="pb-40">
-        <div className="flex items-center mb-8">
-            <Button 
-                variant="outline" 
-                className="h-12 px-6 rounded-xl font-bold border-slate-200 text-[#1E293B] hover:bg-slate-50 transition-all gap-3 shadow-sm font-figtree"
-                onClick={() => router.back()}
-            >
-                <ChevronLeft className="h-5 w-5" /> Back
-            </Button>
-        </div>
 
         {/* Header: Item Summary Card */}
         <motion.div 

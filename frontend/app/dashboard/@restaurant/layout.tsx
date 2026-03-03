@@ -25,16 +25,8 @@ export default function RestaurantLayout({
     <RestaurantDayLifecycleProvider>
       <SidebarProvider>
         <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
-          {/* Fixed Sidebar */}
           <RestaurantSidebar />
-          
-          {/* Spacer for fixed sidebar on desktop */}
-          <div 
-            className="hidden lg:block shrink-0 transition-all duration-500" 
-            style={{ width: 'var(--sidebar-width, 300px)' }}
-          />
-
-          <main className="flex-1 overflow-auto relative flex flex-col">
+          <main className="flex-1 min-w-0 overflow-auto relative flex flex-col">
             <Suspense fallback={<div className="h-[100px] bg-white border-b border-slate-100" />}>
               <DashboardHeader />
             </Suspense>

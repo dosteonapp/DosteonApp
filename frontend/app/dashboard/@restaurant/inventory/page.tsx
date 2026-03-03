@@ -58,23 +58,6 @@ export default function InventoryPage() {
     <AppContainer className="pb-24">
       {!isOpen && <InventoryLockedOverlay />}
 
-      {/* Modern Search & Date Header (Outside Box) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-2 pb-6 mb-0">
-        <div className="flex flex-col gap-1 shrink-0">
-            <FigtreeText className="text-[13px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">Inventory Management</FigtreeText>
-            <InriaHeading className="text-[34px] font-bold text-[#1E293B] tracking-tight leading-none">Dashboard</InriaHeading>
-        </div>
-        <div className="flex items-center gap-6 flex-1">
-             <div className="relative w-full">
-                <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-300 transition-colors group-focus-within:text-[#3B59DA]" />
-                <Input placeholder="Search inventory items..." className="pl-16 h-[72px] bg-white border-slate-200 rounded-2xl w-full text-lg font-black text-slate-700 placeholder:text-slate-300 placeholder:font-black focus-visible:ring-[#3B59DA]/5 focus-visible:border-[#3B59DA]/30 transition-all shadow-none focus:shadow-xl focus:shadow-indigo-500/5" />
-             </div>
-        </div>
-        <div className="bg-white border border-slate-100 px-8 h-[72px] rounded-2xl flex items-center gap-4 text-[#3B59DA] shadow-sm shrink-0 hover:border-[#3B59DA]/20 transition-all cursor-default group">
-             <Calendar className="h-5 w-5 text-slate-400 group-hover:text-[#3B59DA] transition-colors" />
-             <FigtreeText className="text-[14px] font-black tabular-nums text-slate-500 group-hover:text-slate-900 transition-colors uppercase tracking-tight">Tuesday, Jan 24, 2026</FigtreeText>
-        </div>
-      </div>
 
       {/* Hero Section / Main Stats Card */}
       <UnifiedHeroSurface
@@ -122,9 +105,9 @@ export default function InventoryPage() {
       </div>
 
       {/* See All Items Redirection */}
-      <div className="flex justify-end mt-10 mb-10">
+      <div className="flex justify-end mt-12 mb-12">
           <Button 
-            className="h-16 px-12 rounded-[22px] bg-[#F8FAFC] border-2 border-slate-100 text-[#3B59DA] hover:bg-[#3B59DA] hover:text-white hover:border-[#3B59DA] font-black transition-all shadow-md text-[16px] font-figtree active:scale-95"
+            className="h-16 px-12 rounded-[22px] bg-white border-2 border-slate-100 text-[#3B59DA] hover:bg-[#3B59DA] hover:text-white hover:border-[#3B59DA] font-black transition-all shadow-sm text-[16px] font-figtree active:scale-95"
             asChild
           >
             <Link href="/dashboard/inventory/items">
@@ -141,14 +124,14 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
         <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[32px] border border-slate-100 bg-white overflow-hidden shadow-sm p-8 md:p-10 mt-4"
+            className="rounded-[40px] border border-slate-100 bg-white overflow-hidden shadow-sm p-8 md:p-10 mt-6"
         >
-            <div className="flex items-end justify-between mb-8 px-2">
-                <div className="space-y-1">
-                    <FigtreeText className="text-[13px] font-black text-red-400 uppercase tracking-[0.2em] leading-none">Stock Warning</FigtreeText>
-                    <InriaHeading className="text-[32px] md:text-[38px] font-bold tracking-tight text-[#1E293B]">What's Running Low</InriaHeading>
+            <div className="flex items-end justify-between mb-10 px-2">
+                <div className="space-y-1.5 pt-2">
+                    <FigtreeText className="text-[12px] font-black text-red-500 uppercase tracking-[0.25em] leading-none mb-2">Operational Analytics</FigtreeText>
+                    <InriaHeading className="text-[34px] md:text-[38px] font-bold tracking-tight text-[#1E293B]">What's Running Low</InriaHeading>
                 </div>
-                <div className="h-14 w-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 shadow-sm border border-red-100/50">
+                <div className="h-16 w-16 bg-red-50 rounded-[22px] flex items-center justify-center text-red-500 shadow-sm border border-red-100/30">
                     <WarningIcon className="h-7 w-7 stroke-[2.5px]" />
                 </div>
             </div>
@@ -157,22 +140,24 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
                 {items.slice(0, 3).map((item) => (
                     <div 
                         key={item.id}
-                        className="p-5 flex items-center justify-between bg-[#F8FAFC] border border-slate-50 rounded-[28px] transition-all group hover:border-[#3B59DA]/20 hover:bg-white hover:shadow-xl shadow-[0_4px_20px_rgba(0,0,0,0.01)]"
+                        className="p-5 flex items-center justify-between bg-white border border-slate-50 rounded-[32px] transition-all group hover:border-[#3B59DA]/20 hover:bg-[#F8FAFF] hover:shadow-xl shadow-[0_4px_20px_rgba(0,0,0,0.01)]"
                     >
                         <div className="flex items-center gap-8">
-                            <div className="h-20 w-20 rounded-[20px] overflow-hidden border-2 border-white bg-white shrink-0 flex items-center justify-center text-slate-100 shadow-lg group-hover:scale-105 transition-transform">
+                            <div className="h-20 w-20 rounded-full border border-slate-100 bg-white shadow-sm shrink-0 flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-105">
                                 {item.imageUrl ? (
                                     <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                                 ) : (
-                                    <PackageIcon className="h-10 w-10" />
+                                    <div className="h-full w-full bg-slate-50 p-6 text-slate-100 flex items-center justify-center">
+                                        <PackageIcon className="h-8 w-8 text-slate-300" />
+                                    </div>
                                 )}
                             </div>
-                            <div className="space-y-2">
-                                <InriaHeading className="text-[22px] font-bold text-[#1E293B] group-hover:text-[#3B59DA] transition-colors">{item.name}</InriaHeading>
+                            <div className="space-y-1.5 overflow-hidden">
+                                <InriaHeading className="text-[22px] md:text-[24px] font-bold truncate leading-none text-[#1E293B] group-hover:text-[#3B59DA] transition-colors">{item.name}</InriaHeading>
                                 <div className="flex items-center gap-4">
-                                    <FigtreeText className="text-[15px] font-black text-slate-400 tabular-nums uppercase tracking-tight">{item.unitsLeftLabel} left</FigtreeText>
-                                    <div className="px-3 py-1 bg-red-50 text-red-500 rounded-lg text-[10px] font-black uppercase tracking-widest border border-red-100/50">
-                                        RESTOCK {item.needLabel || '10kg'}
+                                    <FigtreeText className="text-[13px] font-black text-slate-400 tabular-nums uppercase tracking-[0.1em]">{item.unitsLeftLabel} REMAINING</FigtreeText>
+                                    <div className="px-3 py-1 bg-red-100 text-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest border border-red-200/50">
+                                        CRITICAL {item.needLabel || 'REFRESH'}
                                     </div>
                                 </div>
                             </div>
@@ -180,7 +165,7 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
                         
                         <Button variant="outline" className="h-14 px-10 rounded-[20px] border-slate-200 bg-white font-black text-[#1E293B]/70 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[15px] font-figtree active:scale-95 shadow-sm" asChild>
                             <Link href={`/dashboard/inventory/${item.id}`}>
-                                View Details
+                                View Stats
                             </Link>
                         </Button>
                     </div>
@@ -201,25 +186,25 @@ function InventoryLockedOverlay() {
                 }}
             />
             
-            <div className="relative z-50 flex flex-col items-center justify-center mt-[420px] bg-white border border-slate-100 p-12 rounded-[28px] shadow-2xl animate-in zoom-in-95 duration-500 scale-90 md:scale-100">
-                <div className="w-16 h-16 bg-[#F3F4F6] border border-slate-100 rounded-[20px] flex items-center justify-center mb-8 shadow-inner">
-                    <LockIcon className="h-6 w-6 text-slate-400" />
+            <div className="relative z-50 flex flex-col items-center justify-center mt-[440px] bg-white border border-slate-100 py-16 px-12 rounded-[48px] shadow-[0_32px_120px_rgba(15,23,42,0.15)] animate-in zoom-in-95 duration-500 scale-90 md:scale-100 max-w-lg mx-auto">
+                <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-[28px] flex items-center justify-center mb-10 shadow-inner">
+                    <LockIcon className="h-8 w-8 text-slate-400 stroke-[2.5px]" />
                 </div>
                 
-                <div className="space-y-4 max-w-sm">
-                    <InriaHeading className="text-[28px] font-bold text-[#1E293B] tracking-tight leading-none">Kitchen Service is Locked</InriaHeading>
-                    <FigtreeText className="text-slate-400 text-[15px] leading-relaxed font-semibold max-w-[300px] mx-auto">
-                        The Kitchen Service workflow is not yet available. Please do your daily stock count before you proceed to Kitchen Service.
+                <div className="space-y-4 text-center">
+                    <InriaHeading className="text-[34px] font-bold text-[#1E293B] tracking-tight leading-none">Kitchen Service is Locked</InriaHeading>
+                    <FigtreeText className="text-slate-400 text-[16px] leading-relaxed font-bold max-w-[320px] mx-auto">
+                        Your inventory levels need to be verified first. Please do your daily stock count to proceed.
                     </FigtreeText>
                 </div>
-
-                <div className="mt-10">
+ 
+                <div className="mt-12 w-full flex justify-center">
                     <Button 
-                        className="h-14 px-10 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-xl font-bold gap-3 shadow-xl shadow-indigo-900/10 transition-all active:scale-95 group border-none text-[15px] font-figtree" 
+                        className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[22px] font-black gap-4 shadow-2xl shadow-indigo-900/10 transition-all active:scale-95 group border-none text-[17px] font-figtree" 
                         asChild
                     >
                         <Link href="/dashboard/inventory/daily-stock-count">
-                            Count Daily Stock <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                         </Link>
                     </Button>
                 </div>

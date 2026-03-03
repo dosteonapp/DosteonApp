@@ -109,25 +109,6 @@ export default function KitchenServicePage() {
 
   return (
     <AppContainer className="pb-24">
-      {/* Header Context (Outside Surface) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-2 pb-6 mb-0">
-        <div className="flex flex-col gap-1 shrink-0">
-            <FigtreeText className="text-[13px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">Service Management</FigtreeText>
-            <InriaHeading className="text-[34px] font-bold text-[#1E293B] tracking-tight leading-none">Kitchen Service</InriaHeading>
-        </div>
-        <div className="flex items-center gap-4">
-            <div className="bg-white border border-slate-100 px-8 h-[72px] rounded-2xl flex items-center gap-4 text-[#3B59DA] shadow-sm hover:border-[#3B59DA]/20 transition-all cursor-default group shrink-0">
-                 <Calendar className="h-5 w-5 text-slate-400 group-hover:text-[#3B59DA] transition-colors" />
-                 <FigtreeText className="text-[14px] font-black tabular-nums text-slate-500 group-hover:text-slate-900 transition-colors uppercase tracking-tight">Tuesday, Jan 24, 2026</FigtreeText>
-            </div>
-            {!isOpen && (
-                <div className="flex items-center h-[72px] gap-3 px-8 rounded-2xl border border-slate-100 bg-[#F8FAFC] text-[#64748B] font-black text-[12px] shadow-sm uppercase tracking-widest shrink-0">
-                    <div className="h-2 w-2 rounded-full bg-slate-300" />
-                    Closed
-                </div>
-            )}
-        </div>
-      </div>
 
       {/* Hero / Header Area */}
       <div className="w-full">
@@ -196,17 +177,17 @@ export default function KitchenServicePage() {
       {/* Main Track Section */}
       <div className="w-full relative mt-8">
         <div className={cn(
-          "bg-white border border-slate-100 rounded-[32px] p-8 md:p-10 shadow-[0_12px_44px_rgba(0,0,0,0.02)] space-y-10 transition-all duration-700",
-          !isOpen && "blur-xl grayscale scale-[0.98] opacity-50 pointer-events-none"
+          "bg-white border border-slate-100 rounded-[40px] p-8 md:p-12 shadow-[0_32px_120px_rgba(15,23,42,0.025)] space-y-12 transition-all duration-700",
+          !isOpen && "blur-2xl grayscale scale-[0.96] opacity-30 pointer-events-none"
         )}>
           {/* Section Header */}
-          <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 px-2">
-            <div className="space-y-2">
-              <FigtreeText className="text-[14px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">Manual Registry</FigtreeText>
-              <InriaHeading className="text-[34px] md:text-[42px] font-bold text-[#1E293B] tracking-tight">Stock Consumption Tracker</InriaHeading>
+          <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 px-4 pt-4">
+            <div className="space-y-2.5">
+              <FigtreeText className="text-[12px] font-black text-slate-400 uppercase tracking-[0.25em] leading-none mb-3">Manual Registry</FigtreeText>
+              <InriaHeading className="text-[34px] md:text-[42px] font-bold text-[#1E293B] tracking-tight leading-none">Stock Consumption Tracker</InriaHeading>
             </div>
-            <Button variant="link" className="text-[#3B59DA] font-black hover:underline transition-all text-[15px] font-figtree p-0 h-auto" asChild>
-              <Link href="/dashboard/kitchen-service/history">View Detailed Consumption History</Link>
+            <Button variant="link" className="text-[#3B59DA] font-black hover:text-[#2D46B2] transition-colors text-[15px] font-figtree p-0 h-auto gap-2" asChild>
+              <Link href="/dashboard/kitchen-service/history">View Detailed Consumption History <ArrowRight className="h-4 w-4" /></Link>
             </Button>
           </div>
 
@@ -222,16 +203,18 @@ export default function KitchenServicePage() {
           </div>
           
           {/* Order Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             {filteredItems.map((item) => (
-              <Card key={item.id} className="rounded-[32px] border border-slate-100 overflow-hidden bg-white shadow-[0_4px_24px_rgba(0,0,0,0.01)] hover:border-[#3B59DA]/20 hover:shadow-2xl transition-all group p-8 space-y-8">
+              <Card key={item.id} className="rounded-[40px] border border-slate-100/50 overflow-hidden bg-white shadow-sm hover:border-[#3B59DA]/30 hover:shadow-2xl transition-all group p-8 space-y-10">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-1.5 overflow-hidden">
-                      <InriaHeading className="font-bold text-[#1E293B] text-[22px] md:text-[24px] tracking-tight group-hover:text-[#3B59DA] transition-colors truncate">{item.name}</InriaHeading>
-                      <FigtreeText className="text-[13px] text-slate-400 font-black uppercase tracking-widest">{item.currentStock} {item.unit} Remaining</FigtreeText>
+                    <div className="space-y-2 overflow-hidden">
+                      <InriaHeading className="font-bold text-[#1E293B] text-[26px] md:text-[28px] tracking-tight group-hover:text-[#3B59DA] transition-colors truncate">{item.name}</InriaHeading>
+                      <div className="flex items-center gap-3">
+                        <FigtreeText className="text-[14px] text-slate-400 font-bold tabular-nums uppercase tracking-tight">{item.currentStock} {item.unit} READY</FigtreeText>
+                      </div>
                     </div>
                     <Badge className={cn(
-                      "border-none rounded-lg font-black text-[10px] px-3.5 py-1.5 uppercase tracking-[0.15em] font-figtree shadow-inner",
+                      "border-none rounded-lg font-black text-[9px] px-3.5 py-1.5 uppercase tracking-[0.2em] font-figtree shadow-inner",
                       item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" : 
                       item.status === 'Low' ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
                     )}>
@@ -239,24 +222,24 @@ export default function KitchenServicePage() {
                     </Badge>
                   </div>
  
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-5">
                     <button 
-                      className="flex flex-col items-center justify-center gap-4 py-8 rounded-[24px] bg-[#F8FAFC] border border-slate-100/50 hover:bg-[#3B59DA] hover:text-white transition-all duration-500 group/btn shadow-sm active:scale-95" 
+                      className="flex flex-col items-center justify-center gap-4 py-10 rounded-[28px] bg-[#F8FAFC] border border-slate-100/30 hover:bg-[#3B59DA] hover:text-white transition-all duration-500 group/btn shadow-sm active:scale-95" 
                       onClick={() => handleLogClick(item, 'usage')}
                     >
-                      <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center shadow-lg group-hover/btn:scale-110 transition-transform">
-                        <Package className="h-6 w-6 text-[#3B59DA]" />
+                      <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center shadow-lg group-hover/btn:scale-110 transition-transform">
+                        <Package className="h-7 w-7 text-[#3B59DA]" />
                       </div>
-                      <FigtreeText className="text-[11px] font-black uppercase tracking-widest leading-none">Log Usage</FigtreeText>
+                      <FigtreeText className="text-[12px] font-black uppercase tracking-[0.15em] leading-none">Log Usage</FigtreeText>
                     </button>
                     <button 
-                      className="flex flex-col items-center justify-center gap-4 py-8 rounded-[24px] bg-[#F8FAFC] border border-slate-100/50 hover:bg-rose-500 hover:text-white transition-all duration-500 group/btn shadow-sm active:scale-95" 
+                      className="flex flex-col items-center justify-center gap-4 py-10 rounded-[28px] bg-[#F8FAFC] border border-slate-100/30 hover:bg-rose-500 hover:text-white transition-all duration-500 group/btn shadow-sm active:scale-95" 
                       onClick={() => handleLogClick(item, 'waste')}
                     >
-                      <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center shadow-lg group-hover/btn:scale-110 transition-transform">
-                        <Trash2 className="h-6 w-6 text-rose-500" />
+                      <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center shadow-lg group-hover/btn:scale-110 transition-transform">
+                        <Trash2 className="h-7 w-7 text-rose-500" />
                       </div>
-                      <FigtreeText className="text-[11px] font-black uppercase tracking-widest leading-none">Log Waste</FigtreeText>
+                      <FigtreeText className="text-[12px] font-black uppercase tracking-[0.15em] leading-none">Log Waste</FigtreeText>
                     </button>
                   </div>
               </Card>
@@ -300,12 +283,12 @@ export default function KitchenServicePage() {
              </div>
           </div>
 
-          <div className="space-y-4">
-            <FigtreeText className="text-[12px] font-black uppercase tracking-[0.2em] text-[#3B59DA] leading-none ml-2">Consumption Amount ({selectedItem?.unit})</FigtreeText>
+          <div className="space-y-4 px-2">
+            <FigtreeText className="text-[13px] font-black uppercase tracking-[0.25em] text-[#3B59DA] leading-none ml-2">Consumption Amount ({selectedItem?.unit})</FigtreeText>
             <Input 
               type="number"
               placeholder="0.00"
-              className="h-[84px] text-[42px] font-black border-slate-200 bg-white rounded-2xl focus:ring-[#3B59DA]/10 px-10 font-figtree text-[#1E293B] shadow-xl"
+              className="h-[100px] text-[48px] font-black border-slate-200 bg-white rounded-[24px] focus:ring-[#3B59DA]/10 px-10 font-figtree text-[#1E293B] shadow-2xl shadow-indigo-500/5 placeholder:text-slate-200"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               autoFocus
@@ -331,27 +314,27 @@ function KitchenServiceLockedOverlay() {
     return (
         <div className="absolute inset-x-0 -top-4 bottom-0 z-[60] flex flex-col items-center justify-center p-8 select-none overflow-visible">
             {/* Blurriness that fades from bottom to top consistent with design */}
-            <div className="absolute inset-0 bg-white/40 backdrop-blur-[32px]" />
+            <div className="absolute inset-0 bg-white/20 backdrop-blur-[48px]" />
             
-            <div className="relative z-[70] flex flex-col items-center justify-center mt-32">
-                <div className="w-24 h-24 bg-white/80 rounded-[28px] flex items-center justify-center mb-8 shadow-xl backdrop-blur-md border border-slate-100">
-                    <Lock className="h-10 w-10 text-[#3B59DA]" />
+            <div className="relative z-[70] flex flex-col items-center justify-center mt-64 bg-white border border-slate-100 py-16 px-12 rounded-[48px] shadow-[0_32px_120px_rgba(15,23,42,0.15)] max-w-lg mx-auto animate-in zoom-in-95 duration-500">
+                <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-[28px] flex items-center justify-center mb-10 shadow-inner">
+                    <Lock className="h-8 w-8 text-slate-400 stroke-[2.5px]" />
                 </div>
                 
                 <div className="space-y-4 max-w-sm text-center">
-                    <h3 className="text-[28px] md:text-[32px] font-bold text-[#1E293B] tracking-tight font-inria">Kitchen Service is Locked</h3>
-                    <p className="text-slate-500 text-[16px] leading-relaxed font-medium font-figtree max-w-[340px] mx-auto">
-                        The Kitchen Service workflow is not yet available. Please do your daily stock count before you proceed to Kitchen Service.
-                    </p>
+                    <InriaHeading className="text-[34px] font-bold text-[#1E293B] tracking-tight leading-none">Kitchen Service is Locked</InriaHeading>
+                    <FigtreeText className="text-slate-400 text-[16px] leading-relaxed font-bold max-w-[320px] mx-auto">
+                        Your operational sequence is currently on hold. Complete your daily stock count to enable this module.
+                    </FigtreeText>
                 </div>
-
-                <div className="mt-12">
+ 
+                <div className="mt-12 w-full flex justify-center">
                     <Button 
-                        className="h-16 px-14 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[20px] font-black gap-4 shadow-2xl shadow-indigo-900/10 transition-all active:scale-95 group font-figtree text-[18px]" 
+                        className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[22px] font-black gap-4 shadow-2xl shadow-indigo-900/10 transition-all active:scale-95 group font-figtree text-[17px]" 
                         asChild
                     >
                         <Link href="/dashboard/inventory/daily-stock-count">
-                            Count Daily Stock <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                            Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                         </Link>
                     </Button>
                 </div>

@@ -39,22 +39,16 @@ export default function OrdersPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <main className="flex-1 space-y-8 max-w-[1700px] mx-auto w-full pb-20 transition-all duration-500">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="space-y-1 text-center sm:text-left">
-            <h2 className="text-[28px] md:text-3xl font-semibold text-[#1E293B] tracking-tight font-inria italic">Orders</h2>
-            <p className="text-[13px] md:text-sm font-semibold text-slate-400">Manage and track your procurement orders</p>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button 
-                className="gap-2 flex-1 sm:flex-none h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-xs md:text-sm shadow-md shadow-indigo-100 text-white" 
+        <div className="flex items-center justify-between gap-4 mb-2">
+           <div className="flex-1" />
+           <Button 
+                className="gap-2 h-[52px] px-8 rounded-2xl bg-[#3B59DA] hover:bg-[#2D46B2] font-black text-sm shadow-xl shadow-indigo-900/10 text-white transition-all active:scale-95" 
                 onClick={() => guard(() => setNewOrderModalOpen(true), { actionName: "order creation" })}
             >
               <Plus className="h-4 w-4" />
               New Order
             </Button>
-          </div>
         </div>
-
         <Tabs defaultValue="current" className="space-y-6">
           <TabsList className="bg-slate-100 p-1 rounded-xl flex flex-wrap h-auto gap-1">
             <TabsTrigger value="current" className="rounded-lg py-2 flex-1 min-w-[100px] font-bold text-xs md:text-sm">Current Orders</TabsTrigger>

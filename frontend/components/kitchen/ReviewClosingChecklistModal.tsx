@@ -75,31 +75,36 @@ export function ReviewClosingChecklistModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[800px] rounded-[32px] p-0 overflow-hidden border-none shadow-2xl bg-white">
+            <DialogContent className="sm:max-w-[800px] rounded-[48px] p-0 overflow-hidden border-none shadow-[0_32px_120px_rgba(15,23,42,0.15)] bg-white">
                 <div className="p-10 space-y-10">
-                    <DialogHeader className="space-y-1">
+                    <DialogHeader className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <InriaHeading className="text-[32px] font-bold text-[#1E293B] tracking-tight">Review Closing Checklist</InriaHeading>
+                            <div className="space-y-1.5">
+                                <InriaHeading className="text-[32px] font-bold text-[#1E293B] tracking-tight leading-none">Review Closing Checklist</InriaHeading>
+                                <FigtreeText className="text-[15px] font-bold text-slate-500 max-w-sm leading-relaxed">
+                                    Confirm today's inventory reconciliation to finalize local operations.
+                                </FigtreeText>
+                            </div>
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-12 w-12 rounded-full hover:bg-slate-50 transition-all" 
+                                className="h-14 w-14 rounded-full hover:bg-slate-50 transition-all border border-slate-50" 
                                 onClick={() => onOpenChange(false)}
                             >
-                                <X className="h-8 w-8 text-slate-300" />
+                                <X className="h-6 w-6 text-slate-400" />
                             </Button>
                         </div>
                     </DialogHeader>
 
                     {/* Banner Alert */}
-                    <div className="p-8 rounded-[24px] border border-[#FDE68A] bg-[#FFFBEB] flex items-center gap-6 shadow-sm">
-                        <div className="h-14 w-14 rounded-2xl bg-[#FCD34D] flex items-center justify-center border border-[#F59E0B] shadow-lg shadow-yellow-200/50 shrink-0">
-                            <AlertTriangle className="h-8 w-8 text-white" />
+                    <div className="p-8 rounded-[32px] border border-amber-100 bg-amber-50/30 flex items-start gap-8 shadow-sm">
+                        <div className="h-14 w-14 rounded-[22px] bg-amber-500 flex items-center justify-center border border-amber-600/10 shadow-lg shadow-amber-200/50 shrink-0">
+                            <AlertTriangle className="h-7 w-7 text-white stroke-[2.5px]" />
                         </div>
-                        <div className="space-y-1.5 flex-1 pt-1">
-                            <h4 className="text-[22px] font-black text-[#92400E] font-figtree tracking-tight leading-none">Attention Needed</h4>
-                            <FigtreeText className="text-base font-bold text-[#B45309] leading-relaxed">
-                                {summary.alerts} item is marked as low stock. This may affect kitchen service.
+                        <div className="space-y-2 flex-1 pt-1">
+                            <h4 className="text-[20px] font-black text-[#92400E] font-figtree tracking-tight leading-none">Action Required (Alerts)</h4>
+                            <FigtreeText className="text-base font-bold text-[#B45309]/80 leading-relaxed">
+                                {summary.alerts} item(s) are marked as low stock. This may require an immediate purchase order to ensure availability.
                             </FigtreeText>
                         </div>
                     </div>
@@ -107,47 +112,47 @@ export function ReviewClosingChecklistModal({
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-6">
                         <StatBox 
-                            label="Items Checked" 
+                            label="Items Checked Today" 
                             value={`${summary.itemsChecked} / ${summary.itemsTotal}`} 
                         />
                         <StatBox 
-                            label="Completion" 
+                            label="Verification Rate" 
                             value="100%" 
-                            valueColor="text-[#10B981]" 
+                            valueColor="text-emerald-500" 
                         />
                         <StatBox 
-                            label="Alerts" 
+                            label="Critical Alerts" 
                             value={summary.alerts.toString()} 
-                            valueColor="text-[#EF4444]" 
+                            valueColor="text-rose-500" 
                         />
                         <StatBox 
-                            label="Closing Time" 
+                            label="Closing Timestamp" 
                             value={summary.closingTime} 
                         />
                     </div>
-
+ 
                     {/* Final Submission Form Area */}
-                    <div className="bg-[#F8FAFC] border border-slate-100 rounded-[28px] p-8 md:p-10 space-y-6">
-                        <div className="space-y-2">
-                           <FigtreeText className="text-[12px] font-black text-[#1E293B] uppercase tracking-[0.2em] leading-none ml-1">Closing Notes</FigtreeText>
+                    <div className="bg-[#F8FAFC] border border-slate-100/50 rounded-[32px] p-8 md:p-10 space-y-6">
+                        <div className="space-y-4">
+                           <FigtreeText className="text-[12px] font-black text-[#1E293B] uppercase tracking-[0.2em] leading-none ml-1">Closing Operational Notes</FigtreeText>
                            <textarea 
                              placeholder="Add any final notes about today's service, stock adjustments, or equipment status..."
-                             className="w-full h-32 bg-white border border-slate-100 rounded-2xl p-6 text-[15px] font-medium text-[#1E293B] font-figtree placeholder:text-slate-300 focus:ring-[#3B59DA]/10 focus:border-[#3B59DA]/20 transition-all shadow-sm resize-none"
+                             className="w-full h-32 bg-white border border-slate-200/50 rounded-2xl p-6 text-[15px] font-bold text-[#1E293B] font-figtree placeholder:text-slate-300 placeholder:font-black focus:ring-[#3B59DA]/10 focus:border-[#3B59DA]/20 transition-all shadow-none focus:shadow-xl focus:shadow-indigo-500/5 border-none resize-none"
                            />
                         </div>
                     </div>
 
                     {/* Footer Buttons */}
-                    <div className="flex items-center justify-end gap-6 pt-6 border-t border-slate-50">
+                    <div className="flex items-center justify-end gap-6 pt-6 border-t border-slate-100">
                         <Button 
                             variant="outline" 
-                            className="h-16 px-12 rounded-2xl border-slate-200 font-bold text-slate-500 hover:bg-slate-50 transition-all font-figtree text-[17px] shadow-sm"
+                            className="h-16 px-12 rounded-[22px] border-slate-200 font-bold text-slate-500 hover:text-slate-900 transition-all font-figtree text-[17px] shadow-sm bg-white active:scale-95"
                             onClick={() => onOpenChange(false)}
                         >
-                            Cancel
+                            Review Again
                         </Button>
                         <Button 
-                            className="h-16 px-14 rounded-2xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black transition-all border-none font-figtree text-[18px] shadow-2xl shadow-indigo-900/10 active:scale-95"
+                            className="h-16 px-14 rounded-[22px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black transition-all border-none font-figtree text-[18px] shadow-2xl shadow-indigo-900/10 active:scale-95"
                             disabled={isSubmitting}
                             onClick={handleConfirm}
                         >
@@ -155,7 +160,7 @@ export function ReviewClosingChecklistModal({
                                 <span className="flex items-center gap-3">
                                     <Clock className="h-6 w-6 animate-spin" /> Submitting...
                                 </span>
-                            ) : "Submit Final Stock Records"}
+                            ) : "Confirm & Close Kitchen"}
                         </Button>
                     </div>
                 </div>
@@ -166,9 +171,9 @@ export function ReviewClosingChecklistModal({
 
 function StatBox({ label, value, valueColor = "text-[#1E293B]" }: { label: string, value: string, valueColor?: string }) {
     return (
-        <div className="p-8 rounded-[24px] border border-slate-100 bg-white shadow-sm flex flex-col items-center justify-center gap-4 text-center min-h-[160px] group hover:border-indigo-100 transition-all hover:shadow-md">
-            <FigtreeText className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">{label}</FigtreeText>
-            <span className={cn("text-[38px] font-black tracking-tighter tabular-nums leading-none font-figtree", valueColor)}>{value}</span>
+        <div className="p-6 rounded-[32px] border border-slate-100 bg-white shadow-sm flex flex-col items-center justify-center gap-3 text-center min-h-[140px] group hover:border-[#3B59DA]/20 transition-all hover:shadow-lg">
+            <FigtreeText className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">{label}</FigtreeText>
+            <span className={cn("text-[32px] font-black tracking-tighter tabular-nums leading-none font-figtree", valueColor)}>{value}</span>
         </div>
     );
 }

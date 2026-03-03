@@ -124,16 +124,6 @@ export default function DailyStockCountPage() {
         "relative flex flex-col gap-10 px-0 transition-all duration-500 w-full",
         showReview && "blur-2xl scale-[0.98] pointer-events-none"
       )}>
-        {/* Navigation */}
-        <div className="flex items-center">
-            <Button 
-                variant="outline" 
-                className="h-12 px-6 rounded-xl font-bold border-slate-200 text-[#1E293B] hover:bg-slate-50 transition-all gap-3 shadow-sm font-figtree"
-                onClick={() => router.back()}
-            >
-                <ArrowLeft className="h-5 w-5" /> Back
-            </Button>
-        </div>
 
         {/* Hero Progress Header */}
         <UnifiedHeroSurface

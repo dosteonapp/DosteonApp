@@ -52,21 +52,6 @@ export default function AddNewItemPage() {
   return (
     <AppContainer className="pb-24">
       <div className="w-full">
-        {/* Navigation / Breadcrumb */}
-        <div className="flex items-center gap-4 mb-8">
-            <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-12 w-12 p-0 rounded-xl border-slate-200 bg-white shadow-sm hover:bg-slate-50 transition-all active:scale-95"
-                onClick={() => router.back()}
-            >
-                <ArrowLeft className="h-5 w-5 text-slate-400" />
-            </Button>
-            <div className="space-y-0.5">
-                <FigtreeText className="text-[13px] font-bold text-slate-400 uppercase tracking-widest leading-none">Inventory / Add New Item</FigtreeText>
-                <InriaHeading className="text-[28px] font-bold text-[#1E293B] tracking-tight leading-none">Product Registry</InriaHeading>
-            </div>
-        </div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}

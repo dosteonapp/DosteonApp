@@ -92,19 +92,6 @@ export default function ClosingPage() {
             summary={closingSummary}
         />
 
-        {/* Page Header Outside Hero */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-2 pb-6 mb-0">
-            <div className="flex flex-col gap-1 shrink-0">
-                <FigtreeText className="text-[13px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">Shift Management</FigtreeText>
-                <InriaHeading className="text-[34px] font-bold text-[#1E293B] tracking-tight leading-none">Daily Closing</InriaHeading>
-            </div>
-            <div className="flex items-center gap-4 shrink-0">
-                <div className="bg-white border border-slate-100 px-8 h-[72px] rounded-2xl flex items-center gap-4 text-[#3B59DA] shadow-sm hover:border-[#3B59DA]/20 transition-all cursor-default group">
-                    <Calendar className="h-5 w-5 text-slate-400 group-hover:text-[#3B59DA] transition-colors" />
-                    <FigtreeText className="text-[14px] font-black tabular-nums text-slate-500 group-hover:text-slate-900 transition-colors uppercase tracking-tight">Tuesday, Jan 24, 2026</FigtreeText>
-                </div>
-            </div>
-        </div>
 
         {/* Hero Section or Locked State */}
         <div className="w-full">

@@ -80,9 +80,9 @@ export function RestaurantSidebar() {
   return (
     <div
       className={cn(
-        "h-screen flex-col border-r border-slate-100 bg-white transition-all duration-500 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-[120] flex",
+        "h-screen flex-col border-r border-slate-100 bg-white transition-all duration-500 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-[120] flex shrink-0",
         isSidebarCollapsed ? "w-[90px]" : "w-[300px]",
-        "fixed inset-y-0 left-0 lg:translate-x-0 transition-transform",
+        "fixed inset-y-0 left-0 lg:relative lg:translate-x-0 transition-transform",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}
     >
