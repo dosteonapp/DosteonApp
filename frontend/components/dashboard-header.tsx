@@ -60,7 +60,7 @@ export function DashboardHeader() {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <div className="bg-white border-b border-slate-50 h-[100px] sticky top-0 z-40 transition-all font-figtree w-full">
+    <div className="bg-white border-b border-slate-100 h-[100px] sticky top-0 z-40 transition-all font-figtree w-full">
       <div className="h-full px-8 flex items-center justify-between">
         <div className="flex items-center gap-8 flex-1">
           <div className="flex items-center gap-4 min-w-fit">

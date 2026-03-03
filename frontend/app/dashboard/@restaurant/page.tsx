@@ -19,7 +19,8 @@ import {
     UnifiedStatCard, 
     AppContainer, 
     InriaHeading, 
-    FigtreeText 
+    FigtreeText,
+    PrimarySurfaceCard
 } from "@/components/ui/dosteon-ui";
 
 export default function RestaurantDashboardPage() {
@@ -137,36 +138,37 @@ export default function RestaurantDashboardPage() {
             )}
         </div>
 
-        {/* Recent Activities Section */}
-        <div className="w-full mt-4 space-y-8">
-            <div className="flex items-end justify-between px-0">
-                <div className="space-y-2">
-                    <FigtreeText className="text-[14px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">Global Logs</FigtreeText>
-                    <InriaHeading className="text-[34px] md:text-[42px] font-bold tracking-tight text-[#1E293B]">Recent Activities</InriaHeading>
+        {/* Recent Activities Section - Wrapped in a single integrated card as per Design Mockup */}
+        <PrimarySurfaceCard className="p-8 md:p-12">
+            <div className="space-y-10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-50 pb-8">
+                    <div className="space-y-1.5">
+                        <InriaHeading className="text-[26px] md:text-[28px] font-bold tracking-tight text-[#1E293B]">Recent Activities</InriaHeading>
+                        <FigtreeText className="text-[15px] font-semibold text-slate-400">Your most recent procurement orders</FigtreeText>
+                    </div>
+                    <Button variant="link" className="text-[#3B59DA] font-black hover:underline transition-all text-[15px] font-figtree p-0 h-fit w-fit" asChild>
+                        <Link href="/dashboard/activities">View All</Link>
+                    </Button>
                 </div>
-                <Button variant="link" className="text-[#3B59DA] font-black hover:underline transition-all text-[15px] font-figtree px-0" asChild>
-                    <Link href="/dashboard/activities">View Full Registry</Link>
-                </Button>
-            </div>
-            
-            <div className="flex flex-col gap-4 w-full">
+                
+                <div className="flex flex-col gap-5 w-full">
                 {activities.map((activity) => (
                     <div 
                         key={activity.id} 
-                        className="bg-white border border-slate-100 rounded-[32px] p-7 md:p-8 flex items-center gap-8 transition-all hover:border-[#3B59DA]/20 hover:shadow-2xl hover:bg-white group shadow-[0_10px_40px_rgba(0,0,0,0.02)]"
+                        className="bg-white border border-slate-100/80 rounded-[28px] p-6 md:p-8 flex items-center gap-7 transition-all hover:border-[#3B59DA]/20 hover:shadow-[0_20px_60px_rgba(59,89,218,0.05)] hover:bg-white group shadow-[0_4px_12px_rgba(0,0,0,0.01)]"
                     >
-                        <div className="h-16 w-16 rounded-[20px] bg-[#F8FAFC] flex items-center justify-center shrink-0 border-2 border-white group-hover:bg-indigo-50 transition-all shadow-xl group-hover:scale-105">
-                            <Package className="h-8 w-8 text-[#3B59DA]/40 group-hover:text-[#3B59DA] transition-colors" />
+                        <div className="h-14 w-14 rounded-[18px] bg-indigo-50/50 flex items-center justify-center shrink-0 border border-indigo-100/50 group-hover:bg-indigo-50 transition-all group-hover:scale-105">
+                            <Package className="h-7 w-7 text-[#3B59DA]/70 group-hover:text-[#3B59DA] transition-colors" />
                         </div>
-                        <div className="flex-1 min-w-0 space-y-2">
-                            <InriaHeading className="font-bold text-[22px] tracking-tight group-hover:text-[#3B59DA] transition-colors">{activity.title}</InriaHeading>
-                            <FigtreeText className="text-[17px] font-semibold text-slate-500 line-clamp-1 leading-relaxed">{activity.description}</FigtreeText>
-                            <FigtreeText className="text-[12px] font-black text-slate-300 mt-3 uppercase tracking-[0.2em] leading-none block">{activity.time}</FigtreeText>
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                            <InriaHeading className="font-bold text-[20px] tracking-tight group-hover:text-[#3B59DA] transition-colors leading-tight">{activity.title}</InriaHeading>
+                            <FigtreeText className="text-[15px] font-bold text-slate-500 line-clamp-1 leading-relaxed opacity-80">{activity.description}</FigtreeText>
+                            <FigtreeText className="text-[11px] font-black text-slate-300 mt-2.5 uppercase tracking-[0.2em] leading-none block">{activity.time}</FigtreeText>
                         </div>
                         {activity.actionLabel && (
-                            <div className="shrink-0 ml-10 hidden xl:block">
+                            <div className="shrink-0 ml-6 hidden lg:block">
                                 <Button 
-                                    className="h-16 px-12 rounded-[22px] font-black bg-[#F8FAFC] border-2 border-slate-100 text-[#3B59DA] hover:bg-[#3B59DA] hover:text-white hover:border-[#3B59DA] shadow-md transition-all active:scale-95 text-[16px] font-figtree"
+                                    className="h-14 px-10 rounded-2xl font-black bg-[#3B59DA] text-white hover:bg-[#2D46B2] shadow-xl shadow-indigo-900/10 transition-all active:scale-95 text-[15px] font-figtree border-none"
                                     asChild
                                 >
                                     <Link href={activity.actionHref || "#"}>
@@ -177,8 +179,9 @@ export default function RestaurantDashboardPage() {
                         )}
                     </div>
                 ))}
+                </div>
             </div>
-        </div>
+        </PrimarySurfaceCard>
     </AppContainer>
   );
 }

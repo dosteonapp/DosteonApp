@@ -28,7 +28,7 @@ export const FigtreeText = ({ className, children, ...props }: React.HTMLAttribu
  * DOS 02: Spacing & Grid Layout
  */
 export const AppContainer = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <div className={cn("w-full space-y-10 md:space-y-12", className)}>
+  <div className={cn("w-full space-y-8", className)}>
     {children}
   </div>
 );
