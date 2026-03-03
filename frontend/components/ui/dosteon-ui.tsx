@@ -91,10 +91,11 @@ export const UnifiedStatCard = ({
 
       <div className="flex flex-col gap-2 py-2">
         <div className={cn(
-          "font-semibold tracking-tight leading-none",
-          "text-[18px] md:text-[20px]",
-          textColors[variant]
-        )}>
+        "relative z-10 w-full flex flex-col h-full",
+        textColors[variant], // This was originally textColors[variant]
+        "font-semibold tracking-tight leading-none",
+        "text-[18px] md:text-[20px]"
+      )}>
           {value}
         </div>
         {subtext && (
@@ -128,7 +129,8 @@ export const UnifiedHeroSurface = ({
   padding,
   minHeight,
   backgroundColor,
-  borderColor
+  borderColor,
+  bgIcon
 }: { 
   title: string, 
   subtitle?: string, 
@@ -147,7 +149,8 @@ export const UnifiedHeroSurface = ({
   padding?: string,
   minHeight?: string,
   backgroundColor?: string,
-  borderColor?: string
+  borderColor?: string,
+  bgIcon?: React.ReactNode
 }) => {
   const isDense = size === 'dense';
   const isSplit = variant === 'split';
@@ -161,16 +164,24 @@ export const UnifiedHeroSurface = ({
       isInline && !isDense && !padding && "lg:pr-6", // Getting that 24px right margin on desktop
       alignItems === 'center' ? "items-center" : "items-stretch",
       backgroundColor ? backgroundColor : (isLocked 
-        ? "bg-gradient-to-br from-[#3B59DA] via-[#7C3AED] to-[#1E3A8A] text-white shadow-2xl" 
+        ? "bg-gradient-to-br from-[#2E46BA] via-[#6366F1] to-[#7C3AED] text-white shadow-2xl" 
         : "bg-white text-[#1E293B] shadow-sm"),
-      borderColor ? borderColor : (isLocked ? "border-indigo-400/20" : "border-indigo-100"),
+      borderColor ? borderColor : (isLocked ? "border-white/10" : "border-indigo-100"),
       className
     )}>
       {/* Background Decor */}
       {isLocked && (
-        <div className="absolute top-0 right-0 w-full h-full pointer-events-none opacity-[0.1] z-0">
-           <div className="absolute -top-1/4 -right-1/4 w-[900px] h-[900px] bg-white rounded-full blur-[160px]" />
-           <div className="absolute -bottom-1/4 -left-1/4 w-[500px] h-[500px] bg-indigo-300 rounded-full blur-[140px]" />
+        <div className="absolute top-0 right-0 w-full h-full pointer-events-none z-0 overflow-hidden">
+           <div className="absolute -top-1/4 -right-1/6 w-[600px] h-[600px] bg-white opacity-[0.1] rounded-full blur-[120px]" />
+           <div className="absolute top-0 right-0 w-[400px] h-full bg-gradient-to-l from-white/[0.05] to-transparent" />
+           <div className="absolute -bottom-1/4 -left-1/4 w-[500px] h-[500px] bg-indigo-200 opacity-[0.1] rounded-full blur-[140px]" />
+           
+           {/* Chef Hat / Background Icon Watermark */}
+           {bgIcon && (
+             <div className="absolute right-[5%] top-1/2 -translate-y-1/2 opacity-[0.07] scale-[2] pointer-events-none">
+               {bgIcon}
+             </div>
+           )}
         </div>
       )}
 
@@ -178,7 +189,7 @@ export const UnifiedHeroSurface = ({
       {isInline ? (
         <div className={cn(
           "relative flex flex-col md:flex-row w-full flex-1 z-10 gap-5 md:gap-8 lg:gap-14",
-          alignItems === 'center' ? "items-center" : (padding ? "items-start pt-0" : "items-start pt-2 md:pt-4")
+          (alignItems === 'center' || isLocked) ? "items-center justify-center h-full" : (padding ? "items-start pt-0" : "items-start pt-2 md:pt-4")
         )}>
            {/* Section 1: Text */}
            <div className="flex flex-col space-y-4 max-w-[320px] shrink-0">

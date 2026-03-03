@@ -384,66 +384,66 @@ function ClosingCountRow({ item }: { item: InventoryItem }) {
 
 function ClosingLockedCard() {
     return (
-        <PrimarySurfaceCard className="w-full p-12 md:p-16 flex flex-col items-start animate-in fade-in zoom-in-95 duration-500 relative overflow-hidden font-figtree">
+        <PrimarySurfaceCard className="w-full max-w-[800px] mx-auto p-8 md:p-16 flex flex-col items-center animate-in fade-in zoom-in-95 duration-500 relative overflow-hidden font-figtree shadow-[0_32px_120px_rgba(15,23,42,0.08)] rounded-[48px]">
              {/* Header Lock Icon */}
-            <div className="h-24 w-24 bg-[#F8FAFC] rounded-[28px] flex items-center justify-center mb-10 shadow-sm border border-slate-100 relative z-10">
-                <Lock className="h-10 w-10 text-slate-300 stroke-[1.5px]" />
+            <div className="h-20 w-20 md:h-24 md:w-24 bg-slate-50 rounded-[24px] md:rounded-[28px] flex items-center justify-center mb-8 md:mb-10 shadow-sm border border-slate-100 relative z-10 transition-transform hover:scale-105 duration-300">
+                <Lock className="h-8 w-8 md:h-10 md:w-10 text-slate-400 stroke-[1.5px]" />
             </div>
             
-            <div className="text-center space-y-4 mb-14 relative z-10">
-                <InriaHeading className="text-[34px] font-bold leading-none">Closing is Locked</InriaHeading>
-                <FigtreeText className="font-medium text-[16px] max-w-sm mx-auto leading-relaxed">
+            <div className="text-center space-y-4 mb-10 md:mb-14 relative z-10">
+                <h2 className="text-[28px] md:text-[34px] font-bold leading-none text-[#1E293B] font-figtree">Closing is Locked</h2>
+                <FigtreeText className="font-medium text-[14px] md:text-[16px] max-w-sm mx-auto leading-relaxed text-slate-500">
                     The closing workflow is not yet available. Please ensure all daily prerequisites are met.
                 </FigtreeText>
             </div>
             
-            <div className="w-full bg-[#F8FAFC]/50 border border-slate-100 rounded-[28px] p-8 md:p-10 space-y-8 mb-14 relative z-10">
-                <div className="flex items-center justify-between pb-6 border-b border-slate-200/50">
-                    <FigtreeText className="text-[13px] font-bold uppercase tracking-widest">Requirements</FigtreeText>
+            <div className="w-full bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 space-y-8 mb-10 md:mb-14 relative z-10 shadow-sm">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                    <FigtreeText className="text-[12px] md:text-[13px] font-bold uppercase tracking-widest text-slate-400">Requirements</FigtreeText>
                 </div>
 
-                <div className="flex items-center justify-between group">
-                    <div className="flex gap-6 items-center">
-                        <div className="h-14 w-14 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 transition-transform group-hover:scale-110 duration-300">
-                            <ClipboardCheck className="h-6 w-6 text-slate-300" />
+                <div className="flex items-center justify-between group py-2">
+                    <div className="flex gap-4 md:gap-6 items-center">
+                        <div className="h-12 w-12 md:h-14 md:w-14 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 transition-transform group-hover:scale-110 duration-300">
+                            <ClipboardCheck className="h-5 w-5 md:h-6 md:w-6 text-slate-400" />
                         </div>
                         <div className="space-y-1">
-                            <InriaHeading className="text-[17px] font-black">Complete Daily Stock Count</InriaHeading>
-                            <FigtreeText className="text-[14px] font-medium">Must be reviewed and completed</FigtreeText>
+                            <h3 className="text-[15px] md:text-[17px] font-bold text-[#1E293B] font-figtree">Complete Daily Stock Count</h3>
+                            <FigtreeText className="text-[13px] md:text-[14px] font-medium text-slate-400">Must be reviewed and completed</FigtreeText>
                         </div>
                     </div>
-                    <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                        <CheckCircle2 className="h-5 w-5 text-white" />
+                    <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                        <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-white" />
                     </div>
                 </div>
                 
-                <div className="flex items-center justify-between group">
-                    <div className="flex gap-6 items-center">
-                        <div className="h-14 w-14 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 transition-transform group-hover:scale-110 duration-300">
-                            <Clock className="h-6 w-6 text-slate-300" />
+                <div className="flex items-center justify-between group py-2">
+                    <div className="flex gap-4 md:gap-6 items-center">
+                        <div className="h-12 w-12 md:h-14 md:w-14 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 transition-transform group-hover:scale-110 duration-300">
+                            <Clock className="h-5 w-5 md:h-6 md:w-6 text-slate-400" />
                         </div>
                         <div className="space-y-1">
-                            <InriaHeading className="text-[17px] font-black">Wait until 7:00 PM</InriaHeading>
-                            <FigtreeText className="text-[14px] font-medium">Currently 4:15 PM</FigtreeText>
+                            <h3 className="text-[15px] md:text-[17px] font-bold text-[#1E293B] font-figtree">Wait until 7:00 PM</h3>
+                            <FigtreeText className="text-[13px] md:text-[14px] font-medium text-slate-400">Currently 4:15 PM</FigtreeText>
                         </div>
                     </div>
-                    <div className="h-8 w-8 rounded-full border-2 border-slate-200 flex items-center justify-center" />
+                    <div className="h-7 w-7 md:h-8 md:w-8 rounded-full border-2 border-slate-100 flex items-center justify-center" />
                 </div>
                 
-                <div className="mt-8 p-8 bg-white rounded-[24px] flex gap-6 items-center border border-slate-100 shadow-sm">
-                    <div className="h-12 w-12 bg-slate-50 rounded-xl flex items-center justify-center shrink-0">
-                        <Info className="h-6 w-6 text-slate-300" />
+                <div className="mt-6 p-6 md:p-8 bg-slate-50/50 rounded-[28px] flex gap-4 md:gap-6 items-center border border-slate-100 transition-colors hover:bg-slate-50">
+                    <div className="h-10 w-10 md:h-12 md:w-12 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+                        <Info className="h-5 w-5 md:h-6 md:w-6 text-slate-400" />
                     </div>
                     <div className="space-y-0.5">
-                        <FigtreeText className="text-[16px] font-black text-[#1E293B]">Store Management</FigtreeText>
-                        <FigtreeText className="text-[14px] font-medium leading-relaxed">Closing hours and reset times can be adjusted by admins in Settings.</FigtreeText>
+                        <FigtreeText className="text-[14px] md:text-[16px] font-bold text-[#1E293B]">Store Management</FigtreeText>
+                        <FigtreeText className="text-[13px] md:text-[14px] font-medium leading-relaxed text-slate-500">Closing hours and reset times can be adjusted by admins in Settings.</FigtreeText>
                     </div>
                 </div>
             </div>
             
-            <Button className="w-full h-20 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[24px] font-black text-[19px] shadow-[0_25px_50px_-12px_rgba(59,89,218,0.4)] border-none transition-all active:scale-95 group relative z-10" asChild>
+            <Button className="w-full h-16 md:h-20 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[24px] font-bold text-[17px] md:text-[19px] shadow-[0_20px_40px_-15px_rgba(59,89,218,0.3)] border-none transition-all active:scale-95 group relative z-10 font-figtree" asChild>
                 <Link href="/dashboard">
-                    Return to Home <ArrowRight className="ml-3 h-7 w-7 transition-transform group-hover:translate-x-3" />
+                    Return to Home
                 </Link>
             </Button>
         </PrimarySurfaceCard>

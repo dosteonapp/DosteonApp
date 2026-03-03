@@ -8,6 +8,8 @@ import {
   AlertCircle, 
   Lock, 
   Clock, 
+  ChefHat,
+  ClipboardList
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -123,15 +125,14 @@ export default function RestaurantDashboardPage() {
                     alignItems="start"
                     padding="px-6 py-6 md:px-10 md:py-6"
                     minHeight="min-h-[260px]"
-                    backgroundColor="bg-[#f5f6ff]"
-                    borderColor="border-[#f5f6ff]"
                     title={`Welcome back, ${name}`}
-                    description="Closing Stock Count will be enabled at 7 PM. To change the Closing Stock Count time, your admin can change it in the store management settings."
+                    description="Do your opening stock count before starting your restaurant operations."
                     isLocked={true}
+                    bgIcon={<ChefHat className="h-64 w-64 text-white" />}
                     badge={
-                        <div className="flex items-center gap-2.5 px-5 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md w-fit shadow-2xl">
-                            <Lock className="h-3.5 w-3.5 text-white" />
-                            <FigtreeText className="text-[12px] font-semibold text-white uppercase tracking-[0.1em]">Opening Prep Locked</FigtreeText>
+                        <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full border-2 border-[#EF4444] bg-white w-fit shadow-sm">
+                            <ClipboardList className="h-4 w-4 text-[#EF4444]" />
+                            <FigtreeText className="text-[12px] font-semibold text-[#EF4444] uppercase tracking-[0.05em]">16 items need counting</FigtreeText>
                         </div>
                     }
                     action={
@@ -145,7 +146,7 @@ export default function RestaurantDashboardPage() {
                     <UnifiedStatCard label="Total Inventory Items" value="24" icon={Package} variant="indigo" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                     <UnifiedStatCard label="Critical Stock Items" value="6" icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                     <UnifiedStatCard label="Low Stock Items" value="6" icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
-                    <UnifiedStatCard label="Shift Status" value="Active" icon={Clock} variant="green" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Shift Status" value="Inactive" icon={Clock} variant="neutral" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                 </UnifiedHeroSurface>
             )}
         </div>

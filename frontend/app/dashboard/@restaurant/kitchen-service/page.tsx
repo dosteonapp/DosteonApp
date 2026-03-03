@@ -15,7 +15,8 @@ import {
   History as HistoryIcon,
   Activity,
   Droplets,
-  Calendar
+  Calendar,
+  ClipboardList
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,8 @@ import {
 } from "@/components/ui/dosteon-ui";
 
 export default function KitchenServicePage() {
-  const { isOpen } = useRestaurantDayLifecycle();
+  const { isOpen, isLoading: isStatusLoading } = useRestaurantDayLifecycle();
+  const name = "Sherry"; // Mocking for now
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -147,30 +149,25 @@ export default function KitchenServicePage() {
                 />
             </UnifiedHeroSurface>
         ) : (
-            <UnifiedHeroSurface
-                title={`Welcome back, Sherry`}
-                subtitle="The Kitchen Service workflow is currently locked. Complete your opening stock count to enable operations."
-                isLocked={true}
-                badge={
-                    <div className="flex items-center gap-2.5 px-5 py-2 rounded-full bg-[#EF4444] w-fit shadow-2xl shadow-red-900/40">
-                        <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                        <FigtreeText className="text-[11px] font-black text-white uppercase tracking-[0.1em]">16 items need counting</FigtreeText>
-                    </div>
-                }
-                action={
-                    <Button className="w-fit h-16 px-12 bg-white text-[#3B59DA] hover:bg-slate-50 transition-all rounded-2xl font-black gap-4 text-[20px] shadow-2xl shadow-indigo-950/20 border-none active:scale-95 group font-figtree" asChild>
-                        <Link href="/dashboard/inventory/daily-stock-count">
-                            Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-3" />
-                        </Link>
-                    </Button>
-                }
-            >
-                <div className="hidden xl:flex flex-1 items-center justify-end pr-10">
-                     <div className="h-56 w-56 bg-white/5 backdrop-blur-3xl rounded-[44px] flex items-center justify-center border border-white/10 shadow-inner">
-                        <ChefHat className="h-32 w-32 text-indigo-100/10 stroke-[1px]" />
+             <UnifiedHeroSurface
+                 title={`Hello, ${name}`}
+                 description="Do your opening stock count before starting your restaurant operations."
+                 isLocked={true}
+                 bgIcon={<ChefHat className="h-64 w-64 text-white" />}
+                 badge={
+                     <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full border-2 border-[#EF4444] bg-white w-fit shadow-sm">
+                         <ClipboardList className="h-4 w-4 text-[#EF4444]" />
+                         <FigtreeText className="text-[12px] font-semibold text-[#EF4444] uppercase tracking-[0.05em]">16 items need counting</FigtreeText>
                      </div>
-                </div>
-            </UnifiedHeroSurface>
+                 }
+                 action={
+                     <Button className="w-fit h-14 px-10 rounded-2xl bg-white text-[#3B59DA] hover:bg-slate-50 font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
+                         <Link href="/dashboard/inventory/daily-stock-count">
+                             Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-3" />
+                         </Link>
+                     </Button>
+                 }
+             />
         )}
       </div>
 
@@ -178,7 +175,7 @@ export default function KitchenServicePage() {
       <div className="w-full relative mt-8">
         <div className={cn(
           "bg-white border border-slate-100 rounded-[40px] p-8 md:p-12 shadow-[0_32px_120px_rgba(15,23,42,0.025)] space-y-12 transition-all duration-700",
-          !isOpen && "blur-2xl grayscale scale-[0.96] opacity-30 pointer-events-none"
+          !isOpen && "blur-xl grayscale scale-[0.96] opacity-80 pointer-events-none"
         )}>
           {/* Section Header */}
           <div className="flex flex-row items-start justify-between gap-4 px-1">
@@ -310,25 +307,25 @@ export default function KitchenServicePage() {
 
 function KitchenServiceLockedOverlay() {
     return (
-        <div className="absolute inset-x-0 -top-4 bottom-0 z-[60] flex flex-col items-center justify-center p-8 select-none overflow-visible">
-            {/* Blurriness that fades from bottom to top consistent with design */}
-            <div className="absolute inset-0 bg-white/20 backdrop-blur-[48px]" />
+        <div className="absolute inset-x-0 top-0 bottom-0 z-[60] flex flex-col items-center justify-center select-none rounded-[40px] overflow-hidden">
+            {/* Blurriness that integrates with the items behind */}
+            <div className="absolute inset-0 bg-white/5 backdrop-blur-[12px]" />
             
-            <div className="relative z-[70] flex flex-col items-center justify-center mt-64 bg-white border border-slate-100 py-16 px-12 rounded-[48px] shadow-[0_32px_120px_rgba(15,23,42,0.15)] max-w-lg mx-auto animate-in zoom-in-95 duration-500">
-                <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-[28px] flex items-center justify-center mb-10 shadow-inner">
-                    <Lock className="h-8 w-8 text-slate-400 stroke-[2.5px]" />
+            <div className="relative z-[70] flex flex-col items-center justify-center max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-700">
+                <div className="w-20 h-20 bg-slate-900/10 backdrop-blur-3xl rounded-[20px] flex items-center justify-center mb-8 border border-white/20 shadow-sm">
+                    <Lock className="h-9 w-9 text-slate-800 stroke-[2px]" />
                 </div>
                 
-                <div className="space-y-4 max-w-sm text-center">
-                    <InriaHeading className="text-[34px] font-bold text-[#1E293B] tracking-tight leading-none">Kitchen Service is Locked</InriaHeading>
-                    <FigtreeText className="text-slate-400 text-[16px] leading-relaxed font-bold max-w-[320px] mx-auto">
-                        Your operational sequence is currently on hold. Complete your daily stock count to enable this module.
+                <div className="space-y-4 max-w-[420px] text-center">
+                    <h2 className="text-[28px] md:text-[34px] font-semibold text-[#1E293B] tracking-tight leading-none font-figtree">Kitchen Service is Locked</h2>
+                    <FigtreeText className="text-slate-600/80 text-[14px] md:text-[16px] leading-relaxed font-medium max-w-[340px] mx-auto">
+                        The Kitchen Service workflow is not yet available. Please do your daily stock count before you proceed to Kitchen Service.
                     </FigtreeText>
                 </div>
  
-                <div className="mt-12 w-full flex justify-center">
+                <div className="mt-10 w-full flex justify-center px-6">
                     <Button 
-                        className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[22px] font-black gap-4 shadow-2xl shadow-indigo-900/10 transition-all active:scale-95 group font-figtree text-[17px]" 
+                        className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[20px] font-semibold gap-4 shadow-xl shadow-indigo-500/20 transition-all active:scale-95 group font-figtree text-[17px]" 
                         asChild
                     >
                         <Link href="/dashboard/inventory/daily-stock-count">
