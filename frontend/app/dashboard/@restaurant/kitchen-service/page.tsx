@@ -44,6 +44,7 @@ import {
     FigtreeText,
     UnifiedModal
 } from "@/components/ui/dosteon-ui";
+import { KitchenLogModals } from "@/components/kitchen/KitchenLogModals";
 
 export default function KitchenServicePage() {
   const { isOpen, isLoading: isStatusLoading } = useRestaurantDayLifecycle();
@@ -54,7 +55,6 @@ export default function KitchenServicePage() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [logType, setLogType] = useState<'usage' | 'waste'>('usage');
-  const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -75,29 +75,7 @@ export default function KitchenServicePage() {
   const handleLogClick = (item: InventoryItem, type: 'usage' | 'waste') => {
     setSelectedItem(item);
     setLogType(type);
-    setAmount("");
     setLogModalOpen(true);
-  };
-
-  const handleSubmitLog = async () => {
-    if (!selectedItem || !amount) return;
-    setIsSubmitting(true);
-    try {
-      const val = parseFloat(amount);
-      if (logType === 'usage') {
-        await restaurantOpsService.createUsageLog(selectedItem.id, val);
-      } else {
-        await restaurantOpsService.createWasteLog(selectedItem.id, val, "Kitchen service log");
-      }
-      toast({ title: "Success", description: `Successfully logged ${logType} for ${selectedItem.name}` });
-      setLogModalOpen(false);
-      const items = await restaurantOpsService.getInventoryItems();
-      setInventoryItems(items);
-    } catch (err) {
-      toast({ title: "Error", description: "Failed to log usage. Please try again.", variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const filteredItems = inventoryItems.filter(item => 
@@ -202,11 +180,11 @@ export default function KitchenServicePage() {
           {/* Order Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
-              <Card key={item.id} className="rounded-[24px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:border-indigo-100 hover:shadow-xl transition-all group p-5 space-y-6">
+              <Card key={item.id} className="rounded-[24px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:shadow-md transition-all group p-5 flex flex-col justify-between space-y-6">
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1 overflow-hidden">
-                      <h3 className="font-bold text-[#1E293B] text-[17px] md:text-[18px] tracking-tight font-figtree truncate">{item.name}</h3>
-                      <FigtreeText className="text-[13px] text-slate-400 font-semibold">{item.currentStock} units remaining</FigtreeText>
+                      <h3 className="font-bold text-[#1E293B] text-[17px] tracking-tight font-figtree truncate">{item.name}</h3>
+                      <FigtreeText className="text-[13px] text-slate-400 font-medium">{item.currentStock} units remaining</FigtreeText>
                     </div>
                     <Badge className={cn(
                       "border-none rounded-lg font-bold text-[10px] px-2.5 py-1 uppercase tracking-tight font-figtree shrink-0 shadow-sm",
@@ -217,24 +195,24 @@ export default function KitchenServicePage() {
                     </Badge>
                   </div>
  
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="flex gap-3">
                     <button 
-                      className="flex flex-col items-center justify-center gap-3 py-6 rounded-2xl bg-slate-50/80 hover:bg-emerald-50 hover:text-emerald-700 transition-all duration-300 group/btn active:scale-95" 
+                      className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border border-slate-100 bg-white hover:bg-emerald-50/50 hover:border-emerald-100 transition-all duration-300 group/btn active:scale-95" 
                       onClick={() => handleLogClick(item, 'usage')}
                     >
-                      <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-sm group-hover/btn:scale-110 transition-transform">
+                      <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
                         <Package className="h-5 w-5 text-emerald-500" />
                       </div>
-                      <FigtreeText className="text-[11px] font-bold text-slate-500 group-hover/btn:text-emerald-700">Log Usage</FigtreeText>
+                      <span className="text-[11px] font-bold text-slate-500 group-hover/btn:text-emerald-600">Log Usage</span>
                     </button>
                     <button 
-                      className="flex flex-col items-center justify-center gap-3 py-6 rounded-2xl bg-slate-50/80 hover:bg-rose-50 hover:text-rose-700 transition-all duration-300 group/btn active:scale-95" 
+                      className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border border-slate-100 bg-white hover:bg-rose-50/50 hover:border-rose-100 transition-all duration-300 group/btn active:scale-95" 
                       onClick={() => handleLogClick(item, 'waste')}
                     >
-                      <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-sm group-hover/btn:scale-110 transition-transform">
+                      <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
                         <Trash2 className="h-5 w-5 text-rose-500" />
                       </div>
-                      <FigtreeText className="text-[11px] font-bold text-slate-500 group-hover/btn:text-rose-700">Log Waste</FigtreeText>
+                      <span className="text-[11px] font-bold text-slate-500 group-hover/btn:text-rose-600">Log Waste</span>
                     </button>
                   </div>
               </Card>
@@ -247,60 +225,32 @@ export default function KitchenServicePage() {
       </div>
 
       {/* Modals */}
-      <UnifiedModal
+      <KitchenLogModals
         isOpen={logModalOpen}
         onClose={() => setLogModalOpen(false)}
-        title={`Log Product ${logType === 'usage' ? 'Usage' : 'Waste'}`}
-        subtitle={`Recording ${logType} metrics for ${selectedItem?.name}`}
-        footer={
-            <>
-                <Button variant="outline" onClick={() => setLogModalOpen(false)} className="rounded-2xl font-bold h-16 px-12 text-slate-500 hover:bg-slate-50 flex-1 font-figtree text-[18px] border-slate-200 shadow-md">Cancel</Button>
-                <Button 
-                    className={cn("rounded-2xl font-black h-16 px-16 border-none flex-[2] text-[20px] shadow-2xl transition-all active:scale-95 text-white", logType === 'usage' ? "bg-[#3B59DA] hover:bg-[#2D46B2] shadow-indigo-900/10" : "bg-rose-500 hover:bg-rose-600 shadow-rose-900/10")}
-                    onClick={handleSubmitLog}
-                    disabled={isSubmitting || !amount}
-                >
-                    {isSubmitting ? "Logging..." : `Confirm Log`}
-                </Button>
-            </>
-        }
-      >
-        <div className="space-y-10">
-          <div className="bg-[#F8FAFC] border border-slate-100 rounded-[28px] p-8 flex items-center justify-between gap-8 shadow-inner">
-             <div className="flex items-center gap-6">
-                <div className="h-20 w-20 rounded-2xl bg-white shadow-xl flex items-center justify-center text-[#3B59DA]">
-                    {logType === 'usage' ? <Package className="h-10 w-10" /> : <Trash2 className="h-10 w-10 text-rose-500" />}
-                </div>
-                <div>
-                    <InriaHeading className="text-[24px] font-bold leading-none mb-2">{selectedItem?.name}</InriaHeading>
-                    <FigtreeText className="text-[13px] font-black uppercase tracking-[0.2em] text-slate-400">Current Balance: {selectedItem?.currentStock} {selectedItem?.unit}</FigtreeText>
-                </div>
-             </div>
-          </div>
-
-          <div className="space-y-4 px-2">
-            <FigtreeText className="text-[13px] font-black uppercase tracking-[0.25em] text-[#3B59DA] leading-none ml-2">Consumption Amount ({selectedItem?.unit})</FigtreeText>
-            <Input 
-              type="number"
-              placeholder="0.00"
-              className="h-[100px] text-[48px] font-black border-slate-200 bg-white rounded-[24px] focus:ring-[#3B59DA]/10 px-10 font-figtree text-[#1E293B] shadow-2xl shadow-indigo-500/5 placeholder:text-slate-200"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              autoFocus
-            />
-          </div>
-
-          {amount && (
-            <div className={cn(
-                "p-6 rounded-[24px] border border-dashed flex items-center gap-4 font-black text-lg transition-all",
-                logType === 'usage' ? "bg-blue-50 border-blue-200 text-[#3B59DA]" : "bg-rose-50 border-rose-200 text-rose-600"
-            )}>
-                {logType === 'usage' ? <Activity className="h-6 w-6" /> : <AlertTriangle className="h-6 w-6" />}
-                <p>New balance will be: <span className="underline decoration-2 underline-offset-4">{(Number(selectedItem?.currentStock ?? 0) - parseFloat(amount)).toFixed(2)}</span> {selectedItem?.unit}</p>
-            </div>
-          )}
-        </div>
-      </UnifiedModal>
+        item={selectedItem}
+        type={logType}
+        isSubmitting={isSubmitting}
+        onSubmit={async (amount, reason) => {
+            if (!selectedItem) return;
+            setIsSubmitting(true);
+            try {
+                if (logType === 'usage') {
+                    await restaurantOpsService.createUsageLog(selectedItem.id, amount);
+                } else {
+                    await restaurantOpsService.createWasteLog(selectedItem.id, amount, reason || "Kitchen service log");
+                }
+                toast({ title: "Success", description: `Successfully logged ${logType} for ${selectedItem.name}` });
+                setLogModalOpen(false);
+                const items = await restaurantOpsService.getInventoryItems();
+                setInventoryItems(items);
+            } catch (err) {
+                toast({ title: "Error", description: "Failed to log usage. Please try again.", variant: "destructive" });
+            } finally {
+                setIsSubmitting(false);
+            }
+        }}
+      />
     </AppContainer>
   );
 }
