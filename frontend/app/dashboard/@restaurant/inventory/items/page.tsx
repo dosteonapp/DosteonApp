@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { 
   Plus as PlusIcon, 
   Search as SearchIcon, 
+  RotateCcw as RefreshIcon,
   Package as PackageIcon, 
-  ChevronRight,
-  ArrowLeft
+  ArrowRight,
+  ArrowLeft,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +39,8 @@ import {
     AppContainer, 
     InriaHeading, 
     FigtreeText, 
-    PrimarySurfaceCard 
+    PrimarySurfaceCard,
+    UnifiedHeroSurface
 } from "@/components/ui/dosteon-ui";
 
 export default function AllInventoryItemsPage() {
@@ -68,93 +71,123 @@ export default function AllInventoryItemsPage() {
     <AppContainer className="pb-24">
 
 
+      <div className="mb-8">
+        <Button 
+          variant="outline" 
+          onClick={() => router.back()}
+          className="h-14 px-8 rounded-xl border-slate-200 bg-white font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[15px] active:scale-95 flex items-center gap-3"
+        >
+          <ArrowLeft className="h-5 w-5" /> Back
+        </Button>
+      </div>
+
+      <UnifiedHeroSurface
+        variant="inline"
+        padding="px-8 py-8 md:px-10 md:py-8"
+        minHeight="min-h-[160px]"
+        backgroundColor="bg-[#f5f6ff]"
+        borderColor="border-[#98a6f9]"
+        title="Inventory"
+        description="Below is a list of all items in your restaurant inventory"
+        isLocked={false}
+        topAction={
+            <div className="flex items-center gap-4">
+                <Button variant="outline" className="h-12 px-6 rounded-xl border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-3 transition-all shadow-sm active:scale-95 font-figtree">
+                    <RefreshIcon className="h-4 w-4" /> Update Inventory
+                </Button>
+                <Button className="h-12 px-8 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-xl font-bold gap-3 transition-all border-none shadow-lg shadow-indigo-100 active:scale-95 font-figtree" asChild>
+                    <Link href="/dashboard/inventory/new">
+                        <PlusIcon className="h-4 w-4" /> Add New Product
+                    </Link>
+                </Button>
+            </div>
+        }
+      />
+
       <motion.div 
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
+        className="mt-8"
       >
-        <PrimarySurfaceCard className="p-10 md:p-12 space-y-12">
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-10">
-                <div className="flex items-center gap-6 flex-1 min-w-0">
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-[72px] w-[72px] shrink-0 p-0 rounded-[22px] border-slate-200 bg-white shadow-sm hover:bg-slate-50 transition-all active:scale-95"
-                        onClick={() => router.back()}
-                    >
-                        <ArrowLeft className="h-6 w-6 text-slate-400" />
-                    </Button>
-                    <div className="relative flex-1 min-w-0">
-                        <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-300" />
-                        <Input placeholder="Search your product registry..." className="pl-16 h-[72px] border-slate-200 rounded-[22px] bg-white focus:ring-[#3B59DA]/5 focus:border-[#3B59DA]/30 placeholder:text-slate-300 placeholder:font-black font-black text-[17px] font-figtree shadow-none focus:shadow-xl focus:shadow-indigo-500/5 transition-all outline-none" />
+        <PrimarySurfaceCard className="p-8 md:p-10">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-8">
+                <div className="flex items-center gap-4 flex-1 w-full max-w-2xl">
+                    <div className="relative flex-1">
+                        <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
+                        <Input placeholder="Search items, SKUs, or brand..." className="pl-14 h-14 border-slate-200 rounded-xl bg-white focus:ring-[#3B59DA]/5 focus:border-[#3B59DA]/30 placeholder:text-slate-300 font-medium text-base font-figtree shadow-none transition-all outline-none" />
                     </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-6">
+                <div className="flex flex-wrap items-center gap-4">
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-[72px] border-slate-200 rounded-[22px] w-full sm:w-56 bg-white font-black text-slate-500 text-sm shadow-sm px-8 hover:border-[#3B59DA]/20 transition-all">
+                        <SelectTrigger className="h-14 border-slate-200 rounded-xl w-full sm:w-56 bg-white font-bold text-slate-500 text-sm shadow-sm px-6 hover:border-[#3B59DA]/20 transition-all">
                             <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-slate-100 p-2 shadow-2xl">
-                            <SelectItem value="all" className="font-bold py-3">All Categories</SelectItem>
-                            <SelectItem value="produce" className="font-bold py-3 text-emerald-600">Produce</SelectItem>
-                            <SelectItem value="meat" className="font-bold py-3 text-red-600">Meat & Poultry</SelectItem>
+                        <SelectContent className="rounded-xl border-slate-100 p-2 shadow-2xl">
+                            <SelectItem value="all" className="font-bold py-2.5">All Categories</SelectItem>
+                            <SelectItem value="produce" className="font-bold py-2.5 text-emerald-600">Produce</SelectItem>
+                            <SelectItem value="meat" className="font-bold py-2.5 text-red-600">Meat & Poultry</SelectItem>
                         </SelectContent>
                     </Select>
-                    
-                    <Button className="h-[72px] px-8 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-[22px] font-black gap-4 text-base shadow-xl shadow-indigo-900/10 border-none transition-all active:scale-95 font-figtree shrink-0" asChild>
-                        <Link href="/dashboard/inventory/new">
-                        <PlusIcon className="h-6 w-6" /> Create Product
-                        </Link>
-                    </Button>
+
+                    <Select defaultValue="all">
+                        <SelectTrigger className="h-14 border-slate-200 rounded-xl w-full sm:w-44 bg-white font-bold text-slate-500 text-sm shadow-sm px-6 hover:border-[#3B59DA]/20 transition-all">
+                            <SelectValue placeholder="All Levels" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-slate-100 p-2 shadow-2xl">
+                            <SelectItem value="all" className="font-bold py-2.5">All Levels</SelectItem>
+                            <SelectItem value="healthy" className="font-bold py-2.5 text-emerald-600">Healthy</SelectItem>
+                            <SelectItem value="low" className="font-bold py-2.5 text-amber-600">Low</SelectItem>
+                            <SelectItem value="critical" className="font-bold py-2.5 text-red-600">Critical</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
 
-            <div className="border border-slate-100 rounded-[32px] overflow-hidden bg-white shadow-sm">
+            <div className="border border-slate-100 rounded-[24px] overflow-hidden bg-white">
                 <Table>
-                    <TableHeader className="bg-[#F8FAFC]">
-                        <TableRow className="border-b border-slate-50 hover:bg-transparent uppercase h-24">
-                            <TableHead className="font-black text-slate-400 text-[10px] tracking-[0.25em] py-5 pl-10 font-figtree">Product Information</TableHead>
-                            <TableHead className="font-black text-slate-400 text-[10px] tracking-[0.25em] font-figtree">Category</TableHead>
-                            <TableHead className="font-black text-slate-400 text-[10px] tracking-[0.25em] font-figtree text-center">Brand</TableHead>
-                            <TableHead className="font-black text-slate-400 text-[10px] tracking-[0.25em] font-figtree text-center">Unit</TableHead>
-                            <TableHead className="font-black text-slate-400 text-[10px] tracking-[0.25em] font-figtree text-right">Current Stock</TableHead>
-                            <TableHead className="font-black text-slate-400 text-[10px] tracking-[0.25em] font-figtree text-center">Status</TableHead>
-                            <TableHead className="font-black text-slate-400 text-[10px] tracking-[0.25em] font-figtree text-right pr-10">Actions</TableHead>
+                    <TableHeader className="bg-slate-50/50">
+                        <TableRow className="border-b border-slate-100 hover:bg-transparent h-16">
+                            <TableHead className="font-bold text-slate-500 text-[13px] py-4 pl-8 font-figtree">Item Name</TableHead>
+                            <TableHead className="font-bold text-slate-500 text-[13px] font-figtree">Category</TableHead>
+                            <TableHead className="font-bold text-slate-500 text-[13px] font-figtree">Brand</TableHead>
+                            <TableHead className="font-bold text-slate-500 text-[13px] font-figtree">Stock Unit</TableHead>
+                            <TableHead className="font-bold text-slate-500 text-[13px] font-figtree">Current Stock</TableHead>
+                            <TableHead className="font-bold text-slate-500 text-[13px] font-figtree">Min. Level</TableHead>
+                            <TableHead className="font-bold text-slate-500 text-[13px] font-figtree">Status</TableHead>
+                            <TableHead className="font-bold text-slate-500 text-[13px] font-figtree">Last Updated</TableHead>
+                            <TableHead className="font-bold text-slate-500 text-[13px] font-figtree text-right pr-8">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         <AnimatePresence mode="popLayout">
                         {inventoryItems.map((item) => (
-                            <TableRow key={item.id} className="border-slate-50 hover:bg-[#F8FAFF] transition-all group h-[110px]">
-                                <TableCell className="pl-10">
-                                    <div className="flex items-center gap-6">
-                                        <div className="h-20 w-20 rounded-full border border-slate-100 bg-white overflow-hidden flex items-center justify-center shrink-0 shadow-sm transition-transform duration-500 group-hover:scale-105">
+                            <TableRow key={item.id} className="border-slate-50 hover:bg-slate-50/30 transition-all group h-[88px]">
+                                <TableCell className="pl-8">
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-12 w-12 rounded-xl border border-slate-100 bg-white overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
                                             {item.imageUrl ? (
                                                 <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                                             ) : (
-                                                <div className="p-5 text-slate-100 h-full w-full flex items-center justify-center bg-slate-50">
-                                                    <PackageIcon className="h-8 w-8 text-slate-300" />
+                                                <div className="h-full w-full flex items-center justify-center bg-slate-50">
+                                                    <PackageIcon className="h-5 w-5 text-slate-300" />
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex flex-col space-y-1.5">
-                                            <InriaHeading className="font-bold text-[#1E293B] text-[22px] group-hover:text-[#3B59DA] transition-colors leading-none tracking-tight">{item.name}</InriaHeading>
-                                            <FigtreeText className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.25em] leading-none">{item.sku}</FigtreeText>
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-slate-700 text-[16px] leading-tight font-figtree">{item.name}</span>
+                                            <span className="text-[11px] text-slate-400 font-medium uppercase font-figtree tracking-tight">{item.sku || 'SKU ID'}</span>
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-[#64748B] font-black text-sm font-figtree uppercase tracking-wider">{item.category}</TableCell>
-                                <TableCell className="text-[#64748B] font-black text-sm font-figtree text-center">{item.brand || '—'}</TableCell>
-                                <TableCell className="text-[#64748B] font-black text-xs uppercase font-figtree tracking-widest text-center">{item.unit}</TableCell>
-                                <TableCell className="text-right">
-                                    <div className="flex flex-col items-end">
-                                        <FigtreeText className="font-black text-[#1E293B] text-[20px] tabular-nums leading-none">{item.currentStock}</FigtreeText>
-                                        <FigtreeText className="text-[11px] font-black text-slate-300 uppercase tracking-widest mt-1">{item.unit}</FigtreeText>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-center">
+                                <TableCell className="text-slate-600 font-medium text-sm font-figtree">{item.category}</TableCell>
+                                <TableCell className="text-slate-600 font-medium text-sm font-figtree">{item.brand || 'Brand Name'}</TableCell>
+                                <TableCell className="text-slate-600 font-medium text-sm font-figtree">{item.unit || 'kg'}</TableCell>
+                                <TableCell className="text-slate-700 font-bold text-sm font-figtree">{item.currentStock || '2.5'} {item.unit || 'kg'}</TableCell>
+                                <TableCell className="text-slate-700 font-bold text-sm font-figtree">{item.minimumLevel || '5'} {item.unit || 'kg'}</TableCell>
+                                <TableCell>
                                     <Badge 
                                         className={cn(
-                                            "border-none rounded-lg font-black text-[9px] px-3.5 py-1.5 uppercase tracking-[0.2em] font-figtree shadow-sm",
+                                            "border-none rounded-lg font-bold text-[11px] px-2.5 py-1 font-figtree shadow-none",
                                             item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" : 
                                             item.status === 'Low' ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
                                         )}
@@ -162,10 +195,11 @@ export default function AllInventoryItemsPage() {
                                         {item.status}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="text-right pr-10">
-                                    <Button variant="ghost" className="h-12 w-12 p-0 rounded-2xl hover:bg-white hover:shadow-2xl text-slate-200 hover:text-[#3B59DA] transition-all active:scale-90 border border-transparent hover:border-slate-50" asChild>
+                                <TableCell className="text-slate-500 font-medium text-sm font-figtree">Today, 8:30 AM</TableCell>
+                                <TableCell className="text-right pr-8">
+                                    <Button variant="outline" className="h-11 w-11 p-0 rounded-xl hover:bg-[#3B59DA] text-slate-400 hover:text-white transition-all active:scale-95 border-slate-200" asChild>
                                         <Link href={`/dashboard/inventory/${item.id}`}>
-                                            <ChevronRight className="h-6 w-6" />
+                                            <ArrowRight className="h-5 w-5" />
                                         </Link>
                                     </Button>
                                 </TableCell>

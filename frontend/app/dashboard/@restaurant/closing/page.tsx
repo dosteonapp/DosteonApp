@@ -40,7 +40,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import { ReviewClosingChecklistModal } from "@/components/kitchen/ReviewClosingChecklistModal";
+import { InventoryUpdateItemModal } from "@/components/inventory/InventoryUpdateItemModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/context/SidebarContext";
 import { 
@@ -58,8 +60,29 @@ export default function ClosingPage() {
   const { isSidebarCollapsed } = useSidebar();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedItemForEdit, setSelectedItemForEdit] = useState<InventoryItem | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [verifiedItemIds, setVerifiedItemIds] = useState<Set<string>>(new Set());
+
+  const handleEditCount = (item: InventoryItem) => {
+    setSelectedItemForEdit(item);
+    setIsEditModalOpen(true);
+  };
+
+  const handleVerifyItem = (itemId: string) => {
+    setVerifiedItemIds(prev => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,7 +103,7 @@ export default function ClosingPage() {
   }
 
   const closingSummary = {
-    itemsChecked: Math.floor(items.length * 0.6),
+    itemsChecked: verifiedItemIds.size,
     itemsTotal: items.length,
     alerts: items.filter(i => i.status === 'Low' || i.status === 'Critical').length,
     closingTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -97,7 +120,7 @@ export default function ClosingPage() {
 
         {/* Hero Section or Locked State */}
         <div className="w-full">
-            {!isOpen ? (
+            {isOpen ? (
                 <div className="flex items-start py-20 min-h-[60vh]">
                      <ClosingLockedCard />
                 </div>
@@ -145,11 +168,11 @@ export default function ClosingPage() {
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <FigtreeText className="text-[18px] font-semibold text-white leading-none">30%</FigtreeText>
+                                        <FigtreeText className="text-[18px] font-semibold text-white leading-none">{Math.round((verifiedItemIds.size / items.length) * 100) || 0}%</FigtreeText>
                                     </div>
                                 </div>
                                 <div className="space-y-1 align-middle">
-                                    <FigtreeText className="text-[20px] font-semibold text-white tracking-tight leading-none whitespace-nowrap">Progress: 6 of 9 Items Counted</FigtreeText>
+                                    <FigtreeText className="text-[20px] font-semibold text-white tracking-tight leading-none whitespace-nowrap">Progress: {verifiedItemIds.size} of {items.length} Items Counted</FigtreeText>
                                     <FigtreeText className="text-white/60 font-normal text-[14px] leading-relaxed lg:whitespace-nowrap">Finish closing stock count to complete your restaurant operations for the day</FigtreeText>
                                 </div>
                             </div>
@@ -203,7 +226,13 @@ export default function ClosingPage() {
                         <div className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar pb-6 -mx-2 px-2">
                             <div className="space-y-4 min-w-[1000px] xl:min-w-0">
                                 {items.slice(0, 6).map((item) => (
-                                    <ClosingCountRow key={item.id} item={item} />
+                                    <ClosingCountRow 
+                                        key={item.id} 
+                                        item={item} 
+                                        onEdit={handleEditCount}
+                                        onVerify={handleVerifyItem}
+                                        isVerified={verifiedItemIds.has(item.id)}
+                                    />
                                 ))}
                             </div>
                         </div>
@@ -213,7 +242,7 @@ export default function ClosingPage() {
         </div>
 
         {/* Fixed Closing Action Footer */}
-        {isOpen && (
+        {!isOpen && (
             <div 
                 className={cn(
                     "fixed bottom-0 right-0 left-0 transition-all duration-500 z-[100] p-0 bg-white/90 backdrop-blur-2xl border-t border-slate-100 flex items-center justify-end shadow-[0_-20px_50px_rgba(0,0,0,0.05)]",
@@ -223,6 +252,10 @@ export default function ClosingPage() {
                 <div className="w-full h-24 px-8 flex items-center justify-end gap-6">
                     <Button 
                         variant="outline"
+                        onClick={() => toast({ 
+                            title: "Progress Saved", 
+                            description: "Your closing progress has been saved as a draft." 
+                        })}
                         className="h-16 px-12 rounded-[22px] border-slate-200 bg-white font-black text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[16px] font-figtree shadow-sm active:scale-95"
                     >
                         Save a draft
@@ -236,6 +269,15 @@ export default function ClosingPage() {
                 </div>
             </div>
         )}
+        <InventoryUpdateItemModal 
+            open={isEditModalOpen}
+            onOpenChange={setIsEditModalOpen}
+            item={selectedItemForEdit}
+            onUpdate={async () => {
+                const inventory = await restaurantOpsService.getInventoryItems();
+                setItems(inventory);
+            }}
+        />
     </AppContainer>
   );
 }
@@ -253,7 +295,7 @@ function ClosingHeroOpen({ summary }: { summary: any }) {
 
             <div className="flex flex-col justify-center text-left max-w-xl shrink-0 z-10 space-y-12">
                 <div className="space-y-4">
-                     <h2 className="text-[44px] md:text-[54px] font-bold tracking-tight leading-none text-white font-inria">End of Day Count</h2>
+                     <h2 className="text-[44px] md:text-[54px] font-bold tracking-tight leading-none text-white font-figtree">End of Day Count</h2>
                      <p className="text-white/80 text-[18px] md:text-[20px] font-medium leading-relaxed font-figtree">
                         Verify remaining stock to finalize daily usage reports.
                      </p>
@@ -331,7 +373,17 @@ function ClosingStatCard({ label, value, subtext, icon: Icon }: { label: string,
     );
 }
 
-function ClosingCountRow({ item }: { item: InventoryItem }) {
+function ClosingCountRow({ 
+    item, 
+    onEdit, 
+    onVerify, 
+    isVerified 
+}: { 
+    item: InventoryItem, 
+    onEdit: (item: InventoryItem) => void,
+    onVerify: (id: string) => void,
+    isVerified: boolean
+}) {
     return (
         <UnifiedListRow className="p-5 md:p-6 transition-all hover:bg-[#F8FAFF]">
             <div className="flex flex-col xl:flex-row xl:items-center gap-8 justify-between w-full">
@@ -370,11 +422,25 @@ function ClosingCountRow({ item }: { item: InventoryItem }) {
                 </div>
                 
                 <div className="flex items-center gap-4 w-full xl:w-auto shrink-0 border-t xl:border-t-0 pt-6 xl:pt-0 xl:border-l border-slate-50 xl:pl-8">
-                    <Button variant="outline" className="h-14 px-8 rounded-2xl border-slate-200 font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[15px] flex-1 xl:flex-none active:scale-95 bg-white">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => onEdit(item)}
+                        className="h-14 px-8 rounded-2xl border-slate-200 font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[15px] flex-1 xl:flex-none active:scale-95 bg-white"
+                    >
                         Edit Final Count
                     </Button>
-                    <Button className="h-14 px-10 rounded-2xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black transition-all border-none font-figtree shadow-2xl shadow-indigo-900/10 text-[16px] flex-1 xl:flex-none min-w-[160px] active:scale-95">
-                        Verify Closing
+                    <Button 
+                        onClick={() => onVerify(item.id)}
+                        className={cn(
+                            "h-14 px-10 rounded-2xl font-black transition-all border-none font-figtree shadow-2xl text-[16px] flex-1 xl:flex-none min-w-[160px] active:scale-95",
+                            isVerified 
+                                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-900/10" 
+                                : "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-indigo-900/10"
+                        )}
+                    >
+                        {isVerified ? (
+                            <span className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" /> Verified</span>
+                        ) : "Verify Closing"}
                     </Button>
                 </div>
             </div>

@@ -60,21 +60,31 @@ export default function InventoryPage() {
     <AppContainer className="pb-24">
       {/* Hero Section / Main Stats Card */}
       <UnifiedHeroSurface
-        variant="split"
-        padding="px-6 py-4 md:px-10 md:py-4"
-        minHeight="min-h-[240px]"
+        variant="standard"
+        padding="px-8 py-8 md:px-10 md:py-10"
+        minHeight="min-h-[260px]"
         backgroundColor={!isOpen ? undefined : "bg-[#f5f6ff]"}
         borderColor={!isOpen ? undefined : "border-[#98a6f9]"}
         title={!isOpen ? "Opening Prep" : "Inventory"}
         subtitle={isOpen ? "Manage your item stock levels and categories" : undefined}
-        description="Do your opening stock count before starting your restaurant operations."
         isLocked={!isOpen}
         bgIcon={!isOpen ? <ChefHat className="h-64 w-64 text-white" /> : undefined}
-        size="dense"
         badge={!isOpen ? (
             <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full border-2 border-[#EF4444] bg-white w-fit shadow-sm">
                 <ClipboardList className="h-4 w-4 text-[#EF4444]" />
                 <FigtreeText className="text-[12px] font-semibold text-[#EF4444] uppercase tracking-[0.05em]">16 items need counting</FigtreeText>
+            </div>
+        ) : undefined}
+        topAction={isOpen ? (
+            <div className="flex items-center gap-3">
+                <Button variant="outline" className="h-11 px-5 rounded-xl border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-2.5 transition-all shadow-sm active:scale-95 font-figtree text-sm">
+                    <RefreshIcon className="h-4 w-4" /> Update Inventory
+                </Button>
+                <Button className="h-11 px-7 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-xl font-bold gap-2.5 transition-all border-none shadow-lg shadow-indigo-100 active:scale-95 font-figtree text-sm" asChild>
+                    <Link href="/dashboard/inventory/new">
+                        <PlusIcon className="h-4 w-4" /> Add New Product
+                    </Link>
+                </Button>
             </div>
         ) : undefined}
         action={!isOpen ? (
@@ -84,23 +94,30 @@ export default function InventoryPage() {
                 </Link>
             </Button>
         ) : undefined}
-        topAction={isOpen ? (
-            <div className="flex items-center gap-3">
-                <Button variant="outline" className="h-12 px-6 rounded-xl border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-semibold gap-2.5 transition-all shadow-sm active:scale-95 font-figtree">
-                    <RefreshIcon className="h-4 w-4" /> Update Inventory
-                </Button>
-                <Button className="h-12 px-8 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-xl font-semibold gap-2.5 transition-all border-none shadow-indigo-200 active:scale-95 font-figtree" asChild>
-                    <Link href="/dashboard/inventory/new">
-                        <PlusIcon className="h-4 w-4" /> Add New Product
-                    </Link>
-                </Button>
-            </div>
-        ) : undefined}
       >
-        <UnifiedStatCard label="Total Inventory Items" value="100" subtext="up by 8% from last week" icon={PackageIcon} variant="neutral" className="flex-1 min-w-[200px]" />
-        <UnifiedStatCard label="Healthy Stock" value="56" subtext="up by 8% from last week" icon={SuccessIcon} variant="green" className="flex-1 min-w-[200px]" />
-        <UnifiedStatCard label="Low Stock" value="23" subtext="up by 8% from last week" icon={WarningIcon} variant="amber" className="flex-1 min-w-[200px]" />
-        <UnifiedStatCard label="Critical" value="4" subtext="up by 8% from last week" icon={AlertIcon} variant="red" className="flex-1 min-w-[200px]" />
+        <div className="flex flex-col xl:flex-row items-end justify-between w-full gap-10">
+            {isOpen && (
+                <div className="max-w-[400px] pb-2 shrink-0">
+                    <FigtreeText className="text-slate-400 font-medium text-[15px] leading-relaxed">
+                        Closing Stock Count will be enabled at 7 PM. If you want to change the Closing Stock Count time, your can admin change it in the store management settings.
+                    </FigtreeText>
+                </div>
+            )}
+            {!isOpen && (
+                <div className="max-w-xl pb-2">
+                    <FigtreeText className="text-white/70 font-medium text-[15px] leading-relaxed">
+                        Do your opening stock count before starting your restaurant operations.
+                    </FigtreeText>
+                </div>
+            )}
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1 w-full xl:w-auto">
+                <UnifiedStatCard label="Total Inventory" value="100" subtext="up by 8% from last week" icon={PackageIcon} variant="indigo" />
+                <UnifiedStatCard label="Healthy Stock" value="56" subtext="up by 8% from last week" icon={SuccessIcon} variant="green" />
+                <UnifiedStatCard label="Low Stock" value="23" subtext="up by 8% from last week" icon={WarningIcon} variant="amber" />
+                <UnifiedStatCard label="Critical" value="4" subtext="up by 8% from last week" icon={AlertIcon} variant="red" />
+            </div>
+        </div>
       </UnifiedHeroSurface>
 
       {/* What's Running Low Section */}
@@ -114,11 +131,11 @@ export default function InventoryPage() {
           {/* See All Items Redirection inside the blurred area */}
           <div className="flex justify-end mt-12 mb-12">
               <Button 
-                className="h-16 px-12 rounded-[22px] bg-white border-2 border-slate-100 text-[#3B59DA] hover:bg-[#3B59DA] hover:text-white hover:border-[#3B59DA] font-black transition-all shadow-sm text-[16px] font-figtree active:scale-95"
+                className="h-14 px-10 rounded-xl bg-[#F0F4FF] text-[#3B59DA] hover:bg-[#3B59DA] hover:text-white font-bold transition-all shadow-sm text-sm font-figtree active:scale-95"
                 asChild
               >
                 <Link href="/dashboard/inventory/items">
-                    See Master Product Registry
+                    See All Items
                 </Link>
               </Button>
           </div>
@@ -135,48 +152,44 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
         <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[40px] border border-slate-100 bg-white overflow-hidden shadow-sm p-8 md:p-10 mt-6"
+            className="rounded-[24px] border border-red-500 bg-white overflow-hidden shadow-sm p-6 md:p-8 mt-6"
         >
-            <div className="flex items-end justify-between mb-10 px-2">
-                <div className="space-y-1.5 pt-2">
-                    <FigtreeText className="text-[12px] font-black text-red-500 uppercase tracking-[0.25em] leading-none mb-2">Operational Analytics</FigtreeText>
-                    <InriaHeading className="text-[34px] md:text-[38px] font-bold tracking-tight text-[#1E293B]">What's Running Low</InriaHeading>
-                </div>
-                <div className="h-16 w-16 bg-red-50 rounded-[22px] flex items-center justify-center text-red-500 shadow-sm border border-red-100/30">
-                    <WarningIcon className="h-7 w-7 stroke-[2.5px]" />
-                </div>
+            <div className="flex items-center gap-3 mb-6 px-1">
+                <WarningIcon className="h-5 w-5 text-red-500 stroke-[2.5px]" />
+                <h3 className="text-base font-bold text-red-500 font-figtree tracking-tight">What's Running Low</h3>
             </div>
             
             <div className="space-y-4">
                 {items.slice(0, 3).map((item) => (
                     <div 
                         key={item.id}
-                        className="p-5 flex items-center justify-between bg-white border border-slate-50 rounded-[32px] transition-all group hover:border-[#3B59DA]/20 hover:bg-[#F8FAFF] hover:shadow-xl shadow-[0_4px_20px_rgba(0,0,0,0.01)]"
+                        className="p-6 flex items-center justify-between bg-white border border-slate-100 rounded-[20px] transition-all group hover:border-[#3B59DA]/20"
                     >
-                        <div className="flex items-center gap-8">
-                            <div className="h-20 w-20 rounded-full border border-slate-100 bg-white shadow-sm shrink-0 flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-105">
+                        <div className="flex items-center gap-6">
+                            <div className="h-16 w-16 rounded-xl overflow-hidden border border-slate-100 shrink-0">
                                 {item.imageUrl ? (
                                     <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                                 ) : (
-                                    <div className="h-full w-full bg-slate-50 p-6 text-slate-100 flex items-center justify-center">
-                                        <PackageIcon className="h-8 w-8 text-slate-300" />
+                                    <div className="h-full w-full bg-slate-50 flex items-center justify-center">
+                                        <PackageIcon className="h-6 w-6 text-slate-300" />
                                     </div>
                                 )}
                             </div>
-                            <div className="space-y-1.5 overflow-hidden">
-                                <InriaHeading className="text-[22px] md:text-[24px] font-bold truncate leading-none text-[#1E293B] group-hover:text-[#3B59DA] transition-colors">{item.name}</InriaHeading>
-                                <div className="flex items-center gap-4">
-                                    <FigtreeText className="text-[13px] font-black text-slate-400 tabular-nums uppercase tracking-[0.1em]">{item.unitsLeftLabel} REMAINING</FigtreeText>
-                                    <div className="px-3 py-1 bg-red-100 text-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest border border-red-200/50">
-                                        CRITICAL {item.needLabel || 'REFRESH'}
-                                    </div>
+                            <div className="space-y-1">
+                                <h4 className="text-[18px] font-bold text-[#1E293B] font-figtree leading-none">{item.name}</h4>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[13px] font-medium text-slate-400 font-figtree">{item.unitsLeftLabel} units left</span>
+                                    <span className="text-slate-300">•</span>
+                                    <Badge className="bg-rose-50 text-rose-500 font-bold text-[10px] px-2 py-0.5 rounded-lg border-none shadow-none uppercase font-figtree">
+                                        Need {item.needLabel || '10kg'}
+                                    </Badge>
                                 </div>
                             </div>
                         </div>
                         
-                        <Button variant="outline" className="h-14 px-10 rounded-[20px] border-slate-200 bg-white font-black text-[#1E293B]/70 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[15px] font-figtree active:scale-95 shadow-sm" asChild>
+                        <Button variant="outline" className="h-12 px-6 rounded-xl border-slate-200 bg-white font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-sm font-figtree active:scale-95" asChild>
                             <Link href={`/dashboard/inventory/${item.id}`}>
-                                View Stats
+                                View Item
                             </Link>
                         </Button>
                     </div>

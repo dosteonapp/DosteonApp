@@ -80,7 +80,7 @@ export default function AnalyticsPage() {
       <main className="flex-1 space-y-10 w-full pb-20 transition-all duration-500">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1 text-center sm:text-left">
-            <h2 className="text-[28px] md:text-3xl font-semibold text-[#1E293B] tracking-tight font-inria italic">Analytics</h2>
+            <h2 className="text-[28px] md:text-3xl font-semibold text-[#1E293B] tracking-tight font-figtree">Analytics</h2>
             <p className="text-[13px] md:text-sm font-semibold text-slate-400">Track consumption, wastage, and predictive trends</p>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">

@@ -85,7 +85,7 @@ export default function NotificationsPage() {
       {/* Header Area */}
       <div className="flex items-center justify-between mb-8 relative z-10">
         <div className="space-y-2">
-          <h2 className="text-[34px] font-bold text-[#1E293B] tracking-tight font-inria">Notifications</h2>
+          <h2 className="text-[34px] font-bold text-[#1E293B] tracking-tight font-figtree">Notifications</h2>
           <p className="text-[14px] font-medium text-slate-400">Stay updated with your kitchen and inventory alerts</p>
         </div>
         <div className="flex bg-[#F8FAFC] p-1 rounded-xl border border-slate-100">

@@ -54,7 +54,7 @@ export default function SupplierDashboard() {
       </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight font-inria italic">
+          <h1 className="text-2xl font-semibold tracking-tight font-figtree">
             Supplier Dashboard
           </h1>
           <div className="flex items-center gap-2">

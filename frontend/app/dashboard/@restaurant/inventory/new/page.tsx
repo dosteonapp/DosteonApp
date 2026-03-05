@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Select, 
+  SelectContent,
+  SelectItem,
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
@@ -59,95 +61,101 @@ export default function AddNewItemPage() {
         >
           <PrimarySurfaceCard className="p-12 md:p-14">
             {/* Header Actions */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 mb-16 border-b border-slate-50 pb-12">
-              <div className="space-y-3">
-                <InriaHeading className="text-[38px] md:text-[46px] font-bold text-[#1E293B] tracking-tight leading-none mb-1">Add New Item</InriaHeading>
-                <FigtreeText className="text-slate-400 font-medium text-lg leading-relaxed max-w-xl">Add a new item to your inventory. Fill out the details below.</FigtreeText>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 mb-12">
+              <div className="space-y-2">
+                <h1 className="text-[32px] font-bold text-[#1E293B] tracking-tight leading-none font-figtree">Add New Item</h1>
+                <FigtreeText className="text-slate-400 font-medium text-[16px]">Add a new item to your inventory. Fill out the details below.</FigtreeText>
               </div>
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
                  <Button 
                   variant="outline" 
-                  className="h-16 px-12 rounded-2xl border-slate-200 font-bold text-slate-500 hover:bg-slate-50 transition-all text-lg font-figtree shadow-md active:scale-95"
+                  className="h-14 px-10 rounded-xl border-slate-200 font-bold text-slate-500 hover:bg-slate-50 transition-all text-base font-figtree shadow-sm active:scale-95 min-w-[140px]"
                   onClick={() => router.back()}
                 >
                   Cancel
                 </Button>
                 <Button 
-                  className="h-16 px-16 rounded-2xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black transition-all border-none text-[19px] shadow-2xl flex items-center gap-4 font-figtree shadow-indigo-900/10 active:scale-95"
+                  className="h-14 px-12 rounded-xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold transition-all border-none text-base shadow-lg flex items-center gap-3 font-figtree active:scale-95 min-w-[160px]"
                 >
-                  <Save className="h-6 w-6" /> Save Product
+                  <Save className="h-5 w-5" /> Save
                 </Button>
               </div>
             </div>
 
             {/* Form Content */}
-            <div className="space-y-14">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                    <div className="space-y-4">
-                        <FigtreeText className="text-[14px] font-bold text-[#64748B] uppercase tracking-widest ml-1 leading-none">Item Name</FigtreeText>
-                        <Input placeholder="Enter item name" className="h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] focus:ring-slate-100 text-[#1E293B] font-bold font-figtree px-8 text-[18px] shadow-sm transition-all" />
+            <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+                    <div className="space-y-2.5">
+                        <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Item Name</label>
+                        <Input placeholder="Enter item name" className="h-16 border-slate-200 rounded-xl bg-white focus:ring-slate-100 text-[#1E293B] font-medium font-figtree px-6 text-base shadow-sm transition-all placeholder:text-slate-300" />
                     </div>
-                    <div className="space-y-4">
-                        <FigtreeText className="text-[14px] font-bold text-[#64748B] uppercase tracking-widest ml-1 leading-none">Item Category</FigtreeText>
+                    <div className="space-y-2.5">
+                        <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Item Category</label>
                         <Select>
-                            <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] font-bold text-[#1E293B] text-[18px] px-8 shadow-sm">
+                            <SelectTrigger className="h-16 border-slate-200 rounded-xl bg-white font-medium text-[#1E293B] text-base px-6 shadow-sm">
                                 <SelectValue placeholder="Select item category" />
                             </SelectTrigger>
                         </Select>
                     </div>
-                    <div className="space-y-4">
-                        <FigtreeText className="text-[14px] font-bold text-[#64748B] uppercase tracking-widest ml-1 leading-none">Current Stock Amount</FigtreeText>
-                        <Input placeholder="Enter amount" className="h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] focus:ring-slate-100 text-[#1E293B] font-bold font-figtree px-8 text-[18px] shadow-sm transition-all text-center tabular-nums" />
+                    <div className="space-y-2.5">
+                        <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Current Stock Amount</label>
+                        <Input placeholder="Enter amount" className="h-16 border-slate-200 rounded-xl bg-white focus:ring-slate-100 text-[#1E293B] font-medium font-figtree px-6 text-base shadow-sm transition-all placeholder:text-slate-300" />
                     </div>
-                    <div className="space-y-4">
-                        <FigtreeText className="text-[14px] font-bold text-[#64748B] uppercase tracking-widest ml-1 leading-none">Measurement Unit</FigtreeText>
+                    <div className="space-y-2.5">
+                        <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Measurement Unit</label>
                         <Select>
-                            <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] font-bold text-[#1E293B] text-[18px] px-8 shadow-sm">
+                            <SelectTrigger className="h-16 border-slate-200 rounded-xl bg-white font-medium text-[#1E293B] text-base px-6 shadow-sm">
                                 <SelectValue placeholder="Select unit" />
                             </SelectTrigger>
                         </Select>
                     </div>
-                    <div className="space-y-4">
-                        <FigtreeText className="text-[14px] font-bold text-[#64748B] uppercase tracking-widest ml-1 leading-none">Storage Location</FigtreeText>
-                        <Input placeholder="Enter storage location" className="h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] focus:ring-slate-100 text-[#1E293B] font-bold font-figtree px-8 text-[18px] shadow-sm transition-all" />
+                    <div className="space-y-2.5">
+                        <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Storage Location</label>
+                        <Input placeholder="Enter storage location" className="h-16 border-slate-200 rounded-xl bg-white focus:ring-slate-100 text-[#1E293B] font-medium font-figtree px-6 text-base shadow-sm transition-all placeholder:text-slate-300" />
                     </div>
-                    <div className="space-y-4">
-                        <FigtreeText className="text-[14px] font-bold text-[#64748B] uppercase tracking-widest ml-1 leading-none">Expiry Date (If Applicable)</FigtreeText>
-                        <div className="grid grid-cols-3 gap-6">
+                    <div className="space-y-2.5">
+                        <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Expiry Date (If Applicable)</label>
+                        <div className="grid grid-cols-3 gap-4">
                             <Select defaultValue="july">
-                                <SelectTrigger className="h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] font-bold text-[#1E293B] text-[18px] px-6 shadow-sm">
+                                <SelectTrigger className="h-16 border-slate-200 rounded-xl bg-white font-medium text-[#1E293B] text-base px-5 shadow-sm">
                                     <SelectValue placeholder="Month" />
                                 </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="july">July</SelectItem>
+                                </SelectContent>
                             </Select>
-                            <Input defaultValue="01" className="h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] text-[#1E293B] font-bold text-[18px] px-6 text-center shadow-sm tabular-nums" />
-                            <Input defaultValue="2000" className="h-[72px] border-slate-200 rounded-2xl bg-[#F8FAFC] text-[#1E293B] font-bold text-[18px] px-6 text-center shadow-sm tabular-nums" />
+                            <Input defaultValue="01" className="h-16 border-slate-200 rounded-xl bg-white text-[#1E293B] font-medium text-base px-5 text-center shadow-sm tabular-nums" />
+                            <Input defaultValue="2000" className="h-16 border-slate-200 rounded-xl bg-white text-[#1E293B] font-medium text-base px-5 text-center shadow-sm tabular-nums" />
                         </div>
                     </div>
                 </div>
 
+                <div className="pt-2">
+                    <FigtreeText className="text-slate-400 text-[13px] font-medium leading-relaxed">Upload high-quality images of your product. The first image will be used as the main product image.</FigtreeText>
+                </div>
+
                 {/* Image Upload Area */}
-                <div className="space-y-10 pt-10 border-t border-slate-50">
-                    <div className="space-y-3">
-                       <InriaHeading className="text-[28px] font-bold text-[#1E293B] leading-none">Upload Item Image</InriaHeading>
-                       <FigtreeText className="text-slate-400 text-base font-medium leading-relaxed italic max-w-3xl">Upload high-quality images of your product. The first image will be used as the main product image.</FigtreeText>
-                    </div>
-                    
-                    <div className="bg-[#F8FAFC] border-2 border-slate-100 border-dashed rounded-[32px] p-12 flex flex-col items-center justify-center text-center space-y-10 group relative transition-all hover:bg-white hover:border-indigo-100 min-h-[460px] shadow-inner">
+                <div className="space-y-3">
+                    <label className="text-[13px] font-bold text-[#1E293B] font-figtree ml-0.5">Upload Item Image</label>
+                    <div className="bg-white border border-slate-200 rounded-[20px] p-12 flex flex-col items-center justify-center text-center space-y-8 min-h-[400px]">
                         {images.length === 0 ? (
                             <>
-                                <div className="h-32 w-32 rounded-[28px] border-2 border-slate-100 border-dashed bg-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-500">
-                                    <ImageIcon className="h-16 w-16 text-slate-200" />
-                                </div>
                                 <div className="space-y-3 max-w-lg">
-                                    <FigtreeText className="text-slate-400 font-bold text-[17px] leading-relaxed">Help your customers know what to expect when they visit your business profile.</FigtreeText>
-                                    <FigtreeText className="text-slate-300 font-bold text-[14px]">PNG or JPG are accepted. Recommended dimension: 200px by 200px</FigtreeText>
+                                    <FigtreeText className="text-slate-400 font-medium text-[15px]">Help your customers know what to expect when they visit your business profile.</FigtreeText>
+                                    <div className="h-20 w-20 rounded-xl border border-slate-200 border-dashed bg-white mx-auto flex items-center justify-center">
+                                        <ImageIcon className="h-10 w-10 text-slate-300" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <FigtreeText className="text-slate-300 font-bold text-[13px]">PNG or JPG are accepted.</FigtreeText>
+                                        <FigtreeText className="text-slate-300 font-bold text-[13px]">Recommended dimension: 200px by 200px</FigtreeText>
+                                    </div>
                                 </div>
                                 <Button 
                                     onClick={handleImageUpload}
                                     disabled={uploading}
-                                    className="h-16 px-12 rounded-2xl bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#3B59DA] font-black transition-all border-none text-[18px] shadow-lg flex items-center gap-4 active:scale-95"
+                                    className="h-14 px-8 rounded-xl bg-[#F0F4FF] hover:bg-[#E0E8FF] text-[#3B59DA] font-bold transition-all border-none text-sm shadow-sm flex items-center gap-3 active:scale-95"
                                 >
-                                    <Upload className="h-6 w-6" /> {uploading ? "Uploading..." : "Upload Image"}
+                                    <Upload className="h-5 w-5" /> {uploading ? "Uploading..." : "Upload Image"}
                                 </Button>
                             </>
                         ) : (
@@ -173,9 +181,9 @@ export default function AddNewItemPage() {
                                 <Button 
                                     onClick={handleImageUpload}
                                     disabled={uploading}
-                                    className="h-16 px-12 rounded-2xl bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#3B59DA] font-black transition-all border-none text-[18px] shadow-lg flex items-center gap-4 active:scale-95 mx-auto"
+                                    className="h-14 px-8 rounded-xl bg-[#F0F4FF] hover:bg-[#E0E8FF] text-[#3B59DA] font-bold transition-all border-none text-sm shadow-sm flex items-center gap-3 active:scale-95 mx-auto"
                                 >
-                                    <Upload className="h-6 w-6" /> {uploading ? "Uploading..." : "Replace Product Image"}
+                                    <Upload className="h-5 w-5" /> {uploading ? "Uploading..." : "Replace Product Image"}
                                 </Button>
                             </div>
                         )}

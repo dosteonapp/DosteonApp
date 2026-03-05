@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
  * Figtree -> BODY/UI
  */
 export const InriaHeading = ({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-  <h1 className={cn("font-inria tracking-tight text-[#1E293B]", className)} {...props}>
+  <h1 className={cn("font-figtree tracking-tight text-[#1E293B]", className)} {...props}>
     {children}
   </h1>
 );
@@ -364,7 +364,7 @@ export const UnifiedModal = ({
       <div className="p-8 sm:p-12 space-y-10">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 text-left">
           <div className="space-y-2 pr-4">
-            <DialogTitle className="text-[28px] sm:text-[36px] font-black text-[#1E293B] font-inria tracking-tight leading-tight">{title}</DialogTitle>
+            <DialogTitle className="text-[28px] sm:text-[36px] font-black text-[#1E293B] font-figtree tracking-tight leading-tight">{title}</DialogTitle>
             {subtitle && <FigtreeText className="text-[15px] sm:text-[17px] font-semibold leading-relaxed">{subtitle}</FigtreeText>}
           </div>
           <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full hover:bg-slate-50 text-slate-300 shrink-0" onClick={onClose}>

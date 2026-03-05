@@ -131,7 +131,7 @@ export function StockConfirmationModal({
       <DialogContent className="max-w-5xl p-0 rounded-[32px] overflow-hidden border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.16)] bg-white font-figtree animate-in zoom-in-95 duration-500">
         <div className="p-10 md:p-12 border-b border-slate-50 flex items-center justify-between">
           <div className="space-y-2">
-            <DialogTitle className="text-[32px] font-bold text-[#1E293B] tracking-tight font-inria leading-none">Confirm Stock Level Changes</DialogTitle>
+            <DialogTitle className="text-[32px] font-bold text-[#1E293B] tracking-tight font-figtree leading-none">Confirm Stock Level Changes</DialogTitle>
             <DialogDescription className="text-slate-400 font-medium text-[16px] font-figtree">
               Please review the following changes before saving. You can edit any values that need correction.
             </DialogDescription>
@@ -148,7 +148,7 @@ export function StockConfirmationModal({
                 <ShieldCheck className="h-8 w-8 text-[#3B59DA]" />
              </div>
              <div className="space-y-1.5">
-                <h3 className="text-[20px] font-bold text-[#1E293B] font-inria">{changedItems.length} Changes Detected</h3>
+                <h3 className="text-[20px] font-bold text-[#1E293B] font-figtree">{changedItems.length} Changes Detected</h3>
                 <p className="text-slate-500 text-[15px] font-medium font-figtree leading-relaxed">System has flagged {changedItems.length} items with inventory fluctuations since last update.</p>
              </div>
           </div>

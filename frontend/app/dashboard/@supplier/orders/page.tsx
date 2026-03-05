@@ -38,7 +38,7 @@ export default function OrdersPage() {
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight font-inria italic">Orders</h1>
+            <h1 className="text-2xl font-semibold tracking-tight font-figtree">Orders</h1>
             <p className="text-muted-foreground">
               Manage incoming orders from restaurants
             </p>

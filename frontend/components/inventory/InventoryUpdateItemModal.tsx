@@ -80,7 +80,7 @@ export function InventoryUpdateItemModal({
                 <div className="p-8 md:p-10 space-y-10">
                     <div className="space-y-1.5 flex items-center justify-between">
                         <div className="space-y-1">
-                            <DialogTitle className="text-[32px] font-bold text-[#1E293B] tracking-tight font-inria">Update Item</DialogTitle>
+                            <DialogTitle className="text-[32px] font-bold text-[#1E293B] tracking-tight font-figtree">Update Item</DialogTitle>
                             <p className="text-[13px] font-medium text-slate-400 font-figtree">
                                 Manually adjust the inventory level for <span className="text-[#3B59DA] font-bold">{restaurantName}</span>
                             </p>
@@ -108,7 +108,7 @@ export function InventoryUpdateItemModal({
                                 )}
                             </div>
                             <div className="space-y-3">
-                                <h4 className="text-[28px] font-bold text-[#1E293B] tracking-tight font-inria group-hover:text-[#3B59DA] transition-colors">{item.name}</h4>
+                                <h4 className="text-[28px] font-bold text-[#1E293B] tracking-tight font-figtree group-hover:text-[#3B59DA] transition-colors">{item.name}</h4>
                                 <div className="flex items-center gap-2.5">
                                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest font-figtree">SKU ID: {item.sku || '001ABC'}</span>
                                     <span className="text-slate-200 text-xs font-bold">•</span>

@@ -112,7 +112,7 @@ function PreOpenCard({ onStart }: { onStart: () => void }) {
         </div>
         
         <div className="space-y-4">
-            <h2 className="text-5xl font-bold text-slate-900 tracking-tight font-inria">Morning Shift Prep</h2>
+            <h2 className="text-5xl font-bold text-slate-900 tracking-tight font-figtree">Morning Shift Prep</h2>
             <p className="text-slate-500 font-bold text-xl max-w-md mx-auto leading-relaxed font-figtree">
                 The restaurant is currently pre-open. Ready to start your sequence and open the doors?
             </p>
@@ -139,7 +139,7 @@ function ClosedCard({ onStartNext }: { onStartNext: () => void }) {
           </div>
           
           <div className="space-y-4">
-              <h2 className="text-5xl font-bold text-slate-900 tracking-tight font-inria">Day is Finished</h2>
+              <h2 className="text-5xl font-bold text-slate-900 tracking-tight font-figtree">Day is Finished</h2>
               <p className="text-slate-500 font-bold text-xl max-w-md mx-auto leading-relaxed font-figtree">
                   All operations for today are successfully reconciled. We'll see you tomorrow!
               </p>
@@ -179,7 +179,7 @@ function ChecklistCard({ title, description, steps, onCompleteStep, onFinish, ic
               <Icon className="h-6 w-6 stroke-[3px]" />
           </div>
           <div className="flex flex-col">
-              <h2 className="text-[32px] font-bold text-slate-900 tracking-tight leading-none font-inria">{title}</h2>
+              <h2 className="text-[32px] font-bold text-slate-900 tracking-tight leading-none font-figtree">{title}</h2>
               <p className="text-[#64748B] font-bold text-[15px] mt-2 tracking-tight uppercase font-figtree">
                 {description}
               </p>
@@ -215,7 +215,7 @@ function ChecklistCard({ title, description, steps, onCompleteStep, onFinish, ic
                       {/* Title & Link */}
                       <div className="flex-1 min-w-0 flex flex-col justify-center">
                           <h4 className={cn(
-                              "text-[22px] font-bold tracking-tight font-inria",
+                              "text-[22px] font-bold tracking-tight font-figtree",
                               step.done ? "text-slate-400 line-through" : 
                               isNext ? "text-[#1E293B]" : "text-slate-300"
                           )}>
