@@ -24,6 +24,7 @@ import {
     FigtreeText,
     PrimarySurfaceCard
 } from "@/components/ui/dosteon-ui";
+import { cn } from "@/lib/utils";
 
 export default function RestaurantDashboardPage() {
   const { isOpen, isLoading: isStatusLoading, isClosingTimeReached, targetClosingTime } = useRestaurantDayLifecycle();
@@ -155,49 +156,70 @@ export default function RestaurantDashboardPage() {
         </div>
 
         {/* Recent Activities Section - Wrapped in a single integrated card as per Design Mockup */}
-        <PrimarySurfaceCard className="p-8 md:p-12">
-            <div className="space-y-10">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-50 pb-8">
-                    <div className="space-y-1.5">
-                        <InriaHeading className="text-[26px] md:text-[28px] font-bold tracking-tight text-[#1E293B]">Recent Activities</InriaHeading>
-                        <FigtreeText className="text-[15px] font-semibold text-slate-400">Your most recent procurement orders</FigtreeText>
-                    </div>
-                    <Button variant="link" className="text-[#3B59DA] font-black hover:underline transition-all text-[15px] font-figtree p-0 h-fit w-fit" asChild>
-                        <Link href="/dashboard/activities">View All</Link>
-                    </Button>
-                </div>
-                
-                <div className="flex flex-col gap-5 w-full">
-                {activities.map((activity) => (
-                    <div 
-                        key={activity.id} 
-                        className="bg-white border border-slate-100/80 rounded-[8px] p-6 md:p-8 flex items-center gap-7 transition-all hover:border-[#3B59DA]/20 hover:shadow-[0_20px_60px_rgba(59,89,218,0.05)] hover:bg-white group shadow-[0_4px_12px_rgba(0,0,0,0.01)] active:scale-[0.98] cursor-pointer"
-                    >
-                        <div className="h-14 w-14 rounded-[8px] bg-indigo-50/50 flex items-center justify-center shrink-0 border border-indigo-100/50 group-hover:bg-indigo-50 transition-all group-hover:scale-105">
-                            <Package className="h-7 w-7 text-[#3B59DA]/70 group-hover:text-[#3B59DA] transition-colors" />
-                        </div>
-                        <div className="flex-1 min-w-0 space-y-1.5">
-                            <InriaHeading className="font-bold text-[20px] tracking-tight group-hover:text-[#3B59DA] transition-colors leading-tight">{activity.title}</InriaHeading>
-                            <FigtreeText className="text-[15px] font-bold text-slate-500 line-clamp-1 leading-relaxed opacity-80">{activity.description}</FigtreeText>
-                            <FigtreeText className="text-[11px] font-black text-slate-300 mt-2.5 uppercase tracking-[0.2em] leading-none block">{activity.time}</FigtreeText>
-                        </div>
-                        {activity.actionLabel && (
-                            <div className="shrink-0 ml-6 hidden lg:block">
-                                <Button 
-                                    className="h-14 px-10 rounded-[8px] font-black bg-[#3B59DA] text-white hover:bg-[#2D46B2] shadow-xl shadow-indigo-900/10 transition-all active:scale-95 text-[15px] font-figtree border-none"
-                                    asChild
-                                >
-                                    <Link href={activity.actionHref || "#"}>
-                                        {activity.actionLabel}
-                                    </Link>
-                                </Button>
+        <div className="relative mt-8">
+            <div className={cn(
+                "transition-all duration-700",
+                !isOpen && "blur-xl grayscale scale-[0.98] opacity-60 pointer-events-none"
+            )}>
+                <PrimarySurfaceCard className="p-8 md:p-12">
+                    <div className="space-y-10">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-50 pb-8">
+                            <div className="space-y-1.5">
+                                <InriaHeading className="text-[26px] md:text-[28px] font-bold tracking-tight text-[#1E293B]">Recent Activities</InriaHeading>
+                                <FigtreeText className="text-[15px] font-semibold text-slate-400">Your most recent procurement orders</FigtreeText>
                             </div>
-                        )}
+                            <Button variant="link" className="text-[#3B59DA] font-black hover:underline transition-all text-[15px] font-figtree p-0 h-fit w-fit" asChild>
+                                <Link href="/dashboard/activities">View All</Link>
+                            </Button>
+                        </div>
+                        
+                        <div className="flex flex-col gap-5 w-full">
+                        {activities.map((activity) => (
+                            <div 
+                                key={activity.id} 
+                                className="bg-white border border-slate-100/80 rounded-[8px] p-6 md:p-8 flex items-center gap-7 transition-all hover:border-[#3B59DA]/20 hover:shadow-[0_20px_60px_rgba(59,89,218,0.05)] hover:bg-white group shadow-[0_4px_12px_rgba(0,0,0,0.01)] active:scale-[0.98] cursor-pointer"
+                            >
+                                <div className="h-14 w-14 rounded-[8px] bg-indigo-50/50 flex items-center justify-center shrink-0 border border-indigo-100/50 group-hover:bg-indigo-50 transition-all group-hover:scale-105">
+                                    <Package className="h-7 w-7 text-[#3B59DA]/70 group-hover:text-[#3B59DA] transition-colors" />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1.5">
+                                    <InriaHeading className="font-bold text-[20px] tracking-tight group-hover:text-[#3B59DA] transition-colors leading-tight">{activity.title}</InriaHeading>
+                                    <FigtreeText className="text-[15px] font-bold text-slate-500 line-clamp-1 leading-relaxed opacity-80">{activity.description}</FigtreeText>
+                                    <FigtreeText className="text-[11px] font-black text-slate-300 mt-2.5 uppercase tracking-[0.2em] leading-none block">{activity.time}</FigtreeText>
+                                </div>
+                                {activity.actionLabel && (
+                                    <div className="shrink-0 ml-6 hidden lg:block">
+                                        <Button 
+                                            className="h-14 px-10 rounded-[8px] font-black bg-[#3B59DA] text-white hover:bg-[#2D46B2] shadow-xl shadow-indigo-900/10 transition-all active:scale-95 text-[15px] font-figtree border-none"
+                                            asChild
+                                        >
+                                            <Link href={activity.actionHref || "#"}>
+                                                {activity.actionLabel}
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                        </div>
                     </div>
-                ))}
-                </div>
+                </PrimarySurfaceCard>
             </div>
-        </PrimarySurfaceCard>
+            
+            {!isOpen && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center">
+                    <div className="bg-white/40 backdrop-blur-sm border border-white/20 p-8 rounded-[12px] shadow-sm flex flex-col items-center text-center space-y-3 max-w-sm">
+                        <div className="h-12 w-12 rounded-full bg-slate-900/10 flex items-center justify-center">
+                            <Lock className="h-6 w-6 text-slate-900" />
+                        </div>
+                        <h4 className="text-[18px] font-bold text-slate-900 font-figtree">Locked Dashboard</h4>
+                        <FigtreeText className="text-slate-600 text-[14px] font-medium leading-relaxed">
+                            Please complete your daily stock count to see your most recent activities.
+                        </FigtreeText>
+                    </div>
+                </div>
+            )}
+        </div>
     </AppContainer>
   );
 }

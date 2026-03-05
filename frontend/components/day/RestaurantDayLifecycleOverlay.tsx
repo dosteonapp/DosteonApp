@@ -48,9 +48,7 @@ export function RestaurantDayLifecycleOverlay() {
   if (!status) return null;
 
   // Only show full-screen overlay for the actual checklist flows
-  const showOverlay = 
-    status.state === DayState.PRE_OPEN ||
-    status.state === DayState.CLOSED;
+  const showOverlay = false;
   
   if (!showOverlay) return null;
 
