@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
  * Figtree -> BODY/UI
  */
 export const InriaHeading = ({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-  <h1 className={cn("font-figtree tracking-tight text-[#1E293B]", className)} {...props}>
+  <h1 className={cn("font-inria tracking-tight text-[#1E293B]", className)} {...props}>
     {children}
   </h1>
 );
@@ -52,7 +52,7 @@ export const UnifiedStatCard = ({
 }: { 
   label: string, 
   value: string | number, 
-  subtext?: string, 
+  subtext?: React.ReactNode, 
   icon: any, 
   variant?: 'indigo' | 'green' | 'red' | 'amber' | 'neutral',
   className?: string
@@ -95,7 +95,7 @@ export const UnifiedStatCard = ({
           {value}
         </div>
         {subtext && (
-          <div className="text-[12px] font-normal text-slate-400 leading-tight mt-1 line-clamp-1">
+          <div className="text-[12px] font-normal text-slate-400 leading-tight mt-1">
             {subtext}
           </div>
         )}
@@ -128,8 +128,8 @@ export const UnifiedHeroSurface = ({
   borderColor,
   bgIcon
 }: { 
-  title: string, 
-  subtitle?: string, 
+  title: React.ReactNode, 
+  subtitle?: React.ReactNode, 
   description?: string,
   children?: React.ReactNode, 
   badge?: React.ReactNode, 
@@ -185,13 +185,12 @@ export const UnifiedHeroSurface = ({
       {isInline ? (
         <div className={cn(
           "relative flex flex-col md:flex-row w-full flex-1 z-10 gap-5 md:gap-8 lg:gap-14",
-          (alignItems === 'center' || isLocked) ? "items-center justify-center h-full" : (padding ? "items-start pt-0" : "items-start pt-2 md:pt-4")
+          alignItems === 'center' ? "items-center justify-center h-full" : (padding ? "items-start pt-0" : "items-start pt-2 md:pt-4")
         )}>
-           {/* Section 1: Text */}
-           <div className="flex flex-col space-y-4 max-w-[320px] shrink-0">
+           <div className="flex flex-col space-y-4 md:max-w-md lg:max-w-lg shrink-0">
               <div className="space-y-3">
                  <h1 className={cn(
-                   "font-figtree text-[18px] md:text-[20px] font-semibold tracking-tight leading-tight",
+                   "font-inria text-[26px] md:text-[34px] font-bold tracking-tight leading-tight",
                    isLocked ? "text-white" : "text-[#1E293B]"
                  )}>{title}</h1>
                  {badge && <div className="w-fit">{badge}</div>}
@@ -233,8 +232,7 @@ export const UnifiedHeroSurface = ({
           )}>
              <div className="flex flex-col items-start space-y-3">
                 <h1 className={cn(
-                  "font-figtree leading-[1.1] font-semibold tracking-tight", 
-                  "text-[18px] md:text-[20px]",
+                  "font-inria leading-[1.1] font-bold tracking-tight text-[32px] md:text-[42px]",
                   isLocked ? "text-white" : "text-[#1E293B]"
                 )}>{title}</h1>
                 
