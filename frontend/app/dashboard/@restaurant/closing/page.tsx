@@ -56,7 +56,8 @@ import {
 } from "@/components/ui/dosteon-ui";
 
 export default function ClosingPage() {
-  const { isOpen } = useRestaurantDayLifecycle();
+  const lifecycle = useRestaurantDayLifecycle();
+  const { isOpen } = lifecycle;
   const { isSidebarCollapsed } = useSidebar();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,7 +123,7 @@ export default function ClosingPage() {
         <div className="w-full">
             {isOpen ? (
                 <div className="flex items-start py-20 min-h-[60vh]">
-                     <ClosingLockedCard lifecycle={useRestaurantDayLifecycle()} />
+                     <ClosingLockedCard lifecycle={lifecycle} />
                 </div>
             ) : (
                 <div className="space-y-12">
