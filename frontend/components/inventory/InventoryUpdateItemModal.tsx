@@ -76,7 +76,7 @@ export function InventoryUpdateItemModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-3xl rounded-[32px] p-0 border-none shadow-2xl overflow-hidden bg-white font-figtree [&>button]:hidden">
+            <DialogContent className="sm:max-w-3xl rounded-[10px] p-0 border-none shadow-2xl overflow-hidden bg-white font-figtree [&>button]:hidden">
                 {/* Header */}
                 <div className="px-8 md:px-12 py-8 border-b border-slate-50 relative">
                     <div className="flex items-center justify-between">
@@ -100,9 +100,9 @@ export function InventoryUpdateItemModal({
                 <div className="px-8 md:px-12 py-10 space-y-10">
 
                     {/* Product Preview Card */}
-                    <div className="bg-white border border-slate-100 rounded-[28px] p-8 flex items-center justify-between shadow-sm group">
+                    <div className="bg-white border border-slate-100 rounded-[10px] p-8 flex items-center justify-between shadow-sm group">
                         <div className="flex items-center gap-8">
-                            <div className="h-32 w-32 rounded-[20px] overflow-hidden border border-slate-50 bg-white shrink-0 shadow-lg transition-transform group-hover:scale-105 duration-500">
+                            <div className="h-32 w-32 rounded-[8px] overflow-hidden border border-slate-50 bg-white shrink-0 shadow-lg transition-transform group-hover:scale-105 duration-500">
                                 {item.imageUrl ? (
                                     <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                                 ) : (
@@ -116,7 +116,7 @@ export function InventoryUpdateItemModal({
                                 <div className="flex items-center gap-3">
                                     <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest font-figtree leading-none">SKU ID: {item.sku || '001ABC'}</span>
                                     <span className="text-slate-200 text-xs font-bold leading-none">•</span>
-                                    <Badge variant="outline" className="text-slate-500 font-bold text-[11px] px-4 py-1.5 rounded-xl border-slate-200 shadow-none font-figtree">
+                                    <Badge variant="outline" className="text-slate-500 font-bold text-[11px] px-4 py-1.5 rounded-[6px] border-slate-200 shadow-none font-figtree">
                                         {item.category}
                                     </Badge>
                                 </div>
@@ -137,7 +137,7 @@ export function InventoryUpdateItemModal({
                                 placeholder={`${item.currentStock} ${item.unit}`}
                                 value={incomingQuantity}
                                 onChange={(e) => setIncomingQuantity(e.target.value)}
-                                className="h-16 rounded-[18px] border-slate-100 bg-white px-8 font-bold text-[#1E293B] text-xl focus-visible:ring-indigo-50 placeholder:text-slate-300 shadow-sm font-figtree transition-all"
+                                className="h-16 rounded-[8px] border-slate-100 bg-white px-8 font-bold text-[#1E293B] text-xl focus-visible:ring-indigo-50 placeholder:text-slate-300 shadow-sm font-figtree transition-all"
                             />
                         </div>
                         <div className="space-y-3">
@@ -146,7 +146,7 @@ export function InventoryUpdateItemModal({
                                 <Input 
                                     readOnly
                                     value={`${newQuantity} ${item.unit}`}
-                                    className="h-16 rounded-[18px] border-[#10B981]/30 bg-white px-8 font-bold text-[#1E293B] text-xl shadow-sm font-figtree transition-all"
+                                    className="h-16 rounded-[8px] border-[#10B981]/30 bg-white px-8 font-bold text-[#1E293B] text-xl shadow-sm font-figtree transition-all"
                                 />
                                 <div className="absolute right-5 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-[#D1FAE5] flex items-center justify-center text-[#10B981]">
                                     <Check className="h-4 w-4 stroke-[3px]" />
@@ -156,7 +156,7 @@ export function InventoryUpdateItemModal({
                     </div>
 
                     {/* Summary Info Box */}
-                    <div className="border border-dashed border-[#3B59DA]/30 rounded-[18px] p-6 bg-[#f8faff] flex items-center gap-5 shadow-sm">
+                    <div className="border border-dashed border-[#3B59DA]/30 rounded-[8px] p-6 bg-[#f8faff] flex items-center gap-5 shadow-sm">
                         <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center text-[#3B59DA] shadow-md shrink-0 border border-[#3B59DA]/10 ring-4 ring-[#f5f8ff]">
                             <ArrowRight className="h-5 w-5" />
                         </div>
@@ -172,7 +172,7 @@ export function InventoryUpdateItemModal({
                     <div className="flex items-center justify-end gap-6">
                         <Button 
                             variant="outline" 
-                            className="h-16 px-12 rounded-[18px] border-slate-200 bg-white font-bold text-slate-500 hover:bg-slate-50 transition-all text-[17px] font-figtree shadow-sm active:scale-95"
+                            className="h-16 px-12 rounded-[8px] border-slate-200 bg-white font-bold text-slate-500 hover:bg-slate-50 transition-all text-[17px] font-figtree shadow-sm active:scale-95"
                             onClick={() => onOpenChange(false)}
                         >
                             Cancel
@@ -180,7 +180,7 @@ export function InventoryUpdateItemModal({
                         <Button 
                             disabled={isSubmitting || !incomingQuantity}
                             className={cn(
-                                "h-16 px-14 rounded-[18px] font-black text-[17px] shadow-2xl transition-all border-none text-white font-figtree active:scale-95",
+                                "h-16 px-14 rounded-[8px] font-black text-[17px] shadow-2xl transition-all border-none text-white font-figtree active:scale-95",
                                 incomingQuantity ? "bg-[#3B59DA] hover:bg-[#2D46B2] shadow-indigo-900/20" : "bg-slate-100 text-slate-300 cursor-not-allowed"
                             )}
                             onClick={handleConfirm}

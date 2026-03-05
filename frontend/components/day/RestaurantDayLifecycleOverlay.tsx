@@ -50,8 +50,7 @@ export function RestaurantDayLifecycleOverlay() {
   // Only show full-screen overlay for the actual checklist flows
   const showOverlay = 
     status.state === DayState.PRE_OPEN ||
-    status.state === DayState.OPENING_IN_PROGRESS || 
-    status.state === DayState.CLOSING_IN_PROGRESS;
+    status.state === DayState.CLOSED;
   
   if (!showOverlay) return null;
 
@@ -68,30 +67,6 @@ export function RestaurantDayLifecycleOverlay() {
         >
           {status.state === DayState.PRE_OPEN && (
             <PreOpenCard onStart={startOpening} />
-          )}
-          {status.state === DayState.OPENING_IN_PROGRESS && (
-            <ChecklistCard 
-              type="opening"
-              title="Opening Checklist"
-              description="Confirm These Steps To Start Taking Orders."
-              steps={status.openingSteps}
-              onCompleteStep={completeOpeningStep}
-              onFinish={finishOpening}
-              icon={Sun}
-              iconContainerClass="bg-[#FFF3D6] text-amber-500"
-            />
-          )}
-          {status.state === DayState.CLOSING_IN_PROGRESS && (
-            <ChecklistCard 
-              type="closing"
-              title="Closing Checklist"
-              description="Complete reconciliation and review before closing."
-              steps={status.closingSteps}
-              onCompleteStep={completeClosingStep}
-              onFinish={finishClosing}
-              icon={Moon}
-              iconContainerClass="bg-[#E0E7FF] text-indigo-500"
-            />
           )}
           {status.state === DayState.CLOSED && (
             <ClosedCard onStartNext={startNextDay} />

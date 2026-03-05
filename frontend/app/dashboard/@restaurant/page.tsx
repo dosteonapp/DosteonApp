@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dosteon-ui";
 
 export default function RestaurantDashboardPage() {
-  const { isOpen, isLoading: isStatusLoading } = useRestaurantDayLifecycle();
+  const { isOpen, isLoading: isStatusLoading, isClosingTimeReached, targetClosingTime } = useRestaurantDayLifecycle();
   const [activities, setActivities] = useState<ActivityType[]>([]);
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(true);
 
@@ -98,7 +98,10 @@ export default function RestaurantDashboardPage() {
                     backgroundColor="bg-[#f5f6ff]"
                     borderColor="border-[#98a6f9]"
                     title={`Welcome back, ${name}`}
-                    description="Closing Stock Count will be enabled at 7 PM. To change the Closing Stock Count time, your admin can change it in the store management settings."
+                    description={isClosingTimeReached 
+                        ? `Closing Stock Count is now enabled. You can now proceed to finalize your daily operations.`
+                        : `Closing Stock Count will be enabled at ${targetClosingTime}. To change this, your admin can adjust it in settings.`
+                    }
                     isLocked={false}
                     badge={
                         <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-indigo-100 bg-white/80 backdrop-blur-sm shadow-sm w-fit">
@@ -107,7 +110,7 @@ export default function RestaurantDashboardPage() {
                         </div>
                     }
                     action={
-                        <Button className="w-fit h-14 px-10 rounded-2xl border-2 border-[#3B59DA] bg-white hover:bg-slate-50 text-[#3B59DA] font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
+                        <Button className="w-fit h-14 px-10 rounded-[8px] border-2 border-[#3B59DA] bg-white hover:bg-slate-50 text-[#3B59DA] font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
                             <Link href="/dashboard/kitchen-service">
                                 Proceed to Kitchen Service <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                             </Link>
@@ -130,13 +133,13 @@ export default function RestaurantDashboardPage() {
                     isLocked={true}
                     bgIcon={<ChefHat className="h-64 w-64 text-white" />}
                     badge={
-                        <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full border-2 border-[#EF4444] bg-white w-fit shadow-sm">
+                        <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-[8px] border-2 border-[#EF4444] bg-white w-fit shadow-sm">
                             <ClipboardList className="h-4 w-4 text-[#EF4444]" />
                             <FigtreeText className="text-[12px] font-semibold text-[#EF4444] uppercase tracking-[0.05em]">16 items need counting</FigtreeText>
                         </div>
                     }
                     action={
-                        <Button className="w-fit h-14 px-10 rounded-2xl bg-white text-[#3B59DA] hover:bg-slate-50 font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
+                        <Button className="w-fit h-14 px-10 rounded-[8px] bg-white text-[#3B59DA] hover:bg-slate-50 font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
                             <Link href="/dashboard/inventory/daily-stock-count">
                                 Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                             </Link>
@@ -168,9 +171,9 @@ export default function RestaurantDashboardPage() {
                 {activities.map((activity) => (
                     <div 
                         key={activity.id} 
-                        className="bg-white border border-slate-100/80 rounded-[24px] p-6 md:p-8 flex items-center gap-7 transition-all hover:border-[#3B59DA]/20 hover:shadow-[0_20px_60px_rgba(59,89,218,0.05)] hover:bg-white group shadow-[0_4px_12px_rgba(0,0,0,0.01)] active:scale-[0.98] cursor-pointer"
+                        className="bg-white border border-slate-100/80 rounded-[8px] p-6 md:p-8 flex items-center gap-7 transition-all hover:border-[#3B59DA]/20 hover:shadow-[0_20px_60px_rgba(59,89,218,0.05)] hover:bg-white group shadow-[0_4px_12px_rgba(0,0,0,0.01)] active:scale-[0.98] cursor-pointer"
                     >
-                        <div className="h-14 w-14 rounded-2xl bg-indigo-50/50 flex items-center justify-center shrink-0 border border-indigo-100/50 group-hover:bg-indigo-50 transition-all group-hover:scale-105">
+                        <div className="h-14 w-14 rounded-[8px] bg-indigo-50/50 flex items-center justify-center shrink-0 border border-indigo-100/50 group-hover:bg-indigo-50 transition-all group-hover:scale-105">
                             <Package className="h-7 w-7 text-[#3B59DA]/70 group-hover:text-[#3B59DA] transition-colors" />
                         </div>
                         <div className="flex-1 min-w-0 space-y-1.5">
@@ -181,7 +184,7 @@ export default function RestaurantDashboardPage() {
                         {activity.actionLabel && (
                             <div className="shrink-0 ml-6 hidden lg:block">
                                 <Button 
-                                    className="h-14 px-10 rounded-2xl font-black bg-[#3B59DA] text-white hover:bg-[#2D46B2] shadow-xl shadow-indigo-900/10 transition-all active:scale-95 text-[15px] font-figtree border-none"
+                                    className="h-14 px-10 rounded-[8px] font-black bg-[#3B59DA] text-white hover:bg-[#2D46B2] shadow-xl shadow-indigo-900/10 transition-all active:scale-95 text-[15px] font-figtree border-none"
                                     asChild
                                 >
                                     <Link href={activity.actionHref || "#"}>

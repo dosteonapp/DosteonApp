@@ -75,7 +75,7 @@ export default function AllInventoryItemsPage() {
         <Button 
           variant="outline" 
           onClick={() => router.back()}
-          className="h-14 px-8 rounded-xl border-slate-200 bg-white font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[15px] active:scale-95 flex items-center gap-3"
+          className="h-14 px-8 rounded-[8px] border-slate-200 bg-white font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[15px] active:scale-95 flex items-center gap-3"
         >
           <ArrowLeft className="h-5 w-5" /> Back
         </Button>
@@ -92,10 +92,10 @@ export default function AllInventoryItemsPage() {
         isLocked={false}
         topAction={
             <div className="flex items-center gap-4">
-                <Button variant="outline" className="h-12 px-6 rounded-xl border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-3 transition-all shadow-sm active:scale-95 font-figtree">
+                <Button variant="outline" className="h-12 px-6 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-3 transition-all shadow-sm active:scale-95 font-figtree">
                     <RefreshIcon className="h-4 w-4" /> Update Inventory
                 </Button>
-                <Button className="h-12 px-8 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-xl font-bold gap-3 transition-all border-none shadow-lg shadow-indigo-100 active:scale-95 font-figtree" asChild>
+                <Button className="h-12 px-8 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-[8px] font-bold gap-3 transition-all border-none shadow-lg shadow-indigo-100 active:scale-95 font-figtree" asChild>
                     <Link href="/dashboard/inventory/new">
                         <PlusIcon className="h-4 w-4" /> Add New Product
                     </Link>
@@ -114,15 +114,15 @@ export default function AllInventoryItemsPage() {
                 <div className="flex items-center gap-4 flex-1 w-full max-w-2xl">
                     <div className="relative flex-1">
                         <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
-                        <Input placeholder="Search items, SKUs, or brand..." className="pl-14 h-14 border-slate-200 rounded-xl bg-white focus:ring-[#3B59DA]/5 focus:border-[#3B59DA]/30 placeholder:text-slate-300 font-medium text-base font-figtree shadow-none transition-all outline-none" />
+                        <Input placeholder="Search items, SKUs, or brand..." className="pl-14 h-14 border-slate-200 rounded-[8px] bg-white focus:ring-[#3B59DA]/5 focus:border-[#3B59DA]/30 placeholder:text-slate-300 font-medium text-base font-figtree shadow-none transition-all outline-none" />
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-14 border-slate-200 rounded-xl w-full sm:w-56 bg-white font-bold text-slate-500 text-sm shadow-sm px-6 hover:border-[#3B59DA]/20 transition-all">
+                        <SelectTrigger className="h-14 border-slate-200 rounded-[8px] w-full sm:w-56 bg-white font-bold text-slate-500 text-sm shadow-sm px-6 hover:border-[#3B59DA]/20 transition-all">
                             <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border-slate-100 p-2 shadow-2xl">
+                        <SelectContent className="rounded-[8px] border-slate-100 p-2 shadow-2xl">
                             <SelectItem value="all" className="font-bold py-2.5">All Categories</SelectItem>
                             <SelectItem value="produce" className="font-bold py-2.5 text-emerald-600">Produce</SelectItem>
                             <SelectItem value="meat" className="font-bold py-2.5 text-red-600">Meat & Poultry</SelectItem>
@@ -130,10 +130,10 @@ export default function AllInventoryItemsPage() {
                     </Select>
 
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-14 border-slate-200 rounded-xl w-full sm:w-44 bg-white font-bold text-slate-500 text-sm shadow-sm px-6 hover:border-[#3B59DA]/20 transition-all">
+                        <SelectTrigger className="h-14 border-slate-200 rounded-[8px] w-full sm:w-44 bg-white font-bold text-slate-500 text-sm shadow-sm px-6 hover:border-[#3B59DA]/20 transition-all">
                             <SelectValue placeholder="All Levels" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border-slate-100 p-2 shadow-2xl">
+                        <SelectContent className="rounded-[8px] border-slate-100 p-2 shadow-2xl">
                             <SelectItem value="all" className="font-bold py-2.5">All Levels</SelectItem>
                             <SelectItem value="healthy" className="font-bold py-2.5 text-emerald-600">Healthy</SelectItem>
                             <SelectItem value="low" className="font-bold py-2.5 text-amber-600">Low</SelectItem>
@@ -143,7 +143,7 @@ export default function AllInventoryItemsPage() {
                 </div>
             </div>
 
-            <div className="border border-slate-100 rounded-[24px] overflow-hidden bg-white">
+            <div className="border border-slate-100 rounded-[8px] overflow-hidden bg-white">
                 <Table>
                     <TableHeader className="bg-slate-50/50">
                         <TableRow className="border-b border-slate-100 hover:bg-transparent h-16">
@@ -164,7 +164,7 @@ export default function AllInventoryItemsPage() {
                             <TableRow key={item.id} className="border-slate-50 hover:bg-[#f8f9ff] transition-all group h-[88px] active:scale-[0.995] cursor-pointer">
                                 <TableCell className="pl-8">
                                     <div className="flex items-center gap-4">
-                                        <div className="h-12 w-12 rounded-xl border border-slate-100 bg-white overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+                                        <div className="h-12 w-12 rounded-[8px] border border-slate-100 bg-white overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
                                             {item.imageUrl ? (
                                                 <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                                             ) : (
@@ -187,7 +187,7 @@ export default function AllInventoryItemsPage() {
                                 <TableCell>
                                     <Badge 
                                         className={cn(
-                                            "border-none rounded-lg font-bold text-[11px] px-2.5 py-1 font-figtree shadow-none",
+                                            "border-none rounded-[6px] font-bold text-[11px] px-2.5 py-1 font-figtree shadow-none",
                                             item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" : 
                                             item.status === 'Low' ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
                                         )}
@@ -197,7 +197,7 @@ export default function AllInventoryItemsPage() {
                                 </TableCell>
                                 <TableCell className="text-slate-500 font-medium text-sm font-figtree">Today, 8:30 AM</TableCell>
                                 <TableCell className="text-right pr-8">
-                                    <Button variant="outline" className="h-11 w-11 p-0 rounded-xl hover:bg-[#3B59DA] text-slate-400 hover:text-white transition-all active:scale-95 border-slate-200" asChild>
+                                    <Button variant="outline" className="h-11 w-11 p-0 rounded-[8px] hover:bg-[#3B59DA] text-slate-400 hover:text-white transition-all active:scale-95 border-slate-200" asChild>
                                         <Link href={`/dashboard/inventory/${item.id}`}>
                                             <ArrowRight className="h-5 w-5" />
                                         </Link>
@@ -218,8 +218,8 @@ export default function AllInventoryItemsPage() {
 function InventoryItemsSkeleton() {
     return (
         <div className="p-10 space-y-10 min-h-screen bg-white">
-            <Skeleton className="h-12 w-1/3 rounded-xl" />
-            <Skeleton className="h-[600px] w-full rounded-[32px]" />
+            <Skeleton className="h-12 w-1/3 rounded-[10px]" />
+            <Skeleton className="h-[600px] w-full rounded-[10px]" />
         </div>
     );
 }

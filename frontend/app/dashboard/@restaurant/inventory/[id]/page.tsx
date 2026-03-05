@@ -102,7 +102,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
             <Button 
                 variant="outline" 
                 onClick={() => router.back()}
-                className="h-14 px-8 rounded-xl border-slate-200 bg-white font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[15px] active:scale-95 flex items-center gap-3"
+                className="h-14 px-8 rounded-[8px] border-slate-200 bg-white font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[15px] active:scale-95 flex items-center gap-3"
             >
                 <ArrowLeft className="h-5 w-5" /> Back
             </Button>
@@ -116,7 +116,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
             <PrimarySurfaceCard className="p-8 lg:p-10 flex flex-col xl:flex-row items-center gap-10 bg-[#f5f6ff] border-[#98a6f9] shadow-sm relative z-10">
                 <div className="flex flex-col md:flex-row items-center gap-8 flex-1">
                     {/* Item Image */}
-                    <div className="h-44 w-44 md:h-56 md:w-56 rounded-[32px] overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center shrink-0">
+                    <div className="h-44 w-44 md:h-56 md:w-56 rounded-[10px] overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center shrink-0">
                         {item.imageUrl ? (
                             <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                         ) : (
@@ -128,20 +128,20 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
                         <div className="space-y-3">
                             <h1 className="text-[32px] md:text-[40px] font-bold text-[#1E293B] leading-tight font-figtree tracking-tight">{item.name}</h1>
                             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
-                                <Badge className="bg-[#DCFCE7] text-[#166534] font-bold text-[11px] px-3 py-1 rounded-lg border-none uppercase font-figtree">In Stock</Badge>
-                                <Badge variant="outline" className="text-slate-500 font-bold text-[11px] px-3 py-1 rounded-lg border-slate-200 bg-white uppercase font-figtree">{item.category}</Badge>
+                                <Badge className="bg-[#DCFCE7] text-[#166534] font-bold text-[11px] px-3 py-1 rounded-[6px] border-none uppercase font-figtree">In Stock</Badge>
+                                <Badge variant="outline" className="text-slate-500 font-bold text-[11px] px-3 py-1 rounded-[6px] border-slate-200 bg-white uppercase font-figtree">{item.category}</Badge>
                             </div>
                             <p className="text-slate-400 font-bold text-[12px] uppercase tracking-wider font-figtree">SKU-ID: {item.sku}</p>
                         </div>
 
                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
-                            <Button variant="outline" className="h-12 px-6 rounded-xl border-slate-200 bg-white font-bold text-slate-500 gap-2 hover:text-[#3B59DA] hover:shadow-sm transition-all text-sm font-figtree active:scale-95" asChild>
+                            <Button variant="outline" className="h-12 px-6 rounded-[8px] border-slate-200 bg-white font-bold text-slate-500 gap-2 hover:text-[#3B59DA] hover:shadow-sm transition-all text-sm font-figtree active:scale-95" asChild>
                                 <Link href={`/dashboard/inventory/new?edit=${item.id}`}>
                                     <Settings className="h-4 w-4" /> Edit Item Details
                                 </Link>
                             </Button>
                             <Button 
-                                className="h-12 px-8 bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold gap-2 shadow-lg shadow-indigo-100 transition-all border-none text-sm font-figtree active:scale-95"
+                                className="h-12 px-8 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[8px] font-bold gap-2 shadow-lg shadow-indigo-100 transition-all border-none text-sm font-figtree active:scale-95"
                                 onClick={() => setIsUpdateModalOpen(true)}
                             >
                                 <RotateCcw className="h-4 w-4" /> Restock Now
@@ -185,25 +185,25 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
                             <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
                             <Input 
                                 placeholder="Search stock history..." 
-                                className="pl-14 h-14 rounded-xl border-slate-200 bg-white font-medium text-slate-600 text-[15px] font-figtree shadow-none"
+                                className="pl-14 h-14 rounded-[8px] border-slate-200 bg-white font-medium text-slate-600 text-[15px] font-figtree shadow-none"
                             />
                         </div>
                         <div className="flex items-center gap-4">
                             <Select defaultValue="all">
-                                <SelectTrigger className="w-44 h-14 rounded-xl border-slate-200 bg-white font-bold text-slate-500 text-sm shadow-sm px-6">
+                                <SelectTrigger className="w-44 h-14 rounded-[8px] border-slate-200 bg-white font-bold text-slate-500 text-sm shadow-sm px-6">
                                     <SelectValue placeholder="All Activities" />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl border-slate-100 p-2 shadow-2xl">
+                                <SelectContent className="rounded-[8px] border-slate-100 p-2 shadow-2xl">
                                     <SelectItem value="all" className="font-bold py-2.5">All Activities</SelectItem>
                                     <SelectItem value="received" className="font-bold py-2.5">Received</SelectItem>
                                     <SelectItem value="removed" className="font-bold py-2.5">Removed</SelectItem>
                                 </SelectContent>
                             </Select>
                             <Select defaultValue="all">
-                                <SelectTrigger className="w-44 h-14 rounded-xl border-slate-200 bg-white font-bold text-slate-500 text-sm shadow-sm px-6">
+                                <SelectTrigger className="w-44 h-14 rounded-[8px] border-slate-200 bg-white font-bold text-slate-500 text-sm shadow-sm px-6">
                                     <SelectValue placeholder="All Time" />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl border-slate-100 p-2 shadow-2xl">
+                                <SelectContent className="rounded-[8px] border-slate-100 p-2 shadow-2xl">
                                     <SelectItem value="all" className="font-bold py-2.5">All Time</SelectItem>
                                     <SelectItem value="today" className="font-bold py-2.5">Today</SelectItem>
                                 </SelectContent>
@@ -212,7 +212,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
                     </div>
                 </div>
 
-                <div className="border border-slate-100 rounded-[24px] overflow-hidden bg-white">
+                <div className="border border-slate-100 rounded-[8px] overflow-hidden bg-white">
                     <Table>
                         <TableHeader className="bg-slate-50/50">
                             <TableRow className="border-b border-slate-100 hover:bg-transparent h-16">
@@ -233,7 +233,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
                                 >
                                     <TableCell className="pl-8">
                                         <Badge className={cn(
-                                            "text-[10px] font-bold px-2.5 py-1 rounded-lg border-none flex items-center gap-2 w-fit uppercase font-figtree",
+                                            "text-[10px] font-bold px-2.5 py-1 rounded-[6px] border-none flex items-center gap-2 w-fit uppercase font-figtree",
                                             act.action === 'Updated' ? "bg-[#EFF6FF] text-[#3B59DA]" :
                                             act.action === 'Received' ? "bg-[#ECFDF5] text-[#16A34A]" :
                                             act.action === 'Removed' ? "bg-[#FEF2F2] text-[#EF4444]" :
@@ -252,7 +252,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
                                     </TableCell>
                                     <TableCell>
                                         <div className={cn(
-                                            "px-3 py-1.5 rounded-lg flex items-center gap-2 w-fit",
+                                            "px-3 py-1.5 rounded-[6px] flex items-center gap-2 w-fit",
                                             act.performer === 'Procurement Officer' ? "bg-purple-50 text-purple-600" :
                                             act.performer === 'Kitchen Staff' ? "bg-orange-50 text-orange-600" :
                                             "bg-slate-50 text-slate-600"
@@ -287,7 +287,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
 
 function StatBox({ label, value, unit, prefix }: { label: string, value: string | number, unit?: string, prefix?: string }) {
     return (
-        <div className="bg-white border border-slate-100 rounded-[24px] p-6 h-[140px] md:h-[155px] flex flex-col justify-between shadow-sm transition-all hover:scale-[1.02] hover:shadow-xl hover:border-indigo-100 active:scale-[0.98] font-figtree group overflow-hidden">
+        <div className="bg-white border border-slate-100 rounded-[8px] p-6 h-[140px] md:h-[155px] flex flex-col justify-between shadow-sm transition-all hover:scale-[1.02] hover:shadow-xl hover:border-indigo-100 active:scale-[0.98] font-figtree group overflow-hidden">
             <p className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-tight line-clamp-1">{label}</p>
             <div className="mt-auto overflow-hidden">
                 <div className="flex items-baseline gap-1">

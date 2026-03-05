@@ -152,7 +152,7 @@ export default function KitchenServicePage() {
       {/* Main Track Section */}
       <div className="w-full relative mt-8">
         <div className={cn(
-          "bg-white border border-slate-100 rounded-[32px] p-8 md:p-12 shadow-[0_32px_120px_rgba(15,23,42,0.025)] space-y-12 transition-all duration-700",
+          "bg-white border border-slate-100 rounded-[10px] p-8 md:p-12 shadow-[0_32px_120px_rgba(15,23,42,0.025)] space-y-12 transition-all duration-700",
           !isOpen && "blur-xl grayscale scale-[0.96] opacity-80 pointer-events-none"
         )}>
           {/* Section Header */}
@@ -171,7 +171,7 @@ export default function KitchenServicePage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
             <Input 
               placeholder="Search items..." 
-              className="pl-12 h-[52px] border-slate-200 rounded-xl bg-slate-50 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus-visible:ring-indigo-500/10 transition-all shadow-none"
+              className="pl-12 h-[52px] border-slate-200 rounded-[8px] bg-slate-50 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus-visible:ring-indigo-500/10 transition-all shadow-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -180,14 +180,14 @@ export default function KitchenServicePage() {
           {/* Order Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
-              <Card key={item.id} className="rounded-[24px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 active:scale-[0.98] transition-all group p-5 flex flex-col justify-between space-y-6">
+              <Card key={item.id} className="rounded-[8px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 active:scale-[0.98] transition-all group p-5 flex flex-col justify-between space-y-6">
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1 overflow-hidden">
                       <h3 className="font-bold text-[#1E293B] text-[17px] tracking-tight font-figtree truncate">{item.name}</h3>
                       <FigtreeText className="text-[13px] text-slate-400 font-medium">{item.currentStock} units remaining</FigtreeText>
                     </div>
                     <Badge className={cn(
-                      "border-none rounded-lg font-bold text-[10px] px-2.5 py-1 uppercase tracking-tight font-figtree shrink-0 shadow-sm",
+                      "border-none rounded-[6px] font-bold text-[10px] px-2.5 py-1 uppercase tracking-tight font-figtree shrink-0 shadow-sm",
                       item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" : 
                       item.status === 'Low' ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
                     )}>
@@ -197,19 +197,19 @@ export default function KitchenServicePage() {
  
                   <div className="flex gap-3">
                     <button 
-                      className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border border-slate-100 bg-white hover:bg-emerald-50/50 hover:border-emerald-100 transition-all duration-300 group/btn active:scale-95" 
+                      className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-[8px] border border-slate-100 bg-white hover:bg-emerald-50/50 hover:border-emerald-100 transition-all duration-300 group/btn active:scale-95" 
                       onClick={() => handleLogClick(item, 'usage')}
                     >
-                      <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+                      <div className="h-10 w-10 rounded-[6px] bg-emerald-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
                         <Package className="h-5 w-5 text-emerald-500" />
                       </div>
                       <span className="text-[11px] font-bold text-slate-500 group-hover/btn:text-emerald-600">Log Usage</span>
                     </button>
                     <button 
-                      className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border border-slate-100 bg-white hover:bg-rose-50/50 hover:border-rose-100 transition-all duration-300 group/btn active:scale-95" 
+                      className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-[8px] border border-slate-100 bg-white hover:bg-rose-50/50 hover:border-rose-100 transition-all duration-300 group/btn active:scale-95" 
                       onClick={() => handleLogClick(item, 'waste')}
                     >
-                      <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+                      <div className="h-10 w-10 rounded-[6px] bg-rose-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
                         <Trash2 className="h-5 w-5 text-rose-500" />
                       </div>
                       <span className="text-[11px] font-bold text-slate-500 group-hover/btn:text-rose-600">Log Waste</span>
@@ -257,12 +257,12 @@ export default function KitchenServicePage() {
 
 function KitchenServiceLockedOverlay() {
     return (
-        <div className="absolute inset-x-0 top-0 bottom-0 z-[60] flex flex-col items-center justify-center select-none rounded-[40px] overflow-hidden">
+        <div className="absolute inset-x-0 top-0 bottom-0 z-[60] flex flex-col items-center justify-center select-none rounded-[10px] overflow-hidden">
             {/* Blurriness that integrates with the items behind */}
             <div className="absolute inset-0 bg-white/5 backdrop-blur-[12px]" />
             
             <div className="relative z-[70] flex flex-col items-center justify-center max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-700">
-                <div className="w-20 h-20 bg-slate-900/10 backdrop-blur-3xl rounded-[20px] flex items-center justify-center mb-8 border border-white/20 shadow-sm">
+                <div className="w-20 h-20 bg-slate-900/10 backdrop-blur-3xl rounded-[10px] flex items-center justify-center mb-8 border border-white/20 shadow-sm">
                     <Lock className="h-9 w-9 text-slate-800 stroke-[2px]" />
                 </div>
                 
@@ -275,7 +275,7 @@ function KitchenServiceLockedOverlay() {
  
                 <div className="mt-10 w-full flex justify-center px-6">
                     <Button 
-                        className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[20px] font-semibold gap-4 shadow-xl shadow-indigo-500/20 transition-all active:scale-95 group font-figtree text-[17px]" 
+                        className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-semibold gap-4 shadow-xl shadow-indigo-500/20 transition-all active:scale-95 group font-figtree text-[17px]" 
                         asChild
                     >
                         <Link href="/dashboard/inventory/daily-stock-count">

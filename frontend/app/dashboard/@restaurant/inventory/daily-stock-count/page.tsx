@@ -126,7 +126,7 @@ export default function DailyStockCountPage() {
         <Button 
           variant="outline" 
           onClick={() => router.back()}
-          className="h-10 px-6 rounded-xl border-slate-200 bg-white text-slate-600 hover:text-[#3B59DA] font-semibold gap-2 transition-all shadow-sm active:scale-95 font-figtree"
+          className="h-10 px-6 rounded-[8px] border-slate-200 bg-white text-slate-600 hover:text-[#3B59DA] font-semibold gap-2 transition-all shadow-sm active:scale-95 font-figtree"
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
@@ -173,12 +173,12 @@ export default function DailyStockCountPage() {
                     <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                     <Input 
                         placeholder="Search items..." 
-                        className="pl-14 h-[60px] border-slate-200 rounded-xl bg-white focus:ring-indigo-100 placeholder:text-slate-400 font-medium text-[15px] font-figtree shadow-sm"
+                        className="pl-14 h-[60px] border-slate-200 rounded-[8px] bg-white focus:ring-indigo-100 placeholder:text-slate-400 font-medium text-[15px] font-figtree shadow-sm"
                     />
                 </div>
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-[60px] border-slate-200 rounded-xl w-full sm:w-[200px] bg-white font-semibold text-slate-500 text-[15px] px-8 shadow-sm">
+                        <SelectTrigger className="h-[60px] border-slate-200 rounded-[8px] w-full sm:w-[200px] bg-white font-semibold text-slate-500 text-[15px] px-8 shadow-sm">
                             <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
                         <SelectContent>
@@ -188,7 +188,7 @@ export default function DailyStockCountPage() {
                         </SelectContent>
                     </Select>
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-[60px] border-slate-200 rounded-xl w-full sm:w-[200px] bg-white font-semibold text-slate-500 text-[15px] px-8 shadow-sm">
+                        <SelectTrigger className="h-[60px] border-slate-200 rounded-[8px] w-full sm:w-[200px] bg-white font-semibold text-slate-500 text-[15px] px-8 shadow-sm">
                             <SelectValue placeholder="All Levels" />
                         </SelectTrigger>
                         <SelectContent>
@@ -227,14 +227,14 @@ export default function DailyStockCountPage() {
           >
               <Button 
                   variant="outline" 
-                  className="h-16 px-12 rounded-2xl border-[#3B59DA] text-[#3B59DA] hover:bg-slate-50 font-semibold transition-all text-[17px] shadow-sm font-figtree"
+                  className="h-16 px-12 rounded-[8px] border-[#3B59DA] text-[#3B59DA] hover:bg-slate-50 font-semibold transition-all text-[17px] shadow-sm font-figtree"
                   onClick={handleSaveDraft}
               >
                   Save a draft
               </Button>
               <Button 
                   className={cn(
-                      "h-16 px-14 rounded-2xl font-black gap-4 transition-all border-none text-[18px] shadow-2xl flex items-center bg-[#3B59DA] hover:bg-[#2D46B2] text-white"
+                      "h-16 px-14 rounded-[8px] font-black gap-4 transition-all border-none text-[18px] shadow-2xl flex items-center bg-[#3B59DA] hover:bg-[#2D46B2] text-white"
                   )}
                   onClick={handleComplete}
               >
@@ -283,7 +283,7 @@ function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
             <div className="flex flex-col lg:flex-row lg:items-center gap-8 justify-between w-full">
                 {/* Product Info */}
                 <div className="flex items-center gap-8 flex-1 min-w-[280px]">
-                    <div className="h-20 w-20 md:h-24 md:w-24 rounded-[28px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden shadow-sm transition-transform group-hover:scale-105">
+                    <div className="h-20 w-20 md:h-24 md:w-24 rounded-[8px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden shadow-sm transition-transform group-hover:scale-105">
                         {item.imageUrl ? (
                             <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                         ) : (
@@ -316,14 +316,14 @@ function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
                 <div className="flex items-center gap-4 w-full lg:w-auto shrink-0 mt-2 lg:mt-0">
                     <Button 
                         variant="outline" 
-                        className="h-14 px-8 rounded-2xl border-slate-200 font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[15px] flex-1 lg:flex-none font-figtree bg-white shadow-sm"
+                        className="h-14 px-8 rounded-[8px] border-slate-200 font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[15px] flex-1 lg:flex-none font-figtree bg-white shadow-sm"
                         onClick={onEdit}
                     >
                         Edit Amount
                     </Button>
                     <Button 
                         className={cn(
-                            "h-14 px-10 rounded-2xl font-black transition-all flex-1 lg:flex-none min-w-[140px] font-figtree text-[15px] border-none",
+                            "h-14 px-10 rounded-[8px] font-black transition-all flex-1 lg:flex-none min-w-[140px] font-figtree text-[15px] border-none",
                             isConfirmed 
                                 ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" 
                                 : "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-lg shadow-indigo-900/10"
@@ -373,7 +373,7 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
             subtitle={<>Manually adjust the inventory level for <b>Dosteon Restaurant</b></>}
             footer={
                 <>
-                    <Button variant="outline" onClick={onClose} className="h-16 px-12 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 text-lg flex-1 font-figtree active:scale-95 transition-all shadow-md">
+                    <Button variant="outline" onClick={onClose} className="h-16 px-12 rounded-[8px] font-bold text-slate-500 hover:bg-slate-50 text-lg flex-1 font-figtree active:scale-95 transition-all shadow-md">
                         Cancel
                     </Button>
                     <Button 
@@ -383,7 +383,7 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
                             totalOpening: total,
                             todayOpening: item.todayOpening ?? item.yesterdayClosing
                         })} 
-                        className="h-16 px-16 rounded-2xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black text-[19px] shadow-2xl shadow-indigo-900/10 border-none flex-[2] font-figtree active:scale-95 transition-all"
+                        className="h-16 px-16 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black text-[19px] shadow-2xl shadow-indigo-900/10 border-none flex-[2] font-figtree active:scale-95 transition-all"
                     >
                         Confirm Update
                     </Button>
@@ -392,9 +392,9 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
         >
             <div className="space-y-10">
                 {/* Item Preview Card */}
-                <div className="bg-white border border-slate-100 rounded-[28px] p-8 flex items-center justify-between shadow-sm transition-all hover:shadow-md group">
+                <div className="bg-white border border-slate-100 rounded-[10px] p-8 flex items-center justify-between shadow-sm transition-all hover:shadow-md group">
                     <div className="flex items-center gap-8">
-                        <div className="h-32 w-32 rounded-[20px] overflow-hidden border border-slate-50 bg-white shrink-0 shadow-lg transition-transform group-hover:scale-105 duration-500">
+                        <div className="h-32 w-32 rounded-[8px] overflow-hidden border border-slate-50 bg-white shrink-0 shadow-lg transition-transform group-hover:scale-105 duration-500">
                             {item.imageUrl ? (
                                 <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                             ) : (
@@ -429,7 +429,7 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
                             value={incoming} 
                             onChange={(e) => handleIncomingChange(e.target.value)}
                             placeholder={`24 kg`} 
-                            className="h-[72px] text-[24px] font-bold border-slate-200 bg-white rounded-xl px-8 focus:ring-[#3B59DA]/10 focus:border-[#3B59DA] text-[#1E293B] font-figtree transition-all shadow-sm" 
+                            className="h-[72px] text-[24px] font-bold border-slate-200 bg-white rounded-[8px] px-8 focus:ring-[#3B59DA]/10 focus:border-[#3B59DA] text-[#1E293B] font-figtree transition-all shadow-sm" 
                         />
                     </div>
                     <div className="space-y-4">
@@ -438,7 +438,7 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
                             <Input 
                                 readOnly
                                 value={`${total} kg`} 
-                                className="h-[72px] text-[24px] font-bold border-[#10B981] bg-white rounded-xl px-8 text-[#10B981] font-figtree shadow-sm border-2" 
+                                className="h-[72px] text-[24px] font-bold border-[#10B981] bg-white rounded-[8px] px-8 text-[#10B981] font-figtree shadow-sm border-2" 
                             />
                             <div className="absolute right-6 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-[#ECFDF5] flex items-center justify-center border border-[#D1FAE5]">
                                 <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
@@ -448,7 +448,7 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
                 </div>
 
                 {/* Summary Info */}
-                <div className="bg-[#F5F8FF] border border-blue-200 border-dashed rounded-[24px] p-6 flex items-center gap-6 text-[#3B59DA] font-bold text-[18px] shadow-sm font-figtree relative overflow-hidden group/info">
+                <div className="bg-[#F5F8FF] border border-blue-200 border-dashed rounded-[8px] p-6 flex items-center gap-6 text-[#3B59DA] font-bold text-[18px] shadow-sm font-figtree relative overflow-hidden group/info">
                     <div className="absolute inset-0 bg-blue-50/50 opacity-0 group-hover/info:opacity-100 transition-opacity duration-500" />
                     <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center border border-blue-100 shadow-md shrink-0 relative z-10">
                         <ArrowRight className="h-6 w-6 text-[#3B59DA]" />

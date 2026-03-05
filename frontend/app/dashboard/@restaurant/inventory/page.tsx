@@ -61,6 +61,7 @@ export default function InventoryPage() {
       {/* Hero Section / Main Stats Card */}
       <UnifiedHeroSurface
         variant="standard"
+        className="shadow-[0_20px_60px_rgba(59,89,218,0.04)]"
         padding="px-8 py-8 md:px-10 md:py-10"
         minHeight="min-h-[260px]"
         backgroundColor={!isOpen ? undefined : "bg-[#f5f6ff]"}
@@ -76,11 +77,11 @@ export default function InventoryPage() {
             </div>
         ) : undefined}
         topAction={isOpen ? (
-            <div className="flex items-center gap-3">
-                <Button variant="outline" className="h-11 px-5 rounded-xl border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-2.5 transition-all shadow-sm active:scale-95 font-figtree text-sm">
+            <div className="flex items-center gap-4">
+                <Button variant="outline" className="h-10 px-5 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-2.5 transition-all shadow-sm active:scale-95 font-figtree text-sm">
                     <RefreshIcon className="h-4 w-4" /> Update Inventory
                 </Button>
-                <Button className="h-11 px-7 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-xl font-bold gap-2.5 transition-all border-none shadow-lg shadow-indigo-100 active:scale-95 font-figtree text-sm" asChild>
+                <Button className="h-10 px-6 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-[8px] font-bold gap-2.5 transition-all border-none shadow-lg shadow-indigo-100 active:scale-95 font-figtree text-sm" asChild>
                     <Link href="/dashboard/inventory/new">
                         <PlusIcon className="h-4 w-4" /> Add New Product
                     </Link>
@@ -88,7 +89,7 @@ export default function InventoryPage() {
             </div>
         ) : undefined}
         action={!isOpen ? (
-            <Button className="w-fit h-14 px-10 rounded-2xl bg-white text-[#3B59DA] hover:bg-slate-50 font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
+            <Button className="w-fit h-14 px-10 rounded-[8px] bg-white text-[#3B59DA] hover:bg-slate-50 font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
                 <Link href="/dashboard/inventory/daily-stock-count">
                     Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                 </Link>
@@ -97,7 +98,7 @@ export default function InventoryPage() {
       >
         <div className="flex flex-col xl:flex-row items-end justify-between w-full gap-10">
             {isOpen && (
-                <div className="max-w-[400px] pb-2 shrink-0">
+                <div className="max-w-[400px] mb-2 shrink-0">
                     <FigtreeText className="text-slate-400 font-medium text-[15px] leading-relaxed">
                         Closing Stock Count will be enabled at 7 PM. If you want to change the Closing Stock Count time, your can admin change it in the store management settings.
                     </FigtreeText>
@@ -111,17 +112,17 @@ export default function InventoryPage() {
                 </div>
             )}
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1 w-full xl:w-auto">
-                <UnifiedStatCard label="Total Inventory" value="100" subtext="up by 8% from last week" icon={PackageIcon} variant="indigo" />
-                <UnifiedStatCard label="Healthy Stock" value="56" subtext="up by 8% from last week" icon={SuccessIcon} variant="green" />
-                <UnifiedStatCard label="Low Stock" value="23" subtext="up by 8% from last week" icon={WarningIcon} variant="amber" />
-                <UnifiedStatCard label="Critical" value="4" subtext="up by 8% from last week" icon={AlertIcon} variant="red" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 w-full xl:w-auto">
+                <UnifiedStatCard label="Total Inventory" value="100" subtext="up by 8% from last week" icon={PackageIcon} variant="indigo" className="hover:shadow-lg hover:shadow-indigo-900/5" />
+                <UnifiedStatCard label="Healthy Stock" value="56" subtext="up by 8% from last week" icon={SuccessIcon} variant="green" className="hover:shadow-lg hover:shadow-indigo-900/5" />
+                <UnifiedStatCard label="Low Stock" value="23" subtext="up by 8% from last week" icon={WarningIcon} variant="amber" className="hover:shadow-lg hover:shadow-indigo-900/5" />
+                <UnifiedStatCard label="Critical" value="4" subtext="up by 8% from last week" icon={AlertIcon} variant="red" className="hover:shadow-lg hover:shadow-indigo-900/5" />
             </div>
         </div>
       </UnifiedHeroSurface>
 
       {/* What's Running Low Section */}
-      <div className="mt-8 relative">
+      <div className="mt-12 relative">
         <div className={cn(
             "relative",
             !isOpen && "blur-xl grayscale scale-[0.96] opacity-80 pointer-events-none"
@@ -131,7 +132,7 @@ export default function InventoryPage() {
           {/* See All Items Redirection inside the blurred area */}
           <div className="flex justify-end mt-12 mb-12">
               <Button 
-                className="h-14 px-10 rounded-xl bg-[#F0F4FF] text-[#3B59DA] hover:bg-[#3B59DA] hover:text-white font-bold transition-all shadow-sm text-sm font-figtree active:scale-95"
+                className="h-11 px-8 rounded-[8px] bg-[#F0F4FF] text-[#3B59DA] hover:bg-[#3B59DA] hover:text-white font-bold transition-all shadow-sm text-sm font-figtree active:scale-95 border border-indigo-100"
                 asChild
               >
                 <Link href="/dashboard/inventory/items">
@@ -152,7 +153,7 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
         <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[32px] border border-red-500 bg-white overflow-hidden shadow-sm p-8 md:p-10 mt-6"
+            className="rounded-[10px] border border-red-500 bg-white overflow-hidden shadow-sm p-8 md:p-10 mt-6"
         >
             <div className="flex items-center gap-3 mb-6 px-1">
                 <WarningIcon className="h-5 w-5 text-red-500 stroke-[2.5px]" />
@@ -163,10 +164,10 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
                 {items.slice(0, 3).map((item) => (
                     <div 
                         key={item.id}
-                        className="p-6 flex items-center justify-between bg-white border border-slate-100 rounded-[24px] transition-all shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 active:scale-[0.98] group cursor-pointer"
+                        className="p-6 flex items-center justify-between bg-white border border-slate-100 rounded-[8px] transition-all shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 active:scale-[0.98] group cursor-pointer"
                     >
                         <div className="flex items-center gap-6">
-                            <div className="h-16 w-16 rounded-2xl overflow-hidden border border-slate-100 shrink-0">
+                            <div className="h-16 w-16 rounded-[8px] overflow-hidden border border-slate-100 shrink-0">
                                 {item.imageUrl ? (
                                     <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                                 ) : (
@@ -180,14 +181,14 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
                                 <div className="flex items-center gap-3">
                                     <span className="text-[13px] font-medium text-slate-400 font-figtree">{item.unitsLeftLabel} units left</span>
                                     <span className="text-slate-300">•</span>
-                                    <Badge className="bg-rose-50 text-rose-500 font-bold text-[10px] px-2 py-0.5 rounded-lg border-none shadow-none uppercase font-figtree">
+                                    <Badge className="bg-rose-50 text-rose-500 font-bold text-[10px] px-2 py-0.5 rounded-[6px] border-none shadow-none uppercase font-figtree">
                                         Need {item.needLabel || '10kg'}
                                     </Badge>
                                 </div>
                             </div>
                         </div>
                         
-                        <Button variant="outline" className="h-12 px-6 rounded-xl border-slate-200 bg-white font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-sm font-figtree active:scale-95" asChild>
+                        <Button variant="outline" className="h-12 px-6 rounded-[8px] border-slate-200 bg-white font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-sm font-figtree active:scale-95" asChild>
                             <Link href={`/dashboard/inventory/${item.id}`}>
                                 View Item
                             </Link>
@@ -201,12 +202,12 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
 
 function InventoryLockedOverlay() {
     return (
-        <div className="absolute inset-x-0 top-0 bottom-0 z-[60] flex flex-col items-center justify-center select-none rounded-[40px] overflow-hidden">
+        <div className="absolute inset-x-0 top-0 bottom-0 z-[60] flex flex-col items-center justify-center select-none rounded-[10px] overflow-hidden">
             {/* Blurriness that integrates with the items behind */}
             <div className="absolute inset-0 bg-white/5 backdrop-blur-[12px]" />
             
             <div className="relative z-[70] flex flex-col items-center justify-center max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-700">
-                <div className="w-20 h-20 bg-slate-900/10 backdrop-blur-3xl rounded-[20px] flex items-center justify-center mb-8 border border-white/20 shadow-sm">
+                <div className="w-20 h-20 bg-slate-900/10 backdrop-blur-3xl rounded-[10px] flex items-center justify-center mb-8 border border-white/20 shadow-sm">
                     <LockIcon className="h-9 w-9 text-slate-800 stroke-[2px]" />
                 </div>
                 
@@ -219,7 +220,7 @@ function InventoryLockedOverlay() {
  
                 <div className="mt-10 w-full flex justify-center px-6">
                     <Button 
-                        className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[20px] font-semibold gap-4 shadow-xl shadow-indigo-500/20 transition-all active:scale-95 group font-figtree text-[17px]" 
+                        className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[8px] font-semibold gap-4 shadow-xl shadow-indigo-500/20 transition-all active:scale-95 group font-figtree text-[17px]" 
                         asChild
                     >
                         <Link href="/dashboard/inventory/daily-stock-count">
@@ -236,10 +237,10 @@ function InventorySkeleton() {
     return (
         <div className="p-10 space-y-12 min-h-screen bg-white">
             <div className="flex justify-between items-center">
-                <Skeleton className="h-12 w-64 rounded-2xl" />
-                <Skeleton className="h-14 w-80 rounded-2xl" />
+                <Skeleton className="h-12 w-64 rounded-[8px]" />
+                <Skeleton className="h-14 w-80 rounded-[8px]" />
             </div>
-            <Skeleton className="h-[440px] w-full rounded-2xl" />
+            <Skeleton className="h-[440px] w-full rounded-[10px]" />
         </div>
     );
 }

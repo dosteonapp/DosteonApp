@@ -34,7 +34,7 @@ export const AppContainer = ({ children, className }: { children: React.ReactNod
 );
 
 export const PrimarySurfaceCard = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <div className={cn("bg-white border border-slate-100 rounded-[32px] shadow-[0_12px_44px_rgba(0,0,0,0.03)] overflow-hidden transition-all", className)}>
+  <div className={cn("bg-white border border-slate-100 rounded-[10px] shadow-[0_12px_44px_rgba(0,0,0,0.03)] overflow-hidden transition-all", className)}>
     {children}
   </div>
 );
@@ -75,11 +75,11 @@ export const UnifiedStatCard = ({
 
   return (
     <div className={cn(
-      "bg-white rounded-[24px] p-5 md:p-7 min-h-[120px] border border-slate-100 transition-all font-figtree w-full min-w-0 shadow-[0_4px_16px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.05)] hover:border-indigo-100 active:scale-[0.98] flex flex-col justify-between overflow-hidden",
+      "bg-white rounded-[8px] p-5 md:p-7 min-h-[120px] border border-slate-100 transition-all font-figtree w-full min-w-0 shadow-[0_4px_16px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.05)] hover:border-indigo-100 active:scale-[0.98] flex flex-col justify-between overflow-hidden",
       className
     )}>
       <div className="flex items-center gap-3 shrink-0">
-        <div className={cn("h-8 w-8 md:h-10 md:w-10 rounded-xl flex items-center justify-center shadow-sm shrink-0", colors[variant])}>
+        <div className={cn("h-8 w-8 md:h-10 md:w-10 rounded-[6px] flex items-center justify-center shadow-sm shrink-0", colors[variant])}>
           <Icon className="h-4 w-4 md:h-5 md:w-5 stroke-[2px]" />
         </div>
         <span className="text-[12px] md:text-[14px] font-semibold text-slate-500 leading-tight line-clamp-1">{label}</span>
@@ -154,7 +154,7 @@ export const UnifiedHeroSurface = ({
 
   return (
     <div className={cn(
-      "relative rounded-[32px] border transition-all duration-700 w-full flex overflow-hidden",
+      "relative rounded-[10px] border transition-all duration-700 w-full flex overflow-hidden",
       padding ? padding : (isDense ? "p-4 md:p-6" : "p-6 md:p-10"),
       minHeight ? minHeight : (isDense ? "min-h-[300px]" : "min-h-[340px]"),
       isInline && !isDense && !padding && "lg:pr-6", // Getting that 24px right margin on desktop
@@ -327,7 +327,7 @@ export const UnifiedListRow = ({
   <div 
     onClick={onClick}
     className={cn(
-      "p-6 md:p-8 bg-white border border-slate-100 rounded-[24px] flex flex-col xl:flex-row items-center justify-between gap-8 transition-all group hover:border-[#3B59DA]/20 hover:shadow-md cursor-pointer",
+      "p-6 md:p-8 bg-white border border-slate-100 rounded-[8px] flex flex-col xl:flex-row items-center justify-between gap-8 transition-all group hover:border-[#3B59DA]/20 hover:shadow-md cursor-pointer",
       className
     )}
   >
@@ -356,7 +356,7 @@ export const UnifiedModal = ({
   className?: string
 }) => (
   <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
-    <DialogContent className={cn("w-[95vw] sm:max-w-[800px] rounded-[32px] p-0 overflow-hidden border-none shadow-2xl bg-white font-figtree [&>button]:hidden", className)}>
+    <DialogContent className={cn("w-[95vw] sm:max-w-[800px] rounded-[10px] p-0 overflow-hidden border-none shadow-2xl bg-white font-figtree [&>button]:hidden", className)}>
       <div className="flex flex-col h-full max-h-[90vh]">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 text-left px-8 sm:px-12 py-8 border-b border-slate-50 shrink-0">
           <div className="space-y-1.5 pr-4">

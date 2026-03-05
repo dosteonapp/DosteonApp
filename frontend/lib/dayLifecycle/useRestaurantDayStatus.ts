@@ -244,5 +244,11 @@ export function useRestaurantDayStatus() {
     isOpening: status?.state === DayState.OPENING_IN_PROGRESS,
     isClosing: status?.state === DayState.CLOSING_IN_PROGRESS,
     isLocked: status?.state !== DayState.OPEN,
+    isClosingTimeReached: (() => {
+        const now = new Date();
+        return now.getHours() >= 19; // 7 PM
+    })(),
+    currentTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    targetClosingTime: "7:00 PM"
   };
 }

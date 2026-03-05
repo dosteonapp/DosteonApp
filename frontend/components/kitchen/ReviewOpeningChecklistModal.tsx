@@ -6,9 +6,6 @@ import {
   X, 
   CheckCircle2, 
   Clock, 
-  User, 
-  PackageCheck, 
-  ClipboardCheck,
   StickyNote
 } from "lucide-react";
 import {
@@ -19,10 +16,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useMocks } from "@/lib/flags";
 import axiosInstance from "@/lib/axios";
+import { FigtreeText, InriaHeading } from "@/components/ui/dosteon-ui";
 
 interface ReviewOpeningChecklistModalProps {
   open: boolean;
@@ -95,106 +92,83 @@ export function ReviewOpeningChecklistModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden gap-0">
-        <DialogHeader className="p-6 border-b flex flex-row items-center justify-between space-y-0">
-          <DialogTitle className="text-2xl font-semibold">Review Opening Checklist</DialogTitle>
+      <DialogContent className="sm:max-w-[700px] rounded-[10px] p-0 overflow-hidden border-none shadow-[0_32px_120px_rgba(15,23,42,0.15)] bg-white [&>button]:hidden font-figtree">
+        <DialogHeader className="p-8 md:p-10 flex flex-row items-center justify-between border-b border-slate-100 space-y-0">
+          <DialogTitle asChild>
+            <InriaHeading className="text-[28px] font-bold text-[#1E293B] tracking-tight leading-none">Review Opening Checklist</InriaHeading>
+          </DialogTitle>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 rounded-full" 
+            className="h-10 w-10 rounded-full hover:bg-slate-50 transition-all font-figtree" 
             onClick={() => onOpenChange(false)}
           >
-            <X className="h-4 w-4" />
+            <X className="h-6 w-6 text-slate-400" />
           </Button>
         </DialogHeader>
 
-        <div className="p-6 space-y-6">
-          {/* Info Card */}
-          <div className="bg-primary/5 border border-primary/10 rounded-xl p-6 flex items-start gap-4">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="h-6 w-6 text-primary" />
+        <div className="p-8 md:p-10 space-y-10">
+          {/* Readiness Banner */}
+          <div className="bg-[#EEF2FF] border border-[#E0E7FF] rounded-[8px] p-8 flex items-center gap-6 shadow-sm">
+            <div className="h-14 w-14 rounded-full bg-[#DBEAFE] flex items-center justify-center border border-[#BFDBFE] shrink-0">
+               <CheckCircle2 className="h-8 w-8 text-[#3B59DA]" />
             </div>
-            <div className="space-y-1">
-              <h3 className="font-semibold text-lg">{mode === 'final' ? 'Ready to Open?' : 'Confirm Item Stock'}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
+            <div className="space-y-1 flex-1">
+              <h3 className="text-[20px] font-bold text-[#1E293B] font-figtree tracking-tight leading-none">
+                {mode === 'final' ? 'Ready to Open?' : 'Confirm Item Stock'}
+              </h3>
+              <FigtreeText className="text-slate-500 text-[14px] font-medium leading-relaxed">
                 {mode === 'final' 
                   ? `Submitting this will unlock Kitchen Service mode and log stock levels for ${summary.date}.`
                   : `Confirming this item will verify the opening stock level for ${summary.date}.`
                 }
-              </p>
+              </FigtreeText>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">Summary Stats</h4>
+          <div className="space-y-6">
+            <h4 className="text-[14px] font-bold text-slate-400 uppercase tracking-widest pl-1">Summary Stats</h4>
             
-            {/* Summary Grid */}
             <div className="grid grid-cols-2 gap-4">
-              <Card className="shadow-none border bg-muted/5 group hover:border-primary/20 transition-colors">
-                <CardContent className="p-4 flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <ClipboardCheck className="h-4 w-4" />
-                    <span className="text-xs font-medium">Items Counted</span>
-                  </div>
-                  <p className="text-xl font-bold">{summary.itemsCounted} / {summary.itemsTotal}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-none border bg-muted/5 group hover:border-primary/20 transition-colors">
-                <CardContent className="p-4 flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <StickyNote className="h-4 w-4" />
-                    <span className="text-xs font-medium">Notes Added</span>
-                  </div>
-                  <p className="text-xl font-bold">{summary.notesTotal} {summary.notesTotal === 1 ? 'Note' : 'Notes'}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-none border bg-muted/5 group hover:border-primary/20 transition-colors">
-                <CardContent className="p-4 flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-xs font-medium">Opening Time</span>
-                  </div>
-                  <p className="text-xl font-bold">{summary.openingTime}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-none border bg-muted/5 group hover:border-primary/20 transition-colors">
-                <CardContent className="p-4 flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <User className="h-4 w-4" />
-                    <span className="text-xs font-medium">Staff</span>
-                  </div>
-                  <p className="text-xl font-bold">{summary.staffName}</p>
-                </CardContent>
-              </Card>
+              <StatCard label="Items Counted" value={`${summary.itemsCounted} / ${summary.itemsTotal}`} />
+              <StatCard label="Notes Added" value={`${summary.notesTotal} ${summary.notesTotal === 1 ? 'Note' : 'Notes'}`} />
+              <StatCard label="Opening Time" value={summary.openingTime} />
+              <StatCard label="Staff" value={summary.staffName} />
             </div>
           </div>
         </div>
 
-        <DialogFooter className="p-6 bg-muted/30 border-t flex flex-row items-center justify-end gap-3 sm:justify-end">
+        <DialogFooter className="p-8 md:p-10 bg-slate-50/20 border-t border-slate-100 flex flex-row items-center justify-end gap-5">
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}
-            className="h-11 px-6 font-medium"
+            className="h-14 px-10 rounded-[8px] font-bold border-slate-200 bg-white text-slate-500 hover:text-slate-900 transition-all font-figtree text-[15px] shadow-sm active:scale-95"
             disabled={isSubmitting}
           >
             Back
           </Button>
           <Button 
             onClick={handleConfirm}
-            className="h-11 px-8 font-semibold bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary/20"
+            className="h-14 px-12 font-bold rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-lg shadow-indigo-100 transition-all font-figtree text-[16px] active:scale-95"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">
-                <Clock className="h-4 w-4 animate-spin" /> {mode === 'final' ? 'Submitting...' : 'Confirming...'}
+                <Clock className="h-5 w-5 animate-spin" /> {mode === 'final' ? 'Submitting...' : 'Confirming...'}
               </span>
             ) : (mode === 'final' ? "Confirm & Open Kitchen" : "Confirm Item")}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-[8px] p-6 flex flex-col items-start justify-center space-y-2.5 shadow-none transition-all hover:border-indigo-100 group min-h-[110px]">
+      <FigtreeText className="text-[12px] font-bold text-slate-400 uppercase tracking-widest leading-none">{label}</FigtreeText>
+      <p className="text-[20px] font-black text-[#1E293B] tabular-nums leading-none font-figtree">{value}</p>
+    </div>
   );
 }

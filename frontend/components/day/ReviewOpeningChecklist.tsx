@@ -60,71 +60,53 @@ export function ReviewOpeningChecklist({ onBack, onConfirm }: ReviewOpeningCheck
   };
 
   return (
-    <div className="w-full max-w-[720px] rounded-[32px] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.16)] border-none overflow-hidden bg-white animate-in zoom-in-95 duration-500 font-figtree">
+    <div className="w-full max-w-[700px] rounded-[10px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden bg-white animate-in zoom-in-95 duration-500 font-figtree">
       {/* Header */}
-      <div className="p-8 md:p-10 flex items-center justify-between border-b border-slate-50">
-        <InriaHeading className="text-[32px] font-bold text-[#1E293B] tracking-tight">
+      <div className="p-8 md:p-10 flex items-center justify-between border-b border-slate-100">
+        <InriaHeading className="text-[28px] font-bold text-[#1E293B] tracking-tight">
           Review Opening Checklist
         </InriaHeading>
-        <Button variant="ghost" className="h-12 w-12 p-0 rounded-full hover:bg-slate-50 transition-all" onClick={onBack}>
-            <X className="h-8 w-8 text-slate-300" />
+        <Button variant="ghost" className="h-10 w-10 p-0 rounded-full hover:bg-slate-50 transition-all" onClick={onBack}>
+            <X className="h-6 w-6 text-slate-400" />
         </Button>
       </div>
 
-      <div className="p-10 space-y-10">
-        {/* Attention Banner */}
-        <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-[24px] p-8 flex items-center gap-6 shadow-sm">
-          <div className="h-14 w-14 rounded-2xl bg-[#FCD34D] flex items-center justify-center border border-[#F59E0B] shadow-lg shadow-yellow-200/50 shrink-0">
-             <AlertTriangle className="h-8 w-8 text-white" />
+      <div className="p-8 md:p-10 space-y-10">
+        {/* Readiness Banner */}
+        <div className="bg-[#EEF2FF] border border-[#E0E7FF] rounded-[8px] p-8 flex items-center gap-6 shadow-sm">
+          <div className="h-14 w-14 rounded-full bg-[#DBEAFE] flex items-center justify-center border border-[#BFDBFE] shrink-0">
+             <CheckCircle2 className="h-8 w-8 text-[#3B59DA]" />
           </div>
-          <div className="space-y-1.5 flex-1">
-            <h3 className="text-[22px] font-black text-[#92400E] font-figtree tracking-tight leading-none">Attention Needed</h3>
-            <FigtreeText className="text-[#B45309] text-base font-bold leading-relaxed">
-              1 item is marked as low stock. This may affect kitchen service.
+          <div className="space-y-1 flex-1">
+            <h3 className="text-[20px] font-bold text-[#1E293B] font-figtree tracking-tight leading-none">Ready to Open?</h3>
+            <FigtreeText className="text-slate-500 text-[14px] font-medium leading-relaxed">
+              Submitting this will unlock Kitchen Service mode and log stock levels for {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.
             </FigtreeText>
           </div>
         </div>
 
-        {/* 4 Summary Stats Grid */}
-        <div className="grid grid-cols-2 gap-6">
-           <SummaryCard 
-                label="Items Checked" 
-                value="24 / 24" 
-                icon={ShieldCheck}
-                color="text-[#1E293B]"
-           />
-           <SummaryCard 
-                label="Completion" 
-                value="100%" 
-                icon={Activity}
-                color="text-[#10B981]"
-           />
-           <SummaryCard 
-                label="Alerts" 
-                value="1" 
-                icon={AlertTriangle}
-                color="text-[#EF4444]"
-           />
-           <SummaryCard 
-                label="Opening Time" 
-                value={currentTime} 
-                icon={Clock}
-                color="text-[#1E293B]"
-           />
+        <div className="space-y-6">
+           <FigtreeText className="text-[14px] font-bold text-slate-400 uppercase tracking-widest ml-1">Summary Stats</FigtreeText>
+           
+           <div className="grid grid-cols-2 gap-4">
+              <SummaryCard label="Items Counted" value="24 / 24" />
+              <SummaryCard label="Notes Added" value="1 Note" />
+              <SummaryCard label="Opening Time" value={currentTime} />
+              <SummaryCard label="Staff" value="Sarah C." />
+           </div>
         </div>
       </div>
 
-      {/* Footer Actions */}
-      <div className="p-10 md:p-12 bg-slate-50/20 border-t border-slate-50 flex items-center justify-end gap-6">
+      <div className="p-8 md:p-10 bg-slate-50/20 border-t border-slate-100 flex items-center justify-end gap-6">
         <Button 
           variant="outline" 
-          className="h-16 px-12 rounded-2xl border-slate-200 font-bold text-slate-500 hover:bg-slate-50 transition-all text-[17px] flex-1 font-figtree shadow-sm"
+          className="h-14 px-10 rounded-[8px] border-slate-200 font-bold text-slate-500 hover:bg-slate-50 transition-all text-sm font-figtree shadow-sm"
           onClick={onBack}
         >
-          Cancel and Back
+          Back
         </Button>
         <Button 
-          className="h-16 px-14 rounded-2xl bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black transition-all border-none text-[18px] shadow-2xl shadow-indigo-900/10 flex-[2] font-figtree active:scale-95 duration-300"
+          className="h-14 px-12 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold transition-all border-none text-sm shadow-lg shadow-indigo-100 font-figtree active:scale-95 duration-300"
           onClick={handleConfirm}
           disabled={isSubmitting}
         >
@@ -135,16 +117,11 @@ export function ReviewOpeningChecklist({ onBack, onConfirm }: ReviewOpeningCheck
   );
 }
 
-function SummaryCard({ label, value, icon: Icon, color }: { label: string; value: string; icon: any; color: string }) {
+function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white border border-slate-100 rounded-[24px] p-8 flex flex-col items-center justify-center text-center space-y-4 shadow-sm transition-all hover:border-indigo-100 group min-h-[160px]">
-      <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-500 shadow-inner">
-         <Icon className="h-6 w-6" />
-      </div>
-      <div className="space-y-1">
-          <p className={cn("text-[38px] font-black tracking-tighter tabular-nums leading-none", color)}>{value}</p>
-          <FigtreeText className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">{label}</FigtreeText>
-      </div>
+    <div className="bg-white border border-slate-200 rounded-[8px] p-6 flex flex-col items-start justify-center space-y-2.5 shadow-none transition-all hover:border-indigo-100 group min-h-[110px]">
+      <FigtreeText className="text-[12px] font-bold text-slate-400 uppercase tracking-widest leading-none">{label}</FigtreeText>
+      <p className="text-[20px] font-black text-[#1E293B] tabular-nums leading-none font-figtree">{value}</p>
     </div>
   );
 }
