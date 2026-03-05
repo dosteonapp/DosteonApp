@@ -161,7 +161,7 @@ export default function AllInventoryItemsPage() {
                     <TableBody>
                         <AnimatePresence mode="popLayout">
                         {inventoryItems.map((item) => (
-                            <TableRow key={item.id} className="border-slate-50 hover:bg-slate-50/30 transition-all group h-[88px]">
+                            <TableRow key={item.id} className="border-slate-50 hover:bg-[#f8f9ff] transition-all group h-[88px] active:scale-[0.995] cursor-pointer">
                                 <TableCell className="pl-8">
                                     <div className="flex items-center gap-4">
                                         <div className="h-12 w-12 rounded-xl border border-slate-100 bg-white overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
@@ -183,7 +183,7 @@ export default function AllInventoryItemsPage() {
                                 <TableCell className="text-slate-600 font-medium text-sm font-figtree">{item.brand || 'Brand Name'}</TableCell>
                                 <TableCell className="text-slate-600 font-medium text-sm font-figtree">{item.unit || 'kg'}</TableCell>
                                 <TableCell className="text-slate-700 font-bold text-sm font-figtree">{item.currentStock || '2.5'} {item.unit || 'kg'}</TableCell>
-                                <TableCell className="text-slate-700 font-bold text-sm font-figtree">{item.minimumLevel || '5'} {item.unit || 'kg'}</TableCell>
+                                <TableCell className="text-slate-700 font-bold text-sm font-figtree">{item.minLevel || '5'} {item.unit || 'kg'}</TableCell>
                                 <TableCell>
                                     <Badge 
                                         className={cn(

@@ -76,51 +76,55 @@ export function InventoryUpdateItemModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl rounded-[28px] p-0 border-none shadow-2xl overflow-hidden bg-white font-figtree">
-                <div className="p-8 md:p-10 space-y-10">
-                    <div className="space-y-1.5 flex items-center justify-between">
+            <DialogContent className="sm:max-w-3xl rounded-[32px] p-0 border-none shadow-2xl overflow-hidden bg-white font-figtree [&>button]:hidden">
+                {/* Header */}
+                <div className="px-8 md:px-12 py-8 border-b border-slate-50 relative">
+                    <div className="flex items-center justify-between">
                         <div className="space-y-1">
-                            <DialogTitle className="text-[32px] font-bold text-[#1E293B] tracking-tight font-figtree">Update Item</DialogTitle>
-                            <p className="text-[13px] font-medium text-slate-400 font-figtree">
-                                Manually adjust the inventory level for <span className="text-[#3B59DA] font-bold">{restaurantName}</span>
+                            <DialogTitle className="text-[28px] md:text-[32px] font-bold text-[#1E293B] tracking-tight font-figtree">Update Item</DialogTitle>
+                            <p className="text-[14px] font-medium text-slate-400 font-figtree">
+                                Manually adjust the inventory level for <span className="text-[#1E293B] font-bold">{restaurantName}</span>
                             </p>
                         </div>
                         <Button 
                             variant="ghost" 
-                            size="sm" 
-                            className="h-10 w-10 p-0 rounded-full hover:bg-slate-50 text-slate-400 transition-all"
+                            size="icon" 
+                            className="h-12 w-12 rounded-full hover:bg-slate-50 text-slate-400 transition-all"
                             onClick={() => onOpenChange(false)}
                         >
-                            <X className="h-6 w-6" />
+                            <X className="h-7 w-7" />
                         </Button>
                     </div>
+                </div>
+
+                <div className="px-8 md:px-12 py-10 space-y-10">
 
                     {/* Product Preview Card */}
-                    <div className="bg-[#FBFDFF] border border-slate-100 rounded-[28px] p-8 flex items-center justify-between shadow-sm group">
+                    <div className="bg-white border border-slate-100 rounded-[28px] p-8 flex items-center justify-between shadow-sm group">
                         <div className="flex items-center gap-8">
-                            <div className="h-28 w-28 rounded-[20px] overflow-hidden border border-white bg-white shrink-0 shadow-xl transition-transform group-hover:scale-105 duration-500">
+                            <div className="h-32 w-32 rounded-[20px] overflow-hidden border border-slate-50 bg-white shrink-0 shadow-lg transition-transform group-hover:scale-105 duration-500">
                                 {item.imageUrl ? (
                                     <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                                 ) : (
-                                    <div className="h-full w-full flex items-center justify-center text-slate-200">
+                                    <div className="h-full w-full flex items-center justify-center text-slate-100">
                                         <Package className="h-14 w-14" />
                                     </div>
                                 )}
                             </div>
                             <div className="space-y-3">
                                 <h4 className="text-[28px] font-bold text-[#1E293B] tracking-tight font-figtree group-hover:text-[#3B59DA] transition-colors">{item.name}</h4>
-                                <div className="flex items-center gap-2.5">
-                                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest font-figtree">SKU ID: {item.sku || '001ABC'}</span>
-                                    <span className="text-slate-200 text-xs font-bold">•</span>
-                                    <Badge className="bg-white text-slate-500 font-bold text-[10px] px-4 py-1.5 rounded-xl border border-slate-100 shadow-sm font-figtree">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest font-figtree leading-none">SKU ID: {item.sku || '001ABC'}</span>
+                                    <span className="text-slate-200 text-xs font-bold leading-none">•</span>
+                                    <Badge variant="outline" className="text-slate-500 font-bold text-[11px] px-4 py-1.5 rounded-xl border-slate-200 shadow-none font-figtree">
                                         {item.category}
                                     </Badge>
                                 </div>
                             </div>
                         </div>
-                        <div className="text-right space-y-1">
-                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest font-figtree">Current Quantity</p>
-                            <p className="text-[34px] font-bold text-[#1E293B] tabular-nums font-figtree tracking-tighter">{item.currentStock} <span className="text-sm font-bold text-slate-400 uppercase ml-1">{item.unit}</span></p>
+                        <div className="text-right flex flex-col items-end">
+                            <p className="text-[13px] font-bold text-slate-300 uppercase tracking-widest font-figtree mb-2">Current Quantity</p>
+                            <p className="text-[36px] font-black text-[#1E293B] tabular-nums font-figtree tracking-tighter leading-none">{item.currentStock} <span className="text-[20px] font-bold text-slate-400 ml-1">{item.unit}</span></p>
                         </div>
                     </div>
 
@@ -152,21 +156,23 @@ export function InventoryUpdateItemModal({
                     </div>
 
                     {/* Summary Info Box */}
-                    <div className="border border-dashed border-[#3B59DA]/20 rounded-[18px] p-6 bg-[#F5F8FF] flex items-center gap-5 shadow-inner">
-                        <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center text-[#3B59DA] shadow-md shrink-0 border border-[#3B59DA]/10">
+                    <div className="border border-dashed border-[#3B59DA]/30 rounded-[18px] p-6 bg-[#f8faff] flex items-center gap-5 shadow-sm">
+                        <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center text-[#3B59DA] shadow-md shrink-0 border border-[#3B59DA]/10 ring-4 ring-[#f5f8ff]">
                             <ArrowRight className="h-5 w-5" />
                         </div>
-                        <p className="text-[15px] font-semibold text-slate-500 font-figtree">
-                            Stock will update from <span className="text-[#1E293B] font-bold">{item.currentStock} {item.unit}</span> to 
-                            <span className="text-[#3B59DA] font-extrabold ml-1.5">{newQuantity} {item.unit}</span>
+                        <p className="text-[16px] font-bold text-slate-500 font-figtree">
+                            Stock will update from <span className="text-slate-400">{item.currentStock} {item.unit}</span> to 
+                            <span className="text-[#3B59DA] font-black ml-1.5">{newQuantity} {item.unit}</span>
                         </p>
                     </div>
+                </div>
 
-                    {/* Footer Actions */}
-                    <div className="flex items-center gap-6 pt-4">
+                {/* Footer */}
+                <div className="px-8 md:px-12 py-8 bg-slate-50/30 border-t border-slate-50">
+                    <div className="flex items-center justify-end gap-6">
                         <Button 
                             variant="outline" 
-                            className="flex-1 h-16 rounded-[18px] border-slate-200 font-bold text-slate-500 hover:bg-slate-50 transition-all text-base font-figtree shadow-sm"
+                            className="h-16 px-12 rounded-[18px] border-slate-200 bg-white font-bold text-slate-500 hover:bg-slate-50 transition-all text-[17px] font-figtree shadow-sm active:scale-95"
                             onClick={() => onOpenChange(false)}
                         >
                             Cancel
@@ -174,8 +180,8 @@ export function InventoryUpdateItemModal({
                         <Button 
                             disabled={isSubmitting || !incomingQuantity}
                             className={cn(
-                                "flex-1 h-16 rounded-[18px] font-bold text-base shadow-2xl transition-all border-none text-white font-figtree active:scale-95",
-                                incomingQuantity ? "bg-[#3B59DA] hover:bg-[#2D46B2] shadow-indigo-900/20" : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                "h-16 px-14 rounded-[18px] font-black text-[17px] shadow-2xl transition-all border-none text-white font-figtree active:scale-95",
+                                incomingQuantity ? "bg-[#3B59DA] hover:bg-[#2D46B2] shadow-indigo-900/20" : "bg-slate-100 text-slate-300 cursor-not-allowed"
                             )}
                             onClick={handleConfirm}
                         >

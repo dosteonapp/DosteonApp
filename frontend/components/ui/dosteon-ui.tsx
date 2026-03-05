@@ -33,12 +33,8 @@ export const AppContainer = ({ children, className }: { children: React.ReactNod
   </div>
 );
 
-/**
- * DOS 03: Surface Standard
- * rounded-[28px] + Shadow-2xl
- */
 export const PrimarySurfaceCard = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <div className={cn("bg-white border border-slate-100 rounded-[28px] shadow-[0_12px_44px_rgba(0,0,0,0.03)] overflow-hidden", className)}>
+  <div className={cn("bg-white border border-slate-100 rounded-[32px] shadow-[0_12px_44px_rgba(0,0,0,0.03)] overflow-hidden transition-all", className)}>
     {children}
   </div>
 );
@@ -79,7 +75,7 @@ export const UnifiedStatCard = ({
 
   return (
     <div className={cn(
-      "bg-white rounded-[24px] p-5 md:p-7 min-h-[120px] border border-slate-100 transition-all font-figtree w-full min-w-0 shadow-[0_2px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)] active:scale-[0.98] flex flex-col justify-between overflow-hidden",
+      "bg-white rounded-[24px] p-5 md:p-7 min-h-[120px] border border-slate-100 transition-all font-figtree w-full min-w-0 shadow-[0_4px_16px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.05)] hover:border-indigo-100 active:scale-[0.98] flex flex-col justify-between overflow-hidden",
       className
     )}>
       <div className="flex items-center gap-3 shrink-0">
@@ -158,7 +154,7 @@ export const UnifiedHeroSurface = ({
 
   return (
     <div className={cn(
-      "relative rounded-[28px] border transition-all duration-700 w-full flex overflow-hidden",
+      "relative rounded-[32px] border transition-all duration-700 w-full flex overflow-hidden",
       padding ? padding : (isDense ? "p-4 md:p-6" : "p-6 md:p-10"),
       minHeight ? minHeight : (isDense ? "min-h-[300px]" : "min-h-[340px]"),
       isInline && !isDense && !padding && "lg:pr-6", // Getting that 24px right margin on desktop
@@ -360,23 +356,23 @@ export const UnifiedModal = ({
   className?: string
 }) => (
   <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
-    <DialogContent className={cn("w-[95vw] sm:max-w-[800px] rounded-[32px] p-0 overflow-hidden border-none shadow-2xl bg-white font-figtree", className)}>
-      <div className="p-8 sm:p-12 space-y-10">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 text-left">
-          <div className="space-y-2 pr-4">
-            <DialogTitle className="text-[28px] sm:text-[36px] font-black text-[#1E293B] font-figtree tracking-tight leading-tight">{title}</DialogTitle>
-            {subtitle && <FigtreeText className="text-[15px] sm:text-[17px] font-semibold leading-relaxed">{subtitle}</FigtreeText>}
+    <DialogContent className={cn("w-[95vw] sm:max-w-[800px] rounded-[32px] p-0 overflow-hidden border-none shadow-2xl bg-white font-figtree [&>button]:hidden", className)}>
+      <div className="flex flex-col h-full max-h-[90vh]">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 text-left px-8 sm:px-12 py-8 border-b border-slate-50 shrink-0">
+          <div className="space-y-1.5 pr-4">
+            <DialogTitle className="text-[28px] sm:text-[32px] font-black text-[#1E293B] font-figtree tracking-tight leading-tight">{title}</DialogTitle>
+            {subtitle && <div className="text-[14px] sm:text-[15px] font-semibold text-slate-400 leading-relaxed font-figtree">{subtitle}</div>}
           </div>
-          <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full hover:bg-slate-50 text-slate-300 shrink-0" onClick={onClose}>
+          <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full hover:bg-slate-50 text-slate-400 shrink-0 transition-all font-figtree" onClick={onClose}>
             <X className="h-7 w-7" />
           </Button>
         </DialogHeader>
 
-        <div className="space-y-8 max-h-[70vh] overflow-y-auto px-1 custom-scrollbar">
+        <div className="p-8 sm:p-12 space-y-10 overflow-y-auto custom-scrollbar flex-1">
           {children}
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row items-center justify-end gap-5 pt-8 border-t border-slate-50">
+        <DialogFooter className="flex flex-col sm:flex-row items-center justify-end gap-5 px-8 sm:px-12 py-8 border-t border-slate-50 bg-slate-50/30 shrink-0">
            {footer}
         </DialogFooter>
       </div>

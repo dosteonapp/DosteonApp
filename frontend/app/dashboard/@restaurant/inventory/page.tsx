@@ -152,7 +152,7 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
         <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[24px] border border-red-500 bg-white overflow-hidden shadow-sm p-6 md:p-8 mt-6"
+            className="rounded-[32px] border border-red-500 bg-white overflow-hidden shadow-sm p-8 md:p-10 mt-6"
         >
             <div className="flex items-center gap-3 mb-6 px-1">
                 <WarningIcon className="h-5 w-5 text-red-500 stroke-[2.5px]" />
@@ -163,10 +163,10 @@ function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
                 {items.slice(0, 3).map((item) => (
                     <div 
                         key={item.id}
-                        className="p-6 flex items-center justify-between bg-white border border-slate-100 rounded-[20px] transition-all group hover:border-[#3B59DA]/20"
+                        className="p-6 flex items-center justify-between bg-white border border-slate-100 rounded-[24px] transition-all shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 active:scale-[0.98] group cursor-pointer"
                     >
                         <div className="flex items-center gap-6">
-                            <div className="h-16 w-16 rounded-xl overflow-hidden border border-slate-100 shrink-0">
+                            <div className="h-16 w-16 rounded-2xl overflow-hidden border border-slate-100 shrink-0">
                                 {item.imageUrl ? (
                                     <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                                 ) : (

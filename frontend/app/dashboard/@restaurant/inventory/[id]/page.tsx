@@ -116,7 +116,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
             <PrimarySurfaceCard className="p-8 lg:p-10 flex flex-col xl:flex-row items-center gap-10 bg-[#f5f6ff] border-[#98a6f9] shadow-sm relative z-10">
                 <div className="flex flex-col md:flex-row items-center gap-8 flex-1">
                     {/* Item Image */}
-                    <div className="h-44 w-44 md:h-56 md:w-56 rounded-[24px] overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center shrink-0">
+                    <div className="h-44 w-44 md:h-56 md:w-56 rounded-[32px] overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center shrink-0">
                         {item.imageUrl ? (
                             <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                         ) : (
@@ -287,7 +287,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
 
 function StatBox({ label, value, unit, prefix }: { label: string, value: string | number, unit?: string, prefix?: string }) {
     return (
-        <div className="bg-white border border-slate-100 rounded-[18px] p-6 h-[140px] md:h-[155px] flex flex-col justify-between shadow-sm transition-all hover:scale-[1.02] hover:shadow-xl hover:border-indigo-100 active:scale-[0.98] font-figtree group overflow-hidden">
+        <div className="bg-white border border-slate-100 rounded-[24px] p-6 h-[140px] md:h-[155px] flex flex-col justify-between shadow-sm transition-all hover:scale-[1.02] hover:shadow-xl hover:border-indigo-100 active:scale-[0.98] font-figtree group overflow-hidden">
             <p className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-tight line-clamp-1">{label}</p>
             <div className="mt-auto overflow-hidden">
                 <div className="flex items-baseline gap-1">

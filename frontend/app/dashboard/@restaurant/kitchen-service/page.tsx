@@ -152,7 +152,7 @@ export default function KitchenServicePage() {
       {/* Main Track Section */}
       <div className="w-full relative mt-8">
         <div className={cn(
-          "bg-white border border-slate-100 rounded-[40px] p-8 md:p-12 shadow-[0_32px_120px_rgba(15,23,42,0.025)] space-y-12 transition-all duration-700",
+          "bg-white border border-slate-100 rounded-[32px] p-8 md:p-12 shadow-[0_32px_120px_rgba(15,23,42,0.025)] space-y-12 transition-all duration-700",
           !isOpen && "blur-xl grayscale scale-[0.96] opacity-80 pointer-events-none"
         )}>
           {/* Section Header */}
@@ -180,7 +180,7 @@ export default function KitchenServicePage() {
           {/* Order Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
-              <Card key={item.id} className="rounded-[24px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:shadow-md transition-all group p-5 flex flex-col justify-between space-y-6">
+              <Card key={item.id} className="rounded-[24px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 active:scale-[0.98] transition-all group p-5 flex flex-col justify-between space-y-6">
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1 overflow-hidden">
                       <h3 className="font-bold text-[#1E293B] text-[17px] tracking-tight font-figtree truncate">{item.name}</h3>

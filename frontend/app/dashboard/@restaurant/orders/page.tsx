@@ -57,7 +57,7 @@ export default function OrdersPage() {
           </TabsList>
 
           <TabsContent value="current" className="outline-none">
-            <Card className="rounded-[24px] border-slate-100 shadow-sm overflow-hidden">
+            <Card className="rounded-[32px] border-slate-100 shadow-sm overflow-hidden transition-all">
               <CardHeader>
                 <CardTitle className="text-xl font-bold">Current Orders</CardTitle>
                 <CardDescription>View and manage your active orders</CardDescription>
@@ -136,12 +136,12 @@ export default function OrdersPage() {
                                 <Link href={`/dashboard/orders/${order.id}`}>View</Link>
                               </Button>
                               {order.status === "Pending" && (
-                                <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-lg border-red-200 text-red-600 font-bold text-[10px] md:text-xs hover:bg-red-50" onClick={() => guard(() => console.log("Cancel order"), { actionName: "order cancellation" })}>
+                                <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-xl border-red-200 text-red-600 font-bold text-[10px] md:text-xs hover:bg-red-50 active:scale-95" onClick={() => guard(() => console.log("Cancel order"), { actionName: "order cancellation" })}>
                                   Cancel
                                 </Button>
                               )}
                               {order.status === "Delivered" && (
-                                <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-lg border-indigo-200 text-indigo-600 font-bold text-[10px] md:text-xs hover:bg-indigo-50" onClick={() => guard(() => console.log("Reorder"), { actionName: "reorder" })}>
+                                <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-xl border-indigo-200 text-indigo-600 font-bold text-[10px] md:text-xs hover:bg-indigo-50 active:scale-95" onClick={() => guard(() => console.log("Reorder"), { actionName: "reorder" })}>
                                   Reorder
                                 </Button>
                               )}
@@ -157,7 +157,7 @@ export default function OrdersPage() {
           </TabsContent>
 
           <TabsContent value="scheduled" className="outline-none">
-            <Card className="rounded-[24px] border-slate-100 shadow-sm overflow-hidden">
+            <Card className="rounded-[32px] border-slate-100 shadow-sm overflow-hidden transition-all">
               <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <CardTitle className="text-xl font-bold">Scheduled Orders</CardTitle>
@@ -199,10 +199,10 @@ export default function OrdersPage() {
                           <TableCell className="font-semibold text-slate-900 text-xs md:text-sm">${order.totalAmount.toFixed(2)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-lg border-slate-200 font-bold text-[10px] md:text-xs">
+                              <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-xl border-slate-200 font-bold text-[10px] md:text-xs active:scale-95">
                                 View
                               </Button>
-                              <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-lg border-slate-200 font-bold text-[10px] md:text-xs">
+                              <Button size="sm" variant="outline" className="h-8 md:h-9 px-3 md:px-4 rounded-xl border-slate-200 font-bold text-[10px] md:text-xs active:scale-95">
                                 Edit
                               </Button>
                               <Button
@@ -224,7 +224,7 @@ export default function OrdersPage() {
           </TabsContent>
 
           <TabsContent value="history" className="outline-none">
-            <Card className="rounded-[24px] border-slate-100 shadow-sm overflow-hidden">
+            <Card className="rounded-[32px] border-slate-100 shadow-sm overflow-hidden transition-all">
               <CardHeader>
                 <CardTitle className="text-xl font-bold">Order History</CardTitle>
                 <CardDescription>View your past orders</CardDescription>

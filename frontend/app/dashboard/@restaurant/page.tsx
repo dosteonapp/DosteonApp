@@ -168,9 +168,9 @@ export default function RestaurantDashboardPage() {
                 {activities.map((activity) => (
                     <div 
                         key={activity.id} 
-                        className="bg-white border border-slate-100/80 rounded-[28px] p-6 md:p-8 flex items-center gap-7 transition-all hover:border-[#3B59DA]/20 hover:shadow-[0_20px_60px_rgba(59,89,218,0.05)] hover:bg-white group shadow-[0_4px_12px_rgba(0,0,0,0.01)]"
+                        className="bg-white border border-slate-100/80 rounded-[24px] p-6 md:p-8 flex items-center gap-7 transition-all hover:border-[#3B59DA]/20 hover:shadow-[0_20px_60px_rgba(59,89,218,0.05)] hover:bg-white group shadow-[0_4px_12px_rgba(0,0,0,0.01)] active:scale-[0.98] cursor-pointer"
                     >
-                        <div className="h-14 w-14 rounded-[18px] bg-indigo-50/50 flex items-center justify-center shrink-0 border border-indigo-100/50 group-hover:bg-indigo-50 transition-all group-hover:scale-105">
+                        <div className="h-14 w-14 rounded-2xl bg-indigo-50/50 flex items-center justify-center shrink-0 border border-indigo-100/50 group-hover:bg-indigo-50 transition-all group-hover:scale-105">
                             <Package className="h-7 w-7 text-[#3B59DA]/70 group-hover:text-[#3B59DA] transition-colors" />
                         </div>
                         <div className="flex-1 min-w-0 space-y-1.5">

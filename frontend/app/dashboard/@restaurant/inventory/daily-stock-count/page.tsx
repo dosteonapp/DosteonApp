@@ -283,7 +283,7 @@ function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
             <div className="flex flex-col lg:flex-row lg:items-center gap-8 justify-between w-full">
                 {/* Product Info */}
                 <div className="flex items-center gap-8 flex-1 min-w-[280px]">
-                    <div className="h-20 w-20 md:h-24 md:w-24 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden shadow-sm">
+                    <div className="h-20 w-20 md:h-24 md:w-24 rounded-[28px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden shadow-sm transition-transform group-hover:scale-105">
                         {item.imageUrl ? (
                             <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                         ) : (
@@ -392,29 +392,31 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
         >
             <div className="space-y-10">
                 {/* Item Preview Card */}
-                <div className="bg-white border border-slate-100 rounded-[24px] p-8 flex items-center justify-between gap-10 shadow-sm relative overflow-hidden group">
-                    <div className="flex items-center gap-8 relative z-10">
-                        <div className="h-28 w-28 rounded-[24px] overflow-hidden border border-slate-50 shadow-xl shrink-0 transition-transform group-hover:scale-105 duration-500">
+                <div className="bg-white border border-slate-100 rounded-[28px] p-8 flex items-center justify-between shadow-sm transition-all hover:shadow-md group">
+                    <div className="flex items-center gap-8">
+                        <div className="h-32 w-32 rounded-[20px] overflow-hidden border border-slate-50 bg-white shrink-0 shadow-lg transition-transform group-hover:scale-105 duration-500">
                             {item.imageUrl ? (
                                 <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                             ) : (
-                                <div className="h-full w-full bg-slate-50 flex items-center justify-center text-slate-200">
-                                    <Package className="h-12 w-12" />
+                                <div className="h-full w-full bg-slate-50 flex items-center justify-center text-slate-100">
+                                    <Package className="h-14 w-14" />
                                 </div>
                             )}
                         </div>
                         <div className="space-y-3">
-                            <InriaHeading className="text-[28px] font-bold leading-none">{item.name}</InriaHeading>
+                            <h4 className="text-[28px] font-bold text-[#1E293B] tracking-tight font-figtree group-hover:text-[#3B59DA] transition-colors">{item.name}</h4>
                             <div className="flex items-center gap-3">
-                                <FigtreeText className="text-[13px] font-bold uppercase tracking-widest leading-none">SKU ID: {item.id}</FigtreeText>
-                                <div className="h-1.5 w-1.5 rounded-full bg-slate-200" />
-                                <Badge className="bg-[#EFF6FF] text-[#3B59DA] border-none font-bold text-[11px] rounded-lg uppercase px-3 py-1 font-figtree tracking-widest leading-none">{item.category}</Badge>
+                                <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest font-figtree leading-none">SKU ID: {item.id}</span>
+                                <span className="text-slate-200 text-xs font-bold leading-none">•</span>
+                                <Badge variant="outline" className="text-slate-500 font-bold text-[11px] px-4 py-1.5 rounded-xl border-slate-200 shadow-none font-figtree uppercase tracking-widest leading-none">
+                                    {item.category}
+                                </Badge>
                             </div>
                         </div>
                     </div>
-                    <div className="text-right shrink-0 relative z-10">
-                         <FigtreeText className="text-[13px] font-black uppercase tracking-[0.2em] mb-2 leading-none">Current Quantity</FigtreeText>
-                         <p className="text-[42px] font-black text-[#1E293B] tracking-tighter leading-none font-figtree">{item.yesterdayClosing} <span className="text-[20px] text-slate-300 ml-1">kg</span></p>
+                    <div className="text-right flex flex-col items-end">
+                         <FigtreeText className="text-[13px] font-bold text-slate-300 uppercase tracking-widest font-figtree mb-2">Current Quantity</FigtreeText>
+                         <p className="text-[36px] font-black text-[#1E293B] tracking-tighter leading-none font-figtree tabular-nums">{item.yesterdayClosing} <span className="text-[20px] font-bold text-slate-400 ml-1">kg</span></p>
                     </div>
                 </div>
 
@@ -427,7 +429,7 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
                             value={incoming} 
                             onChange={(e) => handleIncomingChange(e.target.value)}
                             placeholder={`24 kg`} 
-                            className="h-[72px] text-[24px] font-bold border-slate-200 bg-white rounded-[18px] px-8 focus:ring-[#3B59DA]/10 focus:border-[#3B59DA] text-[#1E293B] font-figtree transition-all shadow-sm" 
+                            className="h-[72px] text-[24px] font-bold border-slate-200 bg-white rounded-xl px-8 focus:ring-[#3B59DA]/10 focus:border-[#3B59DA] text-[#1E293B] font-figtree transition-all shadow-sm" 
                         />
                     </div>
                     <div className="space-y-4">
@@ -436,7 +438,7 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
                             <Input 
                                 readOnly
                                 value={`${total} kg`} 
-                                className="h-[72px] text-[24px] font-bold border-[#10B981] bg-white rounded-[18px] px-8 text-[#10B981] font-figtree shadow-sm border-2" 
+                                className="h-[72px] text-[24px] font-bold border-[#10B981] bg-white rounded-xl px-8 text-[#10B981] font-figtree shadow-sm border-2" 
                             />
                             <div className="absolute right-6 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-[#ECFDF5] flex items-center justify-center border border-[#D1FAE5]">
                                 <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
