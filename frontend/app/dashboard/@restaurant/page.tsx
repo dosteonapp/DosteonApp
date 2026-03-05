@@ -157,10 +157,7 @@ export default function RestaurantDashboardPage() {
 
         {/* Recent Activities Section - Wrapped in a single integrated card as per Design Mockup */}
         <div className="relative mt-8">
-            <div className={cn(
-                "transition-all duration-700",
-                !isOpen && "blur-xl grayscale scale-[0.98] opacity-60 pointer-events-none"
-            )}>
+            <div>
                 <PrimarySurfaceCard className="p-8 md:p-12">
                     <div className="space-y-10">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-50 pb-8">
@@ -206,19 +203,6 @@ export default function RestaurantDashboardPage() {
                 </PrimarySurfaceCard>
             </div>
             
-            {!isOpen && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center">
-                    <div className="bg-white/40 backdrop-blur-sm border border-white/20 p-8 rounded-[12px] shadow-sm flex flex-col items-center text-center space-y-3 max-w-sm">
-                        <div className="h-12 w-12 rounded-full bg-slate-900/10 flex items-center justify-center">
-                            <Lock className="h-6 w-6 text-slate-900" />
-                        </div>
-                        <h4 className="text-[18px] font-bold text-slate-900 font-figtree">Locked Dashboard</h4>
-                        <FigtreeText className="text-slate-600 text-[14px] font-medium leading-relaxed">
-                            Please complete your daily stock count to see your most recent activities.
-                        </FigtreeText>
-                    </div>
-                </div>
-            )}
         </div>
     </AppContainer>
   );
