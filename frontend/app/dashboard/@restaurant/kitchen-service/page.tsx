@@ -103,9 +103,9 @@ export default function KitchenServicePage() {
                 description="Manage your kitchen service here, including ingredient usage as you prepare food for your customers."
                 isLocked={false}
                 topAction={
-                    <div className="flex items-center gap-2.5 px-4 py-2 lg:px-5 lg:py-2.5 rounded-full border border-emerald-500/20 bg-emerald-50 text-emerald-600 shadow-sm border-none backdrop-blur-sm">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <FigtreeText className="font-semibold text-[12px] uppercase tracking-[0.15em] leading-none text-emerald-600">Live Service</FigtreeText>
+                    <div className="flex items-center gap-1.5 md:gap-2.5 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-500/10 shadow-sm border-none backdrop-blur-sm scale-90 md:scale-100 origin-right transition-transform">
+                        <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <FigtreeText className="font-semibold text-[10px] md:text-[12px] uppercase tracking-[0.1em] md:tracking-[0.15em] leading-none text-emerald-600">Live Service</FigtreeText>
                     </div>
                 }
             >
@@ -115,7 +115,7 @@ export default function KitchenServicePage() {
                   subtext="Lunch service in progress" 
                   icon={Utensils}
                   variant="green"
-                  className="w-36 md:w-52 lg:w-60 h-[150px] md:h-[200px] lg:h-[240px] shadow-sm"
+                  className="flex-1 min-w-[150px] md:min-w-[180px] lg:min-w-[220px] h-[160px] md:h-[190px] shadow-sm"
                 />
                 <UnifiedStatCard 
                   label="Critical Ingredients" 
@@ -123,7 +123,7 @@ export default function KitchenServicePage() {
                   subtext="Nothing urgent right now" 
                   icon={Package}
                   variant="neutral"
-                  className="w-36 md:w-52 lg:w-60 h-[150px] md:h-[200px] lg:h-[240px] shadow-sm"
+                  className="flex-1 min-w-[150px] md:min-w-[180px] lg:min-w-[220px] h-[160px] md:h-[190px] shadow-sm"
                 />
             </UnifiedHeroSurface>
         ) : (

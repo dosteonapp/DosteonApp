@@ -104,8 +104,8 @@ export default function InventoryPage() {
                 <FigtreeText className="text-[12px] font-bold text-[#3B59DA] tracking-tight uppercase">16 items need counting</FigtreeText>
             </div>
         ) : undefined}
-        topAction={isOpen ? (
-            <div className="flex items-center gap-4">
+        topAction={isOpen && (
+            <div className="flex items-center gap-3">
                 <Button variant="outline" className="h-10 px-5 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-2.5 transition-all shadow-sm active:scale-95 font-figtree text-sm">
                     <RefreshIcon className="h-4 w-4" /> Update Inventory
                 </Button>
@@ -115,7 +115,7 @@ export default function InventoryPage() {
                     </Link>
                 </Button>
             </div>
-        ) : undefined}
+        )}
         action={!isOpen ? (
             <Button className="w-fit h-14 px-10 rounded-[8px] bg-white text-[#3B59DA] hover:bg-slate-50 font-bold gap-4 transition-all shadow-xl shadow-indigo-900/10 font-figtree active:scale-95 group text-[18px] border-none" asChild>
                 <Link href="/dashboard/inventory/daily-stock-count">

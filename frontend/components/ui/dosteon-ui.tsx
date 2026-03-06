@@ -157,7 +157,8 @@ export const UnifiedHeroSurface = ({
       "relative rounded-[10px] border transition-all duration-700 w-full flex overflow-hidden",
       padding ? padding : (isDense ? "p-4 md:p-6" : "p-6 md:p-10"),
       minHeight ? minHeight : (isDense ? "min-h-[300px]" : "min-h-[340px]"),
-      isInline && !isDense && !padding && "lg:pr-6", // Getting that 24px right margin on desktop
+      // Reserve space for topAction on desktop to prevent overlap
+      topAction && !isSplit && "lg:pr-14", 
       alignItems === 'center' ? "items-center" : "items-stretch",
       backgroundColor ? backgroundColor : (isLocked 
         ? "bg-gradient-to-br from-[#2E46BA] via-[#6366F1] to-[#7C3AED] text-white shadow-2xl" 
@@ -165,6 +166,12 @@ export const UnifiedHeroSurface = ({
       borderColor ? borderColor : (isLocked ? "border-white/10" : "border-indigo-100"),
       className
     )}>
+      {/* Absolute topAction slot for all variants (except split) */}
+      {topAction && !isSplit && (
+        <div className="absolute top-4 right-4 md:top-6 md:right-8 z-30">
+          {topAction}
+        </div>
+      )}
       {/* Background Decor */}
       {isLocked && (
         <div className="absolute top-0 right-0 w-full h-full pointer-events-none z-0 overflow-hidden">
@@ -184,11 +191,14 @@ export const UnifiedHeroSurface = ({
       {/* Inline Layout (Kitchen/Home Style) */}
       {isInline ? (
         <div className={cn(
-          "relative flex flex-col md:flex-row w-full flex-1 z-10 gap-5 md:gap-8 lg:gap-14",
-          alignItems === 'center' ? "items-center justify-center h-full" : (padding ? "items-start pt-0" : "items-start pt-2 md:pt-4"),
-          topAction && "md:pr-[120px] lg:pr-[150px]"
+          "relative flex flex-col xl:flex-row w-full flex-1 z-10 gap-10 xl:gap-14",
+          alignItems === 'center' ? "items-center justify-center h-full" : (padding ? "items-start pt-0" : "items-start pt-2 xl:pt-4"),
+          topAction && "xl:pr-[150px]"
         )}>
-           <div className="flex flex-col space-y-4 md:max-w-md lg:max-w-lg shrink-0">
+           <div className={cn(
+             "flex flex-col space-y-4 md:max-w-md xl:max-w-lg shrink-0",
+             topAction && "pr-24 xl:pr-0"
+           )}>
               <div className="space-y-3">
                  <h1 className={cn(
                    "font-inria text-[26px] md:text-[34px] font-bold tracking-tight leading-tight",
@@ -207,20 +217,15 @@ export const UnifiedHeroSurface = ({
               {action && <div className="w-fit pt-2">{action}</div>}
            </div>
 
-           {/* Section 2: Cards next to text */}
+           {/* Section 2: Cards area (Full width horizontal on mobile/tablet/iPad Pro, flex-1 on desktop) */}
            <div className={cn(
-             "flex flex-col sm:flex-row flex-wrap gap-2 flex-1 justify-start",
+             "flex flex-row flex-wrap gap-4 w-full xl:flex-1 justify-start",
              alignItems === 'center' ? "items-center" : "items-start"
            )}>
               {children}
            </div>
 
-           {/* Section 3: Status Badge Fallback */}
-           {topAction && (
-             <div className="absolute top-6 right-6 md:top-8 md:right-10 z-20">
-               {topAction}
-             </div>
-           )}
+            {/* topAction handled globally now */}
         </div>
       ) : (
         /* Standard & Split Layouts */
@@ -247,11 +252,10 @@ export const UnifiedHeroSurface = ({
                 )}>{subtitle}</FigtreeText>
              </div>
 
-             {/* Top Right Content */}
-             {(topAction || (isSplit && badge)) && (
+             {/* Top Right Content (Moved to global absolute corner) */}
+             {isSplit && badge && (
                <div className="flex items-center gap-3 shrink-0 pt-2">
-                 {topAction}
-                 {isSplit && badge && <div className="shrink-0">{badge}</div>}
+                 <div className="shrink-0">{badge}</div>
                </div>
              )}
           </div>
