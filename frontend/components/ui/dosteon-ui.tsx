@@ -185,7 +185,8 @@ export const UnifiedHeroSurface = ({
       {isInline ? (
         <div className={cn(
           "relative flex flex-col md:flex-row w-full flex-1 z-10 gap-5 md:gap-8 lg:gap-14",
-          alignItems === 'center' ? "items-center justify-center h-full" : (padding ? "items-start pt-0" : "items-start pt-2 md:pt-4")
+          alignItems === 'center' ? "items-center justify-center h-full" : (padding ? "items-start pt-0" : "items-start pt-2 md:pt-4"),
+          topAction && "md:pr-[120px] lg:pr-[150px]"
         )}>
            <div className="flex flex-col space-y-4 md:max-w-md lg:max-w-lg shrink-0">
               <div className="space-y-3">
