@@ -244,6 +244,8 @@ export function useRestaurantDayStatus() {
     isOpening: status?.state === DayState.OPENING_IN_PROGRESS,
     isClosing: status?.state === DayState.CLOSING_IN_PROGRESS,
     isLocked: status?.state !== DayState.OPEN,
+    isClosed: status?.state === DayState.CLOSED,
+    isPreOpen: status?.state === DayState.PRE_OPEN,
     isClosingTimeReached: (() => {
         const now = new Date();
         return now.getHours() >= 19; // 7 PM

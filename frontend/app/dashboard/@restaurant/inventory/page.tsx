@@ -93,7 +93,7 @@ export default function InventoryPage() {
         minHeight={!isOpen ? "min-h-[380px]" : "min-h-[260px]"}
         backgroundColor={!isOpen ? undefined : "bg-[#f5f6ff]"}
         borderColor={!isOpen ? undefined : "border-[#98a6f9]"}
-        title={!isOpen ? "Opening Prep" : "Inventory"}
+        title={!isOpen ? "Closed" : "Inventory"}
         subtitle={isOpen ? "Manage your item stock levels and categories" : undefined}
         description={!isOpen ? "Do your opening stock count before starting your restaurant operations." : undefined}
         isLocked={!isOpen}
@@ -304,7 +304,7 @@ function InventoryLockedOverlay() {
                 </div>
                 
                 <div className="space-y-4 max-w-[440px] text-center mb-12">
-                    <h2 className="text-[30px] md:text-[36px] font-bold text-[#1E293B] tracking-tight leading-tight font-inria">Kitchen Service is Locked</h2>
+                    <h2 className="text-[30px] md:text-[36px] font-bold text-[#1E293B] tracking-tight leading-tight font-inria">Kitchen Service is Closed</h2>
                     <FigtreeText className="text-slate-600/90 text-[15px] md:text-[17px] leading-relaxed font-bold max-w-[360px] mx-auto opacity-80">
                         The Kitchen Service workflow is not yet available. Please do your daily stock count before you proceed to Kitchen Service.
                     </FigtreeText>

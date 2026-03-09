@@ -57,7 +57,7 @@ import {
 
 export default function ClosingPage() {
   const lifecycle = useRestaurantDayLifecycle();
-  const { isOpen } = lifecycle;
+  const { isOpen, isClosing, isClosed } = lifecycle;
   const { isSidebarCollapsed } = useSidebar();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -121,11 +121,7 @@ export default function ClosingPage() {
 
         {/* Hero Section or Locked State */}
         <div className="w-full">
-            {isOpen ? (
-                <div className="flex items-start py-20 min-h-[60vh]">
-                     <ClosingLockedCard lifecycle={lifecycle} />
-                </div>
-            ) : (
+            {isClosing ? (
                 <div className="space-y-12">
                     <UnifiedHeroSurface
                         variant="standard"
@@ -239,11 +235,15 @@ export default function ClosingPage() {
                         </div>
                     </PrimarySurfaceCard>
                 </div>
+            ) : (
+                <div className="flex items-start py-20 min-h-[60vh]">
+                     <ClosingLockedCard lifecycle={lifecycle} />
+                </div>
             )}
         </div>
 
         {/* Fixed Closing Action Footer */}
-        {!isOpen && (
+        {isClosing && (
             <div 
                 className={cn(
                     "fixed bottom-0 right-0 left-0 transition-all duration-500 z-[100] p-0 bg-white/90 backdrop-blur-2xl border-t border-slate-100 flex items-center justify-end shadow-[0_-20px_50px_rgba(0,0,0,0.05)]",
@@ -281,97 +281,6 @@ export default function ClosingPage() {
         />
     </AppContainer>
   );
-}
-
-function ClosingHeroOpen({ summary }: { summary: any }) {
-    const progress = Math.round((summary.itemsChecked / summary.itemsTotal) * 100);
-    
-    return (
-        <div className="relative rounded-[32px] p-10 md:p-14 lg:p-16 border border-[#3B59DA]/20 bg-gradient-to-br from-[#1E1B4B] via-[#3730A3] to-[#4F46E5] text-white flex flex-col lg:flex-row gap-12 items-center justify-between shadow-2xl w-full min-h-[400px] overflow-hidden">
-            {/* Abstract Background Design */}
-            <div className="absolute top-0 right-0 w-full h-full pointer-events-none opacity-[0.08] z-0">
-                <div className="absolute -top-1/4 -right-1/4 w-[900px] h-[900px] bg-white rounded-full blur-[140px]" />
-                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-200 rounded-full blur-[100px]" />
-            </div>
-
-            <div className="flex flex-col justify-center text-left max-w-xl shrink-0 z-10 space-y-12">
-                <div className="space-y-4">
-                     <h2 className="text-[44px] md:text-[54px] font-bold tracking-tight leading-none text-white font-figtree">End of Day Count</h2>
-                     <p className="text-white/80 text-[18px] md:text-[20px] font-medium leading-relaxed font-figtree">
-                        Verify remaining stock to finalize daily usage reports.
-                     </p>
-                </div>
-                
-                <div className="flex items-center gap-10">
-                    {/* Circular Progress from Screenshot 2 */}
-                    <div className="relative h-32 w-32 shrink-0">
-                        <svg className="h-full w-full transform -rotate-90">
-                            <circle
-                                cx="64"
-                                cy="64"
-                                r="56"
-                                stroke="rgba(255,255,255,0.1)"
-                                strokeWidth="8"
-                                fill="transparent"
-                            />
-                            <circle
-                                cx="64"
-                                cy="64"
-                                r="56"
-                                stroke="white"
-                                strokeWidth="8"
-                                fill="transparent"
-                                strokeDasharray={351.85}
-                                strokeDashoffset={351.85 - (351.85 * 30) / 100}
-                                strokeLinecap="round"
-                                className="transition-all duration-1000 ease-in-out"
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-[22px] font-black font-figtree">30%</span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        <h3 className="text-[24px] font-bold text-white font-figtree">Progress: {summary.itemsChecked} of {summary.itemsTotal} Items Counted</h3>
-                        <p className="text-white/60 font-medium text-[15px] font-figtree leading-relaxed">Finish closing stock count to complete your restaurant operations for the day</p>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 flex-1 w-full lg:max-w-xl z-10">
-                <ClosingStatCard 
-                  label="Items Used" 
-                  value="17" 
-                  subtext="Usage intensity" 
-                  icon={Droplets}
-                />
-                <ClosingStatCard 
-                  label="Items Wasted" 
-                  value="5" 
-                  subtext="Reduced today" 
-                  icon={Trash2}
-                />
-            </div>
-        </div>
-    );
-}
-
-function ClosingStatCard({ label, value, subtext, icon: Icon }: { label: string, value: string, subtext: string, icon: any }) {
-    return (
-        <Card className="rounded-[8px] border-none bg-white p-8 space-y-6 shadow-xl hover:scale-[1.02] transition-all duration-300 group font-figtree">
-            <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-[8px] bg-[#F8F9FF] text-[#3B59DA] flex items-center justify-center transition-colors shadow-sm group-hover:bg-indigo-50">
-                    <Icon className="h-6 w-6" />
-                </div>
-                <p className="text-[14px] font-bold text-[#64748B] font-figtree uppercase tracking-widest">{label}</p>
-            </div>
-            <div className="space-y-2 overflow-hidden">
-                <div className="text-[44px] font-black tracking-tighter text-[#1E293B] group-hover:text-[#3B59DA] transition-all leading-none">{value}</div>
-                <div className="text-[14px] font-semibold text-slate-400 font-figtree leading-relaxed">{subtext}</div>
-            </div>
-        </Card>
-    );
 }
 
 function ClosingCountRow({ 
@@ -450,7 +359,7 @@ function ClosingCountRow({
 }
 
 function ClosingLockedCard({ lifecycle }: { lifecycle: any }) {
-    const { currentTime, targetClosingTime, isClosingTimeReached, startClosing } = lifecycle;
+    const { currentTime, targetClosingTime, isClosingTimeReached, startClosing, isClosed, isOpen } = lifecycle;
     
     return (
         <PrimarySurfaceCard className="w-full max-w-[800px] mx-auto p-8 md:p-16 flex flex-col items-center animate-in fade-in zoom-in-95 duration-500 relative overflow-hidden font-figtree shadow-[0_32px_120px_rgba(15,23,42,0.08)] rounded-[10px]">
@@ -460,13 +369,16 @@ function ClosingLockedCard({ lifecycle }: { lifecycle: any }) {
             </div>
             
             <div className="text-center space-y-4 mb-10 md:mb-14 relative z-10">
-                <h2 className="text-[28px] md:text-[34px] font-bold leading-none text-[#1E293B] font-figtree">
-                    {isClosingTimeReached ? "Closing is Ready" : "Closing is Locked"}
+                <h2 className="text-[28px] md:text-[34px] font-bold leading-none text-[#1E293B] font-figtree uppercase tracking-tight">
+                    {isClosed ? "Day is Closed" : (isClosingTimeReached && isOpen ? "Closing is Ready" : "Closed")}
                 </h2>
                 <FigtreeText className="font-medium text-[14px] md:text-[16px] max-w-sm mx-auto leading-relaxed text-slate-500">
-                    {isClosingTimeReached 
-                        ? "The operations day has ended. You can now start the final stock reconciliation."
-                        : "The closing workflow is not yet available. Please ensure all daily prerequisites are met."
+                    {isClosed 
+                        ? "The operations day has ended and reports have been finalized."
+                        : (isClosingTimeReached && isOpen
+                            ? "The operations day has ended. You can now start the final stock reconciliation."
+                            : "The closing workflow is not yet available. Please ensure all daily prerequisites are met."
+                        )
                     }
                 </FigtreeText>
             </div>
@@ -504,7 +416,7 @@ function ClosingLockedCard({ lifecycle }: { lifecycle: any }) {
                             <FigtreeText className="text-[13px] md:text-[14px] font-medium text-slate-400">Currently {currentTime}</FigtreeText>
                         </div>
                     </div>
-                    {isClosingTimeReached ? (
+                    {(isClosingTimeReached && isOpen) ? (
                         <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                             <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-white" />
                         </div>
@@ -526,15 +438,15 @@ function ClosingLockedCard({ lifecycle }: { lifecycle: any }) {
             
             <Button 
                 onClick={startClosing}
-                disabled={!isClosingTimeReached}
+                disabled={!isClosingTimeReached || isClosed || !isOpen}
                 className={cn(
                     "w-full h-16 md:h-20 rounded-[8px] font-bold text-[17px] md:text-[19px] transition-all active:scale-95 group relative z-10 font-figtree",
-                    isClosingTimeReached 
+                    (isClosingTimeReached && isOpen && !isClosed)
                         ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-[0_20px_40px_-15px_rgba(59,89,218,0.3)] border-none" 
                         : "bg-slate-100 text-slate-400 border-none shadow-none cursor-not-allowed"
                 )}
             >
-                {isClosingTimeReached ? "Start Final Stock Count" : "Closing Unavailable"}
+                {isClosed ? "Day is Closed" : ( (isClosingTimeReached && isOpen) ? "Start Final Stock Count" : "Closing Unavailable")}
             </Button>
         </PrimarySurfaceCard>
     );
