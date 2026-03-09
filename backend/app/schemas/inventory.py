@@ -1,41 +1,36 @@
 from pydantic import BaseModel
-from typing import Optional, Union, Any
-from enum import Enum
+from typing import Optional
+from uuid import UUID
 from datetime import datetime
 
-class UnitType(str, Enum):
-    KILOGRAM = "kg"
-    GRAM = "g"
-    LITER = "liter"
-    MILLILITER = "ml"
-    PIECE = "piece"
-    BOX = "box"
-
-class InventoryBase(BaseModel):
+class InventoryItemBase(BaseModel):
     name: str
-    category: Union[str, dict]
-    currentStock: float
-    branded: Optional[str] = None
-    brandName: Optional[str] = None
-    unit: UnitType
-    minimumLevel: float
-    storageLocation: Optional[str] = None
-    expiryDate: Optional[datetime] = None
-    stockLevel: Optional[str] = None # derivable
+    sku: Optional[str] = None
+    category: Optional[str] = None
+    brand: Optional[str] = None
+    unit: str = "unit"
+    current_stock: float = 0
+    min_level: float = 0
+    restock_point: float = 0
+    cost_per_unit: float = 0
+    image_url: Optional[str] = None
+    location: Optional[str] = None
 
-class InventoryCreate(InventoryBase):
+class InventoryItemCreate(InventoryItemBase):
     pass
 
-class InventoryUpdate(BaseModel):
+class InventoryItemUpdate(BaseModel):
     name: Optional[str] = None
-    category: Optional[Union[str, dict]] = None
-    currentStock: Optional[float] = None
-    unit: Optional[UnitType] = None
-    minimumLevel: Optional[float] = None
+    current_stock: Optional[float] = None
+    min_level: Optional[float] = None
+    restock_point: Optional[float] = None
+    cost_per_unit: Optional[float] = None
+    image_url: Optional[str] = None
+    location: Optional[str] = None
 
-class Inventory(InventoryBase):
-    id: str
-    user_id: str
+class InventoryItem(InventoryItemBase):
+    id: UUID
+    organization_id: UUID
     created_at: datetime
     updated_at: datetime
 

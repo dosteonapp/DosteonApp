@@ -59,5 +59,10 @@ class RoleChecker:
         return user
 
 # Helper instances
-get_restaurant_user = RoleChecker(["restaurant"])
+# Updated roles for the Restaurant Focus V1
+RESTAURANT_ROLES = ["admin", "manager", "staff", "restaurant"]
+
+get_restaurant_user = RoleChecker(RESTAURANT_ROLES)
+get_admin_user = RoleChecker(["admin"])
+get_manager_user = RoleChecker(["admin", "manager"])
 get_supplier_user = RoleChecker(["supplier"])

@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, field_validator
 import re
 from typing import Optional, Literal
 from datetime import datetime
+from uuid import UUID
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -10,7 +11,10 @@ class UserSignup(UserBase):
     password: str
     first_name: str
     last_name: str
-    role: Literal["restaurant", "supplier"]
+    # 'admin' usually creates the org, 'manager'/'staff' usually join one
+    role: Literal["admin", "manager", "staff", "restaurant", "supplier"] 
+    organization_name: Optional[str] = None # Provided if creating a new org
+    invite_code: Optional[str] = None # Provided if joining an existing org
 
     @field_validator("password")
     @classmethod
@@ -51,15 +55,25 @@ class PasswordResetConfirm(BaseModel):
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
-
 class UserLogin(UserBase):
     password: str
 
+class OrgSettings(BaseModel):
+    opening_time: str = "08:00"
+    closing_time: str = "22:00"
+
+class OrganizationBase(BaseModel):
+    name: str
+    type: str = "restaurant"
+    settings: OrgSettings = OrgSettings()
+
 class Profile(UserBase):
-    id: str
-    role: Literal["restaurant", "supplier"]
+    id: UUID
+    role: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    organization_id: Optional[UUID] = None
+    team_id: Optional[UUID] = None
     created_at: Optional[datetime] = None
 
 class Token(BaseModel):
