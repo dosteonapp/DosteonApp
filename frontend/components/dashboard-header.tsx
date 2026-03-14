@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Bell, Calendar, ChevronRight, ArrowLeft, Menu } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -14,23 +14,42 @@ export function DashboardHeader() {
   const searchParams = useSearchParams();
   const { toggleSidebar } = useSidebar();
   
+  // Real-time Clock State
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(date);
+  };
+
+  const formatTime = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).format(date);
+  };
+  
   const getBreadcrumbs = (path: string) => {
-    // Inventory Breadcrumbs
-    if (path === "/dashboard/inventory/daily-stock-count") {
-      return ["Inventory", "Daily Stock Count"];
-    }
+    if (path === "/dashboard/inventory/daily-stock-count") return ["Inventory", "Daily Stock Count"];
     if (path === "/dashboard/inventory/new") {
       const isEdit = searchParams.get("edit");
       return ["Inventory", isEdit ? "Edit Item" : "Add New Item"];
     }
-    if (path === "/dashboard/inventory/items") {
-      return ["Inventory", "Master Registry"];
-    }
-    if (path.startsWith("/dashboard/inventory/") && 
-        path !== "/dashboard/inventory/items") {
-      return ["Inventory", "Item Details"];
-    }
-
+    if (path === "/dashboard/inventory/items") return ["Inventory", "Master Registry"];
+    if (path.startsWith("/dashboard/inventory/") && path !== "/dashboard/inventory/items") return ["Inventory", "Item Details"];
     if (path === "/dashboard") return ["Home"];
     if (path.startsWith("/dashboard/kitchen-service")) return ["Kitchen Service"];
     if (path.startsWith("/dashboard/inventory")) return ["Inventory"];
@@ -41,19 +60,8 @@ export function DashboardHeader() {
       if (path.includes("/personal")) parts.push("Personal Details");
       if (path.includes("/business")) parts.push("Business Settings");
       if (path.includes("/notifications")) parts.push("Notification Settings");
-      
-      if (path.includes("/profile")) parts.push("Profile");
-      if (path.includes("/security")) parts.push("Security");
-      if (path.includes("/preferences")) parts.push("Preferences");
-      if (path.includes("/team")) parts.push("Team Management");
-      if (path.includes("/operations")) parts.push("Operations");
-      
       return parts;
     }
-    if (path.startsWith("/dashboard/orders")) return ["Orders"];
-    if (path.startsWith("/dashboard/finance")) return ["Finance"];
-    if (path.startsWith("/dashboard/suppliers")) return ["Suppliers"];
-    if (path.startsWith("/dashboard/analytics")) return ["Analytics"];
     return [];
   };
 
@@ -113,9 +121,9 @@ export function DashboardHeader() {
           <div className="hidden xl:flex items-center gap-4 bg-indigo-50/30 px-6 py-3.5 rounded-[22px] border border-indigo-100/30 shadow-sm hover:bg-white hover:border-indigo-100 transition-all group cursor-default">
             <Calendar className="h-5 w-5 text-[#3B59DA] group-hover:scale-110 transition-transform stroke-[2.5px]" />
             <div className="flex items-center gap-3 text-[14px] font-bold text-slate-500 font-figtree">
-              <span className="group-hover:text-slate-900 transition-colors">Tuesday, Jan 24, 2026</span>
+              <span className="group-hover:text-slate-900 transition-colors uppercase">{formatDate(currentTime)}</span>
               <div className="h-1.5 w-1.5 rounded-full bg-slate-200 group-hover:bg-[#3B59DA] transition-colors" />
-              <span className="tabular-nums text-[#3B59DA] group-hover:scale-105 transition-transform">09:43:23 AM</span>
+              <span className="tabular-nums text-[#3B59DA] group-hover:scale-105 transition-transform">{formatTime(currentTime)}</span>
             </div>
           </div>
           

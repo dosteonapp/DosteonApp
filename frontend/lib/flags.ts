@@ -4,8 +4,8 @@
  */
 
 export const FLAGS = {
-  useMocks: true,
-  bypassAuth: true,
+  useMocks: false,
+  bypassAuth: false,
 };
 
 export const useMocks = FLAGS.useMocks;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Formik, Form, Field, FormikHelpers } from "formik";
 import { Button } from "@/components/ui/button";
@@ -19,13 +19,22 @@ import { useAuth } from "@/context/AuthContext";
 import { EmailCheckScreen } from "@/components/auth/EmailCheckScreen";
 import { toast } from "sonner";
 import Image from "next/image";
+import { useEffect } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, sendMagicLink, authenticateWithOAuth } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'password' | 'magic'>('password');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("verified") === "true") {
+      toast.success("Email verified successfully! You can now sign in.");
+    }
+  }, [searchParams]);
+
 
   const handleSubmit = async (
     values: LoginValues,

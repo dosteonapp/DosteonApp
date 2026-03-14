@@ -45,13 +45,22 @@ const RoleProvider = ({
     }
 
     if (user?.role === "restaurant") {
+      // If the user hasn't set up an organization yet, show the onboarding flow
+      if (!user.organization_id && !user.onboardingSkipped) {
+        return onboarding;
+      }
       return restaurant;
     } else if (user?.role === "supplier") {
+      // Suppliers might have their own onboarding later, but for now redirect
+      if (!user.organization_id && !user.onboardingSkipped) {
+        return onboarding;
+      }
       return supplier;
     } else {
       return <div className="p-20 text-center font-black text-slate-400">Unauthorized: Invalid Role</div>;
     }
   };
+
 
   return <>{getRouteByUserStatus()}</>;
 };

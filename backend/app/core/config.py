@@ -12,6 +12,17 @@ class Settings(BaseSettings):
     
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    
+    # Auth Redirect (for Email Verification/Callback)
+    AUTH_REDIRECT_URL: str = Field("http://localhost:3000/auth/callback", validation_alias="AUTH_REDIRECT_URL")
+
+    # SMTP Settings (for manual email fallback)
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = Field(None, validation_alias="SMTP_USER")
+    SMTP_PASS: Optional[str] = Field(None, validation_alias="SMTP_PASS")
+    FROM_EMAIL: Optional[str] = Field(None, validation_alias="FROM_EMAIL")
+
 
     model_config = SettingsConfigDict(
         env_file=".env",

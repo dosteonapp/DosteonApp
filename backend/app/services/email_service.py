@@ -6,12 +6,12 @@ import os
 
 class EmailService:
     def __init__(self):
-        # These should be in your .env
-        self.smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-        self.smtp_port = int(os.getenv("SMTP_PORT", 587))
-        self.smtp_user = os.getenv("SMTP_USER") # Your Gmail
-        self.smtp_pass = os.getenv("SMTP_PASS") # Your Google App Password
-        self.from_email = os.getenv("FROM_EMAIL", self.smtp_user)
+        self.smtp_host = settings.SMTP_HOST
+        self.smtp_port = settings.SMTP_PORT
+        self.smtp_user = settings.SMTP_USER
+        self.smtp_pass = settings.SMTP_PASS
+        self.from_email = settings.FROM_EMAIL or self.smtp_user
+
 
     def send_verification_email(self, to_email: str, verification_link: str, first_name: str):
         if not self.smtp_user or not self.smtp_pass:

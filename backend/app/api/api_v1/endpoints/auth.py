@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Body
 from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest
 from app.services.auth_service import auth_service
 from app.api.deps import oauth2_scheme
@@ -16,6 +16,14 @@ async def login(login_data: UserLogin):
 @router.get("/me", response_model=UserMe)
 async def get_me(token: str = Depends(oauth2_scheme)):
     return await auth_service.get_me(token)
+
+@router.post("/onboard")
+async def onboard_user(
+    org_data: dict = Body(...), 
+    token: str = Depends(oauth2_scheme)
+):
+    """Initialize organization and link to user profile"""
+    return await auth_service.onboard_user(org_data, token)
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(request: RefreshTokenRequest):

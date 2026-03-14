@@ -14,6 +14,12 @@ async def get_running_low(current_user: dict = Depends(get_restaurant_user)):
     """Match frontend: Get items with stock below minimum level"""
     return await restaurant_service.get_low_stock_items(current_user["organization_id"])
 
+@router.get("/inventory/items")
+async def get_inventory_items(current_user: dict = Depends(get_restaurant_user)):
+    """Match frontend: Get all inventory items for the organization"""
+    return await restaurant_service.get_inventory_items(current_user["organization_id"])
+
+
 @router.get("/day-status")
 async def get_day_status(current_user: dict = Depends(get_restaurant_user)):
     """Get the current operational status of the day lifecycle"""

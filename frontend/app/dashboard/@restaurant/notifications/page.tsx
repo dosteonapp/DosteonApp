@@ -1,25 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
-  Bell, 
   CheckCircle2,
   AlertCircle,
   TriangleAlert,
   History,
   Info,
-  Package,
-  X,
-  User,
-  ShieldCheck,
-  TrendingUp,
-  LayoutDashboard
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 
 interface Notification {
   id: string;
@@ -31,53 +25,33 @@ interface Notification {
   by?: string;
 }
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    type: "success",
-    title: "Daily Stock Confirmed",
-    description: "Daily stock count has been successfully confirmed for all 18 items.",
-    time: "2 hours ago",
-    unread: true
-  },
-  {
-    id: "2",
-    type: "alert",
-    title: "Critical Stock Level",
-    description: "Item 'Tomatoes' has reached critical stock level (0.5kg remaining).",
-    time: "4 hours ago",
-    unread: true
-  },
-  {
-    id: "3",
-    type: "history",
-    title: "Login History",
-    description: "You logged in at 10:42 AM from a new Android device.",
-    time: "5 hours ago",
-    unread: false,
-    by: "@you"
-  },
-  {
-    id: "4",
-    type: "warning",
-    title: "Stock Discrepancy",
-    description: "Inventory mismatch flagged for 2 items in 'Meat & Poultry'.",
-    time: "1 day ago",
-    unread: false
-  },
-  {
-    id: "5",
-    type: "info",
-    title: "System Update",
-    description: "Restaurant module has been updated with new analytics features.",
-    time: "2 days ago",
-    unread: false
-  }
-];
-
 export default function NotificationsPage() {
+  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState("All");
   const filters = ["All", "Unread", "Alerts"];
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const data = await restaurantOpsService.getNotifications();
+        setNotifications(data);
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  if (loading) return <div className="p-10 text-center text-slate-400 font-figtree">Loading notifications...</div>;
+
+  const filteredNotifications = notifications.filter(n => {
+    if (filter === "Unread") return n.unread;
+    if (filter === "Alerts") return n.type === 'alert' || n.type === 'warning';
+    return true;
+  });
 
   return (
     <div className="max-w-4xl mx-auto w-full pb-20 font-figtree animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -108,15 +82,22 @@ export default function NotificationsPage() {
 
       {/* Notifications List */}
       <div className="space-y-3">
-        {MOCK_NOTIFICATIONS.filter(n => filter === "All" || (filter === "Unread" && n.unread) || (filter === "Alerts" && (n.type === 'alert' || n.type === 'warning'))).map((notification) => (
+        {filteredNotifications.map((notification) => (
           <NotificationItem key={notification.id} notification={notification} />
         ))}
+        {filteredNotifications.length === 0 && (
+          <div className="text-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No notifications found</p>
+          </div>
+        )}
       </div>
       
       {/* No More Notifications */}
-      <div className="mt-12 text-center py-10 border-t border-slate-50">
-        <p className="text-slate-300 text-xs font-bold uppercase tracking-widest">No more notifications</p>
-      </div>
+      {filteredNotifications.length > 0 && (
+        <div className="mt-12 text-center py-10 border-t border-slate-50">
+          <p className="text-slate-300 text-xs font-bold uppercase tracking-widest">No more notifications</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -130,7 +111,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
     info: { icon: Info, color: "text-sky-500", bg: "bg-sky-50" }
   };
 
-  const { icon: Icon, color, bg } = config[notification.type];
+  const { icon: Icon, color, bg } = config[notification.type] || config.info;
 
   return (
     <Card className={cn(
@@ -171,24 +152,5 @@ function NotificationItem({ notification }: { notification: Notification }) {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function ChevronRight(props: any) {
-  return (
-    <svg 
-      {...props} 
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
   );
 }

@@ -23,9 +23,14 @@ CREATE TABLE IF NOT EXISTS public.organizations (
 );
 
 -- Link profiles to organizations
-ALTER TABLE public.profiles 
-ADD CONSTRAINT fk_profiles_organization 
-FOREIGN KEY (organization_id) REFERENCES public.organizations(id);
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_profiles_organization') THEN
+        ALTER TABLE public.profiles 
+        ADD CONSTRAINT fk_profiles_organization 
+        FOREIGN KEY (organization_id) REFERENCES public.organizations(id);
+    END IF;
+END $$;
 
 -- 3. Create Teams
 CREATE TABLE IF NOT EXISTS public.teams (
@@ -36,25 +41,37 @@ CREATE TABLE IF NOT EXISTS public.teams (
 );
 
 -- Link profiles to teams
-ALTER TABLE public.profiles 
-ADD CONSTRAINT fk_profiles_team 
-FOREIGN KEY (team_id) REFERENCES public.teams(id);
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_profiles_team') THEN
+        ALTER TABLE public.profiles 
+        ADD CONSTRAINT fk_profiles_team 
+        FOREIGN KEY (team_id) REFERENCES public.teams(id);
+    END IF;
+END $$;
+
 
 -- 4. Enable RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
 
--- 5. Create basic policies
-CREATE POLICY "Profiles are viewable by self and org members" ON public.profiles
-    FOR SELECT USING (auth.uid() = id OR organization_id IN (
-        SELECT organization_id FROM public.profiles WHERE id = auth.uid()
-    ));
+-- 5. Create helper for RLS to avoid recursion
+CREATE OR REPLACE FUNCTION public.get_my_org_id()
+RETURNS uuid AS $$
+  SELECT organization_id FROM public.profiles WHERE id = auth.uid();
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+
+-- 6. Create basic policies
+CREATE POLICY "Users can view own profile" ON public.profiles
+    FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can view org members" ON public.profiles
+    FOR SELECT USING (organization_id = public.get_my_org_id());
 
 CREATE POLICY "Organizations are viewable by members" ON public.organizations
-    FOR SELECT USING (id IN (
-        SELECT organization_id FROM public.profiles WHERE id = auth.uid()
-    ));
+    FOR SELECT USING (id = public.get_my_org_id());
+
 
 -- 6. Auth Trigger to auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()

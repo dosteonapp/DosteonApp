@@ -34,6 +34,7 @@ This is the FastAPI backend server for the Dosteon project. It handles core auth
 
 4.  **Run in Development Mode**:
     ```bash
+    .\venv\Scripts\Activate.ps1
     uvicorn app.main:app --reload
     ```
     The server will start on `http://localhost:8000`. You can access the Interactive API docs at `http://localhost:8000/docs`.

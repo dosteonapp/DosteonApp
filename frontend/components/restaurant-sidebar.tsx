@@ -31,11 +31,15 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 import { useSidebar } from "@/context/SidebarContext";
+import { useUser } from "@/context/UserContext";
+
 
 export function RestaurantSidebar() {
   const pathname = usePathname();
   const { isSidebarOpen, isSidebarCollapsed, toggleCollapse } = useSidebar();
   const { status, isUserUnlocked } = useRestaurantDayLifecycle();
+  const { user } = useUser();
+
 
   useEffect(() => {
     document.documentElement.style.setProperty('--sidebar-width', isSidebarCollapsed ? '90px' : '300px');
@@ -155,12 +159,13 @@ export function RestaurantSidebar() {
         {/* Tier 2: Administrative Section (Space shared equally) */}
         <div className="space-y-4">
           {!isSidebarCollapsed && (
-            <h3 className="px-5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300 font-figtree">
+            <h3 className="px-5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 font-figtree">
               Systems
             </h3>
           )}
           <div className="flex flex-col gap-2">
               {systemsRoutes.map((route) => (
+
               <SidebarLink 
                   key={route.href} 
                   route={route} 
@@ -177,19 +182,29 @@ export function RestaurantSidebar() {
         <div className="space-y-8 pt-6 border-t border-slate-50">
           {!isSidebarCollapsed && (
             <div className="flex items-center gap-4 px-2 group cursor-pointer transition-all hover:translate-x-1">
-              <div className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-                  <img 
-                      src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=100" 
-                      alt="User" 
-                      className="object-cover h-full w-full"
-                  />
+              <div className="h-12 w-12 rounded-2xl bg-[#3B59DA]/10 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+                  {user?.imageUrl ? (
+                      <img 
+                          src={user.imageUrl} 
+                          alt="User" 
+                          className="object-cover h-full w-full"
+                      />
+                  ) : (
+                      <span className="text-[#3B59DA] font-bold text-lg uppercase tracking-wider">
+                          {(user?.first_name?.[0] || "") + (user?.last_name?.[0] || "") || "ST"}
+                      </span>
+                  )}
               </div>
+
               <div className="flex flex-col min-w-0">
-                  <span className="text-[14px] font-bold text-[#1E293B] truncate tracking-tight">Sherry Harper</span>
+                  <span className="text-[14px] font-bold text-[#1E293B] truncate tracking-tight">
+                    {user?.first_name} {user?.last_name}
+                  </span>
                   <span className="text-[11px] font-bold text-slate-400 capitalize flex items-center gap-1.5">
-                      Admin Manager
+                      {user?.role || "Staff"}
                   </span>
               </div>
+
             </div>
           )}
           <LogoutButton

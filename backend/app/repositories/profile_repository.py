@@ -18,4 +18,10 @@ class ProfileRepository:
         result = supabase.table(self.table).select("*").eq("email", email).single().execute()
         return result.data if result.data else None
 
+    def update(self, user_id: str, data: dict) -> dict:
+
+        result = supabase.table(self.table).update(data).eq("id", user_id).execute()
+        return result.data[0]
+
 profile_repo = ProfileRepository()
+

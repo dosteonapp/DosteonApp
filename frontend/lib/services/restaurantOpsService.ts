@@ -58,9 +58,17 @@ export interface RunningLowItem {
 }
 
 export const restaurantOpsService = {
+  getStats: async (): Promise<{ totalItems: number; healthy: number; low: number; critical: number }> => {
+    if (useMocks) {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      return { totalItems: 24, healthy: 12, low: 6, critical: 6 };
+    }
+    const { data } = await axiosInstance.get("/restaurant/stats");
+    return data;
+  },
+
   getOpeningChecklistItems: async (): Promise<OpeningStockItem[]> => {
     if (useMocks) {
-      // Return mock items with a slight delay
       await new Promise((resolve) => setTimeout(resolve, 800));
       return openingStockItems;
     }
@@ -69,9 +77,7 @@ export const restaurantOpsService = {
   },
 
   saveOpeningChecklistDraft: async (payload: any): Promise<{ success: boolean }> => {
-    if (useMocks) {
-      return { success: true };
-    }
+    if (useMocks) return { success: true };
     const { data } = await axiosInstance.post("/restaurant/opening-checklist/save-draft", payload);
     return data;
   },
@@ -84,6 +90,7 @@ export const restaurantOpsService = {
         const status = current ? JSON.parse(current) : { ...mockDayStatus };
         status.openingCompleted = true;
         status.shiftStatus = "Active";
+        status.state = "OPEN";
         localStorage.setItem('mock_day_status', JSON.stringify(status));
       }
       return { success: true };
@@ -108,38 +115,10 @@ export const restaurantOpsService = {
     if (useMocks) {
       await new Promise((resolve) => setTimeout(resolve, 600));
       return [
-        {
-          id: "act-1",
-          type: "confirm",
-          title: "Daily Stock Confirmed",
-          description: "[User Name] [sub-team, e.g., Kitchen] confirmed today's closing stock",
-          time: "2 hours ago"
-        },
-        {
-          id: "act-2",
-          type: "manual",
-          title: "Manual stock update",
-          description: "[User Name] added [x][quantity] of [product name] manually",
-          time: "2 hours ago"
-        },
-        {
-          id: "act-3",
-          type: "alert",
-          title: "Stock Discrepancy Alert",
-          description: "Inventory mismatch flagged for [product name]",
-          time: "2 hours ago",
-          actionLabel: "Fix Inventory",
-          actionHref: "/dashboard/inventory"
-        },
-        {
-          id: "act-4",
-          type: "reminder",
-          title: "Stock Review Reminder",
-          description: "Don't forget to confirm today's closing stock. This keeps your inventory accurate.",
-          time: "2 hours ago",
-          actionLabel: "Review Inventory",
-          actionHref: "/dashboard/closing"
-        }
+        { id: "act-1", type: "confirm", title: "Daily Stock Confirmed", description: "Kitchen team confirmed today's closing stock", time: "2 hours ago" },
+        { id: "act-2", type: "manual", title: "Manual stock update", description: "Admin added 5.5 kg of Fresh Tomato manually", time: "2 hours ago" },
+        { id: "act-3", type: "alert", title: "Stock Discrepancy Alert", description: "Inventory mismatch flagged for Whole Milk", time: "2 hours ago", actionLabel: "Fix Inventory", actionHref: "/dashboard/inventory" },
+        { id: "act-4", type: "reminder", title: "Stock Review Reminder", description: "Don't forget to confirm today's closing stock.", time: "2 hours ago", actionLabel: "Review Inventory", actionHref: "/dashboard/inventory" }
       ];
     }
     const { data } = await axiosInstance.get("/restaurant/recent-activities");
@@ -165,10 +144,6 @@ export const restaurantOpsService = {
       const allItems: KitchenItem[] = [
         { id: "k-1", name: "Purple Onions", remainingUnits: 12, unit: "units", status: "Critical" },
         { id: "k-2", name: "White Rice", remainingUnits: 45, unit: "units", status: "Healthy" },
-        { id: "k-3", name: "Sunflower Oil", remainingUnits: 8, unit: "units", status: "Running Low" },
-        { id: "k-4", name: "Tomatoes", remainingUnits: 5, unit: "units", status: "Critical" },
-        { id: "k-5", name: "Flour", remainingUnits: 100, unit: "units", status: "Healthy" },
-        { id: "k-6", name: "Chicken Breast", remainingUnits: 15, unit: "units", status: "Running Low" },
       ];
       return allItems.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
     }
@@ -178,31 +153,23 @@ export const restaurantOpsService = {
 
   getKitchenServiceSummary: async () => {
     if (useMocks) {
-      return {
-        health: "Healthy",
-        healthSubtext: "Lunch service in progress",
-        criticalIngredients: 0,
-        criticalSubtext: "Nothing urgent right now"
-      };
+      return { health: "Healthy", healthSubtext: "Lunch service in progress", criticalIngredients: 0, criticalSubtext: "Nothing urgent right now" };
     }
     const { data } = await axiosInstance.get("/restaurant/kitchen/summary");
     return data;
   },
 
   createUsageLog: async (itemId: string, amount: number) => {
-    console.log(`Log Usage: ${itemId} - ${amount}`);
     if (useMocks) return { success: true };
     return axiosInstance.post("/restaurant/kitchen/log-usage", { itemId, amount });
   },
 
   createWasteLog: async (itemId: string, amount: number, reason: string) => {
-    console.log(`Log Waste: ${itemId} - ${amount} - ${reason}`);
     if (useMocks) return { success: true };
     return axiosInstance.post("/restaurant/kitchen/log-waste", { itemId, amount, reason });
   },
 
   updateItemStock: async (itemId: string, newQuantity: number) => {
-    console.log(`Update Stock: ${itemId} to ${newQuantity}`);
     if (useMocks) return { success: true };
     return axiosInstance.post("/restaurant/inventory/update-stock", { itemId, newQuantity });
   },
@@ -226,8 +193,9 @@ export const restaurantOpsService = {
       if (typeof window !== 'undefined') {
         const current = localStorage.getItem('mock_day_status');
         const status = current ? JSON.parse(current) : { ...mockDayStatus };
-        status.openingCompleted = false; // Reset for next day
+        status.openingCompleted = false;
         status.shiftStatus = "Closed";
+        status.state = "CLOSED";
         localStorage.setItem('mock_day_status', JSON.stringify(status));
       }
       return { success: true };
@@ -240,21 +208,10 @@ export const restaurantOpsService = {
       await new Promise((resolve) => setTimeout(resolve, 600));
       let allItems: InventoryItem[] = [
         { id: "1", name: "Tomatoes", sku: "TOM-001", category: "Vegetables", brand: "FreshFarm", unit: "kg", currentStock: 2.5, minLevel: 5, restockPoint: 10, costPerUnit: 1200, status: "Critical", lastUpdated: "Today, 8:30 AM" },
-        { id: "2", name: "Purple Onions", sku: "ONN-002", category: "Vegetables", brand: "GlobalFoods", unit: "kg", currentStock: 12, minLevel: 10, restockPoint: 20, costPerUnit: 800, status: "Healthy", lastUpdated: "Today, 9:15 AM" },
-        { id: "3", name: "White Rice", sku: "RIC-003", category: "Pantry", brand: "Sona", unit: "kg", currentStock: 45, minLevel: 20, restockPoint: 50, costPerUnit: 1500, status: "Healthy", lastUpdated: "Today, 10:00 AM" },
-        { id: "4", name: "Sunflower Oil", sku: "OIL-004", category: "Pantry", brand: "Fortune", unit: "L", currentStock: 8, minLevel: 15, restockPoint: 25, costPerUnit: 2500, status: "Low", lastUpdated: "Yesterday, 4:00 PM" },
       ];
-      
-      if (search) {
-        allItems = allItems.filter(i => i.name.toLowerCase().includes(search.toLowerCase()) || i.sku.toLowerCase().includes(search.toLowerCase()));
-      }
-      if (category && category !== "all") {
-        allItems = allItems.filter(i => i.category === category);
-      }
-      if (level && level !== "all") {
-        allItems = allItems.filter(i => i.status.toLowerCase() === level.toLowerCase());
-      }
-      
+      if (search) allItems = allItems.filter(i => i.name.toLowerCase().includes(search.toLowerCase()) || i.sku.toLowerCase().includes(search.toLowerCase()));
+      if (category && category !== "all") allItems = allItems.filter(i => i.category === category);
+      if (level && level !== "all") allItems = allItems.filter(i => i.status.toLowerCase() === level.toLowerCase());
       return allItems;
     }
     const { data } = await axiosInstance.get("/restaurant/inventory/items", { params: { search, category, level } });
@@ -276,17 +233,61 @@ export const restaurantOpsService = {
     if (useMocks) {
       return [
         { id: "1", action: "Updated", change: "-", performer: "Procurement Officer", activity: "Manual (Inventory Setup)", timestamp: "Oct 06, 2025; 14:32" },
-        { id: "2", action: "Received", change: "+25kg", performer: "Procurement Officer", activity: "Delivery", timestamp: "Oct 06, 2025; 14:32" },
-        { id: "3", action: "Received", change: "+25kg", performer: "Procurement Officer", activity: "Delivery", timestamp: "Oct 06, 2025; 14:32" },
-        { id: "4", action: "Updated", change: "-", performer: "Procurement Officer", activity: "Updated supplier unit price from 3,500 > 3,800 RWF.", timestamp: "Oct 06, 2025; 14:32" },
-        { id: "5", action: "Removed", change: "-10kg", performer: "Kitchen Staff", activity: "Waste Management", timestamp: "Oct 06, 2025; 14:32" },
-        { id: "6", action: "Auto-Alert", change: "-10kg (discrepancy)", performer: "System Agent", activity: "System Forecast", timestamp: "Oct 06, 2025; 14:32" },
-        { id: "7", action: "Removed", change: "-10kg", performer: "Kitchen Staff", activity: "Waste Management", timestamp: "Oct 06, 2025; 14:32" },
-        { id: "8", action: "System Sync", change: "-", performer: "System Agent", activity: "POS Integration", timestamp: "Oct 06, 2025; 14:32" },
-        { id: "9", action: "Received", change: "+25kg", performer: "Procurement Officer", activity: "Delivery", timestamp: "Oct 06, 2025; 14:32" },
       ];
     }
     const { data } = await axiosInstance.get(`/restaurant/inventory/items/${id}/activities`);
+    return data;
+  },
+
+  getSettings: async () => {
+    if (useMocks) return { name: "Gatete Restaurant", email: "food@restaurant.com", opening_time: "09:00 AM", closing_time: "11:00 PM" };
+    const { data } = await axiosInstance.get("/restaurant/settings");
+    return data;
+  },
+
+  updateSettings: async (settings: any) => {
+    if (useMocks) return { success: true };
+    const { data } = await axiosInstance.patch("/restaurant/settings", settings);
+    return data;
+  },
+
+  getNotifications: async (): Promise<any[]> => {
+    if (useMocks) {
+      return [
+        { id: "1", type: "success", title: "Daily Stock Confirmed", description: "Daily stock count has been successfully confirmed for all 18 items.", time: "2 hours ago", unread: true },
+        { id: "2", type: "alert", title: "Critical Stock Level", description: "Item 'Tomatoes' has reached critical stock level (0.5kg remaining).", time: "4 hours ago", unread: true },
+      ];
+    }
+    const { data } = await axiosInstance.get("/restaurant/notifications");
+    return data;
+  },
+
+  getMenu: async (): Promise<any[]> => {
+    if (useMocks) {
+      return [
+        { id: "m1", name: "Cafe Latte", description: "Rich espresso with steamed milk", price: 3500, category: "Coffee", image_url: "https://images.unsplash.com/photo-1541167760496-162955ed8a9f" },
+        { id: "m2", name: "Iced Oat Latte", description: "Chilled espresso with creamy oat milk", price: 4000, category: "Coffee", image_url: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735" }
+      ];
+    }
+    const { data } = await axiosInstance.get("/pos/menu");
+    return data;
+  },
+
+  getCanonicalCatalog: async (): Promise<any[]> => {
+    if (useMocks) return [];
+    try {
+        const { data } = await axiosInstance.get("/inventory/catalog");
+        return data;
+    } catch (e) {
+        return [];
+    }
+  },
+
+  placeOrder: async (menuItemId: string, quantity: number = 1): Promise<any> => {
+    if (useMocks) {
+      return { status: "success", deductions: [] };
+    }
+    const { data } = await axiosInstance.post("/pos/order", { menu_item_id: menuItemId, quantity });
     return data;
   }
 }

@@ -36,3 +36,16 @@ class InventoryItem(InventoryItemBase):
 
     class Config:
         from_attributes = True
+
+class CanonicalCatalogItem(BaseModel):
+    id: UUID
+    sku_id: str
+    canonical_name_en: str
+    category: str
+    subcategory: Optional[str] = None
+    purchase_unit: str
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

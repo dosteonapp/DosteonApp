@@ -55,3 +55,13 @@ dist/
 build/
 .next/
 node_modules/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Databases
+*.sqlite3
+*.db

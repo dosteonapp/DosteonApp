@@ -9,9 +9,17 @@ export async function POST(request: Request) {
     const { email, password, role, firstName, lastName } = await request.json()
 
     // 1. Sign up with Supabase Auth
+    // We pass data in options to allow the Postgres trigger to pick it up
     const { data: { user }, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+            data: {
+                first_name: firstName,
+                last_name: lastName,
+                role: role || 'restaurant',
+            }
+        }
     })
 
     if (error) {
@@ -22,25 +30,9 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Signup failed" }, { status: 500 })
     }
 
-    // 2. Create Profile
-    const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-            {
-                id: user.id,
-                email: email,
-                role: role || 'restaurant', // Default to restaurant if not provided
-                first_name: firstName,
-                last_name: lastName,
-            },
-        ])
+    // Note: Profile creation is handled by the 'on_auth_user_created' trigger 
+    // in the database (see backend/supabase_schema.sql)
 
-    if (profileError) {
-        console.error('Profile creation error:', profileError)
-        // Optional: Delete auth user if profile creation fails to maintain consistency?
-        // For now, return error.
-        return NextResponse.json({ error: "Failed to create user profile" }, { status: 500 })
-    }
 
     return NextResponse.json({
         message: "Signup successful",

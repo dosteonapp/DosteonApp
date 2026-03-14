@@ -14,4 +14,7 @@ export interface User {
   onboardingCompleted?: boolean;
   emailVerified?: boolean;
   onboardingSkipped?: boolean;
+  organization_id?: string;
+  team_id?: string;
 }
+

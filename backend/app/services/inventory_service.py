@@ -17,4 +17,7 @@ class InventoryService:
     async def remove_item(self, item_id: str):
         return inventory_repo.delete_item(UUID(item_id))
 
+    async def get_catalog(self):
+        return inventory_repo.get_catalog()
+
 inventory_service = InventoryService()

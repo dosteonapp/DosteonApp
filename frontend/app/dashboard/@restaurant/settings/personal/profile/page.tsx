@@ -18,6 +18,8 @@ import {
   Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/context/UserContext";
+
 import {
   Dialog,
   DialogContent,
@@ -25,7 +27,9 @@ import {
 } from "@/components/ui/dialog";
 
 export default function PersonalDetailsPage() {
+  const { user } = useUser();
   const [isSaved, setIsSaved] = React.useState(false);
+
   const [showPasswordModal, setShowPasswordModal] = React.useState(false);
   const [passwordStep, setPasswordStep] = React.useState<"form" | "success">("form");
   const [showCurrentPassword, setShowCurrentPassword] = React.useState(false);
@@ -103,18 +107,19 @@ export default function PersonalDetailsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="first-name" className="text-sm font-bold text-slate-500">First Name</Label>
-                    <Input id="first-name" defaultValue="Hilmi" className="h-14 rounded-xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800" />
+                    <Input id="first-name" defaultValue={user?.first_name || ""} className="h-14 rounded-xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="last-name" className="text-sm font-bold text-slate-500">Last Name</Label>
-                    <Input id="last-name" defaultValue="Hilmi" className="h-14 rounded-xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800" />
+                    <Input id="last-name" defaultValue={user?.last_name || ""} className="h-14 rounded-xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-bold text-slate-500">Email Address</Label>
-                  <Input id="email" defaultValue="yusuf@hilmi.com" disabled className="h-14 rounded-xl border-slate-100 bg-slate-50 border-slate-200 text-slate-500 font-medium cursor-not-allowed" />
+                  <Input id="email" defaultValue={user?.email || ""} disabled className="h-14 rounded-xl bg-slate-50 border-slate-200 text-slate-500 font-medium cursor-not-allowed" />
                 </div>
+
 
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="text-sm font-bold text-slate-500">Phone Number</Label>

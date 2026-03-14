@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.schemas.inventory import InventoryItem, InventoryItemCreate, InventoryItemUpdate
+from app.schemas.inventory import InventoryItem, InventoryItemCreate, InventoryItemUpdate, CanonicalCatalogItem
 from app.services.inventory_service import inventory_service
 from typing import List
 from app.api.deps import get_restaurant_user
 
 router = APIRouter()
+
+@router.get("/catalog", response_model=List[CanonicalCatalogItem])
+async def read_canonical_catalog(current_user: dict = Depends(get_restaurant_user)):
+    """Read the canonical global catalog for quick inventory addition"""
+    return await inventory_service.get_catalog()
 
 @router.get("/", response_model=List[InventoryItem])
 async def read_inventory(current_user: dict = Depends(get_restaurant_user)):

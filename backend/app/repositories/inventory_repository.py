@@ -25,4 +25,8 @@ class InventoryRepository:
     def delete_item(self, item_id: UUID):
         supabase.table(self.table).delete().eq("id", str(item_id)).execute()
 
+    def get_catalog(self) -> List[dict]:
+        result = supabase.table("canonical_catalog").select("*").order("category").execute()
+        return result.data
+
 inventory_repo = InventoryRepository()

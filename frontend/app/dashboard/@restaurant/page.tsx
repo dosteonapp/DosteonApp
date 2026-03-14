@@ -29,50 +29,21 @@ import { cn } from "@/lib/utils";
 export default function RestaurantDashboardPage() {
   const { isOpen, isLoading: isStatusLoading, isClosingTimeReached, targetClosingTime } = useRestaurantDayLifecycle();
   const [activities, setActivities] = useState<ActivityType[]>([]);
+  const [stats, setStats] = useState({ totalItems: 0, healthy: 0, low: 0, critical: 0 });
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(true);
 
   // In a real app, this would come from a user context
-  const name = "Sherry"; 
+  const name = "Jules"; 
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        await restaurantOpsService.getRecentActivities();
-        // Matching design's specific activities for the demo
-        setActivities([
-          {
-            id: "1",
-            title: "Daily Stock Confirmed",
-            description: "Sherry from Kitchen confirmed today's closing stock",
-            time: "2 hours ago",
-            type: "stock"
-          },
-          {
-            id: "2",
-            title: "Manual stock update",
-            description: "Jules added 5.5 kg of Fresh Tomato manually",
-            time: "2 hours ago",
-            type: "stock"
-          },
-          {
-            id: "3",
-            title: "Stock Discrepancy Alert",
-            description: "Inventory mismatch flagged for Whole Milk",
-            time: "2 hours ago",
-            type: "alert",
-            actionLabel: "Fix Inventory",
-            actionHref: "/dashboard/inventory"
-          },
-          {
-            id: "4",
-            title: "Stock Review Reminder",
-            description: "📦 Don't forget to confirm today's closing stock. This keeps your inventory accurate.",
-            time: "2 hours ago",
-            type: "remind",
-            actionLabel: "Review Inventory",
-            actionHref: "/dashboard/inventory"
-          }
+        const [acts, dashboardStats] = await Promise.all([
+          restaurantOpsService.getRecentActivities(),
+          restaurantOpsService.getStats()
         ]);
+        setActivities(acts);
+        setStats(dashboardStats);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -118,9 +89,9 @@ export default function RestaurantDashboardPage() {
                         </Button>
                     }
                 >
-                    <UnifiedStatCard label="Total Inventory Items" value="24" icon={Package} variant="indigo" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
-                    <UnifiedStatCard label="Critical Stock Items" value="6" icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
-                    <UnifiedStatCard label="Low Stock Items" value="6" icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Total Inventory Items" value={stats.totalItems.toString()} icon={Package} variant="indigo" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Critical Stock Items" value={stats.critical.toString()} icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Low Stock Items" value={stats.low.toString()} icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                     <UnifiedStatCard label="Shift Status" value="Active" icon={Clock} variant="green" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                 </UnifiedHeroSurface>
             ) : (
@@ -136,7 +107,7 @@ export default function RestaurantDashboardPage() {
                     badge={
                         <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-[8px] border-2 border-[#EF4444] bg-white w-fit shadow-sm">
                             <ClipboardList className="h-4 w-4 text-[#EF4444]" />
-                            <FigtreeText className="text-[12px] font-semibold text-[#EF4444] uppercase tracking-[0.05em]">16 items need counting</FigtreeText>
+                            <FigtreeText className="text-[12px] font-semibold text-[#EF4444] uppercase tracking-[0.05em]">{stats.totalItems} items need counting</FigtreeText>
                         </div>
                     }
                     action={
@@ -147,9 +118,9 @@ export default function RestaurantDashboardPage() {
                         </Button>
                     }
                 >
-                    <UnifiedStatCard label="Total Inventory Items" value="24" icon={Package} variant="indigo" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
-                    <UnifiedStatCard label="Critical Stock Items" value="6" icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
-                    <UnifiedStatCard label="Low Stock Items" value="6" icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Total Inventory Items" value={stats.totalItems.toString()} icon={Package} variant="indigo" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Critical Stock Items" value={stats.critical.toString()} icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Low Stock Items" value={stats.low.toString()} icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                     <UnifiedStatCard label="Shift Status" value="Inactive" icon={Clock} variant="neutral" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                 </UnifiedHeroSurface>
             )}

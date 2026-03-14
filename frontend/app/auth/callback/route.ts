@@ -13,5 +13,8 @@ export async function GET(request: Request) {
     }
 
     // URL to redirect to after sign in process completes
-    return NextResponse.redirect(new URL(next, request.url));
+    // The user requested redirecting to sign-in before going to dashboard
+    const redirectUrl = new URL(`/auth/restaurant/signin?verified=true`, request.url);
+    return NextResponse.redirect(redirectUrl);
+
 }

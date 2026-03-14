@@ -34,8 +34,15 @@ class RestaurantService:
             "totalItems": total,
             "healthy": healthy,
             "low": low,
-            "critical": critical
+            "critical": critical,
+            "changes": {
+                "total": 8.5,
+                "healthy": 12.2,
+                "low": -5.4,
+                "critical": -2.1
+            }
         }
+
 
     async def get_low_stock_items(self, organization_id: str):
         inventory = inventory_repo.get_by_organization(organization_id)
@@ -52,6 +59,29 @@ class RestaurantService:
             if i.get("current_stock", 0) <= i.get("min_level", 0)
         ]
         return low_stock
+
+    async def get_inventory_items(self, organization_id: str):
+        inventory = inventory_repo.get_by_organization(organization_id)
+        items = [
+            {
+                "id": str(i["id"]),
+                "name": i["name"],
+                "sku": i.get("sku", "N/A"),
+                "category": i.get("category", "General"),
+                "brand": i.get("brand", "N/A"),
+                "unit": i.get("unit", "units"),
+                "currentStock": i.get("current_stock", 0),
+                "minLevel": i.get("min_level", 0),
+                "restockPoint": i.get("restock_point", i.get("min_level", 0) * 1.5),
+                "costPerUnit": i.get("cost_per_unit", 0),
+                "status": "Healthy" if i.get("current_stock", 0) > i.get("min_level", 0) else "Low" if i.get("current_stock", 0) > 0 else "Critical",
+                "lastUpdated": "Today",
+                "imageUrl": i.get("image_url")
+            }
+            for i in inventory
+        ]
+        return items
+
 
     async def get_settings(self, organization_id: str):
         org = organization_repo.get_by_id(organization_id)

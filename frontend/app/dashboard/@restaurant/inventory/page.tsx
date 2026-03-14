@@ -36,13 +36,19 @@ import {
 export default function InventoryPage() {
   const { isOpen } = useRestaurantDayLifecycle();
   const [runningLowItems, setRunningLowItems] = useState<RunningLowItem[]>([]);
+  const [stats, setStats] = useState<any>({ totalItems: 0, healthy: 0, low: 0, critical: 0, changes: { total: 0, healthy: 0, low: 0, critical: 0 } });
   const [isLoading, setIsLoading] = useState(true);
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const lowItems = await restaurantOpsService.getRunningLowItems();
+        const [lowItems, dashboardStats] = await Promise.all([
+          restaurantOpsService.getRunningLowItems(),
+          restaurantOpsService.getStats()
+        ]);
         setRunningLowItems(lowItems);
+        setStats(dashboardStats);
       } catch (err) {
         console.error("Failed to fetch inventory data:", err);
       } finally {
@@ -101,7 +107,7 @@ export default function InventoryPage() {
         badge={!isOpen ? (
             <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/20 bg-white shadow-sm w-fit">
                 <ClipboardList className="h-4 w-4 text-[#3B59DA]" />
-                <FigtreeText className="text-[12px] font-bold text-[#3B59DA] tracking-tight uppercase">16 items need counting</FigtreeText>
+                <FigtreeText className="text-[12px] font-bold text-[#3B59DA] tracking-tight uppercase">{stats.totalItems} items need counting</FigtreeText>
             </div>
         ) : undefined}
         topAction={isOpen && (
@@ -142,36 +148,69 @@ export default function InventoryPage() {
             )}>
                 <UnifiedStatCard 
                     label="Total Inventory Items" 
-                    value="100" 
-                    subtext={<span className="flex items-center gap-1.5 text-emerald-500 font-bold text-[11px]"><TrendUpIcon className="h-3.5 w-3.5" /> up by 8% from last week</span>} 
+                    value={stats.totalItems.toString()} 
+                    subtext={
+                        <span className={cn(
+                            "flex items-center gap-1.5 font-bold text-[11px]",
+                            (stats.changes?.total || 0) >= 0 ? "text-emerald-500" : "text-rose-500"
+                        )}>
+                            <TrendUpIcon className={cn("h-3.5 w-3.5", (stats.changes?.total || 0) < 0 && "rotate-180")} /> 
+                            {Math.abs(stats.changes?.total || 0)}% from last week
+                        </span>
+                    } 
                     icon={PackageIcon} 
                     variant="indigo" 
                     className="h-[160px] md:h-[190px] w-full shadow-sm" 
                 />
                 <UnifiedStatCard 
                     label="Healthy Stock" 
-                    value="56" 
-                    subtext={<span className="flex items-center gap-1.5 text-emerald-500 font-bold text-[11px]"><TrendUpIcon className="h-3 w-3" /> up by 8% from last week</span>} 
+                    value={stats.healthy.toString()} 
+                    subtext={
+                        <span className={cn(
+                            "flex items-center gap-1.5 font-bold text-[11px]",
+                            (stats.changes?.healthy || 0) >= 0 ? "text-emerald-500" : "text-rose-500"
+                        )}>
+                            <TrendUpIcon className={cn("h-3.5 w-3.5", (stats.changes?.healthy || 0) < 0 && "rotate-180")} /> 
+                            {Math.abs(stats.changes?.healthy || 0)}% from last week
+                        </span>
+                    } 
                     icon={SuccessIcon} 
                     variant="green" 
                     className="h-[160px] md:h-[190px] w-full shadow-sm" 
                 />
                 <UnifiedStatCard 
                     label="Low Stock" 
-                    value="23" 
-                    subtext={<span className="flex items-center gap-1.5 text-emerald-500 font-bold text-[11px]"><TrendUpIcon className="h-3 w-3" /> up by 8% from last week</span>} 
+                    value={stats.low.toString()} 
+                    subtext={
+                        <span className={cn(
+                            "flex items-center gap-1.5 font-bold text-[11px]",
+                            (stats.changes?.low || 0) >= 0 ? "text-rose-500" : "text-emerald-500" // Low stock going up is usually bad
+                        )}>
+                            <TrendUpIcon className={cn("h-3.5 w-3.5", (stats.changes?.low || 0) < 0 && "rotate-180")} /> 
+                            {Math.abs(stats.changes?.low || 0)}% from last week
+                        </span>
+                    } 
                     icon={WarningIcon} 
                     variant="amber" 
                     className="h-[160px] md:h-[190px] w-full shadow-sm" 
                 />
                 <UnifiedStatCard 
                     label="Critical" 
-                    value="4" 
-                    subtext={<span className="flex items-center gap-1.5 text-emerald-500 font-bold text-[11px]"><TrendUpIcon className="h-3 w-3" /> up by 8% from last week</span>} 
+                    value={stats.critical.toString()} 
+                    subtext={
+                        <span className={cn(
+                            "flex items-center gap-1.5 font-bold text-[11px]",
+                            (stats.changes?.critical || 0) >= 0 ? "text-rose-500" : "text-emerald-500"
+                        )}>
+                            <TrendUpIcon className={cn("h-3.5 w-3.5", (stats.changes?.critical || 0) < 0 && "rotate-180")} /> 
+                            {Math.abs(stats.changes?.critical || 0)}% from last week
+                        </span>
+                    } 
                     icon={AlertIcon} 
                     variant="red" 
                     className="h-[160px] md:h-[190px] w-full shadow-sm" 
                 />
+
             </div>
         </div>
       </UnifiedHeroSurface>

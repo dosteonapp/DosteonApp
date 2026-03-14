@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,9 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Search } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { addInventoryItem } from "@/lib/services/inventoryService";
+import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import { useProductCategories } from "@/hooks/product-categories";
 
 interface AddProductModalProps {
@@ -40,6 +43,10 @@ export function AddProductModal({
 }: AddProductModalProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [catalogItems, setCatalogItems] = useState<any[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [selectedCanonical, setSelectedCanonical] = useState<string>("");
+  
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -49,6 +56,7 @@ export function AddProductModal({
     preferredSuppliers: "",
     storageLocation: "",
     expiryDate: "",
+    sku: "",
   });
 
   const {
@@ -56,6 +64,32 @@ export function AddProductModal({
     isLoading: loadingCategories,
     isError: errorCategories,
   } = useProductCategories();
+
+  useEffect(() => {
+    if (open) {
+        setCatalogLoading(true);
+        restaurantOpsService.getCanonicalCatalog().then(data => {
+            setCatalogItems(data || []);
+            setCatalogLoading(false);
+        }).catch(() => setCatalogLoading(false));
+    }
+  }, [open]);
+
+  const handleCanonicalSelect = (skuId: string) => {
+    setSelectedCanonical(skuId);
+    if (!skuId) return;
+    
+    const item = catalogItems.find(i => i.sku_id === skuId);
+    if (item) {
+        setFormData(prev => ({
+            ...prev,
+            name: item.canonical_name_en,
+            sku: item.sku_id,
+            category: item.category,
+            unit: item.purchase_unit.split(' ')[0], // extract 'kg', 'litre', etc.
+        }));
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -74,6 +108,7 @@ export function AddProductModal({
     try {
       const payload = {
         name: formData.name,
+        sku: formData.sku || undefined,
         category: formData.category,
         currentStock: Number(formData.currentStock),
         unit: formData.unit,
@@ -101,7 +136,9 @@ export function AddProductModal({
         preferredSuppliers: "",
         storageLocation: "",
         expiryDate: "",
+        sku: "",
       });
+      setSelectedCanonical("");
       onOpenChange(false);
     } catch (err: any) {
       toast({
@@ -117,15 +154,47 @@ export function AddProductModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto no-scrollbar">
         <DialogHeader>
           <DialogTitle>Add New Product</DialogTitle>
           <DialogDescription>
-            Add a new product to your catalog. Fill in all the required fields.
+            Add a new product to your catalog.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+          
+          {/* Canonical Selector */}
+          <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 mb-6 space-y-3">
+              <div className="flex items-center justify-between">
+                  <Label className="text-indigo-900 font-bold flex items-center gap-2">
+                    <Search className="h-4 w-4" /> Kigali Seed Catalog
+                  </Label>
+                  <Badge variant="outline" className="bg-white text-indigo-600 border-indigo-200">Auto-fill</Badge>
+              </div>
+              <p className="text-xs text-indigo-700/70">Select a standard item to automatically fill in details, or skip to create a custom product.</p>
+              
+              <Select value={selectedCanonical} onValueChange={handleCanonicalSelect}>
+                <SelectTrigger className="bg-white border-indigo-200 focus:ring-indigo-500/20 shadow-sm h-11">
+                  <SelectValue placeholder={catalogLoading ? "Loading catalog..." : "Search for standard products..."} />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {catalogItems.length === 0 && !catalogLoading ? (
+                      <div className="p-4 text-center text-sm text-slate-500">No catalog items available</div>
+                  ) : (
+                      catalogItems.map(item => (
+                          <SelectItem key={item.sku_id} value={item.sku_id} className="py-2.5">
+                              <div className="flex flex-col">
+                                  <span className="font-bold text-[#1E293B]">{item.canonical_name_en}</span>
+                                  <span className="text-xs text-slate-500">{item.category} • SKU: {item.sku_id}</span>
+                              </div>
+                          </SelectItem>
+                      ))
+                  )}
+                </SelectContent>
+              </Select>
+          </div>
+
+          <div className="grid gap-5 py-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Product Name *</Label>
@@ -136,6 +205,7 @@ export function AddProductModal({
                   onChange={handleChange}
                   placeholder="e.g. Organic Tomatoes"
                   required
+                  className="h-11"
                 />
               </div>
               <div className="space-y-2">
