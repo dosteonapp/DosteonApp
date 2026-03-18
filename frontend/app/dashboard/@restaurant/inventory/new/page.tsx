@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   ArrowLeft, 
   Upload, 
   X, 
   ImageIcon,
-  Save
+  Save,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,23 +28,73 @@ import {
     FigtreeText, 
     PrimarySurfaceCard 
 } from "@/components/ui/dosteon-ui";
+import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 
-export default function AddNewItemPage() {
+function AddNewItemContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
+  const isEditMode = !!editId;
   const { toast } = useToast();
+  
+  // Form State
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    currentStock: "",
+    unit: "",
+    location: "",
+    expiryMonth: "july",
+    expiryDay: "01",
+    expiryYear: "2025"
+  });
+  
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditMode);
+
+  useEffect(() => {
+    if (isEditMode) {
+      const fetchItem = async () => {
+        try {
+          const item = await restaurantOpsService.getInventoryItemById(editId!);
+          if (item) {
+             setFormData({
+                name: item.name,
+                category: item.category.toLowerCase(),
+                currentStock: item.currentStock.toString(),
+                unit: item.unit,
+                location: item.location || "",
+                expiryMonth: "july",
+                expiryDay: "01",
+                expiryYear: "2025"
+             });
+             if (item.imageUrl) setImages([item.imageUrl]);
+          }
+        } catch (err) {
+          toast({ variant: "destructive", title: "Load Failed", description: "Could not fetch item details." });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchItem();
+    }
+  }, [editId, isEditMode]);
+
+  const categories = ["Vegetables", "Meat", "Dairy", "Grains", "Spices", "Beverages", "Supplies", "Other"];
+  const units = ["kg", "g", "l", "ml", "units", "pcs", "boxes", "packs", "bags"];
+  const months = [
+    "January", "February", "March", "April", "May", "June", 
+    "July", "August", "September", "October", "November", "December"
+  ];
 
   const handleImageUpload = () => {
     setUploading(true);
-    // Simulate upload
     setTimeout(() => {
       setImages(prev => [...prev, "https://api.a0.dev/assets/img/generic_product.png"]);
       setUploading(false);
-      toast({
-        title: "Image Uploaded",
-        description: "Your product image has been successfully uploaded.",
-      });
+      toast({ title: "Image Uploaded", description: "Product image successfully uploaded." });
     }, 1500);
   };
 
@@ -51,33 +102,62 @@ export default function AddNewItemPage() {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleSave = async () => {
+    if (!formData.name || !formData.category || !formData.unit) {
+      toast({ variant: "destructive", title: "Missing Fields", description: "Please fill in all required fields." });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      if (isEditMode) {
+        await restaurantOpsService.updateItem(editId!, { ...formData, images });
+        toast({ title: "Item Updated", description: "Changes have been saved." });
+      } else {
+        await restaurantOpsService.addItem({ ...formData, images });
+        toast({ title: "Item Added", description: `${formData.name} has been added.` });
+      }
+      router.push("/dashboard/inventory");
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save item." });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+        <div className="flex h-[400px] items-center justify-center">
+            <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
+        </div>
+    );
+  }
+
   return (
     <AppContainer className="pb-24">
       <div className="w-full">
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <PrimarySurfaceCard className="p-12 md:p-14">
             {/* Header Actions */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 mb-12">
               <div className="space-y-2">
-                <h1 className="text-[32px] font-bold text-[#1E293B] tracking-tight leading-none font-figtree">Add New Item</h1>
-                <FigtreeText className="text-slate-400 font-medium text-[16px]">Add a new item to your inventory. Fill out the details below.</FigtreeText>
+                <h1 className="text-[32px] font-bold text-[#1E293B] tracking-tight leading-none font-figtree">
+                    {isEditMode ? "Edit Item" : "Add New Item"}
+                </h1>
+                <FigtreeText className="text-slate-400 font-medium text-[16px]">
+                    {isEditMode ? `Updating ${formData.name} details.` : "Add a new item to your inventory. Fill out the details below."}
+                </FigtreeText>
               </div>
               <div className="flex items-center gap-4">
-                 <Button 
-                  variant="outline" 
-                  className="h-14 px-10 rounded-[8px] border-slate-200 font-bold text-slate-500 hover:bg-slate-50 transition-all text-base font-figtree shadow-sm active:scale-95 min-w-[140px]"
-                  onClick={() => router.back()}
-                >
+                <Button variant="outline" className="h-14 px-10 rounded-[8px] border-slate-200 font-bold text-slate-500 hover:bg-slate-50 transition-all font-figtree shadow-sm active:scale-95" onClick={() => router.back()}>
                   Cancel
                 </Button>
                 <Button 
-                  className="h-14 px-12 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold transition-all border-none text-base shadow-lg flex items-center gap-3 font-figtree active:scale-95 min-w-[160px]"
+                  disabled={isSaving}
+                  onClick={handleSave}
+                  className="h-14 px-12 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold transition-all border-none text-base shadow-lg flex items-center gap-3 font-figtree active:scale-95"
                 >
-                  <Save className="h-5 w-5" /> Save
+                  <Save className="h-5 w-5" /> {isSaving ? "Saving..." : "Save"}
                 </Button>
               </div>
             </div>
@@ -87,51 +167,86 @@ export default function AddNewItemPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
                     <div className="space-y-2.5">
                         <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Item Name</label>
-                        <Input placeholder="Enter item name" className="h-16 border-slate-200 rounded-[8px] bg-white focus:ring-slate-100 text-[#1E293B] font-medium font-figtree px-6 text-base shadow-sm transition-all placeholder:text-slate-300" />
+                        <Input 
+                          value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          placeholder="Enter item name" 
+                          className="h-16 border-slate-200 rounded-[8px] px-6 text-base font-figtree shadow-sm" 
+                        />
                     </div>
                     <div className="space-y-2.5">
                         <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Item Category</label>
-                        <Select>
-                            <SelectTrigger className="h-16 border-slate-200 rounded-[8px] bg-white font-medium text-[#1E293B] text-base px-6 shadow-sm">
+                        <Select onValueChange={(v) => setFormData({...formData, category: v})}>
+                            <SelectTrigger className="h-16 border-slate-200 rounded-[8px] px-6 text-base font-figtree shadow-sm">
                                 <SelectValue placeholder="Select item category" />
                             </SelectTrigger>
+                            <SelectContent>
+                                {categories.map(c => <SelectItem key={c} value={c.toLowerCase()}>{c}</SelectItem>)}
+                            </SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2.5">
                         <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Current Stock Amount</label>
-                        <Input placeholder="Enter amount" className="h-16 border-slate-200 rounded-[8px] bg-white focus:ring-slate-100 text-[#1E293B] font-medium font-figtree px-6 text-base shadow-sm transition-all placeholder:text-slate-300" />
+                        <Input 
+                          type="number"
+                          value={formData.currentStock}
+                          onChange={(e) => setFormData({...formData, currentStock: e.target.value})}
+                          placeholder="Enter amount" 
+                          className="h-16 border-slate-200 rounded-[8px] px-6 text-base font-figtree shadow-sm" 
+                        />
                     </div>
                     <div className="space-y-2.5">
                         <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Measurement Unit</label>
-                        <Select>
-                            <SelectTrigger className="h-16 border-slate-200 rounded-[8px] bg-white font-medium text-[#1E293B] text-base px-6 shadow-sm">
+                        <Select onValueChange={(v) => setFormData({...formData, unit: v})}>
+                            <SelectTrigger className="h-16 border-slate-200 rounded-[8px] px-6 text-base font-figtree shadow-sm">
                                 <SelectValue placeholder="Select unit" />
                             </SelectTrigger>
+                            <SelectContent>
+                                {units.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                            </SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2.5">
                         <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Storage Location</label>
-                        <Input placeholder="Enter storage location" className="h-16 border-slate-200 rounded-[8px] bg-white focus:ring-slate-100 text-[#1E293B] font-medium font-figtree px-6 text-base shadow-sm transition-all placeholder:text-slate-300" />
+                        <Input 
+                          value={formData.location}
+                          onChange={(e) => setFormData({...formData, location: e.target.value})}
+                          placeholder="Enter storage location" 
+                          className="h-16 border-slate-200 rounded-[8px] px-6 text-base font-figtree shadow-sm" 
+                        />
                     </div>
                     <div className="space-y-2.5">
                         <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Expiry Date (If Applicable)</label>
                         <div className="grid grid-cols-3 gap-4">
-                            <Select defaultValue="july">
-                                <SelectTrigger className="h-16 border-slate-200 rounded-[8px] bg-white font-medium text-[#1E293B] text-base px-5 shadow-sm">
+                            <Select 
+                              value={formData.expiryMonth}
+                              onValueChange={(v) => setFormData({...formData, expiryMonth: v})}
+                            >
+                                <SelectTrigger className="h-16 border-slate-200 rounded-[8px] px-4 text-sm font-figtree shadow-sm">
                                     <SelectValue placeholder="Month" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="july">July</SelectItem>
+                                    {months.map(m => <SelectItem key={m} value={m.toLowerCase()}>{m}</SelectItem>)}
                                 </SelectContent>
                             </Select>
-                            <Input defaultValue="01" className="h-16 border-slate-200 rounded-[8px] bg-white text-[#1E293B] font-medium text-base px-5 text-center shadow-sm tabular-nums" />
-                            <Input defaultValue="2000" className="h-16 border-slate-200 rounded-[8px] bg-white text-[#1E293B] font-medium text-base px-5 text-center shadow-sm tabular-nums" />
+                            <Input 
+                              value={formData.expiryDay}
+                              onChange={(e) => setFormData({...formData, expiryDay: e.target.value})}
+                              className="h-16 border-slate-200 rounded-[8px] text-center shadow-sm" 
+                            />
+                            <Input 
+                              value={formData.expiryYear}
+                              onChange={(e) => setFormData({...formData, expiryYear: e.target.value})}
+                              className="h-16 border-slate-200 rounded-[8px] text-center shadow-sm" 
+                            />
                         </div>
                     </div>
                 </div>
 
                 <div className="pt-2">
-                    <FigtreeText className="text-slate-400 text-[13px] font-medium leading-relaxed">Upload high-quality images of your product. The first image will be used as the main product image.</FigtreeText>
+                    <FigtreeText className="text-slate-400 text-[13px] font-medium leading-relaxed">
+                      Upload high-quality images of your product. The first image will be used as the main product image.
+                    </FigtreeText>
                 </div>
 
                 {/* Image Upload Area */}
@@ -153,7 +268,7 @@ export default function AddNewItemPage() {
                                 <Button 
                                     onClick={handleImageUpload}
                                     disabled={uploading}
-                                    className="h-14 px-8 rounded-[8px] bg-white/10 hover:bg-white/20 text-[#3B59DA] font-bold transition-all border-[#3B59DA]/20 border text-sm shadow-sm flex items-center gap-3 active:scale-95"
+                                    className="h-14 px-8 rounded-[8px] bg-slate-50 text-[#3B59DA] font-bold border-[#3B59DA]/20 border shadow-sm flex items-center gap-3"
                                 >
                                     <Upload className="h-5 w-5" /> {uploading ? "Uploading..." : "Upload Image"}
                                 </Button>
@@ -161,29 +276,25 @@ export default function AddNewItemPage() {
                         ) : (
                             <div className="w-full space-y-12">
                                 <div className="space-y-2">
-                                    <FigtreeText className="text-[18px] font-black text-[#1E293B] uppercase tracking-[0.2em] leading-none">{images.length} Upload Complete</FigtreeText>
+                                    <FigtreeText className="text-[18px] font-black text-[#1E293B] uppercase tracking-[0.2em]">{images.length} Upload Complete</FigtreeText>
                                 </div>
                                 <div className="flex flex-wrap items-center justify-center gap-8">
                                     {images.map((img, i) => (
-                                        <div key={i} className="relative group/img transition-all hover:-translate-y-2">
+                                        <div key={i} className="relative group transition-all hover:-translate-y-2">
                                             <div className="h-40 w-40 rounded-[8px] overflow-hidden border-4 border-white shadow-2xl">
                                                 <img src={img} className="h-full w-full object-cover" />
                                             </div>
                                             <button 
                                                 onClick={() => removeImage(i)}
-                                                className="absolute -top-4 -right-4 h-[48px] w-[48px] rounded-full bg-white shadow-2xl flex items-center justify-center text-[#64748B] hover:text-[#EF4444] transition-all border border-slate-100 active:scale-90"
+                                                className="absolute -top-4 -right-4 h-10 w-10 rounded-full bg-white shadow-lg flex items-center justify-center text-[#64748B] hover:text-[#EF4444]"
                                             >
-                                                <X className="h-7 w-7" />
+                                                <X className="h-5 w-5" />
                                             </button>
                                         </div>
                                     ))}
                                 </div>
-                                <Button 
-                                    onClick={handleImageUpload}
-                                    disabled={uploading}
-                                    className="h-14 px-8 rounded-[8px] bg-white/10 hover:bg-white/20 text-[#3B59DA] font-bold transition-all border-[#3B59DA]/20 border text-sm shadow-sm flex items-center gap-3 active:scale-95 mx-auto"
-                                >
-                                    <Upload className="h-5 w-5" /> {uploading ? "Uploading..." : "Replace Product Image"}
+                                <Button onClick={handleImageUpload} disabled={uploading} className="mx-auto h-14 px-8 rounded-[8px] bg-slate-50 text-[#3B59DA] font-bold border-[#3B59DA]/20 border shadow-sm">
+                                    <Upload className="h-5 w-5 mr-3" /> {uploading ? "Uploading..." : "Add More Images"}
                                 </Button>
                             </div>
                         )}
@@ -195,4 +306,15 @@ export default function AddNewItemPage() {
       </div>
     </AppContainer>
   );
+}
+
+export default function AddNewItemPage() {
+    return (
+        <Suspense fallback={<div className="p-20 text-center flex flex-col items-center gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
+            <p className="font-figtree text-slate-500 font-bold">Initializing form...</p>
+        </div>}>
+            <AddNewItemContent />
+        </Suspense>
+    );
 }

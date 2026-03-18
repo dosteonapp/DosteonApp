@@ -11,21 +11,32 @@ class ProfileRepository:
                 "update": profile_data
             }
         )
-        return profile.model_dump()
+        return profile.model_dump() if hasattr(profile, 'model_dump') else profile.__dict__
 
     async def get_profile_by_id(self, user_id: str) -> Optional[dict]:
-        profile = await db.profile.find_unique(where={"id": user_id})
-        return profile.__dict__ if profile else None
+        try:
+            # Ensure it's a valid UUID string
+            UUID(user_id)
+            p = await db.profile.find_unique(where={"id": user_id})
+            if not p: return None
+            return p.model_dump() if hasattr(p, 'model_dump') else p.__dict__
+        except (ValueError, Exception):
+            # If not a valid UUID or DB error, return None (auth dependency will handle fallback)
+            return None
 
     async def get_profile_by_email(self, email: str) -> Optional[dict]:
-        profile = await db.profile.find_first(where={"email": email})
-        return profile.__dict__ if profile else None
+        try:
+            p = await db.profile.find_first(where={"email": email})
+            if not p: return None
+            return p.model_dump() if hasattr(p, 'model_dump') else p.__dict__
+        except Exception:
+            return None
 
     async def update(self, user_id: str, data: dict) -> dict:
-        profile = await db.profile.update(
+        p = await db.profile.update(
             where={"id": user_id},
             data=data
         )
-        return profile.__dict__
+        return p.model_dump() if hasattr(p, 'model_dump') else p.__dict__
 
 profile_repo = ProfileRepository()

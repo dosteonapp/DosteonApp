@@ -44,8 +44,8 @@ const RoleProvider = ({
       );
     }
 
-    const isRestaurantSide = ["restaurant", "admin", "manager", "staff"].includes(user?.role || "");
-    const isSupplierSide = user?.role === "supplier";
+    const isRestaurantSide = ["OWNER", "MANAGER", "CHEF", "STAFF"].includes(user?.role || "");
+    const isSupplierSide = user?.role === "SUPPLIER";
 
     if (isRestaurantSide) {
       // If the user hasn't set up an organization yet, show the onboarding flow

@@ -21,10 +21,24 @@ async def get_current_user(credentials = Depends(security)):
     
     # Get user profile from our DB to ensure it exists and to get roles
     profile = await profile_repo.get_profile_by_id(payload["id"])
+    
+    # Fallback to email if ID doesn't match (essential for seeded users)
+    if not profile and "email" in payload:
+        profile = await profile_repo.get_profile_by_email(payload["email"])
+        if profile:
+            # OPTIONAL: Update the profile with the correct ID for future hits
+            try:
+                # We need a low-level update because we are changing the ID
+                # Actually, Prisma doesn't support changing @id easily.
+                # But for now, returning the profile found by email is enough.
+                pass
+            except:
+                pass
+
     if not profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not initialized",
+            detail=f"User profile with email {payload.get('email')} not initialized in database",
         )
             
     return profile
@@ -42,10 +56,10 @@ class RoleChecker:
         return user
 
 # Helper instances
-# Updated roles for the Restaurant Focus V1
-RESTAURANT_ROLES = ["admin", "manager", "staff", "restaurant"]
+# Updated roles for the Restaurant Focus V1 (Match Prisma Enum Case)
+RESTAURANT_ROLES = ["OWNER", "MANAGER", "CHEF", "STAFF"]
 
 get_restaurant_user = RoleChecker(RESTAURANT_ROLES)
-get_admin_user = RoleChecker(["admin"])
-get_manager_user = RoleChecker(["admin", "manager"])
-get_supplier_user = RoleChecker(["supplier"])
+get_admin_user = RoleChecker(["OWNER", "MANAGER"])
+get_manager_user = RoleChecker(["OWNER", "MANAGER"])
+get_supplier_user = RoleChecker(["SUPPLIER"])

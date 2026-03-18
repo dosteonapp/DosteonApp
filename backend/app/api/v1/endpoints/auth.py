@@ -21,6 +21,13 @@ async def login(request: Request, login_data: UserLogin):
 async def get_me(current_user: dict = Depends(get_current_user)):
     return await auth_service.get_me(current_user)
 
+@router.patch("/me")
+async def update_me(
+    profile_data: dict = Body(...),
+    current_user: dict = Depends(get_current_user)
+):
+    return await auth_service.update_me(current_user["id"], profile_data)
+
 @router.post("/onboard")
 async def onboard_user(
     org_data: dict = Body(...), 

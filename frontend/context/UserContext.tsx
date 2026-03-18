@@ -4,6 +4,7 @@ import {
   QueryClient,
   QueryClientProvider,
   useQuery,
+  useMutation,
 } from "@tanstack/react-query";
 import { User, UserContextType } from "@/types/user";
 import axiosInstance from "@/lib/axios";
@@ -54,7 +55,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
               email: "admin@therestaurant.com",
               first_name: "Sherry",
               last_name: "Harper",
-              role: "restaurant",
+              role: "MANAGER",
               created_at: new Date().toISOString(),
             } as User;
           }
@@ -79,6 +80,24 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5, // 5 minutes
     });
+ 
+    const { mutateAsync: updateUser } = useMutation({
+      mutationFn: async (profileData: Partial<User>) => {
+        if (bypassAuth) {
+            const saved = localStorage.getItem('mock_user');
+            if (saved) {
+                const user = JSON.parse(saved);
+                const updated = { ...user, ...profileData };
+                localStorage.setItem('mock_user', JSON.stringify(updated));
+            }
+            return;
+        }
+        await axiosInstance.patch("/auth/me", profileData);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["user"] });
+      }
+    });
 
     return (
       <UserContext.Provider
@@ -86,6 +105,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
           user,
           fetchUserError,
           fetchingUser,
+          updateUser,
         }}
       >
         {children}

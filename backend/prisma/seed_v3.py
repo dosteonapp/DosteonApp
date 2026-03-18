@@ -1,14 +1,12 @@
 import asyncio
 import os
-from prisma import Prisma
-from datetime import datetime
-from uuid import UUID
+from prisma import Prisma, Json
 
 async def seed():
     db = Prisma()
     await db.connect()
 
-    print("--- SEEDING MASTER DATA (V2) ---")
+    print("--- SEEDING MASTER DATA (V3.2 - JSON FIXED) ---")
 
     # 1. Get or Create Organization
     org_name = "Dosteon Demo Restaurant"
@@ -18,29 +16,14 @@ async def seed():
             data={
                 "name": org_name,
                 "type": "restaurant",
-                "settings": {"opening_time": "08:00 AM", "closing_time": "10:00 PM"}
+                "settings": Json({"opening_time": "08:00 AM", "closing_time": "10:00 PM"})
             }
         )
-        print(f"Created Organization: {org.name}")
+        print(f"Created Organization: {org.id} - {org.name}")
     else:
-        print(f"Using existing Organization: {org.name}")
+        print(f"Using existing Organization: {org.id} - {org.name}")
 
-    # 2. Update Profile (Link to Org if email matches)
-    user_email = "gatetejules1@gmail.com"
-    profile = await db.profile.find_first(where={"email": user_email})
-    if profile:
-        await db.profile.update(
-            where={"id": profile.id},
-            data={
-                "organization_id": org.id,
-                "first_name": "Test",
-                "last_name": "User",
-                "role": "MANAGER"
-            }
-        )
-        print(f"Linked profile {user_email} to organization and set name.")
-
-    # 3. Canonical Products List (~30 items)
+    # 2. Canonical Products List (~30 items)
     canonical_items = [
         {"name": "Tomatoes", "category": "Fresh Produce", "type": "Vegetables", "unit": "kg", "prefix": "FPD"},
         {"name": "Onions", "category": "Fresh Produce", "type": "Vegetables", "unit": "kg", "prefix": "FPD"},
@@ -100,7 +83,6 @@ async def seed():
         )
         
         if not existing_ctx:
-            # Generate SKU
             prefix = item["prefix"]
             count = prefix_counts.get(prefix, 1)
             sku = f"{prefix}-{str(count).zfill(3)}"
@@ -110,18 +92,17 @@ async def seed():
                 data={
                     "organization_id": org.id,
                     "canonical_product_id": cp.id,
-                    "name": cp.name,
                     "sku": sku,
-                    "pack_unit": cp.base_unit,
-                    "preferred_unit": cp.base_unit,
-                    "current_stock": 20.0, # Seed some starting stock
+                    "pack_unit": item["unit"],
+                    "preferred_unit": item["unit"],
+                    "current_stock": 20.0,
                     "reorder_threshold": 5.0,
                     "critical_threshold": 2.0
                 }
             )
-            print(f"  - Setup Contextual Product: {cp.name} (SKU: {sku})")
+            print(f"  - Setup Contextual Product: {item['name']} (SKU: {sku})")
 
-    # 4. Initialize Day Status
+    # 3. Initialize Day Status
     existing_status = await db.daystatus.find_unique(where={"organization_id": org.id})
     if not existing_status:
         await db.daystatus.create(

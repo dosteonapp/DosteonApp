@@ -2,13 +2,12 @@ import asyncio
 import os
 from prisma import Prisma
 from datetime import datetime
-from uuid import UUID
 
 async def seed():
     db = Prisma()
     await db.connect()
 
-    print("--- SEEDING MASTER DATA (V2) ---")
+    print("--- SEEDING MASTER DATA (V2.1) ---")
 
     # 1. Get or Create Organization
     org_name = "Dosteon Demo Restaurant"
@@ -23,22 +22,25 @@ async def seed():
         )
         print(f"Created Organization: {org.name}")
     else:
-        print(f"Using existing Organization: {org.name}")
+        print(f"Using existing Organization: {org.id} - {org.name}")
 
     # 2. Update Profile (Link to Org if email matches)
     user_email = "gatetejules1@gmail.com"
     profile = await db.profile.find_first(where={"email": user_email})
     if profile:
-        await db.profile.update(
-            where={"id": profile.id},
-            data={
-                "organization_id": org.id,
-                "first_name": "Test",
-                "last_name": "User",
-                "role": "MANAGER"
-            }
-        )
-        print(f"Linked profile {user_email} to organization and set name.")
+        try:
+            await db.profile.update(
+                where={"id": profile.id},
+                data={
+                    "organization_id": org.id,
+                    "first_name": "Jules",
+                    "last_name": "Gatete",
+                    # "role": "MANAGER" # Temporarily commented to avoid enum error
+                }
+            )
+            print(f"Linked profile {user_email} to organization and set name.")
+        except Exception as e:
+            print(f"Error updating profile: {e}")
 
     # 3. Canonical Products List (~30 items)
     canonical_items = [
@@ -114,7 +116,7 @@ async def seed():
                     "sku": sku,
                     "pack_unit": cp.base_unit,
                     "preferred_unit": cp.base_unit,
-                    "current_stock": 20.0, # Seed some starting stock
+                    "current_stock": 20.0,
                     "reorder_threshold": 5.0,
                     "critical_threshold": 2.0
                 }

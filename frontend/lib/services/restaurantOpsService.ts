@@ -209,6 +209,18 @@ export const restaurantOpsService = {
     return axiosInstance.post("/restaurant/closing/submit", payload);
   },
 
+  addItem: async (itemData: any) => {
+    if (useMocks) return { success: true };
+    const { data } = await axiosInstance.post("/restaurant/inventory/items", itemData);
+    return data;
+  },
+
+  updateItem: async (id: string, itemData: any) => {
+    if (useMocks) return { success: true };
+    const { data } = await axiosInstance.patch(`/restaurant/inventory/items/${id}`, itemData);
+    return data;
+  },
+
   getInventoryItems: async ({ search, category, level }: { search?: string, category?: string, level?: string } = {}): Promise<InventoryItem[]> => {
     if (useMocks) {
       await new Promise((resolve) => setTimeout(resolve, 600));

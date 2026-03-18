@@ -27,8 +27,11 @@ import {
 } from "@/components/ui/dialog";
 
 export default function PersonalDetailsPage() {
-  const { user } = useUser();
+  const { user, updateUser } = useUser();
   const [isSaved, setIsSaved] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const [fName, setFName] = React.useState(user?.first_name || "");
+  const [lName, setLName] = React.useState(user?.last_name || "");
 
   const [showPasswordModal, setShowPasswordModal] = React.useState(false);
   const [passwordStep, setPasswordStep] = React.useState<"form" | "success">("form");
@@ -107,11 +110,21 @@ export default function PersonalDetailsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="first-name" className="text-sm font-bold text-slate-500">First Name</Label>
-                    <Input id="first-name" defaultValue={user?.first_name || ""} className="h-14 rounded-xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800" />
+                    <Input 
+                      id="first-name" 
+                      value={fName} 
+                      onChange={(e) => setFName(e.target.value)}
+                      className="h-14 rounded-xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="last-name" className="text-sm font-bold text-slate-500">Last Name</Label>
-                    <Input id="last-name" defaultValue={user?.last_name || ""} className="h-14 rounded-xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800" />
+                    <Input 
+                      id="last-name" 
+                      value={lName} 
+                      onChange={(e) => setLName(e.target.value)}
+                      className="h-14 rounded-xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800" 
+                    />
                   </div>
                 </div>
 
@@ -326,10 +339,19 @@ export default function PersonalDetailsPage() {
 
       <div className="flex justify-center pt-4">
         <Button 
-          onClick={() => setIsSaved(true)}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await updateUser({ first_name: fName, last_name: lName });
+              setIsSaved(true);
+            } finally {
+              setSaving(false);
+            }
+          }}
+          disabled={saving}
           className="h-14 px-20 bg-[#3B59DA] hover:bg-[#2F47AF] text-white font-black rounded-xl shadow-lg shadow-indigo-100 transition-all active:scale-95 text-base"
         >
-          Save Changes
+          {saving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </div>

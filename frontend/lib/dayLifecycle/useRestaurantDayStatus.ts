@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DayState, DayStatus, DayStep } from "./types";
 import { restaurantDayStorage } from "./storage";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
-
+import { useUser } from "@/context/UserContext";
+ 
 const DEFAULT_ORG_ID = "org_123";
 const DEFAULT_BUSINESS_DATE = "2026-01-24"; // Matching the hardcoded date in UI for consistency
 
@@ -22,7 +23,8 @@ const INITIAL_CLOSING_STEPS: DayStep[] = [
 
 export function useRestaurantDayStatus() {
   const queryClient = useQueryClient();
-  const orgId = DEFAULT_ORG_ID;
+  const { user } = useUser();
+  const orgId = user?.organization_id || DEFAULT_ORG_ID;
   const businessDate = DEFAULT_BUSINESS_DATE;
 
   const { data: status, isLoading } = useQuery({

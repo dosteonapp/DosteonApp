@@ -22,4 +22,11 @@ class OrganizationRepository:
             .execute()
         return res.data[0]
 
+    def update_name(self, org_id: str, name: str) -> dict:
+        res = supabase.table("organizations")\
+            .update({"name": name})\
+            .eq("id", str(org_id))\
+            .execute()
+        return res.data[0]
+
 organization_repo = OrganizationRepository()

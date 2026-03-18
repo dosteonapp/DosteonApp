@@ -35,7 +35,7 @@ export async function addInventoryItem(data: {
   storageLocation?: string;
   expiryDate?: string;
 }) {
-  const response = await axiosInstance.post("/restaurant/inventory", data);
+  const response = await axiosInstance.post("/inventory", data);
   return response.data;
 }
 

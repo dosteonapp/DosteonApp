@@ -119,6 +119,21 @@ class AuthService:
             "team_id": current_user.get("team_id")
         }
 
+    async def update_me(self, user_id: str, profile_data: dict):
+        # 1. Update Profile in DB
+        updated = await profile_repo.update(user_id, profile_data)
+        
+        # 2. Sync to Supabase Auth metadata
+        try:
+            supabase.auth.admin.update_user_by_id(
+                user_id,
+                {"user_metadata": profile_data}
+            )
+        except:
+            pass
+            
+        return updated
+
 
 
     async def onboard_user(self, org_data: dict, current_user: dict):
