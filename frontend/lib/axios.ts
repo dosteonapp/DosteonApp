@@ -10,6 +10,8 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(async (config) => {
   if (bypassAuth) {
+    const devToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYWRtaW4ifQ.devtokenjules";
+    config.headers.Authorization = `Bearer ${devToken}`;
     return config;
   }
   

@@ -16,5 +16,6 @@ export interface User {
   onboardingSkipped?: boolean;
   organization_id?: string;
   team_id?: string;
+  image_url?: string;
 }
 

@@ -58,10 +58,10 @@ export interface RunningLowItem {
 }
 
 export const restaurantOpsService = {
-  getStats: async (): Promise<{ totalItems: number; healthy: number; low: number; critical: number }> => {
+  getStats: async (): Promise<{ totalItems: number; countedItems: number; healthy: number; low: number; critical: number }> => {
     if (useMocks) {
       await new Promise((resolve) => setTimeout(resolve, 600));
-      return { totalItems: 24, healthy: 12, low: 6, critical: 6 };
+      return { totalItems: 24, countedItems: 6, healthy: 12, low: 6, critical: 6 };
     }
     const { data } = await axiosInstance.get("/restaurant/stats");
     return data;
@@ -172,6 +172,12 @@ export const restaurantOpsService = {
   updateItemStock: async (itemId: string, newQuantity: number) => {
     if (useMocks) return { success: true };
     return axiosInstance.post("/restaurant/inventory/update-stock", { itemId, newQuantity });
+  },
+
+  getClosingIndicators: async () => {
+    if (useMocks) return { itemsUsed: 17, itemsWasted: 5 };
+    const { data } = await axiosInstance.get("/restaurant/closing/indicators");
+    return data;
   },
 
   getClosingStatus: async () => {

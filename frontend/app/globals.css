@@ -126,3 +126,11 @@
   background-color: var(--rdp-accent-color);
   color: white;
 }
+/* Hero Page Gradients */
+.bg-hero-closing {
+  background: linear-gradient(135deg, #1b32b8 0%, #761dc3 50%, #091558 100%);
+}
+
+.bg-hero-locked-red {
+  background: linear-gradient(135deg, #3B59DA 0%, #DA3B3B 100%);
+}

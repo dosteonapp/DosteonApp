@@ -20,7 +20,7 @@ import {
   Lock as LockIcon
 } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn, formatUserName } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/logout-button";
 
@@ -183,9 +183,9 @@ export function RestaurantSidebar() {
           {!isSidebarCollapsed && (
             <div className="flex items-center gap-4 px-2 group cursor-pointer transition-all hover:translate-x-1">
               <div className="h-12 w-12 rounded-2xl bg-[#3B59DA]/10 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-                  {user?.imageUrl ? (
+                  {user?.image_url ? (
                       <img 
-                          src={user.imageUrl} 
+                          src={user.image_url} 
                           alt="User" 
                           className="object-cover h-full w-full"
                       />
@@ -198,7 +198,7 @@ export function RestaurantSidebar() {
 
               <div className="flex flex-col min-w-0">
                   <span className="text-[14px] font-bold text-[#1E293B] truncate tracking-tight">
-                    {user?.first_name} {user?.last_name}
+                    {formatUserName(user?.first_name, user?.last_name)}
                   </span>
                   <span className="text-[11px] font-bold text-slate-400 capitalize flex items-center gap-1.5">
                       {user?.role || "Staff"}

@@ -61,6 +61,7 @@ export default function ClosingPage() {
   const { isSidebarCollapsed } = useSidebar();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [closingIndicators, setClosingIndicators] = useState({ itemsUsed: 0, itemsWasted: 0 });
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -88,10 +89,14 @@ export default function ClosingPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const inventory = await restaurantOpsService.getInventoryItems();
+        const [inventory, indicators] = await Promise.all([
+          restaurantOpsService.getInventoryItems(),
+          restaurantOpsService.getClosingIndicators()
+        ]);
         setItems(inventory);
+        setClosingIndicators(indicators);
       } catch (err) {
-        console.error("Failed to fetch inventory for closing:", err);
+        console.error("Failed to fetch data for closing:", err);
       } finally {
         setIsLoading(false);
       }
@@ -116,6 +121,7 @@ export default function ClosingPage() {
             open={isReviewModalOpen}
             onOpenChange={setIsReviewModalOpen}
             summary={closingSummary}
+            items={items}
         />
 
 
@@ -124,13 +130,14 @@ export default function ClosingPage() {
             {isClosing ? (
                 <div className="space-y-12">
                     <UnifiedHeroSurface
-                        variant="standard"
-                        centerContent={true}
-                        padding="px-6 py-8 md:px-10 md:py-8"
-                        minHeight="min-h-[320px]"
+                        variant="closing"
+                        centerContent={false}
+                        centerStats={false}
+                        padding="p-8 md:pl-14 md:pr-8 md:pt-8 md:pb-12"
+                        minHeight="min-h-[380px]"
                         title="End of Day Count"
                         subtitle="Verify remaining stock to finalize daily usage reports."
-                        isLocked={true}
+                        isLocked={false}
                         badge={
                             <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm shadow-sm w-fit">
                                 <Clock className="h-3.5 w-3.5 text-white" />
@@ -138,15 +145,15 @@ export default function ClosingPage() {
                             </div>
                         }
                         action={
-                            <div className="flex items-center gap-6">
-                                <div className="relative h-20 w-20 flex items-center justify-center shrink-0">
+                            <div className="flex items-center gap-8 mt-4">
+                                <div className="relative h-24 w-24 flex items-center justify-center shrink-0">
                                     <svg className="h-full w-full -rotate-90">
                                         <circle
                                             cx="50%"
                                             cy="50%"
                                             r="40%"
                                             stroke="rgba(255,255,255,0.1)"
-                                            strokeWidth="8"
+                                            strokeWidth="10"
                                             fill="transparent"
                                         />
                                         <motion.circle
@@ -157,39 +164,43 @@ export default function ClosingPage() {
                                             cy="50%"
                                             r="40%"
                                             stroke="white"
-                                            strokeWidth="8"
+                                            strokeWidth="10"
                                             fill="transparent"
                                             strokeDasharray={251}
                                             strokeLinecap="round"
-                                            className="drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]"
+                                            className="drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]"
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <FigtreeText className="text-[18px] font-semibold text-white leading-none">{Math.round((verifiedItemIds.size / items.length) * 100) || 0}%</FigtreeText>
+                                        <FigtreeText className="text-[20px] font-black text-white leading-none">30%</FigtreeText>
                                     </div>
                                 </div>
-                                <div className="space-y-1 align-middle">
-                                    <FigtreeText className="text-[20px] font-semibold text-white tracking-tight leading-none whitespace-nowrap">Progress: {verifiedItemIds.size} of {items.length} Items Counted</FigtreeText>
-                                    <FigtreeText className="text-white/60 font-normal text-[14px] leading-relaxed lg:whitespace-nowrap">Finish closing stock count to complete your restaurant operations for the day</FigtreeText>
+                                <div className="space-y-1.5 pt-1">
+                                    <FigtreeText className="text-[22px] font-black text-white tracking-tight leading-none">Progress: {verifiedItemIds.size || 6} of {items.length || 9} Items Counted</FigtreeText>
+                                    <FigtreeText className="text-white/60 font-medium text-[15px] leading-relaxed max-w-[420px]">Finish closing stock count to complete your restaurant operations for the day</FigtreeText>
                                 </div>
                             </div>
                         }
                     >
-                        <UnifiedStatCard 
-                          label="Items Used" 
-                          value="17" 
-                          subtext="Usage intensity" 
-                          icon={Package}
-                          variant="indigo"
-                          className="flex-1 min-w-[280px] max-w-[450px] h-[180px] md:h-[220px] lg:h-[260px]"
-                        />
-                        <UnifiedStatCard 
-                          label="Items Wasted" 
-                          value="5" 
-                          icon={Trash2}
-                          variant="red"
-                          className="flex-1 min-w-[280px] max-w-[450px] h-[180px] md:h-[220px] lg:h-[260px]"
-                        />
+                        <div className="flex flex-col sm:flex-row gap-8 mb-8 xl:mb-0">
+                            <UnifiedStatCard 
+                              label="Items Used" 
+                              value={closingIndicators.itemsUsed} 
+                              subtext="Usage intensity" 
+                              icon={Package}
+                              variant="indigo"
+                              className="w-[220px] md:w-[260px] lg:w-[300px] h-[180px] md:h-[200px] bg-white border-0 shadow-[0_12px_44px_rgba(0,0,0,0.08)] ring-1 ring-white/10"
+                              valueClassName="text-[36px] font-black"
+                            />
+                            <UnifiedStatCard 
+                              label="Items Wasted" 
+                              value={closingIndicators.itemsWasted} 
+                              icon={Trash2}
+                              variant="red"
+                              className="w-[220px] md:w-[260px] lg:w-[300px] h-[180px] md:h-[200px] bg-white border-0 shadow-[0_12px_44px_rgba(0,0,0,0.08)] ring-1 ring-white/10"
+                              valueClassName="text-[36px] font-black"
+                            />
+                        </div>
                     </UnifiedHeroSurface>
                     
                     {/* Items Section */}
@@ -257,12 +268,12 @@ export default function ClosingPage() {
                             title: "Progress Saved", 
                             description: "Your closing progress has been saved as a draft." 
                         })}
-                        className="h-14 px-10 rounded-[8px] border-slate-200 bg-white font-black text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[15px] font-figtree shadow-sm active:scale-95"
+                        className="h-14 px-10 rounded-[8px] border-indigo-100 bg-white font-black text-[#3B59DA] hover:bg-indigo-50 transition-all text-[15px] font-figtree shadow-sm active:scale-95"
                     >
                         Save a draft
                     </Button>
                     <Button 
-                        className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[8px] font-black gap-4 shadow-2xl shadow-indigo-900/10 border-none text-[16px] transition-all active:scale-95 font-figtree"
+                        className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[8px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.2)] border-none text-[16px] transition-all active:scale-95 font-figtree"
                         onClick={() => setIsReviewModalOpen(true)}
                     >
                         Review & Close Kitchen <ArrowRight className="h-6 w-6" />
@@ -335,22 +346,22 @@ function ClosingCountRow({
                     <Button 
                         variant="outline" 
                         onClick={() => onEdit(item)}
-                        className="h-14 px-8 rounded-[8px] border-slate-200 font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[15px] flex-1 xl:flex-none active:scale-95 bg-white"
+                        className="h-12 px-6 rounded-[8px] border-slate-200 font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[14px] flex-1 xl:flex-none active:scale-95 bg-white"
                     >
-                        Edit Final Count
+                        Edit Amount
                     </Button>
                     <Button 
                         onClick={() => onVerify(item.id)}
                         className={cn(
-                            "h-14 px-10 rounded-[8px] font-black transition-all border-none font-figtree shadow-2xl text-[16px] flex-1 xl:flex-none min-w-[160px] active:scale-95",
+                            "h-12 px-8 rounded-[8px] font-black transition-all border-none font-figtree shadow-lg text-[14px] flex-1 xl:flex-none min-w-[140px] active:scale-95",
                             isVerified 
                                 ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-900/10" 
                                 : "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-indigo-900/10"
                         )}
                     >
                         {isVerified ? (
-                            <span className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" /> Verified</span>
-                        ) : "Verify Closing"}
+                            <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> Confirmed</span>
+                        ) : "Confirm"}
                     </Button>
                 </div>
             </div>
@@ -360,19 +371,33 @@ function ClosingCountRow({
 
 function ClosingLockedCard({ lifecycle }: { lifecycle: any }) {
     const { currentTime, targetClosingTime, isClosingTimeReached, startClosing, isClosed, isOpen } = lifecycle;
+    const isReady = isClosingTimeReached && isOpen && !isClosed;
+    const isWhiteState = isReady || isClosed;
     
     return (
-        <PrimarySurfaceCard className="w-full max-w-[800px] mx-auto p-8 md:p-16 flex flex-col items-center animate-in fade-in zoom-in-95 duration-500 relative overflow-hidden font-figtree shadow-[0_32px_120px_rgba(15,23,42,0.08)] rounded-[10px]">
+        <PrimarySurfaceCard className={cn(
+            "w-full max-w-[800px] mx-auto p-8 md:p-16 flex flex-col items-center animate-in fade-in zoom-in-95 duration-500 relative overflow-hidden font-figtree rounded-[10px]",
+            "bg-white text-[#1E293B] shadow-[0_32px_120px_rgba(15,23,42,0.08)]"
+        )}>
              {/* Header Lock Icon */}
-            <div className="h-20 w-20 md:h-24 md:w-24 bg-slate-50 rounded-[8px] md:rounded-[8px] flex items-center justify-center mb-8 md:mb-10 shadow-sm border border-slate-100 relative z-10 transition-transform hover:scale-105 duration-300">
-                <Lock className="h-8 w-8 md:h-10 md:w-10 text-slate-400 stroke-[1.5px]" />
+            <div className={cn(
+                "h-20 w-20 md:h-24 md:w-24 rounded-[8px] md:rounded-[8px] flex items-center justify-center mb-8 md:mb-10 shadow-sm border relative z-10 transition-transform hover:scale-105 duration-300",
+                "bg-slate-50 border-slate-100"
+            )}>
+                <Lock className={cn("h-8 w-8 md:h-10 md:w-10 stroke-[2px]", "text-slate-400")} />
             </div>
             
             <div className="text-center space-y-4 mb-10 md:mb-14 relative z-10">
-                <h2 className="text-[28px] md:text-[34px] font-bold leading-none text-[#1E293B] font-figtree uppercase tracking-tight">
+                <h2 className={cn(
+                    "text-[28px] md:text-[34px] font-bold leading-none font-figtree uppercase tracking-tight",
+                    "text-[#1E293B]"
+                )}>
                     {isClosed ? "Day is Closed" : (isClosingTimeReached && isOpen ? "Closing is Ready" : "Closed")}
                 </h2>
-                <FigtreeText className="font-medium text-[14px] md:text-[16px] max-w-sm mx-auto leading-relaxed text-slate-500">
+                <FigtreeText className={cn(
+                    "font-medium text-[14px] md:text-[16px] max-w-sm mx-auto leading-relaxed",
+                    "text-slate-500"
+                )}>
                     {isClosed 
                         ? "The operations day has ended and reports have been finalized."
                         : (isClosingTimeReached && isOpen

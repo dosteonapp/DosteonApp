@@ -23,6 +23,7 @@ import {
 interface ReviewClosingChecklistModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    items: any[];
     summary: {
         itemsChecked: number;
         itemsTotal: number;
@@ -34,7 +35,8 @@ interface ReviewClosingChecklistModalProps {
 export function ReviewClosingChecklistModal({ 
     open, 
     onOpenChange, 
-    summary 
+    summary,
+    items
 }: ReviewClosingChecklistModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
@@ -45,7 +47,10 @@ export function ReviewClosingChecklistModal({
         setIsSubmitting(true);
         try {
             // 1. Submit to backend
-            const submitTask = restaurantOpsService.submitClosingChecklist(summary);
+            const submitTask = restaurantOpsService.submitClosingChecklist({ 
+                summary, 
+                items 
+            });
             
             // 2. Transition lifecycle immediately
             await forceClose();

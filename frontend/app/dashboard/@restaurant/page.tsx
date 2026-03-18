@@ -24,16 +24,17 @@ import {
     FigtreeText,
     PrimarySurfaceCard
 } from "@/components/ui/dosteon-ui";
-import { cn } from "@/lib/utils";
+import { cn, formatUserName } from "@/lib/utils";
+import { useUser } from "@/context/UserContext";
 
 export default function RestaurantDashboardPage() {
   const { isOpen, isLoading: isStatusLoading, isClosingTimeReached, targetClosingTime } = useRestaurantDayLifecycle();
   const [activities, setActivities] = useState<ActivityType[]>([]);
-  const [stats, setStats] = useState({ totalItems: 0, healthy: 0, low: 0, critical: 0 });
+  const [stats, setStats] = useState({ totalItems: 0, countedItems: 0, healthy: 0, low: 0, critical: 0 });
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(true);
 
-  // In a real app, this would come from a user context
-  const name = "Jules"; 
+  const { user } = useUser();
+  const name = formatUserName(user?.first_name, user?.last_name);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,9 +106,11 @@ export default function RestaurantDashboardPage() {
                     isLocked={true}
                     bgIcon={<ChefHat className="h-64 w-64 text-white" />}
                     badge={
-                        <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-[8px] border-2 border-[#EF4444] bg-white w-fit shadow-sm">
-                            <ClipboardList className="h-4 w-4 text-[#EF4444]" />
-                            <FigtreeText className="text-[12px] font-semibold text-[#EF4444] uppercase tracking-[0.05em]">{stats.totalItems} items need counting</FigtreeText>
+                        <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm shadow-sm w-fit">
+                            <ClipboardList className="h-3.5 w-3.5 text-white" />
+                            <FigtreeText className="text-[11px] font-bold text-white uppercase tracking-[0.1em]">
+                                {stats.countedItems || 0} of {stats.totalItems} Items counted ({Math.round(((stats.countedItems || 0) / (stats.totalItems || 1)) * 100)}%)
+                            </FigtreeText>
                         </div>
                     }
                     action={

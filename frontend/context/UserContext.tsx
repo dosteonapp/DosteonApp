@@ -36,39 +36,43 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     } = useQuery<User | null>({
       queryKey: ["user"],
       queryFn: async () => {
-        if (bypassAuth) {
-          const savedMock = localStorage.getItem('mock_user');
-          if (savedMock) {
-            try {
-              return JSON.parse(savedMock) as User;
-            } catch (e) {
-              console.error("Failed to parse mock_user", e);
-            }
-          }
-          return {
-            id: "mock-restaurant-id",
-            email: "admin@therestaurant.com",
-            first_name: "Sherry",
-            last_name: "Harper",
-            role: "restaurant",
-            created_at: new Date().toISOString(),
-          } as User;
-        }
         try {
-          // Check if we have a session first before calling the backend
-          const { createClient } = await import("@/lib/supabase/client");
-          const supabase = createClient();
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (!session) {
-            return null;
-          }
-
+          // If bypassAuth is true, axios will use the dev token.
+          // We hit the backend to get the real profile (e.g. gatetejules1@gmail.com)
           const { data } = await axiosInstance.get("/auth/me");
           return data;
         } catch (error) {
-          console.error("Error fetching user profile:", error);
-          throw error;
+          if (bypassAuth) {
+            const savedMock = localStorage.getItem('mock_user');
+            if (savedMock) {
+              try {
+                return JSON.parse(savedMock) as User;
+              } catch (e) {}
+            }
+            return {
+              id: "mock-restaurant-id",
+              email: "admin@therestaurant.com",
+              first_name: "Sherry",
+              last_name: "Harper",
+              role: "restaurant",
+              created_at: new Date().toISOString(),
+            } as User;
+          }
+          
+          // Non-bypass mode: check session
+          try {
+            const { createClient } = await import("@/lib/supabase/client");
+            const supabase = createClient();
+            if (!supabase) return null;
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return null;
+            
+            const { data } = await axiosInstance.get("/auth/me");
+            return data;
+          } catch (err) {
+            console.error("Error fetching user profile:", err);
+            return null;
+          }
         }
       },
       retry: 1,

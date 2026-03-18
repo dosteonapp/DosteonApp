@@ -48,14 +48,16 @@ export const UnifiedStatCard = ({
   subtext, 
   icon: Icon, 
   variant = 'indigo',
-  className 
+  className,
+  valueClassName
 }: { 
   label: string, 
   value: string | number, 
   subtext?: React.ReactNode, 
   icon: any, 
   variant?: 'indigo' | 'green' | 'red' | 'amber' | 'neutral',
-  className?: string
+  className?: string,
+  valueClassName?: string
 }) => {
   const colors = {
     indigo: "bg-[#F8F9FF] text-[#3B59DA] border-[#D0D7FF]/50",
@@ -88,9 +90,10 @@ export const UnifiedStatCard = ({
       <div className="flex flex-col gap-2 py-2">
         <div className={cn(
         "relative z-10 w-full flex flex-col h-full",
-        textColors[variant], // This was originally textColors[variant]
+        textColors[variant], 
         "font-semibold tracking-tight leading-none",
-        "text-[18px] md:text-[20px]"
+        "text-[24px] md:text-[28px]",
+        valueClassName
       )}>
           {value}
         </div>
@@ -126,7 +129,8 @@ export const UnifiedHeroSurface = ({
   minHeight,
   backgroundColor,
   borderColor,
-  bgIcon
+  bgIcon,
+  textColor
 }: { 
   title: React.ReactNode, 
   subtitle?: React.ReactNode, 
@@ -139,18 +143,19 @@ export const UnifiedHeroSurface = ({
   className?: string,
   size?: 'default' | 'dense',
   alignItems?: 'start' | 'center',
-  variant?: 'standard' | 'split' | 'inline',
+  variant?: 'standard' | 'split' | 'inline' | 'closing' | 'locked-red',
   centerContent?: boolean,
   centerStats?: boolean,
   padding?: string,
   minHeight?: string,
   backgroundColor?: string,
   borderColor?: string,
-  bgIcon?: React.ReactNode
+  bgIcon?: React.ReactNode,
+  textColor?: string
 }) => {
   const isDense = size === 'dense';
   const isSplit = variant === 'split';
-  const isInline = variant === 'inline';
+  const isInline = variant === 'inline' || variant === 'closing' || variant === 'locked-red' || isLocked;
 
   return (
     <div className={cn(
@@ -160,10 +165,16 @@ export const UnifiedHeroSurface = ({
       // Reserve space for topAction on desktop to prevent overlap
       topAction && !isSplit && "lg:pr-14", 
       alignItems === 'center' ? "items-center" : "items-stretch",
-      backgroundColor ? backgroundColor : (isLocked 
-        ? "bg-gradient-to-br from-[#2E46BA] via-[#6366F1] to-[#7C3AED] text-white shadow-2xl" 
-        : "bg-white text-[#1E293B] shadow-sm"),
-      borderColor ? borderColor : (isLocked ? "border-white/10" : "border-indigo-100"),
+      backgroundColor ? backgroundColor : (
+        variant === 'closing' || (isLocked && !backgroundColor) ? "bg-hero-closing text-white shadow-xl shadow-indigo-900/20" :
+        isLocked ? "bg-gradient-to-br from-[#F8F9FF] via-[#EEF2FF] to-[#E0E7FF] text-[#1E293B] shadow-sm" :
+        "bg-white text-[#1E293B] shadow-sm"
+      ),
+      textColor ? textColor : "",
+      borderColor ? borderColor : (
+        variant === 'closing' || isLocked ? "border-white/10" :
+        "border-indigo-100"
+      ),
       className
     )}>
       {/* Absolute topAction slot for all variants (except split) */}
@@ -202,16 +213,18 @@ export const UnifiedHeroSurface = ({
               <div className="space-y-3">
                  <h1 className={cn(
                    "font-inria text-[26px] md:text-[34px] font-bold tracking-tight leading-tight",
-                   isLocked ? "text-white" : "text-[#1E293B]"
+                   (variant === 'closing' || variant === 'locked-red' || isLocked) ? "text-white" : "text-[#1E293B]"
                  )}>{title}</h1>
                  {badge && <div className="w-fit">{badge}</div>}
               </div>
               
-              {description && (
+               {description && (
                 <FigtreeText className={cn(
                   "font-normal leading-relaxed text-[12px] md:text-[14px]",
-                  isLocked ? "text-white/60" : "text-slate-400"
-                )}>{description}</FigtreeText>
+                  (variant === 'closing' || variant === 'locked-red' || isLocked) ? "text-white/60" : "text-slate-400"
+                )}>
+                  {description}
+                </FigtreeText>
               )}
 
               {action && <div className="w-fit pt-2">{action}</div>}
@@ -219,7 +232,8 @@ export const UnifiedHeroSurface = ({
 
            {/* Section 2: Cards area (Full width horizontal on mobile/tablet/iPad Pro, flex-1 on desktop) */}
            <div className={cn(
-             "flex flex-row flex-wrap gap-4 w-full xl:flex-1 justify-start",
+             "flex flex-row flex-wrap gap-4 w-full xl:flex-1",
+             variant === 'closing' ? "justify-end" : "justify-start",
              alignItems === 'center' ? "items-center" : "items-start"
            )}>
               {children}
@@ -239,17 +253,20 @@ export const UnifiedHeroSurface = ({
              <div className="flex flex-col items-start space-y-3">
                 <h1 className={cn(
                   "font-inria leading-[1.1] font-bold tracking-tight text-[32px] md:text-[42px]",
-                  isLocked ? "text-white" : "text-[#1E293B]"
-                )}>{title}</h1>
+                   "text-[#1E293B]"
+                )}>
+                  {title}
+                </h1>
                 
                 {/* Standard Variant: Badge below title */}
                 {!isSplit && badge && <div className="py-1">{badge}</div>}
                 
                 <FigtreeText className={cn(
-                  "font-semibold leading-tight", 
-                  "text-[14px]",
-                  isLocked ? "text-white/60" : "text-slate-400"
-                )}>{subtitle}</FigtreeText>
+                  "font-semibold leading-tight text-[14px]",
+                  "text-slate-400"
+                )}>
+                  {subtitle}
+                </FigtreeText>
              </div>
 
              {/* Top Right Content (Moved to global absolute corner) */}
@@ -284,10 +301,9 @@ export const UnifiedHeroSurface = ({
                   isSplit ? "mb-[50px] max-w-[180px] sm:max-w-xs" : (padding ? "max-w-xl mb-0" : "max-w-xl mb-2")
                 )}>
                    {description && (
-                      <FigtreeText className={cn(
-                        "font-normal leading-relaxed text-[12px] md:text-[14px]", 
-                        isLocked ? "text-white/80" : "text-slate-500"
-                      )}>{description}</FigtreeText>
+                      <FigtreeText className="font-normal leading-relaxed text-[12px] md:text-[14px] text-slate-500">
+                        {description}
+                      </FigtreeText>
                    )}
                    {action && <div className="w-fit">{action}</div>}
                 </div>

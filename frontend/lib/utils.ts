@@ -38,3 +38,13 @@ export function validateApiResponse<T>(response: ApiResponse<T>): T {
 export function resetFormStatus<T>(helpers: FormikHelpers<T>) {
   helpers.setStatus(null);
 }
+
+/**
+ * Formats user name as "First Name LastInitial."
+ * e.g. "Test User" -> "Test U."
+ */
+export function formatUserName(firstName?: string, lastName?: string): string {
+  if (!firstName) return "User";
+  if (!lastName) return firstName;
+  return `${firstName} ${lastName.charAt(0)}.`;
+}

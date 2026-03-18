@@ -16,8 +16,10 @@ import {
   Loader2
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const OnboardingPage = () => {
+  const router = useRouter();
   const { user } = useUser();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -36,6 +38,10 @@ const OnboardingPage = () => {
       toast.success("Workspace created successfully!");
       // Invalidate user to trigger RoleProvider reload
       queryClient.invalidateQueries({ queryKey: ["user"] });
+      
+      // Navigate immediately
+      router.push("/dashboard");
+      router.refresh();
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || "Onboarding failed");

@@ -44,13 +44,16 @@ const RoleProvider = ({
       );
     }
 
-    if (user?.role === "restaurant") {
+    const isRestaurantSide = ["restaurant", "admin", "manager", "staff"].includes(user?.role || "");
+    const isSupplierSide = user?.role === "supplier";
+
+    if (isRestaurantSide) {
       // If the user hasn't set up an organization yet, show the onboarding flow
       if (!user.organization_id && !user.onboardingSkipped) {
         return onboarding;
       }
       return restaurant;
-    } else if (user?.role === "supplier") {
+    } else if (isSupplierSide) {
       // Suppliers might have their own onboarding later, but for now redirect
       if (!user.organization_id && !user.onboardingSkipped) {
         return onboarding;

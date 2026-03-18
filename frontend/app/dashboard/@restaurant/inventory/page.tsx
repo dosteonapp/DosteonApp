@@ -78,13 +78,18 @@ export default function InventoryPage() {
               </div>
               
               <div className="flex items-center gap-3">
-                  <Button variant="outline" className="h-11 px-6 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-3 shadow-none transition-all active:scale-95 font-figtree text-[14px]">
+                  <Button 
+                    variant="outline" 
+                    disabled={true}
+                    className="h-11 px-6 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white opacity-80 font-bold gap-3 shadow-none transition-all font-figtree text-[14px] cursor-not-allowed pointer-events-none"
+                  >
                       <RefreshIcon className="h-4 w-4" /> Update Inventory
                   </Button>
-                  <Button className="h-11 px-7 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-[8px] font-bold gap-3 transition-all border-none shadow-xl shadow-indigo-100 active:scale-95 font-figtree text-[14px]" asChild>
-                      <Link href="/dashboard/inventory/new">
-                          <PlusIcon className="h-4 w-4" /> Add New Product
-                      </Link>
+                  <Button 
+                    disabled={true}
+                    className="h-11 px-7 bg-[#3B59DA] text-white opacity-80 rounded-[8px] font-bold gap-3 transition-all border-none shadow-xl shadow-indigo-100 font-figtree text-[14px] cursor-not-allowed pointer-events-none"
+                  >
+                      <PlusIcon className="h-4 w-4" /> Add New Product
                   </Button>
               </div>
           </div>
@@ -93,21 +98,21 @@ export default function InventoryPage() {
 
       {/* Hero Section / Main Stats Card */}
       <UnifiedHeroSurface
-        variant={!isOpen ? "inline" : "standard"}
+        variant={!isOpen ? "standard" : "standard"}
         className="shadow-[0_20px_60px_rgba(59,89,218,0.04)]"
         padding={!isOpen ? "px-8 pt-4 pb-12 md:px-14 md:pt-4 md:pb-16" : "px-8 py-8 md:px-10 md:py-10"}
         minHeight={!isOpen ? "min-h-[380px]" : "min-h-[260px]"}
         backgroundColor={!isOpen ? undefined : "bg-[#f5f6ff]"}
         borderColor={!isOpen ? undefined : "border-[#98a6f9]"}
-        title={!isOpen ? "Closed" : "Inventory"}
+        title={!isOpen ? "Opening Prep" : "Inventory"}
         subtitle={isOpen ? "Manage your item stock levels and categories" : undefined}
         description={!isOpen ? "Do your opening stock count before starting your restaurant operations." : undefined}
         isLocked={!isOpen}
         bgIcon={!isOpen ? <PackageIcon className="h-64 w-64 text-white" /> : undefined}
         badge={!isOpen ? (
-            <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/20 bg-white shadow-sm w-fit">
-                <ClipboardList className="h-4 w-4 text-[#3B59DA]" />
-                <FigtreeText className="text-[12px] font-bold text-[#3B59DA] tracking-tight uppercase">{stats.totalItems} items need counting</FigtreeText>
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm shadow-sm w-fit mb-4">
+                <ClipboardList className="h-4 w-4 text-white" />
+                <FigtreeText className="text-[13px] font-bold text-white leading-none whitespace-nowrap">{stats.totalItems} items need counting</FigtreeText>
             </div>
         ) : undefined}
         topAction={isOpen && (
@@ -123,7 +128,7 @@ export default function InventoryPage() {
             </div>
         )}
         action={!isOpen ? (
-            <Button className="w-fit h-14 px-10 rounded-[8px] bg-white text-[#3B59DA] hover:bg-slate-50 font-bold gap-4 transition-all shadow-xl shadow-indigo-900/10 font-figtree active:scale-95 group text-[18px] border-none" asChild>
+            <Button className="w-fit h-14 px-10 rounded-[10px] bg-white text-[#3B59DA] hover:bg-slate-50 font-black gap-4 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.1)] font-figtree active:scale-95 group text-[18px] border-none" asChild>
                 <Link href="/dashboard/inventory/daily-stock-count">
                     Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                 </Link>
@@ -151,64 +156,64 @@ export default function InventoryPage() {
                     value={stats.totalItems.toString()} 
                     subtext={
                         <span className={cn(
-                            "flex items-center gap-1.5 font-bold text-[11px]",
+                            "flex items-center gap-1.5 font-bold text-[12px]",
                             (stats.changes?.total || 0) >= 0 ? "text-emerald-500" : "text-rose-500"
                         )}>
-                            <TrendUpIcon className={cn("h-3.5 w-3.5", (stats.changes?.total || 0) < 0 && "rotate-180")} /> 
-                            {Math.abs(stats.changes?.total || 0)}% from last week
+                            <TrendUpIcon className={cn("h-4 w-4", (stats.changes?.total || 0) < 0 && "rotate-180")} /> 
+                            up by {Math.abs(stats.changes?.total || 0)}% from last week
                         </span>
                     } 
                     icon={PackageIcon} 
                     variant="indigo" 
-                    className="h-[160px] md:h-[190px] w-full shadow-sm" 
+                    className="h-[180px] md:h-[200px] w-full bg-white border-none shadow-[0_12px_44px_rgba(0,0,0,0.06)] ring-1 ring-white/10" 
                 />
                 <UnifiedStatCard 
                     label="Healthy Stock" 
                     value={stats.healthy.toString()} 
                     subtext={
                         <span className={cn(
-                            "flex items-center gap-1.5 font-bold text-[11px]",
+                            "flex items-center gap-1.5 font-bold text-[12px]",
                             (stats.changes?.healthy || 0) >= 0 ? "text-emerald-500" : "text-rose-500"
                         )}>
-                            <TrendUpIcon className={cn("h-3.5 w-3.5", (stats.changes?.healthy || 0) < 0 && "rotate-180")} /> 
-                            {Math.abs(stats.changes?.healthy || 0)}% from last week
+                            <TrendUpIcon className={cn("h-4 w-4", (stats.changes?.healthy || 0) < 0 && "rotate-180")} /> 
+                            up by {Math.abs(stats.changes?.healthy || 0)}% from last week
                         </span>
                     } 
                     icon={SuccessIcon} 
                     variant="green" 
-                    className="h-[160px] md:h-[190px] w-full shadow-sm" 
+                    className="h-[180px] md:h-[200px] w-full bg-white border-none shadow-[0_12px_44px_rgba(0,0,0,0.06)] ring-1 ring-white/10" 
                 />
                 <UnifiedStatCard 
                     label="Low Stock" 
                     value={stats.low.toString()} 
                     subtext={
                         <span className={cn(
-                            "flex items-center gap-1.5 font-bold text-[11px]",
-                            (stats.changes?.low || 0) >= 0 ? "text-rose-500" : "text-emerald-500" // Low stock going up is usually bad
+                            "flex items-center gap-1.5 font-bold text-[12px]",
+                            (stats.changes?.low || 0) >= 0 ? "text-rose-500" : "text-emerald-500"
                         )}>
-                            <TrendUpIcon className={cn("h-3.5 w-3.5", (stats.changes?.low || 0) < 0 && "rotate-180")} /> 
-                            {Math.abs(stats.changes?.low || 0)}% from last week
+                            <TrendUpIcon className={cn("h-4 w-4", (stats.changes?.low || 0) < 0 && "rotate-180")} /> 
+                            up by {Math.abs(stats.changes?.low || 0)}% from last week
                         </span>
                     } 
                     icon={WarningIcon} 
                     variant="amber" 
-                    className="h-[160px] md:h-[190px] w-full shadow-sm" 
+                    className="h-[180px] md:h-[200px] w-full bg-white border-none shadow-[0_12px_44px_rgba(0,0,0,0.06)] ring-1 ring-white/10" 
                 />
                 <UnifiedStatCard 
                     label="Critical" 
                     value={stats.critical.toString()} 
                     subtext={
                         <span className={cn(
-                            "flex items-center gap-1.5 font-bold text-[11px]",
+                            "flex items-center gap-1.5 font-bold text-[12px]",
                             (stats.changes?.critical || 0) >= 0 ? "text-rose-500" : "text-emerald-500"
                         )}>
-                            <TrendUpIcon className={cn("h-3.5 w-3.5", (stats.changes?.critical || 0) < 0 && "rotate-180")} /> 
-                            {Math.abs(stats.changes?.critical || 0)}% from last week
+                            <TrendUpIcon className={cn("h-4 w-4", (stats.changes?.critical || 0) < 0 && "rotate-180")} /> 
+                            up by {Math.abs(stats.changes?.critical || 0)}% from last week
                         </span>
                     } 
                     icon={AlertIcon} 
                     variant="red" 
-                    className="h-[160px] md:h-[190px] w-full shadow-sm" 
+                    className="h-[180px] md:h-[200px] w-full bg-white border-none shadow-[0_12px_44px_rgba(0,0,0,0.06)] ring-1 ring-white/10" 
                 />
 
             </div>
@@ -338,19 +343,19 @@ function InventoryLockedOverlay() {
             <div className="absolute inset-0 bg-white/40 backdrop-blur-md" />
             
             <div className="relative z-10 flex flex-col items-center justify-center max-w-xl mx-auto px-6 animate-in fade-in zoom-in-95 duration-500">
-                <div className="w-20 h-20 bg-white/80 backdrop-blur-xl rounded-[16px] flex items-center justify-center mb-10 shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-white">
-                    <LockIcon className="h-9 w-9 text-slate-900/80 stroke-[2px]" />
+                <div className="w-20 h-20 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.06)] rounded-[16px] flex items-center justify-center mb-10 border border-slate-100/50">
+                    <LockIcon className="h-9 w-9 text-slate-800/80 stroke-[2px]" />
                 </div>
                 
-                <div className="space-y-4 max-w-[440px] text-center mb-12">
-                    <h2 className="text-[30px] md:text-[36px] font-bold text-[#1E293B] tracking-tight leading-tight font-inria">Kitchen Service is Closed</h2>
-                    <FigtreeText className="text-slate-600/90 text-[15px] md:text-[17px] leading-relaxed font-bold max-w-[360px] mx-auto opacity-80">
+                <div className="space-y-4 max-w-[440px] text-center mb-10">
+                    <h2 className="text-[32px] md:text-[36px] font-bold text-[#1E293B] tracking-tight leading-tight font-figtree">Kitchen Service is Locked</h2>
+                    <FigtreeText className="text-slate-500 text-[15px] md:text-[16px] leading-relaxed font-semibold max-w-[380px] mx-auto">
                         The Kitchen Service workflow is not yet available. Please do your daily stock count before you proceed to Kitchen Service.
                     </FigtreeText>
                 </div>
  
                 <Button 
-                    className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-bold gap-4 shadow-2xl shadow-indigo-500/30 transition-all active:scale-95 group font-figtree text-[18px] border-none" 
+                    className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[8px] font-black gap-4 shadow-2xl shadow-indigo-900/20 transition-all active:scale-95 group font-figtree text-[18px] border-none" 
                     asChild
                 >
                     <Link href="/dashboard/inventory/daily-stock-count">

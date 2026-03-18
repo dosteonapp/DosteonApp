@@ -45,24 +45,32 @@ import {
     UnifiedModal
 } from "@/components/ui/dosteon-ui";
 import { KitchenLogModals } from "@/components/kitchen/KitchenLogModals";
+import { formatUserName } from "@/lib/utils";
+import { useUser } from "@/context/UserContext";
 
 export default function KitchenServicePage() {
   const { isOpen, isLoading: isStatusLoading } = useRestaurantDayLifecycle();
-  const name = "Sherry"; // Mocking for now
+  const { user } = useUser();
+  const name = formatUserName(user?.first_name, user?.last_name);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [logType, setLogType] = useState<'usage' | 'waste'>('usage');
+  const [kitchenSummary, setKitchenSummary] = useState({ health: "Healthy", healthSubtext: "Checking status...", criticalIngredients: 0, criticalSubtext: "..." });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const items = await restaurantOpsService.getInventoryItems();
+        const [items, summary] = await Promise.all([
+            restaurantOpsService.getInventoryItems(),
+            restaurantOpsService.getKitchenServiceSummary()
+        ]);
         setInventoryItems(items);
+        setKitchenSummary(summary);
       } catch (error) {
         console.error("Failed to fetch inventory:", error);
       } finally {
@@ -89,6 +97,22 @@ export default function KitchenServicePage() {
 
   return (
     <AppContainer className="pb-24">
+      {/* Page Header (Only visible when locked) */}
+      {!isOpen && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div className="space-y-1.5">
+            <InriaHeading className="text-[32px] md:text-[38px] font-bold tracking-tight text-[#1E293B]">Kitchen Service</InriaHeading>
+            <FigtreeText className="text-slate-400 font-semibold text-[15px]">Service not started</FigtreeText>
+          </div>
+          
+          <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-slate-200 bg-white shadow-sm w-fit">
+                  <div className="h-2 w-2 rounded-full bg-slate-400" />
+                  <FigtreeText className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.1em]">Closed Service</FigtreeText>
+              </div>
+          </div>
+        </div>
+      )}
 
       {/* Hero / Header Area */}
       <div className="w-full">
@@ -111,18 +135,18 @@ export default function KitchenServicePage() {
             >
                 <UnifiedStatCard 
                   label="Kitchen Health" 
-                  value="Healthy" 
-                  subtext="Lunch service in progress" 
+                  value={kitchenSummary.health} 
+                  subtext={kitchenSummary.healthSubtext} 
                   icon={Utensils}
-                  variant="green"
+                  variant={kitchenSummary.health === "Healthy" ? "green" : "red"}
                   className="flex-1 min-w-[150px] md:min-w-[180px] lg:min-w-[220px] h-[160px] md:h-[190px] shadow-sm"
                 />
                 <UnifiedStatCard 
                   label="Critical Ingredients" 
-                  value="0" 
-                  subtext="Nothing urgent right now" 
+                  value={kitchenSummary.criticalIngredients.toString()} 
+                  subtext={kitchenSummary.criticalSubtext} 
                   icon={Package}
-                  variant="neutral"
+                  variant={kitchenSummary.criticalIngredients > 0 ? "red" : "neutral"}
                   className="flex-1 min-w-[150px] md:min-w-[180px] lg:min-w-[220px] h-[160px] md:h-[190px] shadow-sm"
                 />
             </UnifiedHeroSurface>
@@ -133,15 +157,15 @@ export default function KitchenServicePage() {
                  isLocked={true}
                  bgIcon={<ChefHat className="h-64 w-64 text-white" />}
                  badge={
-                     <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full border-2 border-[#EF4444] bg-white w-fit shadow-sm">
-                         <ClipboardList className="h-4 w-4 text-[#EF4444]" />
-                         <FigtreeText className="text-[12px] font-semibold text-[#EF4444] uppercase tracking-[0.05em]">16 items need counting</FigtreeText>
+                     <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm shadow-sm w-fit mb-4">
+                         <ClipboardList className="h-4 w-4 text-white" />
+                         <FigtreeText className="text-[13px] font-bold text-white leading-none whitespace-nowrap">Inventory items need counting</FigtreeText>
                      </div>
                  }
                  action={
-                     <Button className="w-fit h-14 px-10 rounded-2xl bg-white text-[#3B59DA] hover:bg-slate-50 font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
+                     <Button className="w-fit h-14 px-10 rounded-[10px] bg-white text-[#3B59DA] hover:bg-slate-50 font-black gap-4 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.1)] font-figtree active:scale-95 group text-[18px] border-none" asChild>
                          <Link href="/dashboard/inventory/daily-stock-count">
-                             Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-3" />
+                             Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                          </Link>
                      </Button>
                  }
@@ -152,8 +176,8 @@ export default function KitchenServicePage() {
       {/* Main Track Section */}
       <div className="w-full relative mt-8">
         <div className={cn(
-          "bg-white border border-slate-100 rounded-[10px] p-8 md:p-12 shadow-[0_32px_120px_rgba(15,23,42,0.025)] space-y-12 transition-all duration-700",
-          !isOpen && "blur-xl grayscale scale-[0.96] opacity-80 pointer-events-none"
+          "bg-white border border-slate-100 rounded-[12px] p-8 md:p-12 shadow-[0_8px_32px_rgba(0,0,0,0.02)] space-y-12 transition-all duration-1000 overflow-hidden relative",
+          !isOpen ? "min-h-[600px] blur-[6px] grayscale-[0.1] opacity-95 pointer-events-none select-none" : ""
         )}>
           {/* Section Header */}
           <div className="flex flex-row items-start justify-between gap-4 px-1">
@@ -177,46 +201,65 @@ export default function KitchenServicePage() {
             />
           </div>
           
-          {/* Order Grid */}
+          {/* Order Grid / Ghost Content when locked */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredItems.map((item) => (
-              <Card key={item.id} className="rounded-[8px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 active:scale-[0.98] transition-all group p-5 flex flex-col justify-between space-y-6">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1 overflow-hidden">
-                      <h3 className="font-bold text-[#1E293B] text-[17px] tracking-tight font-figtree truncate">{item.name}</h3>
-                      <FigtreeText className="text-[13px] text-slate-400 font-medium">{item.currentStock} units remaining</FigtreeText>
+            {!isOpen ? (
+                /* Ghost Skeleton Cards to provide height and blur depth */
+                [1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="h-64 rounded-[8px] border border-slate-100 bg-slate-50/50 flex flex-col p-6 gap-8">
+                        <div className="flex justify-between">
+                            <div className="space-y-3 flex-1">
+                                <div className="h-4 w-3/4 bg-slate-200 rounded-full" />
+                                <div className="h-3 w-1/2 bg-slate-100 rounded-full" />
+                            </div>
+                            <div className="h-6 w-16 bg-slate-200 rounded-md" />
+                        </div>
+                        <div className="mt-auto flex gap-3">
+                            <div className="flex-1 h-20 bg-slate-100 rounded-md" />
+                            <div className="flex-1 h-20 bg-slate-100 rounded-md" />
+                        </div>
                     </div>
-                    <Badge className={cn(
-                      "border-none rounded-[6px] font-bold text-[10px] px-2.5 py-1 uppercase tracking-tight font-figtree shrink-0 shadow-sm",
-                      item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" : 
-                      item.status === 'Low' ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
-                    )}>
-                      {item.status}
-                    </Badge>
-                  </div>
- 
-                  <div className="flex gap-3">
-                    <button 
-                      className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-[8px] border border-slate-100 bg-white hover:bg-emerald-50/50 hover:border-emerald-100 transition-all duration-300 group/btn active:scale-95" 
-                      onClick={() => handleLogClick(item, 'usage')}
-                    >
-                      <div className="h-10 w-10 rounded-[6px] bg-emerald-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
-                        <Package className="h-5 w-5 text-emerald-500" />
+                ))
+            ) : (
+                filteredItems.map((item) => (
+                  <Card key={item.id} className="rounded-[8px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 active:scale-[0.98] transition-all group p-5 flex flex-col justify-between space-y-6">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1 overflow-hidden">
+                          <h3 className="font-bold text-[#1E293B] text-[17px] tracking-tight font-figtree truncate">{item.name}</h3>
+                          <FigtreeText className="text-[13px] text-slate-400 font-medium">{item.currentStock} units remaining</FigtreeText>
+                        </div>
+                        <Badge className={cn(
+                          "border-none rounded-[6px] font-bold text-[10px] px-2.5 py-1 uppercase tracking-tight font-figtree shrink-0 shadow-sm",
+                          item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" : 
+                          item.status === 'Low' ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
+                        )}>
+                          {item.status}
+                        </Badge>
                       </div>
-                      <span className="text-[11px] font-bold text-slate-500 group-hover/btn:text-emerald-600">Log Usage</span>
-                    </button>
-                    <button 
-                      className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-[8px] border border-slate-100 bg-white hover:bg-rose-50/50 hover:border-rose-100 transition-all duration-300 group/btn active:scale-95" 
-                      onClick={() => handleLogClick(item, 'waste')}
-                    >
-                      <div className="h-10 w-10 rounded-[6px] bg-rose-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
-                        <Trash2 className="h-5 w-5 text-rose-500" />
+     
+                      <div className="flex gap-3">
+                        <button 
+                          className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-[8px] border border-slate-100 bg-white hover:bg-emerald-50/50 hover:border-emerald-100 transition-all duration-300 group/btn active:scale-95" 
+                          onClick={() => handleLogClick(item, 'usage')}
+                        >
+                          <div className="h-10 w-10 rounded-[6px] bg-emerald-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+                            <Package className="h-5 w-5 text-emerald-500" />
+                          </div>
+                          <span className="text-[11px] font-bold text-slate-500 group-hover/btn:text-emerald-600">Log Usage</span>
+                        </button>
+                        <button 
+                          className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-[8px] border border-slate-100 bg-white hover:bg-rose-50/50 hover:border-rose-100 transition-all duration-300 group/btn active:scale-95" 
+                          onClick={() => handleLogClick(item, 'waste')}
+                        >
+                          <div className="h-10 w-10 rounded-[6px] bg-rose-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+                            <Trash2 className="h-5 w-5 text-rose-500" />
+                          </div>
+                          <span className="text-[11px] font-bold text-slate-500 group-hover/btn:text-rose-600">Log Waste</span>
+                        </button>
                       </div>
-                      <span className="text-[11px] font-bold text-slate-500 group-hover/btn:text-rose-600">Log Waste</span>
-                    </button>
-                  </div>
-              </Card>
-            ))}
+                  </Card>
+                ))
+            )}
           </div>
         </div>
 
@@ -257,32 +300,32 @@ export default function KitchenServicePage() {
 
 function KitchenServiceLockedOverlay() {
     return (
-        <div className="absolute inset-x-0 top-0 bottom-0 z-[60] flex flex-col items-center justify-center select-none rounded-[10px] overflow-hidden">
-            {/* Blurriness that integrates with the items behind */}
-            <div className="absolute inset-0 bg-white/5 backdrop-blur-[12px]" />
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-auto rounded-[12px] overflow-hidden">
+            {/* Premium Frosted Glass with Depth */}
+            <div className="absolute inset-0 bg-white/50 backdrop-blur-[6px]" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[120px]" />
             
-            <div className="relative z-[70] flex flex-col items-center justify-center max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-700">
-                <div className="w-20 h-20 bg-slate-900/10 backdrop-blur-3xl rounded-[10px] flex items-center justify-center mb-8 border border-white/20 shadow-sm">
-                    <Lock className="h-9 w-9 text-slate-800 stroke-[2px]" />
+            <div className="relative z-10 flex flex-col items-center justify-center max-w-xl mx-auto px-6 animate-in fade-in zoom-in-95 duration-1000">
+                {/* 3D-effect Lock Icon */}
+                <div className="w-20 h-20 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.06)] rounded-[20px] flex items-center justify-center mb-10 border border-slate-100/50">
+                    <Lock className="h-9 w-9 text-slate-800/80 stroke-[2.5px] drop-shadow-sm" />
                 </div>
                 
-                <div className="space-y-4 max-w-[420px] text-center">
-                    <h2 className="text-[28px] md:text-[34px] font-semibold text-[#1E293B] tracking-tight leading-none font-figtree">Kitchen Service is Locked</h2>
-                    <FigtreeText className="text-slate-600/80 text-[14px] md:text-[16px] leading-relaxed font-medium max-w-[340px] mx-auto">
+                <div className="space-y-4 max-w-[480px] text-center mb-12">
+                    <h2 className="text-[34px] md:text-[40px] font-black text-[#1E293B] tracking-tight leading-tight font-figtree">Kitchen Service is Locked</h2>
+                    <FigtreeText className="text-slate-500 text-[16px] md:text-[18px] leading-relaxed font-bold max-w-[360px] mx-auto opacity-70">
                         The Kitchen Service workflow is not yet available. Please do your daily stock count before you proceed to Kitchen Service.
                     </FigtreeText>
                 </div>
  
-                <div className="mt-10 w-full flex justify-center px-6">
-                    <Button 
-                        className="h-16 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-semibold gap-4 shadow-xl shadow-indigo-500/20 transition-all active:scale-95 group font-figtree text-[17px]" 
-                        asChild
-                    >
-                        <Link href="/dashboard/inventory/daily-stock-count">
-                            Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
-                        </Link>
-                    </Button>
-                </div>
+                <Button 
+                    className="h-16 px-14 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.25)] transition-all active:scale-95 group font-figtree text-[19px] border-none" 
+                    asChild
+                >
+                    <Link href="/dashboard/inventory/daily-stock-count">
+                        Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
+                    </Link>
+                </Button>
             </div>
         </div>
     );

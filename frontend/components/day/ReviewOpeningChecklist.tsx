@@ -16,11 +16,12 @@ import {
 } from "@/components/ui/dosteon-ui";
 
 interface ReviewOpeningChecklistProps {
+  items: any[];
   onBack: () => void;
   onConfirm?: () => void;
 }
 
-export function ReviewOpeningChecklist({ onBack, onConfirm }: ReviewOpeningChecklistProps) {
+export function ReviewOpeningChecklist({ items, onBack, onConfirm }: ReviewOpeningChecklistProps) {
   const router = useRouter();
   const { finishOpening } = useRestaurantDayLifecycle();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +35,9 @@ export function ReviewOpeningChecklist({ onBack, onConfirm }: ReviewOpeningCheck
   const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
-      await restaurantOpsService.submitOpeningChecklist({});
+      // Get items from state (passed through checklist context or props if needed)
+      // Since this modal is inside DailyStockCountPage, we'll give it the items
+      await restaurantOpsService.submitOpeningChecklist({ items });
       finishOpening();
       
       toast({
@@ -88,12 +91,12 @@ export function ReviewOpeningChecklist({ onBack, onConfirm }: ReviewOpeningCheck
         <div className="space-y-6">
            <FigtreeText className="text-[14px] font-bold text-slate-400 uppercase tracking-widest ml-1">Summary Stats</FigtreeText>
            
-           <div className="grid grid-cols-2 gap-4">
-              <SummaryCard label="Items Counted" value="24 / 24" />
-              <SummaryCard label="Notes Added" value="1 Note" />
-              <SummaryCard label="Opening Time" value={currentTime} />
-              <SummaryCard label="Staff" value="Sarah C." />
-           </div>
+            <div className="grid grid-cols-2 gap-4">
+               <SummaryBox label="Items Counted" value={`${items.filter(i => i.isConfirmed).length} / ${items.length}`} />
+               <SummaryBox label="Healthy Stock" value={items.filter(i => i.status === 'Healthy').length.toString()} />
+               <SummaryBox label="Opening Time" value={currentTime} />
+               <SummaryBox label="Current Day" value={new Date().toLocaleDateString('en-US', { weekday: 'short' })} />
+            </div>
         </div>
       </div>
 
@@ -117,7 +120,7 @@ export function ReviewOpeningChecklist({ onBack, onConfirm }: ReviewOpeningCheck
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: string }) {
+function SummaryBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-white border border-slate-200 rounded-[8px] p-6 flex flex-col items-start justify-center space-y-2.5 shadow-none transition-all hover:border-indigo-100 group min-h-[110px]">
       <FigtreeText className="text-[12px] font-bold text-slate-400 uppercase tracking-widest leading-none">{label}</FigtreeText>
