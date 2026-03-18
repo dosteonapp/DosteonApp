@@ -1,62 +1,58 @@
 # Dosteon Backend
 
-This is the FastAPI backend server for the Dosteon project. It handles core authentication logic (including social logins and magic links), user profile management, inventory, and orders via the Supabase Python SDK.
+This is the FastAPI backend server for the Dosteon project, following a clean, professional, and secure architecture.
 
-## Prerequisites
+## 🏗 Project Structure
+- `app/`: Primary application source code.
+  - `api/`: API versioned routers and dependencies.
+  - `core/`: Global configuration, security, and logging.
+  - `repositories/`: Database abstraction layer.
+  - `services/`: Business logic layer.
+  - `schemas/`: Pydantic models for validation.
+- `prisma/`: Prisma schema, migrations, and SQL utilities.
+- `scripts/`: Maintenance and utility scripts.
+- `tests/`: Comprehensive test suite.
 
-- Python 3.9+
-- [Virtualenv](https://virtualenv.pypa.io/en/latest/) (recommended)
-- Access to a Supabase project
+## 🚀 Getting Started
 
-## Getting Started
+### 1. Prerequisites
+- Python 3.12+ (Recommended)
+- Virtual environment tool
 
-1.  **Set up Virtual Environment**:
-    ```bash
-    python -m venv venv
-    .\venv\Scripts\activate  # Windows
-    source venv/bin/activate  # Linux/macOS
-    ```
+### 2. Setup
+```powershell
+# Create venv
+python -m venv venv
 
-2.  **Install Dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+# Activate venv
+.\venv\Scripts\activate
 
-3.  **Environment Variables**:
-    Create a `.env` file in the `backend/` directory and add the following:
-    ```env
-    PROJECT_NAME="Dosteon API"
-    SUPABASE_URL=your_supabase_project_url
-    SUPABASE_ANON_KEY=your_supabase_anon_key
-    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-    BACKEND_CORS_ORIGINS=["http://localhost:3000"]
-    ```
+# Install dependencies
+pip install -r requirements.txt
 
-4.  **Run in Development Mode**:
-    ```bash
-    .\venv\Scripts\Activate.ps1
-    uvicorn app.main:app --reload
-    ```
-    The server will start on `http://localhost:8000`. You can access the Interactive API docs at `http://localhost:8000/docs`.
+# Setup Prisma
+python -m prisma generate
+```
 
-## Recent Updates
+### 3. Environment Configuration
+Ensure `.env` contains the necessary Supabase and Database credentials. Use `.env.example` as a template.
 
-- **Modular Architecture**: Refactored to a domain-driven structure (api, core, models, repositories, schemas, services).
-- **Enhanced Authentication**: 
-    - Password complexity validation.
-    - Social login integration (Google, Apple).
-    - Magic link sign-in flow.
-    - Secure password rest mechanism.
-- **Service Layer**: Implemented a dedicated service layer for business logic separation.
+### 4. Running the Server
+```powershell
+uvicorn app.main:app --reload
+```
+The server starts at `http://localhost:8000`. Documentation:
+- Swagger: `/docs`
+- ReDoc: `/redoc`
 
-## Features
+## 🛡 Security & Compliance
+- **Auth**: Integrated with Supabase JWT validation. 
+- **Validation**: Strict schema validation using Pydantic v2.
+- **Logging**: Centralized professional logging system.
+- **Clean Code**: SOLID principles applied to repository/service layers.
 
-- **Auth**: Fully integrated with Supabase Auth for secure user management.
-- **Inventory**: Endpoints for managing restaurant/supplier stock.
-- **Orders**: Core order processing and tracking.
-
-## API Documentation
-
-Once the server is running, visit:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+## 🧪 Testing
+Run tests using pytest:
+```powershell
+pytest
+```

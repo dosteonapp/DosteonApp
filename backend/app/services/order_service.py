@@ -1,4 +1,4 @@
-from app.repositories.order_repository import order_repo
+from app.db.repositories.order_repository import order_repo
 from app.schemas.orders import OrderCreate, OrderUpdate
 
 class OrderService:

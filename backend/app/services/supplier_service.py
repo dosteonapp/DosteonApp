@@ -1,5 +1,5 @@
-from app.repositories.inventory_repository import inventory_repo
-from app.repositories.order_repository import order_repo
+from app.db.repositories.inventory_repository import inventory_repo
+from app.db.repositories.order_repository import order_repo
 
 class SupplierService:
     async def get_stats(self, user_id: str):

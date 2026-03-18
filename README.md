@@ -31,4 +31,4 @@ This repository is split into two primary components:
 
 ## Testing & Integration
 
-Detailed testing documentation for both segregated and integrated flows can be found in our internal [walkthrough.md](C:/Users/jules/.gemini/antigravity/brain/286cd4b2-b6a5-402d-8104-97e5a47694ea/walkthrough.md).
+Detailed testing documentation for both segregated and integrated flows can be found in our internal [walkthrough.md]

@@ -1,50 +1,33 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from app.core.supabase import supabase
-from app.repositories.profile_repository import profile_repo
+from fastapi.security import HTTPBearer
+from app.core.security import verify_supabase_token
+from app.db.repositories.profile_repository import profile_repo
+from app.core.logging import get_logger
 from typing import List
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
+logger = get_logger("deps")
+security = HTTPBearer()
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    try:
-        # Verify the token with Supabase
-        user_response = supabase.auth.get_user(token)
-        if not user_response.user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        
-        # Check if email is confirmed
-        if not user_response.user.email_confirmed_at:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Email not verified. Please verify your email before proceeding.",
-            )
-        
-        # Get user profile
-        profile = profile_repo.get_profile_by_id(user_response.user.id)
-        if not profile:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found",
-            )
-            
-        return profile
-    except Exception as e:
-        if isinstance(e, HTTPException):
-            raise e
-        
-        # Log the detailed error for debugging
-        print(f"Token validation error: {str(e)}")
-        
+async def get_current_user(credentials = Depends(security)):
+    token = credentials.credentials
+    payload = await verify_supabase_token(token)
+
+    if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Session expired or invalid. Please login again.",
+            detail="Invalid or expired authentication token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # Get user profile from our DB to ensure it exists and to get roles
+    profile = await profile_repo.get_profile_by_id(payload["id"])
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User profile not initialized",
+        )
+            
+    return profile
 
 class RoleChecker:
     def __init__(self, allowed_roles: List[str]):

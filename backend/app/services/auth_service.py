@@ -2,8 +2,8 @@ from app.core.supabase import supabase
 from app.core.config import settings
 
 from app.schemas.auth import UserSignup, UserLogin, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, RefreshTokenRequest
-from app.repositories.profile_repository import profile_repo
-from app.repositories.organization_repository import organization_repo
+from app.db.repositories.profile_repository import profile_repo
+from app.db.repositories.organization_repository import organization_repo
 from app.services.email_service import email_service # New Integration
 from fastapi import HTTPException, status
 from uuid import UUID
@@ -108,36 +108,24 @@ class AuthService:
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-    async def get_me(self, token: str):
-        try:
-            user_response = supabase.auth.get_user(token)
-            if not user_response.user:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session")
-            
-            user_id = user_response.user.id
-            profile = profile_repo.get_profile_by_id(user_id)
-            
-            return {
-                "id": user_id,
-                "email": user_response.user.email,
-                "role": (profile.get("role") if profile else None) or user_response.user.user_metadata.get("role") or "staff",
-                "first_name": (profile.get("first_name") if profile else None) or user_response.user.user_metadata.get("first_name"),
-                "last_name": (profile.get("last_name") if profile else None) or user_response.user.user_metadata.get("last_name"),
-                "organization_id": (profile.get("organization_id") if profile else None) or user_response.user.user_metadata.get("organization_id"),
-                "team_id": (profile.get("team_id") if profile else None) or user_response.user.user_metadata.get("team_id")
-            }
-        except Exception as e:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    async def get_me(self, current_user: dict):
+        return {
+            "id": current_user["id"],
+            "email": current_user["email"],
+            "role": current_user.get("role") or "staff",
+            "first_name": current_user.get("first_name"),
+            "last_name": current_user.get("last_name"),
+            "organization_id": current_user.get("organization_id"),
+            "team_id": current_user.get("team_id")
+        }
 
 
-    async def onboard_user(self, org_data: dict, token: str):
+
+    async def onboard_user(self, org_data: dict, current_user: dict):
         try:
-            # 1. Get current user
-            user_res = supabase.auth.get_user(token)
-            if not user_res.user:
-                raise HTTPException(status_code=401, detail="Unauthorized")
+            user_id = current_user["id"]
+            user_metadata = {"role": current_user.get("role", "staff")}
             
-            user_id = user_res.user.id
             org_name = org_data.get("organization_name")
             if not org_name:
                 raise HTTPException(status_code=400, detail="Organization name is required")
@@ -147,12 +135,12 @@ class AuthService:
             org_id = org["id"]
 
             # 3. Update User Profile in DB
-            profile_repo.update(user_id, {"organization_id": org_id})
+            await profile_repo.update(user_id, {"organization_id": org_id})
 
-            # 4. Sync metadata to Supabase Auth (so roles/org_id are in future JWTs)
+            # 4. Sync metadata to Supabase Auth
             supabase.auth.admin.update_user_by_id(
                 user_id,
-                {"user_metadata": {**user_res.user.user_metadata, "organization_id": str(org_id)}}
+                {"user_metadata": {**user_metadata, "organization_id": str(org_id)}}
             )
 
             return {"status": "ok", "organization_id": org_id, "message": "Onboarding completed"}

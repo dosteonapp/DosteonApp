@@ -1,5 +1,5 @@
-from app.repositories.pos_repository import pos_repo
-from app.repositories.inventory_repository import inventory_repo
+from app.db.repositories.pos_repository import pos_repo
+from app.db.repositories.inventory_repository import inventory_repo
 from fastapi import HTTPException, status
 
 class POSService:

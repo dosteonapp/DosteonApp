@@ -1,0 +1,211 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-py"
+  binaryTargets   = ["native"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------
+// CORE FOUNDATION (Tenancy)
+// ---------------------------------------------------------
+
+model Organization {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  type          String          @default("restaurant")
+  settings      Json?           @default("{\"opening_time\": \"08:00\", \"closing_time\": \"22:00\"}")
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  
+  profiles      Profile[]
+  locations     Location[]
+  products      ContextualProduct[]
+  day_status    DayStatus?
+
+  @@map("organizations")
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  CHEF
+  STAFF
+}
+
+model Profile {
+  id              String        @id @db.Uuid
+  email           String
+  role            UserRole      @default(STAFF)
+  first_name      String?
+  last_name       String?
+  organization_id String?       @db.Uuid
+  created_at      DateTime      @default(now()) @db.Timestamptz(6)
+
+  organization    Organization? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+  @@index([organization_id])
+}
+
+// ---------------------------------------------------------
+// 1. CANONICAL LAYER
+// ---------------------------------------------------------
+
+model CanonicalProduct {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String    @unique
+  category          String
+  product_type      String
+  base_unit         String    
+  is_critical_item  Boolean   @default(false)
+  synonyms          String[]  
+  created_at        DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime  @default(now()) @db.Timestamptz(6)
+
+  contextual_products ContextualProduct[]
+
+  @@map("canonical_products")
+}
+
+// ---------------------------------------------------------
+// 2. CONTEXTUAL LAYER
+// ---------------------------------------------------------
+
+model Location {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organization_id String    @db.Uuid
+  country         String
+  region          String?
+  city            String?
+  location_type   String    
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+
+  organization    Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  products        ContextualProduct[]
+  events_source   InventoryEvent[] @relation("SourceLocation")
+  events_dest     InventoryEvent[] @relation("DestinationLocation")
+
+  @@map("locations")
+}
+
+model ContextualProduct {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  canonical_product_id  String    @db.Uuid
+  organization_id       String    @db.Uuid 
+  owner_type            String    @default("restaurant") 
+
+  name                  String?   // Denormalized for restaurant-specific naming
+  sku                   String?   
+  brand_name            String?
+  pack_size             Float?
+  pack_unit             String?   
+  preferred_unit        String?   
+
+  current_stock         Float     @default(0) // Performance Cache
+  reorder_threshold     Float?    @default(0)
+  critical_threshold    Float?    @default(0)
+  
+  location_id           String?   @db.Uuid
+  storage_type          String?   
+
+  status                String    @default("active")
+  image_url             String?
+  is_active             Boolean   @default(true)
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @db.Timestamptz(6)
+
+  canonical             CanonicalProduct @relation(fields: [canonical_product_id], references: [id], onDelete: Restrict)
+  organization          Organization     @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  location              Location?        @relation(fields: [location_id], references: [id])
+  inventory_events      InventoryEvent[]
+
+  @@map("contextual_products")
+  @@index([organization_id])
+  @@index([sku])
+}
+
+// ---------------------------------------------------------
+// 3. EVENT LAYER
+// ---------------------------------------------------------
+
+enum InventoryEventType {
+  OPENING
+  RECEIVED
+  USED
+  WASTED
+  ADJUSTMENT
+  TRANSFER
+  CLOSING_CORRECTION
+}
+
+model InventoryEvent {
+  id                      String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contextual_product_id   String             @db.Uuid
+  organization_id         String?            @db.Uuid
+  event_type              InventoryEventType 
+  quantity                Float              // quantity_delta
+  unit                    String    
+
+  source_location_id      String?            @db.Uuid
+  destination_location_id String?            @db.Uuid
+
+  actor_type              String?   
+  actor_id                String?            @db.Uuid
+
+  reference_id            String?   
+  metadata                Json?     
+
+  occurred_at             DateTime           @default(now()) @db.Timestamptz(6)
+  created_at              DateTime           @default(now()) @db.Timestamptz(6)
+
+  product                 ContextualProduct  @relation(fields: [contextual_product_id], references: [id], onDelete: Restrict)
+  source_location         Location?          @relation("SourceLocation", fields: [source_location_id], references: [id])
+  destination_location    Location?          @relation("DestinationLocation", fields: [destination_location_id], references: [id])
+
+  @@map("inventory_events")
+  @@index([contextual_product_id])
+  @@index([organization_id])
+  @@index([created_at])
+}
+
+// ---------------------------------------------------------
+// OPERATIONAL STATE
+// ---------------------------------------------------------
+
+enum DayState {
+  CLOSED
+  OPEN
+  CLOSING
+}
+
+model DayStatus {
+  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organization_id      String        @unique @db.Uuid
+  state                DayState      @default(CLOSED) 
+  business_date        DateTime      @default(now()) @db.Date
+  opened_by            String?       @db.Uuid
+  closed_by            String?       @db.Uuid
+  opened_at            DateTime?     @db.Timestamptz(6)
+  closed_at            DateTime?     @db.Timestamptz(6)
+  is_opening_completed Boolean       @default(false)
+  metadata             Json?
+  updated_at           DateTime      @default(now()) @db.Timestamptz(6)
+
+  organization         Organization  @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  @@map("day_status")
+}
+
+model UnitConversion {
+  from_unit   String
+  to_unit     String
+  multiplier  Float
+
+  @@id([from_unit, to_unit])
+  @@map("unit_conversions")
+}

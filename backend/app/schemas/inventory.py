@@ -1,51 +1,56 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 
-class InventoryItemBase(BaseModel):
-    name: str
-    sku: Optional[str] = None
-    category: Optional[str] = None
-    brand: Optional[str] = None
-    unit: str = "unit"
-    current_stock: float = 0
-    min_level: float = 0
-    restock_point: float = 0
-    cost_per_unit: float = 0
-    image_url: Optional[str] = None
-    location: Optional[str] = None
-
-class InventoryItemCreate(InventoryItemBase):
-    pass
-
-class InventoryItemUpdate(BaseModel):
-    name: Optional[str] = None
-    current_stock: Optional[float] = None
-    min_level: Optional[float] = None
-    restock_point: Optional[float] = None
-    cost_per_unit: Optional[float] = None
-    image_url: Optional[str] = None
-    location: Optional[str] = None
-
-class InventoryItem(InventoryItemBase):
+class CanonicalCatalogItem(BaseModel):
     id: UUID
-    organization_id: UUID
+    name: str
+    category: str
+    product_type: str
+    base_unit: str
+    is_critical_item: bool = False
+    synonyms: List[str] = []
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
 
-class CanonicalCatalogItem(BaseModel):
+class InventoryItem(BaseModel):
     id: UUID
-    sku_id: str
-    canonical_name_en: str
-    category: str
-    subcategory: Optional[str] = None
-    purchase_unit: str
-    notes: Optional[str] = None
+    name: str # From Canonical
+    category: str # From Canonical
+    brand: Optional[str] = None # From Contextual
+    unit: str # From Contextual/Canonical
+    current_stock: float = 0 # Aggregated from Events
+    min_level: float = 0 # From Contextual (reorder_threshold)
+    location: Optional[str] = None # From Contextual
+    status: str = "active"
+    canonical_id: UUID
     created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
+
+class InventoryItemCreate(BaseModel):
+    canonical_product_id: UUID
+    brand_name: Optional[str] = None
+    pack_size: Optional[float] = None
+    pack_unit: Optional[str] = None
+    location_id: Optional[UUID] = None
+    reorder_threshold: float = 0
+    opening_stock: float = 0
+
+class InventoryItemUpdate(BaseModel):
+    brand_name: Optional[str] = None
+    reorder_threshold: Optional[float] = None
+    status: Optional[str] = None
+
+class StockEventCreate(BaseModel):
+    contextual_product_id: UUID
+    event_type: str # opening_stock, consumption, delivery, adjustment, transfer, closing_stock
+    quantity: float
+    unit: str
+    metadata: Optional[dict] = None

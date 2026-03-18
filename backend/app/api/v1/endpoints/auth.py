@@ -1,41 +1,47 @@
 from fastapi import APIRouter, Depends, HTTPException, Header, Body
 from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest
 from app.services.auth_service import auth_service
-from app.api.deps import oauth2_scheme
+from app.api.deps import get_current_user
+from app.core.rate_limit import limiter
+from fastapi import Request
 
 router = APIRouter()
 
 @router.post("/signup")
-async def signup(user_data: UserSignup):
+@limiter.limit("5/minute")
+async def signup(request: Request, user_data: UserSignup):
     return await auth_service.signup(user_data)
 
 @router.post("/login", response_model=Token)
-async def login(login_data: UserLogin):
+@limiter.limit("5/minute")
+async def login(request: Request, login_data: UserLogin):
     return await auth_service.login(login_data)
 
 @router.get("/me", response_model=UserMe)
-async def get_me(token: str = Depends(oauth2_scheme)):
-    return await auth_service.get_me(token)
+async def get_me(current_user: dict = Depends(get_current_user)):
+    return await auth_service.get_me(current_user)
 
 @router.post("/onboard")
 async def onboard_user(
     org_data: dict = Body(...), 
-    token: str = Depends(oauth2_scheme)
+    current_user: dict = Depends(get_current_user)
 ):
     """Initialize organization and link to user profile"""
-    return await auth_service.onboard_user(org_data, token)
+    return await auth_service.onboard_user(org_data, current_user)
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(request: RefreshTokenRequest):
     return await auth_service.refresh_token(request)
 
 @router.post("/magic-link")
-async def magic_link(request: MagicLinkRequest):
-    return await auth_service.sign_in_with_magic_link(request)
+@limiter.limit("3/minute")
+async def magic_link(request: Request, body: MagicLinkRequest):
+    return await auth_service.sign_in_with_magic_link(body)
 
 @router.post("/forgot-password")
-async def forgot_password(request: ForgotPasswordRequest):
-    return await auth_service.forgot_password(request)
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, body: ForgotPasswordRequest):
+    return await auth_service.forgot_password(body)
 
 @router.post("/reset-password")
 async def reset_password(request: PasswordResetConfirm):
