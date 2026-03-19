@@ -5,7 +5,7 @@ export const useLogout = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  const logout = async (redirectPath: string = "/auth/signin") => {
+  const logout = async (redirectPath: string = "/") => {
     try {
       // 1. Sign out from Supabase (clears local session)
       const { createClient } = await import("@/lib/supabase/client");

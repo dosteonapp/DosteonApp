@@ -36,7 +36,7 @@ export function LogoutButton({
   size = "default",
   className,
   children,
-  redirectPath = "/auth/signin",
+  redirectPath = "/",
 }: LogoutButtonProps) {
   const { logout } = useLogout();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
