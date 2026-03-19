@@ -127,6 +127,14 @@ export default function DailyStockCountPage() {
   const progressPercent = totalCount > 0 ? Math.round((progressCount / totalCount) * 100) : 0;
 
   if (isLoading) return <OpeningSkeleton />;
+  
+  // Dynamic Sorting: Unconfirmed items at top, confirmed at bottom
+  const sortedItems = [...items].sort((a, b) => {
+    const aConf = confirmedIds.has(a.id);
+    const bConf = confirmedIds.has(b.id);
+    if (aConf === bConf) return 0;
+    return aConf ? 1 : -1;
+  });
 
   return (
     <AppContainer className="pb-48">
@@ -209,8 +217,8 @@ export default function DailyStockCountPage() {
                 </div>
             </div>
 
-            <div className="space-y-4">
-                {items.map((item, idx) => (
+            <div className="grow space-y-4">
+                {sortedItems.map((item, idx) => (
                     <StockRow 
                         key={item.id} 
                         item={item} 

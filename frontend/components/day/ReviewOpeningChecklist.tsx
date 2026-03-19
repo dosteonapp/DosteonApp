@@ -38,7 +38,7 @@ export function ReviewOpeningChecklist({ items, onBack, onConfirm }: ReviewOpeni
       // Get items from state (passed through checklist context or props if needed)
       // Since this modal is inside DailyStockCountPage, we'll give it the items
       await restaurantOpsService.submitOpeningChecklist({ items });
-      finishOpening();
+      await finishOpening();
       
       toast({
         title: "Kitchen Opened",
