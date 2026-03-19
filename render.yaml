@@ -1,0 +1,50 @@
+# Render blueprint configuration for Dosteon
+# This file automates the deployment of both Frontend and Backend.
+
+services:
+  - type: web
+    name: dosteon-backend
+    env: python
+    region: ohio # Or your preferred region
+    plan: free
+    # Root directory for this service
+    rootDir: backend
+    # Build command: install dependencies and generate Prisma client
+    buildCommand: |
+      pip install -r requirements.txt
+      python -m prisma generate
+    # Start command: use gunicorn for production as recommended in DEPLOYMENT.md
+    startCommand: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9 # Fixes pydantic-core Rust compilation issues
+      - key: ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # Set in Render Dashboard (Connection Pooling URL)
+      - key: DIRECT_URL
+        sync: false # Set in Render Dashboard (Direct DB URL for migrations)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: AUTH_REDIRECT_URL
+        sync: false
+
+  - type: web
+    name: dosteon-frontend
+    env: node
+    region: ohio
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false # e.g., https://dosteon-backend.onrender.com
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false

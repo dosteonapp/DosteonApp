@@ -74,3 +74,15 @@ Ensure `next.config.mjs` is configured to point to your production backend URL. 
 - **Frontend**: [Vercel](https://vercel.com) (native support for Next.js).
 - **Backend/DB**: [Railway](https://railway.app) or [Render](https://render.com) (Native Python support + Docker).
 - **Database**: [Supabase](https://supabase.com).
+
+---
+
+## 🛠️ Automated Deployment (Render)
+
+A `render.yaml` file has been provided in the root directory. This allows for:
+1. **One-click deployment** in Render.
+2. Correct **Python 3.11.9** pinning to avoid Rust compilation issues with Pydantic.
+3. Automated **Prisma Client** generation during the build phase.
+4. Correct use of **Gunicorn** for the backend production server.
+
+Simply connect your repository to Render using the "Blueprint" feature.
