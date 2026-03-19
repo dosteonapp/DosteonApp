@@ -2,22 +2,14 @@ from app.db.repositories.inventory_repository import inventory_repo
 from fastapi import HTTPException, status
 from uuid import UUID
 from datetime import datetime
-from prisma import Json
-
 
 
 class RestaurantService:
     async def get_stats(self, organization_id: str):
         if not organization_id:
-            return {
-                "totalItems": 0,
-                "healthy": 0,
-                "low": 0,
-                "critical": 0
-            }
+            return {"totalItems": 0, "healthy": 0, "low": 0, "critical": 0}
 
         inventory = await inventory_repo.get_by_organization(UUID(organization_id))
-
         total = len(inventory)
         low = 0
         critical = 0
@@ -26,7 +18,6 @@ class RestaurantService:
         for item in inventory:
             stock = item.get("current_stock", 0)
             min_lvl = item.get("min_level", 0)
-
             if stock <= 0:
                 critical += 1
             elif stock <= min_lvl:
@@ -51,12 +42,7 @@ class RestaurantService:
             "healthy": healthy,
             "low": low,
             "critical": critical,
-            "changes": {
-                "total": 0,
-                "healthy": 0,
-                "low": 0,
-                "critical": 0
-            }
+            "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}
         }
 
     async def get_low_stock_items(self, organization_id: str):
@@ -112,8 +98,8 @@ class RestaurantService:
             "currentStock": item.get("current_stock", 0),
             "minLevel": item.get("min_level", 0),
             "restockPoint": item.get("min_level", 0) * 1.5,
-            "costPerUnit": 0, # Still need to add this to DB or mock for now but user wants data-driven
-            "avgPrice": 0,    # Same as above
+            "costPerUnit": 0,
+            "avgPrice": 0,
             "status": item["status"],
             "imageUrl": item.get("image_url")
         }
@@ -177,35 +163,29 @@ class RestaurantService:
             raise HTTPException(status_code=400, detail=str(e))
 
     def _map_inventory_event(self, e):
-        # Action Label
         action = "Updated"
         if e.event_type == "OPENING": action = "Received"
         elif e.event_type == "USED": action = "Removed"
         elif e.event_type == "WASTED": action = "Removed"
         elif e.event_type == "ADJUSTMENT": action = "Updated"
 
-        # Performer
         performer = "System Agent"
         if e.event_type in ["OPENING", "ADJUSTMENT"]:
             performer = "Procurement Officer"
         elif e.event_type in ["USED", "WASTED"]:
             performer = "Kitchen Staff"
 
-        # Product Name
         p_name = "Unknown Item"
         unit = ""
         try:
-            # If e.product is loaded via relationship
             if hasattr(e, 'product') and e.product:
-                p_name = e.product.name
-                unit = e.product.pack_unit
+                p_name = e.product.name or "Unknown Item"
+                unit = e.product.pack_unit or ""
         except:
-             pass
+            pass
 
-        # Quantity formatting
         q = int(e.quantity) if e.quantity == int(e.quantity) else e.quantity
         change = f"{'+' if q > 0 else ''}{q} {unit or ''}"
-        
         reason = e.metadata.get("reason", "Inventory Update") if e.metadata else "Inventory Update"
         timestamp = e.created_at.strftime("%b %d, %Y; %H:%M") if e.created_at else ""
 
@@ -250,10 +230,10 @@ class RestaurantService:
             await db.daystatus.update(
                 where={"organization_id": organization_id},
                 data={
-                    "metadata": Json({
+                    "metadata": {
                         "draft_confirmed_ids": confirmed_ids,
                         "draft_counts": counts
-                    })
+                    }
                 }
             )
             return {"success": True}
@@ -284,7 +264,7 @@ class RestaurantService:
                     "is_opening_completed": True,
                     "state": "OPEN",
                     "opened_at": datetime.utcnow(),
-                    "metadata": Json({})
+                    "metadata": {}
                 }
             )
             return {"success": True}
@@ -326,7 +306,18 @@ class RestaurantService:
         }
 
     async def update_settings(self, organization_id: str, settings: dict):
-        return await organization_repo.update(organization_id, settings)
+        from app.db.prisma import db
+        import json
+
+        org = await db.organization.update(
+            where={"id": organization_id},
+            data={"settings": json.dumps(settings)}
+        )
+        return {
+            "name": org.name,
+            "opening_time": settings.get("opening_time", "08:00"),
+            "closing_time": settings.get("closing_time", "00:00"),
+        }
 
     async def get_notifications(self, organization_id: str):
         if not organization_id:
@@ -371,7 +362,7 @@ class RestaurantService:
             event_type=mapped_type,
             quantity=-abs(amount),
             unit="units",
-            metadata=Json({"reason": reason}) if reason else Json({})
+            metadata={"reason": reason} if reason else {}
         )
         return {"success": True}
 
