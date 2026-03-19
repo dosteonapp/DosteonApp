@@ -92,11 +92,13 @@ class InventoryRepository:
                 "critical_level": float(p.critical_threshold or 0),
                 "location": loc,
                 "status": p.status or "active",
+                "image_url": p.image_url,
                 "created_at": p.created_at,
                 "updated_at": p.updated_at,
                 "canonical_id": p.canonical_product_id,
             }
-        except:
+        except Exception as e:
+            print(f"Error in get_by_id: {e}")
             return None
 
     async def ensure_canonical(self, name: str, category: str) -> str:

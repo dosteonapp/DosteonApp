@@ -158,7 +158,14 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
                         <div className="space-y-3">
                             <h1 className="text-[32px] md:text-[40px] font-bold text-[#1E293B] leading-tight font-figtree tracking-tight">{item.name}</h1>
                             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
-                                <Badge className="bg-[#DCFCE7] text-[#166534] font-bold text-[11px] px-3 py-1 rounded-[6px] border-none uppercase font-figtree">In Stock</Badge>
+                                <Badge className={cn(
+                                    "font-bold text-[11px] px-3 py-1 rounded-[6px] border-none uppercase font-figtree",
+                                    item.status === 'Critical' ? "bg-red-100 text-red-700" :
+                                    item.status === 'Low' ? "bg-amber-100 text-amber-700" :
+                                    "bg-[#DCFCE7] text-[#166534]"
+                                )}>
+                                    {item.status === 'Critical' ? 'Out of Stock' : item.status === 'Low' ? 'Low Stock' : 'In Stock'}
+                                </Badge>
                                 <Badge variant="outline" className="text-slate-500 font-bold text-[11px] px-3 py-1 rounded-[6px] border-slate-200 bg-white uppercase font-figtree">{item.category}</Badge>
                             </div>
                             <p className="text-slate-400 font-bold text-[12px] uppercase tracking-wider font-figtree">SKU-ID: {item.sku}</p>
@@ -182,10 +189,10 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
                 
                 {/* Right Side Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full xl:w-[480px]">
-                    <StatBox label="Current Stock" value={item.currentStock || '45'} unit="units" />
-                    <StatBox label="Avg Market Price" value={item.avgPrice || '3000'} unit="/kg" prefix="RWF" />
-                    <StatBox label="Minimum Stock" value={item.minLevel || '20'} unit="units" />
-                    <StatBox label="Reorder Point" value={item.restockPoint || '24'} unit="units" />
+                    <StatBox label="Current Stock" value={item.currentStock ?? 0} unit={item.unit} />
+                    <StatBox label="Avg Market Price" value={item.avgPrice ?? 0} unit={`/${item.unit}`} prefix="RWF" />
+                    <StatBox label="Minimum Stock" value={item.minLevel ?? 0} unit={item.unit} />
+                    <StatBox label="Reorder Point" value={item.restockPoint ?? 0} unit={item.unit} />
                 </div>
             </PrimarySurfaceCard>
         </motion.div>
@@ -302,7 +309,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-slate-500 max-w-[280px] truncate font-medium font-figtree text-sm">{act.activity}</TableCell>
-                                    <TableCell className="pr-8 text-slate-400 font-medium tabular-nums text-[13px] font-figtree">Oct 06, 2025; 14:32</TableCell>
+                                    <TableCell className="pr-8 text-slate-400 font-medium tabular-nums text-[13px] font-figtree">{act.timestamp || 'Just now'}</TableCell>
                                 </TableRow>
                             ))}
                             </AnimatePresence>

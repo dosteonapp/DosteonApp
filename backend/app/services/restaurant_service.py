@@ -110,7 +110,8 @@ class RestaurantService:
             "currentStock": item.get("current_stock", 0),
             "minLevel": item.get("min_level", 0),
             "restockPoint": item.get("min_level", 0) * 1.5,
-            "costPerUnit": 0,
+            "costPerUnit": 0, # Still need to add this to DB or mock for now but user wants data-driven
+            "avgPrice": 0,    # Same as above
             "status": item["status"],
             "imageUrl": item.get("image_url")
         }
@@ -139,10 +140,11 @@ class RestaurantService:
             elif e.event_type in ["USED", "WASTED"]:
                 performer = "Kitchen Staff"
 
+            q = int(e.quantity) if e.quantity == int(e.quantity) else e.quantity
             activities.append({
                 "id": str(e.id),
                 "action": action,
-                "change": f"{'+' if e.quantity > 0 else ''}{e.quantity} {e.unit or ''}",
+                "change": f"{'+' if q > 0 else ''}{q} {e.unit or ''}",
                 "performer": performer,
                 "activity": e.metadata.get("reason", "Inventory Update") if e.metadata else "Inventory Update",
                 "timestamp": e.created_at.strftime("%b %d, %Y; %H:%M") if e.created_at else ""
