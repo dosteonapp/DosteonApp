@@ -58,5 +58,13 @@ async def root():
         "version": "1.0.0"
     }
 
+@app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+async def catch_all(path_name: str):
+    print(f"DEBUG: 404 MATCH: {path_name}")
+    return {
+        "detail": "Not Found by Dosteon Backend Debugger",
+        "path_received": path_name
+    }
+
 
  

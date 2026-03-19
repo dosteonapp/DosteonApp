@@ -20,8 +20,9 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
     AppContainer, 
     InriaHeading, 
@@ -49,6 +50,7 @@ function AddNewItemContent() {
     expiryYear: "2025"
   });
   
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -165,14 +167,58 @@ function AddNewItemContent() {
             {/* Form Content */}
             <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
-                    <div className="space-y-2.5">
+                    <div className="space-y-2.5 relative">
                         <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Item Name</label>
                         <Input 
                           value={formData.name}
-                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          onChange={(e) => {
+                             const val = e.target.value;
+                             setFormData({...formData, name: val});
+                             if (val.length > 1) {
+                                restaurantOpsService.searchCanonicalCatalog(val).then(setSuggestions);
+                             } else {
+                                setSuggestions([]);
+                             }
+                          }}
                           placeholder="Enter item name" 
                           className="h-16 border-slate-200 rounded-[8px] px-6 text-base font-figtree shadow-sm" 
                         />
+                        {/* Search Suggestions Dropdown */}
+                        <AnimatePresence>
+                            {suggestions.length > 0 && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: -10 }} 
+                                    animate={{ opacity: 1, y: 0 }} 
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="absolute z-[100] left-0 right-0 top-[calc(100%+8px)] bg-white border border-slate-100 rounded-xl shadow-2xl p-2 max-h-[300px] overflow-y-auto"
+                                >
+                                    <div className="p-3 mb-1">
+                                        <FigtreeText className="text-[11px] font-black text-[#3B59DA] uppercase tracking-widest pl-1">Suggested from Catalog</FigtreeText>
+                                    </div>
+                                    {suggestions.map((s) => (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => {
+                                                setFormData({
+                                                    ...formData,
+                                                    name: s.name,
+                                                    category: s.category.toLowerCase(),
+                                                    unit: s.base_unit || "kg"
+                                                });
+                                                setSuggestions([]);
+                                            }}
+                                            className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-slate-50 transition-colors text-left group"
+                                        >
+                                            <div className="space-y-0.5">
+                                                <FigtreeText className="font-bold text-slate-800 text-[15px] group-hover:text-[#3B59DA] transition-colors">{s.name}</FigtreeText>
+                                                <FigtreeText className="text-xs text-slate-400 font-medium">{s.category} • {s.sku}</FigtreeText>
+                                            </div>
+                                            <Badge variant="outline" className="bg-indigo-50 border-indigo-100 text-[#3B59DA] font-bold text-[10px] uppercase">Link Item</Badge>
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                     <div className="space-y-2.5">
                         <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Item Category</label>

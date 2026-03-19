@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const supabase = createClient();
         
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
           // Invalidate user query to trigger UI refresh
           queryClient.invalidateQueries({ queryKey: ["user"] });
           
@@ -70,14 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { mutateAsync: loginMutation } = useMutation({
     mutationFn: async (credentials: LoginValues) => {
-      const { data } = await axiosInstance.post("/auth/login", credentials);
+      const { data } = await axiosInstance.post("auth/login", credentials);
       return data;
     },
   });
 
   const { mutateAsync: signupMutation } = useMutation({
     mutationFn: async (values: SignupValues) => {
-      const { data } = await axiosInstance.post("/auth/signup", {
+      const { data } = await axiosInstance.post("auth/signup", {
         email: values.email,
         password: values.password,
         first_name: values.firstname,
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { mutateAsync: forgotPasswordMutation } = useMutation({
     mutationFn: async (values: ForgotPasswordValues) => {
-      const { data } = await axiosInstance.post("/auth/forgot-password", {
+      const { data } = await axiosInstance.post("auth/forgot-password", {
         email: values.email,
       });
       return data;
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       
-      const { data } = await axiosInstance.post("/auth/reset-password", {
+      const { data } = await axiosInstance.post("auth/reset-password", {
         access_token: session?.access_token,
         password: values.password,
         confirmPassword: values.confirmPassword,

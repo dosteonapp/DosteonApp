@@ -16,6 +16,8 @@ class RequestLoggingMiddleware:
         start_time = time.perf_counter()
         path = scope.get("path", "")
         method = scope.get("method", "")
+        # BRUTE FORCE LOGGING FOR 404 DEBUGGING
+        print(f"DEBUG: INCOMING REQUEST: {method} {path}")
         
         # Log request start
         logger.info(

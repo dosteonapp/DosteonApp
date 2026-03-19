@@ -63,7 +63,7 @@ export const restaurantOpsService = {
       await new Promise((resolve) => setTimeout(resolve, 600));
       return { totalItems: 24, countedItems: 6, healthy: 12, low: 6, critical: 6 };
     }
-    const { data } = await axiosInstance.get("/restaurant/stats");
+    const { data } = await axiosInstance.get("restaurant/stats");
     return data;
   },
 
@@ -72,13 +72,13 @@ export const restaurantOpsService = {
       await new Promise((resolve) => setTimeout(resolve, 800));
       return openingStockItems;
     }
-    const { data } = await axiosInstance.get("/restaurant/opening-checklist/items");
+    const { data } = await axiosInstance.get("restaurant/opening-checklist/items");
     return data;
   },
 
   saveOpeningChecklistDraft: async (payload: any): Promise<{ success: boolean }> => {
     if (useMocks) return { success: true };
-    const { data } = await axiosInstance.post("/restaurant/opening-checklist/save-draft", payload);
+    const { data } = await axiosInstance.post("restaurant/opening-checklist/save-draft", payload);
     return data;
   },
 
@@ -95,7 +95,7 @@ export const restaurantOpsService = {
       }
       return { success: true };
     }
-    const { data } = await axiosInstance.post("/restaurant/opening-checklist/submit", payload);
+    const { data } = await axiosInstance.post("restaurant/opening-checklist/submit", payload);
     return data;
   },
 
@@ -107,7 +107,7 @@ export const restaurantOpsService = {
       }
       return mockDayStatus;
     }
-    const { data } = await axiosInstance.get("/restaurant/day-status");
+    const { data } = await axiosInstance.get("restaurant/day-status");
     return data;
   },
 
@@ -121,7 +121,7 @@ export const restaurantOpsService = {
         { id: "act-4", type: "reminder", title: "Stock Review Reminder", description: "Don't forget to confirm today's closing stock.", time: "2 hours ago", actionLabel: "Review Inventory", actionHref: "/dashboard/inventory" }
       ];
     }
-    const { data } = await axiosInstance.get("/restaurant/recent-activities");
+    const { data } = await axiosInstance.get("restaurant/recent-activities");
     return data;
   },
 
@@ -134,7 +134,7 @@ export const restaurantOpsService = {
         { id: "3", name: "White Rice", imageUrl: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&h=100&fit=crop", unitsLeftLabel: "10 units left", needLabel: "Need 20kg" },
       ];
     }
-    const { data } = await axiosInstance.get("/restaurant/inventory/running-low");
+    const { data } = await axiosInstance.get("restaurant/inventory/running-low");
     return data;
   },
 
@@ -147,7 +147,7 @@ export const restaurantOpsService = {
       ];
       return allItems.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
     }
-    const { data } = await axiosInstance.get("/restaurant/kitchen/items", { params: { search } });
+    const { data } = await axiosInstance.get("restaurant/kitchen/items", { params: { search } });
     return data;
   },
 
@@ -155,28 +155,28 @@ export const restaurantOpsService = {
     if (useMocks) {
       return { health: "Healthy", healthSubtext: "Lunch service in progress", criticalIngredients: 0, criticalSubtext: "Nothing urgent right now" };
     }
-    const { data } = await axiosInstance.get("/restaurant/kitchen/summary");
+    const { data } = await axiosInstance.get("restaurant/kitchen/summary");
     return data;
   },
 
   createUsageLog: async (itemId: string, amount: number) => {
     if (useMocks) return { success: true };
-    return axiosInstance.post("/restaurant/kitchen/log-usage", { itemId, amount });
+    return axiosInstance.post("restaurant/kitchen/log-usage", { itemId, amount });
   },
 
   createWasteLog: async (itemId: string, amount: number, reason: string) => {
     if (useMocks) return { success: true };
-    return axiosInstance.post("/restaurant/kitchen/log-waste", { itemId, amount, reason });
+    return axiosInstance.post("restaurant/kitchen/log-waste", { itemId, amount, reason });
   },
 
   updateItemStock: async (itemId: string, newQuantity: number) => {
     if (useMocks) return { success: true };
-    return axiosInstance.post("/restaurant/inventory/update-stock", { itemId, newQuantity });
+    return axiosInstance.post("restaurant/inventory/update-stock", { itemId, newQuantity });
   },
 
   getClosingIndicators: async () => {
     if (useMocks) return { itemsUsed: 17, itemsWasted: 5 };
-    const { data } = await axiosInstance.get("/restaurant/closing/indicators");
+    const { data } = await axiosInstance.get("restaurant/closing/indicators");
     return data;
   },
 
@@ -190,7 +190,7 @@ export const restaurantOpsService = {
         ]
       };
     }
-    const { data } = await axiosInstance.get("/restaurant/closing/status");
+    const { data } = await axiosInstance.get("restaurant/closing/status");
     return data;
   },
 
@@ -206,18 +206,18 @@ export const restaurantOpsService = {
       }
       return { success: true };
     }
-    return axiosInstance.post("/restaurant/closing/submit", payload);
+    return axiosInstance.post("restaurant/closing/submit", payload);
   },
 
   addItem: async (itemData: any) => {
     if (useMocks) return { success: true };
-    const { data } = await axiosInstance.post("/restaurant/inventory/items", itemData);
+    const { data } = await axiosInstance.post("restaurant/inventory/items", itemData);
     return data;
   },
 
   updateItem: async (id: string, itemData: any) => {
     if (useMocks) return { success: true };
-    const { data } = await axiosInstance.patch(`/restaurant/inventory/items/${id}`, itemData);
+    const { data } = await axiosInstance.patch(`restaurant/inventory/items/${id}`, itemData);
     return data;
   },
 
@@ -232,7 +232,7 @@ export const restaurantOpsService = {
       if (level && level !== "all") allItems = allItems.filter(i => i.status.toLowerCase() === level.toLowerCase());
       return allItems;
     }
-    const { data } = await axiosInstance.get("/restaurant/inventory/items", { params: { search, category, level } });
+    const { data } = await axiosInstance.get("restaurant/inventory/items", { params: { search, category, level } });
     return data;
   },
 
@@ -243,7 +243,7 @@ export const restaurantOpsService = {
       if (item) return item;
       throw new Error("Item not found");
     }
-    const { data } = await axiosInstance.get(`/restaurant/inventory/items/${id}`);
+    const { data } = await axiosInstance.get(`restaurant/inventory/items/${id}`);
     return data;
   },
 
@@ -253,19 +253,19 @@ export const restaurantOpsService = {
         { id: "1", action: "Updated", change: "-", performer: "Procurement Officer", activity: "Manual (Inventory Setup)", timestamp: "Oct 06, 2025; 14:32" },
       ];
     }
-    const { data } = await axiosInstance.get(`/restaurant/inventory/items/${id}/activities`);
+    const { data } = await axiosInstance.get(`restaurant/inventory/items/${id}/activities`);
     return data;
   },
 
   getSettings: async () => {
     if (useMocks) return { name: "Gatete Restaurant", email: "food@restaurant.com", opening_time: "09:00 AM", closing_time: "11:00 PM" };
-    const { data } = await axiosInstance.get("/restaurant/settings");
+    const { data } = await axiosInstance.get("restaurant/settings");
     return data;
   },
 
   updateSettings: async (settings: any) => {
     if (useMocks) return { success: true };
-    const { data } = await axiosInstance.patch("/restaurant/settings", settings);
+    const { data } = await axiosInstance.patch("restaurant/settings", settings);
     return data;
   },
 
@@ -276,7 +276,7 @@ export const restaurantOpsService = {
         { id: "2", type: "alert", title: "Critical Stock Level", description: "Item 'Tomatoes' has reached critical stock level (0.5kg remaining).", time: "4 hours ago", unread: true },
       ];
     }
-    const { data } = await axiosInstance.get("/restaurant/notifications");
+    const { data } = await axiosInstance.get("restaurant/notifications");
     return data;
   },
 
@@ -287,14 +287,24 @@ export const restaurantOpsService = {
         { id: "m2", name: "Iced Oat Latte", description: "Chilled espresso with creamy oat milk", price: 4000, category: "Coffee", image_url: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735" }
       ];
     }
-    const { data } = await axiosInstance.get("/pos/menu");
+    const { data } = await axiosInstance.get("pos/menu");
     return data;
   },
 
   getCanonicalCatalog: async (): Promise<any[]> => {
     if (useMocks) return [];
     try {
-        const { data } = await axiosInstance.get("/inventory/catalog");
+        const { data } = await axiosInstance.get("inventory/catalog");
+        return data;
+    } catch (e) {
+        return [];
+    }
+  },
+
+  searchCanonicalCatalog: async (query: string): Promise<any[]> => {
+    if (useMocks) return [];
+    try {
+        const { data } = await axiosInstance.get(`inventory/catalog/search?q=${query}`);
         return data;
     } catch (e) {
         return [];
@@ -305,7 +315,7 @@ export const restaurantOpsService = {
     if (useMocks) {
       return { status: "success", deductions: [] };
     }
-    const { data } = await axiosInstance.post("/pos/order", { menu_item_id: menuItemId, quantity });
+    const { data } = await axiosInstance.post("pos/order", { menu_item_id: menuItemId, quantity });
     return data;
   }
 }

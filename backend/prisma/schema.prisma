@@ -7,8 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------------------------------------------------------
@@ -58,10 +59,13 @@ model Profile {
 
 model CanonicalProduct {
   id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sku               String    @unique
   name              String    @unique
   category          String
-  product_type      String
+  subcategory       String?   
+  product_type      String    @default("inventory_item")
   base_unit         String    
+  is_public         Boolean   @default(true)
   is_critical_item  Boolean   @default(false)
   synonyms          String[]  
   created_at        DateTime  @default(now()) @db.Timestamptz(6)
@@ -70,6 +74,7 @@ model CanonicalProduct {
   contextual_products ContextualProduct[]
 
   @@map("canonical_products")
+  @@index([sku])
 }
 
 // ---------------------------------------------------------
@@ -127,6 +132,7 @@ model ContextualProduct {
   @@map("contextual_products")
   @@index([organization_id])
   @@index([sku])
+  @@unique([organization_id, canonical_product_id])
 }
 
 // ---------------------------------------------------------

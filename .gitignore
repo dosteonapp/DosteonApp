@@ -27,34 +27,53 @@ logs/
 .env.production.local
 .env*.local
 **/.env*
+.env.backup
+.env.bak
 
 # vercel
 .vercel
 
-# typescript
+# typescript & next.js
 *.tsbuildinfo
 next-env.d.ts
+**/.next/
+**/out/
+**/build/
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# Testing
+# Testing & Logs
 test-results.txt
 coverage/
 **/coverage/
+*.log
+**/*.log
+**/*.txt
+!**/README.md
+!**/requirements.txt
+**/tsc_errors.log
+**/build_output.log
+**/build_log.txt
+**/build_log_utf8.txt
+**/tsc_output.txt
 
 # Python
 __pycache__/
-*.pyc
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.venv/
 venv/
+ENV/
+env/
 .pytest_cache/
+.mypy_cache/
 
-# Build artifacts
+# Build artifacts & packages
 dist/
 build/
-.next/
-node_modules/
 
 # IDEs and Editors
 .vscode/
@@ -65,3 +84,19 @@ node_modules/
 # Databases
 *.sqlite3
 *.db
+prisma/migrations_lock.toml
+!backend/prisma/schema.prisma
+
+# Local maintenance/junk scripts
+backend/fix_user_profile.py
+backend/verify_user.py
+backend/check_settings.py
+backend/check_user_org.py
+backend/link_user.py
+backend/list_profiles.py
+backend/test_api.py
+backend/test_conn.py
+backend/check_catalog.py
+backend/check_cols.py
+backend/check_db.py
+backend/check_item.py

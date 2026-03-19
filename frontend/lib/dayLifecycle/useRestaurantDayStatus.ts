@@ -230,6 +230,12 @@ export function useRestaurantDayStatus() {
     await updateStatusMutation.mutateAsync(nextStatus);
   };
 
+  const { data: settings } = useQuery({
+    queryKey: ["restaurantSettings", orgId],
+    queryFn: () => restaurantOpsService.getSettings(),
+    enabled: !!orgId
+  });
+
   return {
     status,
     isLoading,
@@ -249,10 +255,21 @@ export function useRestaurantDayStatus() {
     isClosed: status?.state === DayState.CLOSED,
     isPreOpen: status?.state === DayState.PRE_OPEN,
     isClosingTimeReached: (() => {
+        const closingStart = settings?.closing_start || "08:00 PM";
+        const [time, period] = closingStart.split(" ");
+        const [hours, minutes] = time.split(":").map(Number);
+        
+        let hour24 = hours;
+        if (period === "PM" && hours !== 12) hour24 += 12;
+        if (period === "AM" && hours === 12) hour24 = 0;
+        
         const now = new Date();
-        return now.getHours() >= 19; // 7 PM
+        const currentHour = now.getHours();
+        const currentMin = now.getMinutes();
+
+        return (currentHour > hour24) || (currentHour === hour24 && currentMin >= (minutes || 0));
     })(),
     currentTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    targetClosingTime: "7:00 PM"
+    targetClosingTime: settings?.closing_start || "08:00 PM"
   };
 }

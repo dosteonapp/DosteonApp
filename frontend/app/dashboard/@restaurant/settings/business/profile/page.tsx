@@ -34,7 +34,9 @@ export default function RestaurantProfilePage() {
     phone: "",
     location: "",
     opening_time: "09:00 AM",
-    closing_time: "11:00 PM"
+    closing_time: "11:00 PM",
+    closing_start: "08:00 PM",
+    closing_end: "10:00 PM"
   });
   const [activeDays, setActiveDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thur", "Fri"]);
   
@@ -50,7 +52,9 @@ export default function RestaurantProfilePage() {
           phone: settings.phone || "",
           location: settings.location || "",
           opening_time: settings.opening_time || "09:00 AM",
-          closing_time: settings.closing_time || "11:00 PM"
+          closing_time: settings.closing_time || "11:00 PM",
+          closing_start: settings.closing_start || "08:00 PM",
+          closing_end: settings.closing_end || "10:00 PM"
         });
         if (settings.active_days) setActiveDays(settings.active_days);
       } catch (err) {
@@ -224,39 +228,92 @@ export default function RestaurantProfilePage() {
             </div>
 
             <div className="space-y-6">
-              <h3 className="text-[15px] font-bold text-slate-800">Operating Times</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <Label className="text-sm font-bold text-slate-400">Opening Time</Label>
-                  <Select 
-                    value={formData.opening_time} 
-                    onValueChange={(v) => updateField("opening_time", v)}
-                  >
-                    <SelectTrigger className="h-14 rounded-xl border-slate-200 bg-white font-bold text-slate-800">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="08:00 AM">08:00 AM</SelectItem>
-                      <SelectItem value="09:00 AM">09:00 AM</SelectItem>
-                      <SelectItem value="10:00 AM">10:00 AM</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <h3 className="text-[15px] font-bold text-slate-800">Operational Windows</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                {/* Standard Operating Hours */}
+                <div className="space-y-6">
+                    <FigtreeText className="text-[12px] font-black text-slate-400 uppercase tracking-widest leading-none">Standard Trading Hours</FigtreeText>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                            <Label className="text-xs font-bold text-slate-400 uppercase tracking-tight">Opening Time</Label>
+                            <Select 
+                                value={formData.opening_time} 
+                                onValueChange={(v) => updateField("opening_time", v)}
+                            >
+                                <SelectTrigger className="h-14 rounded-xl border-slate-200 bg-white font-bold text-slate-800">
+                                <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                                    <SelectItem value="06:00 AM">06:00 AM</SelectItem>
+                                    <SelectItem value="07:00 AM">07:00 AM</SelectItem>
+                                    <SelectItem value="08:00 AM">08:00 AM</SelectItem>
+                                    <SelectItem value="09:00 AM">09:00 AM</SelectItem>
+                                    <SelectItem value="10:00 AM">10:00 AM</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-3">
+                            <Label className="text-xs font-bold text-slate-400 uppercase tracking-tight">Closing Time</Label>
+                            <Select 
+                                value={formData.closing_time} 
+                                onValueChange={(v) => updateField("closing_time", v)}
+                            >
+                                <SelectTrigger className="h-14 rounded-xl border-slate-200 bg-white font-bold text-slate-800">
+                                <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                                    <SelectItem value="09:00 PM">09:00 PM</SelectItem>
+                                    <SelectItem value="10:00 PM">10:00 PM</SelectItem>
+                                    <SelectItem value="11:00 PM">11:00 PM</SelectItem>
+                                    <SelectItem value="12:00 AM">12:00 AM</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                 </div>
-                <div className="space-y-3">
-                  <Label className="text-sm font-bold text-slate-400">Closing Time</Label>
-                  <Select 
-                    value={formData.closing_time} 
-                    onValueChange={(v) => updateField("closing_time", v)}
-                  >
-                    <SelectTrigger className="h-14 rounded-xl border-slate-200 bg-white font-bold text-slate-800">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10:00 PM">10:00 PM</SelectItem>
-                      <SelectItem value="11:00 PM">11:00 PM</SelectItem>
-                      <SelectItem value="12:00 AM">12:00 AM</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                {/* Closing Reconciliation Window */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-2">
+                        <FigtreeText className="text-[12px] font-black text-[#3B59DA] uppercase tracking-widest leading-none">Closing Reconciliation Range</FigtreeText>
+                        <Badge variant="outline" className="text-[9px] font-black bg-indigo-50 border-indigo-100 text-[#3B59DA] uppercase py-0 px-2 rounded-md">Admins Only</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                            <Label className="text-xs font-bold text-slate-400 uppercase tracking-tight">Range Start</Label>
+                            <Select 
+                                value={formData.closing_start || "08:00 PM"} 
+                                onValueChange={(v) => updateField("closing_start", v)}
+                            >
+                                <SelectTrigger className="h-14 rounded-xl border-[#3B59DA]/20 bg-indigo-50/10 font-bold text-[#3B59DA]">
+                                <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                                    <SelectItem value="06:00 PM">06:00 PM</SelectItem>
+                                    <SelectItem value="07:00 PM">07:00 PM</SelectItem>
+                                    <SelectItem value="08:00 PM">08:00 PM</SelectItem>
+                                    <SelectItem value="09:00 PM">09:00 PM</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-3">
+                            <Label className="text-xs font-bold text-slate-400 uppercase tracking-tight">Range End</Label>
+                            <Select 
+                                value={formData.closing_end || "10:00 PM"} 
+                                onValueChange={(v) => updateField("closing_end", v)}
+                            >
+                                <SelectTrigger className="h-14 rounded-xl border-[#3B59DA]/20 bg-indigo-50/10 font-bold text-[#3B59DA]">
+                                <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                                    <SelectItem value="09:00 PM">09:00 PM</SelectItem>
+                                    <SelectItem value="10:00 PM">10:00 PM</SelectItem>
+                                    <SelectItem value="11:00 PM">11:00 PM</SelectItem>
+                                    <SelectItem value="12:00 AM">12:00 AM</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                 </div>
               </div>
             </div>
