@@ -2,14 +2,12 @@ from typing import Optional
 from uuid import UUID
 from app.db.prisma import db
 import json
+import asyncio
 
 
 class OrganizationRepository:
     def create(self, name: str, org_type: str = "restaurant") -> dict:
-        import asyncio
-        return asyncio.get_event_loop().run_until_complete(
-            self._create_async(name, org_type)
-        )
+        return asyncio.run(self._create_async(name, org_type))
 
     async def _create_async(self, name: str, org_type: str = "restaurant") -> dict:
         org = await db.organization.create(
@@ -25,10 +23,7 @@ class OrganizationRepository:
         return {"id": org.id, "name": org.name, "type": org.type, "settings": org.settings}
 
     def get_by_id(self, org_id: UUID) -> Optional[dict]:
-        import asyncio
-        return asyncio.get_event_loop().run_until_complete(
-            self._get_by_id_async(org_id)
-        )
+        return asyncio.run(self._get_by_id_async(org_id))
 
     async def _get_by_id_async(self, org_id: UUID) -> Optional[dict]:
         org = await db.organization.find_unique(where={"id": str(org_id)})
@@ -37,10 +32,7 @@ class OrganizationRepository:
         return {"id": org.id, "name": org.name, "type": org.type, "settings": org.settings}
 
     def update_settings(self, org_id: UUID, settings: dict) -> dict:
-        import asyncio
-        return asyncio.get_event_loop().run_until_complete(
-            self._update_settings_async(org_id, settings)
-        )
+        return asyncio.run(self._update_settings_async(org_id, settings))
 
     async def _update_settings_async(self, org_id: UUID, settings: dict) -> dict:
         org = await db.organization.update(
@@ -50,10 +42,7 @@ class OrganizationRepository:
         return {"id": org.id, "name": org.name, "settings": org.settings}
 
     def update_name(self, org_id: str, name: str) -> dict:
-        import asyncio
-        return asyncio.get_event_loop().run_until_complete(
-            self._update_name_async(org_id, name)
-        )
+        return asyncio.run(self._update_name_async(org_id, name))
 
     async def _update_name_async(self, org_id: str, name: str) -> dict:
         org = await db.organization.update(

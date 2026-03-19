@@ -1,5 +1,4 @@
 from app.db.repositories.inventory_repository import inventory_repo
-from app.db.repositories.organization_repository import organization_repo
 from fastapi import HTTPException, status
 from uuid import UUID
 from datetime import datetime
@@ -33,7 +32,6 @@ class RestaurantService:
             else:
                 healthy += 1
 
-        # Get DayStatus for drafted progress
         counted = 0
         try:
             from app.db.prisma import db
@@ -63,8 +61,7 @@ class RestaurantService:
         if not organization_id:
             return []
         inventory = await inventory_repo.get_by_organization(UUID(organization_id))
-
-        low_stock = [
+        return [
             {
                 "id": str(i["id"]),
                 "name": i["name"],
@@ -75,13 +72,12 @@ class RestaurantService:
             for i in inventory
             if i.get("current_stock", 0) <= i.get("min_level", 1)
         ]
-        return low_stock
 
     async def get_inventory_items(self, organization_id: str):
         if not organization_id:
             raise HTTPException(status_code=403, detail="User is not linked to any organization")
         inventory = await inventory_repo.get_by_organization(UUID(organization_id))
-        items = [
+        return [
             {
                 "id": str(i["id"]),
                 "name": i["name"],
@@ -99,13 +95,11 @@ class RestaurantService:
             }
             for i in inventory
         ]
-        return items
 
     async def get_inventory_item_by_id(self, item_id: str):
         item = await inventory_repo.get_by_id(UUID(item_id))
         if not item:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
-
         return {
             "id": str(item["id"]),
             "name": item["name"],
@@ -143,10 +137,7 @@ class RestaurantService:
         if not name:
             raise HTTPException(status_code=400, detail="Item name is required")
 
-        # 1. Ensure canonical product exists
         canonical_id = await inventory_repo.ensure_canonical(name, category)
-
-        # 2. Create the contextual product for this restaurant
         item = await inventory_repo.create_contextual_product(
             organization_id=organization_id,
             canonical_product_id=canonical_id,
@@ -156,7 +147,6 @@ class RestaurantService:
             storage_type=location,
             status="Healthy" if stock > 0 else "Critical"
         )
-
         return {"success": True, "item": item}
 
     async def update_inventory_item(self, organization_id: str, item_id: str, payload: dict):
@@ -283,35 +273,39 @@ class RestaurantService:
         }
 
     async def get_settings(self, organization_id: str):
-        if not organization_id:
-            return {
-                "name": "Dosteon User",
-                "opening_time": "08:00",
-                "closing_time": "22:00",
-            }
+        from app.db.prisma import db
+        import json
 
-        try:
-            org = organization_repo.get_by_id(UUID(organization_id))
-            if not org:
-                raise HTTPException(status_code=404, detail="Organization not found")
-            
-            settings = org.get("settings") or {}
-            if isinstance(settings, str):
-                import json
-                settings = json.loads(settings)
-                
-            return {
-                "name": org.get("name"),
-                "opening_time": settings.get("opening_time", "08:00"),
-                "closing_time": settings.get("closing_time", "22:00"),
-            }
-        except Exception as e:
-            print(f"CRITICAL ERROR in get_settings: {str(e)}")
-            raise HTTPException(status_code=500, detail=str(e))
+        if not organization_id:
+            return {"name": "Restaurant", "opening_time": "08:00", "closing_time": "22:00"}
+
+        org = await db.organization.find_unique(where={"id": organization_id})
+        if not org:
+            raise HTTPException(status_code=404, detail="Organization not found")
+
+        settings = org.settings or {}
+        if isinstance(settings, str):
+            settings = json.loads(settings)
+
+        return {
+            "name": org.name,
+            "opening_time": settings.get("opening_time", "08:00"),
+            "closing_time": settings.get("closing_time", "22:00"),
+        }
 
     async def update_settings(self, organization_id: str, settings: dict):
-        updated = organization_repo.update_settings(UUID(organization_id), settings)
-        return updated
+        from app.db.prisma import db
+        import json
+
+        org = await db.organization.update(
+            where={"id": organization_id},
+            data={"settings": json.dumps(settings)}
+        )
+        return {
+            "name": org.name,
+            "opening_time": settings.get("opening_time", "08:00"),
+            "closing_time": settings.get("closing_time", "22:00"),
+        }
 
     async def get_notifications(self, organization_id: str):
         if not organization_id:
