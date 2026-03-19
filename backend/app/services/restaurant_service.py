@@ -283,18 +283,31 @@ class RestaurantService:
         }
 
     async def get_settings(self, organization_id: str):
-        org = organization_repo.get_by_id(UUID(organization_id))
-        if not org:
-            raise HTTPException(status_code=404, detail="Organization not found")
-        settings = org.get("settings") or {}
-        if isinstance(settings, str):
-            import json
-            settings = json.loads(settings)
-        return {
-            "name": org.get("name"),
-            "opening_time": settings.get("opening_time", "08:00"),
-            "closing_time": settings.get("closing_time", "22:00"),
-        }
+        if not organization_id:
+            return {
+                "name": "Dosteon User",
+                "opening_time": "08:00",
+                "closing_time": "22:00",
+            }
+
+        try:
+            org = organization_repo.get_by_id(UUID(organization_id))
+            if not org:
+                raise HTTPException(status_code=404, detail="Organization not found")
+            
+            settings = org.get("settings") or {}
+            if isinstance(settings, str):
+                import json
+                settings = json.loads(settings)
+                
+            return {
+                "name": org.get("name"),
+                "opening_time": settings.get("opening_time", "08:00"),
+                "closing_time": settings.get("closing_time", "22:00"),
+            }
+        except Exception as e:
+            print(f"CRITICAL ERROR in get_settings: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
 
     async def update_settings(self, organization_id: str, settings: dict):
         updated = organization_repo.update_settings(UUID(organization_id), settings)
