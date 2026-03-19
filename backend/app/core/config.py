@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = Field(
-    default=["http://localhost:3000", "https://dosteon-app.vercel.app"],
+    default=["http://localhost:3000", "https://dosteon-app.vercel.app", "https://dosteon-app-git-main-dosteonapp.vercel.app", "https://dosteon-app-git-main-dosteonapp-dosteonapp.vercel.app"],
     validation_alias="BACKEND_CORS_ORIGINS"
     )
     

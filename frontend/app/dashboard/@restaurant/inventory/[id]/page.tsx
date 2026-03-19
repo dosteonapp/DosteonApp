@@ -115,13 +115,43 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
         >
             <PrimarySurfaceCard className="p-8 lg:p-10 flex flex-col xl:flex-row items-center gap-10 bg-[#f5f6ff] border-[#98a6f9] shadow-sm relative z-10">
                 <div className="flex flex-col md:flex-row items-center gap-8 flex-1">
-                    {/* Item Image */}
-                    <div className="h-44 w-44 md:h-56 md:w-56 rounded-[10px] overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center shrink-0">
+                    {/* Item Image with upload capability */}
+                    <div className="group relative h-44 w-44 md:h-56 md:w-56 rounded-[10px] overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center shrink-0 cursor-pointer"
+                         onClick={() => document.getElementById('item-image-upload')?.click()}>
                         {item.imageUrl ? (
-                            <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                            <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover group-hover:opacity-75 transition-opacity" />
                         ) : (
-                            <Package className="h-16 w-16 text-slate-200" />
+                            <Package className="h-16 w-16 text-slate-200 group-hover:text-slate-300 transition-colors" />
                         )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity">
+                            <Plus className="h-8 w-8 mb-2" />
+                            <span className="text-[11px] font-bold uppercase tracking-wider">Change Image</span>
+                        </div>
+                        <input 
+                            id="item-image-upload" 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                
+                                try {
+                                    setIsLoading(true);
+                                    const { uploadImage } = await import("@/lib/supabase/storage");
+                                    const publicUrl = await uploadImage(file, 'inventory', `items/${id}`);
+                                    
+                                    if (publicUrl) {
+                                        await restaurantOpsService.updateItem(id, { imageUrl: publicUrl });
+                                        setItem({ ...item, imageUrl: publicUrl });
+                                    }
+                                } catch (err) {
+                                    console.error("Upload failed:", err);
+                                } finally {
+                                    setIsLoading(false);
+                                }
+                            }}
+                        />
                     </div>
 
                     <div className="space-y-6 text-center md:text-left flex-1">

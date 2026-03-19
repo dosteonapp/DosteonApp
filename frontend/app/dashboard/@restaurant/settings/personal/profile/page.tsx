@@ -85,22 +85,50 @@ export default function PersonalDetailsPage() {
             </div>
             
             <div className="border-t border-slate-50 p-8 space-y-10">
-              {/* Photo Upload Section */}
               <div className="flex items-center gap-8">
-                <div className="relative group">
-                  <Avatar className="h-24 w-24 border-4 border-slate-50 shadow-sm">
-                    <AvatarImage src="/placeholder.svg" />
-                    <AvatarFallback className="bg-slate-100 text-[#3B59DA] font-black text-xl">H</AvatarFallback>
+                <div className="relative group cursor-pointer" onClick={() => document.getElementById('avatar-upload')?.click()}>
+                  <Avatar className="h-24 w-24 border-4 border-slate-50 shadow-sm overflow-hidden">
+                    {user?.avatar_url ? (
+                        <AvatarImage src={user.avatar_url} className="object-cover" />
+                    ) : (
+                        <AvatarFallback className="bg-slate-100 text-[#3B59DA] font-black text-xl">
+                            {user?.first_name?.charAt(0) || "U"}
+                        </AvatarFallback>
+                    )}
                   </Avatar>
                   <div className="absolute bottom-0 right-0 h-7 w-7 bg-white border border-slate-100 rounded-full flex items-center justify-center shadow-sm text-slate-400 group-hover:text-[#3B59DA] transition-colors">
                     <Camera className="h-4 w-4" />
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <Button variant="outline" className="h-11 px-6 rounded-xl border-slate-200 text-slate-700 font-bold text-sm bg-white hover:bg-slate-50 gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-11 px-6 rounded-xl border-slate-200 text-slate-700 font-bold text-sm bg-white hover:bg-slate-50 gap-2"
+                    onClick={() => document.getElementById('avatar-upload')?.click()}
+                  >
                     <Upload className="h-4 w-4" />
                     Change Profile Photo
                   </Button>
+                  <input 
+                    id="avatar-upload" 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                            const { uploadImage } = await import("@/lib/supabase/storage");
+                            const url = await uploadImage(file, 'profiles', 'avatars');
+                            if (url) {
+                                await updateUser({ avatar_url: url });
+                                import("sonner").then(m => m.toast.success("Avatar updated!"));
+                            }
+                        } catch (err) {
+                            import("sonner").then(m => m.toast.error("Upload failed"));
+                        }
+                    }}
+                  />
                   <p className="text-xs text-slate-400 font-medium">SVG, PNG, or JPG. Max 2MB.</p>
                 </div>
               </div>

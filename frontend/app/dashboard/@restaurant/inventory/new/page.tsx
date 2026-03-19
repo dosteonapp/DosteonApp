@@ -91,13 +91,25 @@ function AddNewItemContent() {
     "July", "August", "September", "October", "November", "December"
   ];
 
-  const handleImageUpload = () => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     setUploading(true);
-    setTimeout(() => {
-      setImages(prev => [...prev, "https://api.a0.dev/assets/img/generic_product.png"]);
-      setUploading(false);
-      toast({ title: "Image Uploaded", description: "Product image successfully uploaded." });
-    }, 1500);
+    (async () => {
+        try {
+            const { uploadImage } = await import("@/lib/supabase/storage");
+            const publicUrl = await uploadImage(file, 'inventory', 'items/new');
+            if (publicUrl) {
+                setImages(prev => [...prev, publicUrl]);
+                toast({ title: "Image Uploaded", description: "Product image successfully uploaded." });
+            }
+        } catch (err) {
+            toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload image." });
+        } finally {
+            setUploading(false);
+        }
+    })();
   };
 
   const removeImage = (index: number) => {
@@ -111,12 +123,14 @@ function AddNewItemContent() {
     }
 
     setIsSaving(true);
+    const imageUrl = images.length > 0 ? images[0] : undefined;
+    
     try {
       if (isEditMode) {
-        await restaurantOpsService.updateItem(editId!, { ...formData, images });
+        await restaurantOpsService.updateItem(editId!, { ...formData, imageUrl });
         toast({ title: "Item Updated", description: "Changes have been saved." });
       } else {
-        await restaurantOpsService.addItem({ ...formData, images });
+        await restaurantOpsService.addItem({ ...formData, imageUrl });
         toast({ title: "Item Added", description: `${formData.name} has been added.` });
       }
       router.push("/dashboard/inventory");
@@ -312,12 +326,19 @@ function AddNewItemContent() {
                                     </div>
                                 </div>
                                 <Button 
-                                    onClick={handleImageUpload}
+                                    onClick={() => document.getElementById('image-upload-input')?.click()}
                                     disabled={uploading}
                                     className="h-14 px-8 rounded-[8px] bg-slate-50 text-[#3B59DA] font-bold border-[#3B59DA]/20 border shadow-sm flex items-center gap-3"
                                 >
                                     <Upload className="h-5 w-5" /> {uploading ? "Uploading..." : "Upload Image"}
                                 </Button>
+                                <input 
+                                    id="image-upload-input" 
+                                    type="file" 
+                                    className="hidden" 
+                                    onChange={handleImageUpload} 
+                                    accept="image/*"
+                                />
                             </>
                         ) : (
                             <div className="w-full space-y-12">
@@ -339,9 +360,20 @@ function AddNewItemContent() {
                                         </div>
                                     ))}
                                 </div>
-                                <Button onClick={handleImageUpload} disabled={uploading} className="mx-auto h-14 px-8 rounded-[8px] bg-slate-50 text-[#3B59DA] font-bold border-[#3B59DA]/20 border shadow-sm">
+                                <Button 
+                                    onClick={() => document.getElementById('image-upload-input')?.click()} 
+                                    disabled={uploading} 
+                                    className="mx-auto h-14 px-8 rounded-[8px] bg-slate-50 text-[#3B59DA] font-bold border-[#3B59DA]/20 border shadow-sm"
+                                >
                                     <Upload className="h-5 w-5 mr-3" /> {uploading ? "Uploading..." : "Add More Images"}
                                 </Button>
+                                <input 
+                                    id="image-upload-input" 
+                                    type="file" 
+                                    className="hidden" 
+                                    onChange={handleImageUpload} 
+                                    accept="image/*"
+                                />
                             </div>
                         )}
                     </div>

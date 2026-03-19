@@ -18,5 +18,6 @@ export interface User {
   organization_id?: string;
   team_id?: string;
   image_url?: string;
+  avatar_url?: string;
 }
 

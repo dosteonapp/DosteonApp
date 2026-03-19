@@ -33,6 +33,7 @@ export default function RestaurantProfilePage() {
     email: "",
     phone: "",
     location: "",
+    logo_url: "",
     opening_time: "09:00 AM",
     closing_time: "11:00 PM",
     closing_start: "08:00 PM",
@@ -51,6 +52,7 @@ export default function RestaurantProfilePage() {
           email: settings.email || "",
           phone: settings.phone || "",
           location: settings.location || "",
+          logo_url: settings.logo_url || "",
           opening_time: settings.opening_time || "09:00 AM",
           closing_time: settings.closing_time || "11:00 PM",
           closing_start: settings.closing_start || "08:00 PM",
@@ -134,14 +136,42 @@ export default function RestaurantProfilePage() {
           </div>
           <div className="border-t border-slate-50 p-6 md:p-8 space-y-8">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
-                <div className="h-24 w-24 md:h-32 md:w-32 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center border-dashed shrink-0">
-                    <ImageIcon className="h-8 w-8 md:h-10 md:w-10 text-slate-300" />
+                <div className="h-24 w-24 md:h-32 md:w-32 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0 relative group">
+                    {formData.logo_url ? (
+                        <img src={formData.logo_url} className="h-full w-full object-cover" alt="Logo" />
+                    ) : (
+                        <ImageIcon className="h-8 w-8 md:h-10 md:w-10 text-slate-300" />
+                    )}
                 </div>
                 <div className="space-y-3 text-center sm:text-left">
-                    <Button variant="outline" className="h-10 md:h-11 px-6 rounded-xl border-slate-200 text-slate-700 font-bold text-xs md:text-sm bg-white hover:bg-slate-50 gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="h-10 md:h-11 px-6 rounded-xl border-slate-200 text-slate-700 font-bold text-xs md:text-sm bg-white hover:bg-slate-50 gap-2"
+                      onClick={() => document.getElementById('logo-upload')?.click()}
+                    >
                         <Upload className="h-4 w-4" />
-                        Upload Logo
+                        Update Logo
                     </Button>
+                    <input 
+                        id="logo-upload" 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                                const { uploadImage } = await import("@/lib/supabase/storage");
+                                const url = await uploadImage(file, 'profiles', 'logos');
+                                if (url) {
+                                    updateField("logo_url", url);
+                                    toast.success("Logo uploaded!");
+                                }
+                            } catch (err) {
+                                toast.error("Upload failed");
+                            }
+                        }}
+                    />
                     <p className="text-[10px] md:text-xs text-slate-400 font-medium">SVG, PNG, or JPG. Max 2MB.</p>
                 </div>
             </div>

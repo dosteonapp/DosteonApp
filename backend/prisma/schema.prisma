@@ -20,6 +20,7 @@ model Organization {
   id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name          String
   type          String          @default("restaurant")
+  logo_url      String?
   settings      Json?           @default("{\"opening_time\": \"08:00\", \"closing_time\": \"22:00\"}")
   created_at    DateTime        @default(now()) @db.Timestamptz(6)
   
@@ -44,6 +45,7 @@ model Profile {
   role            UserRole      @default(STAFF)
   first_name      String?
   last_name       String?
+  avatar_url      String?
   organization_id String?       @db.Uuid
   created_at      DateTime      @default(now()) @db.Timestamptz(6)
 

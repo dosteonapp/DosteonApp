@@ -15,11 +15,11 @@ axiosInstance.interceptors.request.use(async (config) => {
     config.headers.Authorization = `Bearer ${devToken}`;
     return config;
   }
-  
+
   const { createClient } = await import("./supabase/client");
   const supabase = createClient();
   if (!supabase) return config;
-  
+
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
 
@@ -32,59 +32,94 @@ axiosInstance.interceptors.request.use(async (config) => {
 // GLOBAL ERROR MANAGEMENT
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
-      const url = error.config?.url || "unknown";
-      const fullUrl = error.config?.baseURL ? `${error.config.baseURL}/${url}` : url;
-      const errorStatus = error.response?.status || "Network Error";
-      
-      if (typeof errorStatus === 'number' && errorStatus >= 400 && ![401, 403, 404].includes(errorStatus)) {
-          console.error(`[AxiosError] ${errorStatus} - ${fullUrl}`, {
-              url: error.config?.url,
-              baseURL: error.config?.baseURL,
-              method: error.config?.method,
-              data: error.response?.data
-          });
+  async (error) => {
+    const url = error.config?.url || "unknown";
+    const fullUrl = error.config?.baseURL ? `${error.config.baseURL}/${url}` : url;
+    const errorStatus = error.response?.status || "Network Error";
+
+    // 1. Handle network errors (e.g. Render cold start / ECONNRESET)
+    if (!error.response) {
+      // Retry once after 3s to handle cold starts
+      if (!error.config._retry) {
+        error.config._retry = true;
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        try {
+          return await axiosInstance(error.config);
+        } catch {
+          // Retry failed — fall through to toast
+        }
       }
-
-      // 1. Check if it's a network error
-      if (!error.response) {
-          toast.error("Network Error", {
-              description: "Unable to reach the server. Please check your internet connection.",
-          });
-          return Promise.reject(error);
-      }
-
-      const detail = error.response?.data?.detail || "An unexpected error occurred.";
-
-      // 2. Handle specific status codes
-      switch (errorStatus) {
-          case 401:
-              // Only toast if not on login page
-              if (window.location.pathname !== '/auth/restaurant/signin') {
-                toast.warning("Session Expired", { description: "Please sign in again to continue." });
-              }
-              break;
-          case 404:
-              // Completely silent for 404s
-              break;
-          case 500:
-              toast.error("Server Error (500)", {
-                  description: "Something went wrong on our end. Our team has been notified. Please try again later.",
-              });
-              break;
-          case 403:
-              toast.error("Permission Denied", {
-                  description: "You don't have authorization to perform this action.",
-              });
-              break;
-          default:
-              // Generic error if it doesn't match above and is a 'bad' code
-              if (typeof errorStatus === 'number' && errorStatus >= 400) {
-                  toast.error(`Error ${errorStatus}`, { description: detail });
-              }
-      }
-
+      toast.error("Connection Error", {
+        description: "Unable to reach the server. Please try again in a moment.",
+      });
       return Promise.reject(error);
+    }
+
+    // 2. Log unexpected errors (skip 401, 403, 404)
+    if (typeof errorStatus === "number" && errorStatus >= 400 && ![401, 403, 404].includes(errorStatus)) {
+      console.error(`[AxiosError] ${errorStatus} - ${fullUrl}`, {
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        method: error.config?.method,
+        data: error.response?.data,
+      });
+    }
+
+    const detail = error.response?.data?.detail || "An unexpected error occurred.";
+
+    // 3. Handle 401 — attempt token refresh then retry
+    if (errorStatus === 401 && !error.config._retry) {
+      error.config._retry = true;
+      try {
+        const { createClient } = await import("./supabase/client");
+        const supabase = createClient();
+        if (!supabase) throw new Error("No supabase client");
+
+        const { data, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !data.session) throw refreshError;
+
+        // Update header with new token and retry
+        error.config.headers.Authorization = `Bearer ${data.session.access_token}`;
+        return axiosInstance(error.config);
+      } catch {
+        // Refresh failed — redirect to login
+        if (typeof window !== "undefined" && window.location.pathname !== "/auth/restaurant/signin") {
+          toast.warning("Session Expired", { description: "Please sign in again to continue." });
+          setTimeout(() => {
+            window.location.href = "/auth/restaurant/signin";
+          }, 1500);
+        }
+      }
+      return Promise.reject(error);
+    }
+
+    // 4. Handle specific status codes
+    switch (errorStatus) {
+      case 401:
+        if (typeof window !== "undefined" && window.location.pathname !== "/auth/restaurant/signin") {
+          toast.warning("Session Expired", { description: "Please sign in again to continue." });
+        }
+        break;
+      case 404:
+        // Silent — expected for unauthenticated state checks
+        break;
+      case 500:
+        toast.error("Server Error", {
+          description: "Something went wrong on our end. Please try again later.",
+        });
+        break;
+      case 403:
+        toast.error("Permission Denied", {
+          description: "You don't have authorization to perform this action.",
+        });
+        break;
+      default:
+        if (typeof errorStatus === "number" && errorStatus >= 400) {
+          toast.error(`Error ${errorStatus}`, { description: detail });
+        }
+    }
+
+    return Promise.reject(error);
   }
 );
 

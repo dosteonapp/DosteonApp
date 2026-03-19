@@ -116,16 +116,39 @@ class RestaurantService:
         }
 
     async def get_item_activities(self, item_id: str):
-        return [
-            {
-                "id": "mock-act-1",
-                "action": "Updated",
-                "change": "-",
-                "performer": "Procurement Officer",
-                "activity": "Inventory Initialization",
-                "timestamp": "Oct 06, 2025; 14:32"
-            }
-        ]
+        from app.db.prisma import db
+        events = await db.inventoryevent.find_many(
+            where={"contextual_product_id": item_id},
+            order={"created_at": "desc"},
+            take=50
+        )
+        
+        activities = []
+        for e in events:
+            # Map database event types to frontend-friendly labels
+            action = "Updated"
+            if e.event_type == "OPENING": action = "Received"
+            elif e.event_type == "USED": action = "Removed"
+            elif e.event_type == "WASTED": action = "Removed"
+            elif e.event_type == "ADJUSTMENT": action = "Updated"
+
+            # Determine performer (simplified for now)
+            performer = "System Agent"
+            if e.event_type in ["OPENING", "ADJUSTMENT"]:
+                performer = "Procurement Officer"
+            elif e.event_type in ["USED", "WASTED"]:
+                performer = "Kitchen Staff"
+
+            activities.append({
+                "id": str(e.id),
+                "action": action,
+                "change": f"{'+' if e.quantity > 0 else ''}{e.quantity} {e.unit or ''}",
+                "performer": performer,
+                "activity": e.metadata.get("reason", "Inventory Update") if e.metadata else "Inventory Update",
+                "timestamp": e.created_at.strftime("%b %d, %Y; %H:%M") if e.created_at else ""
+            })
+            
+        return activities
 
     async def create_inventory_item(self, organization_id: str, payload: dict):
         name = payload.get("name")
@@ -133,6 +156,7 @@ class RestaurantService:
         stock = float(payload.get("currentStock") or 0)
         unit = payload.get("unit", "units")
         location = payload.get("location", "Main Storage")
+        image_url = payload.get("imageUrl")
 
         if not name:
             raise HTTPException(status_code=400, detail="Item name is required")
@@ -145,6 +169,7 @@ class RestaurantService:
             current_stock=stock,
             pack_unit=unit,
             storage_type=location,
+            image_url=image_url,
             status="Healthy" if stock > 0 else "Critical"
         )
         return {"success": True, "item": item}
@@ -155,6 +180,7 @@ class RestaurantService:
         if "currentStock" in payload: data["current_stock"] = float(payload["currentStock"])
         if "unit" in payload: data["pack_unit"] = payload["unit"]
         if "location" in payload: data["storage_type"] = payload["location"]
+        if "imageUrl" in payload: data["image_url"] = payload["imageUrl"]
 
         try:
             await inventory_repo.update_contextual_product(UUID(item_id), data)
@@ -294,18 +320,7 @@ class RestaurantService:
         }
 
     async def update_settings(self, organization_id: str, settings: dict):
-        from app.db.prisma import db
-        import json
-
-        org = await db.organization.update(
-            where={"id": organization_id},
-            data={"settings": json.dumps(settings)}
-        )
-        return {
-            "name": org.name,
-            "opening_time": settings.get("opening_time", "08:00"),
-            "closing_time": settings.get("closing_time", "22:00"),
-        }
+        return await organization_repo.update(organization_id, settings)
 
     async def get_notifications(self, organization_id: str):
         if not organization_id:

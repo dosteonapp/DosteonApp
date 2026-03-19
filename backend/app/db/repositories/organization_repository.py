@@ -51,5 +51,31 @@ class OrganizationRepository:
         )
         return {"id": org.id, "name": org.name}
 
+    async def update(self, org_id: str, data: dict) -> dict:
+        """Flexible update for organization fields"""
+        # Extract fields that belong to the model direct, others go to settings
+        model_fields = ["name", "type", "logo_url"]
+        update_data = {}
+        settings_data = {}
+
+        for k, v in data.items():
+            if k in model_fields:
+                update_data[k] = v
+            else:
+                settings_data[k] = v
+        
+        if settings_data:
+            # Get current settings first
+            current = await db.organization.find_unique(where={"id": org_id})
+            current_settings = json.loads(current.settings) if current and current.settings else {}
+            current_settings.update(settings_data)
+            update_data["settings"] = json.dumps(current_settings)
+
+        org = await db.organization.update(
+            where={"id": org_id},
+            data=update_data
+        )
+        return {"id": org.id, "name": org.name, "logo_url": org.logo_url, "settings": org.settings}
+
 
 organization_repo = OrganizationRepository()

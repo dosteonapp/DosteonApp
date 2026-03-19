@@ -36,7 +36,7 @@ async def startup_event():
 async def shutdown_event():
     await disconnect_db()
 
-# Set all CORS enabled origins
+# CORS
 if settings.BACKEND_CORS_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
@@ -58,6 +58,11 @@ async def root():
         "version": "1.0.0"
     }
 
+@app.get("/health")
+async def health():
+    """Health check endpoint — used by UptimeRobot to keep Render warm."""
+    return {"status": "ok"}
+
 @app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def catch_all(path_name: str):
     print(f"DEBUG: 404 MATCH: {path_name}")
@@ -65,6 +70,3 @@ async def catch_all(path_name: str):
         "detail": "Not Found by Dosteon Backend Debugger",
         "path_received": path_name
     }
-
-
- 
