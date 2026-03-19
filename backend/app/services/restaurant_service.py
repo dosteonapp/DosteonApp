@@ -231,10 +231,10 @@ class RestaurantService:
             await db.daystatus.update(
                 where={"organization_id": organization_id},
                 data={
-                    "metadata": {
+                    "metadata": json.dumps({
                         "draft_confirmed_ids": confirmed_ids,
                         "draft_counts": counts
-                    }
+                    })
                 }
             )
             return {"success": True}
@@ -369,6 +369,7 @@ class RestaurantService:
 
 
 restaurant_service = RestaurantService()
+
 
 
 
