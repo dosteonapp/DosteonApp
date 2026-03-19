@@ -239,7 +239,7 @@ class InventoryRepository:
                 "event_type": event_type,
                 "quantity": quantity,
                 "unit": unit,
-                "metadata": Json(metadata or {})
+                "metadata": metadata or {}
             }
         )
 

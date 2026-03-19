@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from uuid import UUID
 from datetime import datetime
 import json
+import traceback
 
 
 class RestaurantService:
@@ -228,18 +229,30 @@ class RestaurantService:
             from app.db.prisma import db
             confirmed_ids = payload.get("confirmedIds", [])
             counts = payload.get("counts", {})
-            await db.daystatus.update(
+            
+            # Using upsert to ensure DayStatus exists before updating draft
+            await db.daystatus.upsert(
                 where={"organization_id": organization_id},
                 data={
-                    "metadata": json.dumps({
-                        "draft_confirmed_ids": confirmed_ids,
-                        "draft_counts": counts
-                    })
+                    "create": {
+                        "organization_id": organization_id,
+                        "state": "CLOSED",
+                        "metadata": {
+                            "draft_confirmed_ids": confirmed_ids,
+                            "draft_counts": counts
+                        }
+                    },
+                    "update": {
+                        "metadata": {
+                            "draft_confirmed_ids": confirmed_ids,
+                            "draft_counts": counts
+                        }
+                    }
                 }
             )
             return {"success": True}
         except Exception as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e))
 
     async def submit_opening_checklist(self, organization_id: str, payload: dict):
         try:
@@ -247,42 +260,81 @@ class RestaurantService:
             counts = payload.get("counts", {})
 
             for item_id, quantity in counts.items():
+                # Ensure we are using a valid UUID string
+                clean_item_id = str(UUID(item_id)) if not isinstance(item_id, UUID) else str(item_id)
+                
+                # 1. Reset stock to 0 to prevent double-counting
                 await inventory_repo.update_contextual_product(
-                    UUID(item_id),
-                    {"current_stock": float(quantity)}
+                    UUID(clean_item_id),
+                    {"current_stock": 0.0}
                 )
+                # 2. Add as an event
                 await inventory_repo.add_event(
-                    contextual_product_id=item_id,
+                    contextual_product_id=clean_item_id,
                     event_type="OPENING",
                     quantity=float(quantity),
                     unit="units",
                     metadata={"reason": "Opening stock count"}
                 )
 
-            await db.daystatus.update(
-                where={"organization_id": organization_id},
-                data={
-                    "is_opening_completed": True,
-                    "state": "OPEN",
-                    "opened_at": datetime.utcnow(),
-                    "metadata": json.dumps({})
-                }
-            )
+            # Manual Upsert for better reliability in some environments
+            ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
+            if ds:
+                await db.daystatus.update(
+                    where={"organization_id": organization_id},
+                    data={
+                        "is_opening_completed": True,
+                        "state": "OPEN",
+                        "opened_at": datetime.utcnow(),
+                        "metadata": {}
+                    }
+                )
+            else:
+                await db.daystatus.create(
+                    data={
+                        "organization_id": organization_id,
+                        "is_opening_completed": True,
+                        "state": "OPEN",
+                        "opened_at": datetime.utcnow(),
+                        "metadata": {}
+                    }
+                )
             return {"success": True}
         except Exception as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            # Print full traceback to terminal/logs
+            print("--- BACKEND SUBMIT ERROR ---")
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
 
     async def get_day_status(self, organization_id: str):
         from app.db.prisma import db
         ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
+        
+        # Auto-create DayStatus if it's missing (failsafe for first launch)
         if not ds:
-            raise HTTPException(status_code=404, detail="Day status not found")
+            ds = await db.daystatus.create(
+                data={
+                    "organization_id": organization_id,
+                    "state": "CLOSED",
+                    "metadata": {}
+                }
+            )
+            
+        metadata = ds.metadata or {}
+        if isinstance(metadata, str):
+            try:
+                import json
+                metadata = json.loads(metadata)
+            except:
+                metadata = {}
+
         return {
             "state": ds.state,
             "business_date": str(ds.business_date),
             "is_opening_completed": ds.is_opening_completed,
             "opened_at": str(ds.opened_at) if ds.opened_at else None,
             "closed_at": str(ds.closed_at) if ds.closed_at else None,
+            "metadata": metadata,
         }
 
     async def get_settings(self, organization_id: str):
@@ -298,26 +350,39 @@ class RestaurantService:
 
         settings = org.settings or {}
         if isinstance(settings, str):
-            settings = json.loads(settings)
+            try:
+                settings = json.loads(settings)
+            except:
+                settings = {}
 
+        # Combine top-level fields with settings JSON for the frontend
         return {
+            "id": str(org.id),
             "name": org.name,
-            "opening_time": settings.get("opening_time", "08:00"),
-            "closing_time": settings.get("closing_time", "22:00"),
+            "logo_url": org.logo_url,
+            **settings
         }
 
-    async def update_settings(self, organization_id: str, settings: dict):
+    async def update_settings(self, organization_id: str, new_settings: dict):
         from app.db.prisma import db
-        import json
+        
+        # Pull out top-level fields for the Organization table
+        update_data = {"settings": new_settings}
+        if "name" in new_settings:
+            update_data["name"] = new_settings["name"]
+        if "logo_url" in new_settings:
+            update_data["logo_url"] = new_settings["logo_url"]
 
         org = await db.organization.update(
             where={"id": organization_id},
-            data={"settings": json.dumps(settings)}
+            data=update_data
         )
+        
         return {
+            "id": str(org.id),
             "name": org.name,
-            "opening_time": settings.get("opening_time", "08:00"),
-            "closing_time": settings.get("closing_time", "00:00"),
+            "logo_url": org.logo_url,
+            **new_settings
         }
 
     async def get_notifications(self, organization_id: str):
