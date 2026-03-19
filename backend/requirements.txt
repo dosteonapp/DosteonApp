@@ -11,3 +11,4 @@ PyJWT==2.10.1
 slowapi==0.1.9
 gunicorn==22.0.0
 uvloop==0.21.0; sys_platform != 'win32'
+email-validator==2.1.0
