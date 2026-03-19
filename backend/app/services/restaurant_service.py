@@ -2,6 +2,7 @@ from app.db.repositories.inventory_repository import inventory_repo
 from fastapi import HTTPException, status
 from uuid import UUID
 from datetime import datetime
+import json
 
 
 class RestaurantService:
@@ -264,7 +265,7 @@ class RestaurantService:
                     "is_opening_completed": True,
                     "state": "OPEN",
                     "opened_at": datetime.utcnow(),
-                    "metadata": {}
+                    "metadata": json.dumps({})
                 }
             )
             return {"success": True}
@@ -368,3 +369,6 @@ class RestaurantService:
 
 
 restaurant_service = RestaurantService()
+
+
+
