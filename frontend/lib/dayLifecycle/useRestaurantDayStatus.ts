@@ -34,16 +34,18 @@ export function useRestaurantDayStatus() {
       const saved = restaurantDayStorage.getStatus(orgId, businessDate);
       if (saved) return saved;
 
-      // 2. Fetch from service (mock)
-      const mockResult = await restaurantOpsService.getDayStatus();
+      // 2. Fetch from service (actual API)
+      const apiResult = await restaurantOpsService.getDayStatus();
       
-      // Transform mock to our structure
-      const initialState = mockResult.openingCompleted ? DayState.OPEN : DayState.PRE_OPEN;
-      const initialOpeningSteps = INITIAL_OPENING_STEPS.map(s => ({ ...s, done: mockResult.openingCompleted }));
+      // Transform API results to our internal structure (snake_case to camelCase)
+      const isActuallyOpen = apiResult.is_opening_completed || apiResult.openingCompleted;
+      const initialState = isActuallyOpen ? DayState.OPEN : DayState.PRE_OPEN;
+      const initialOpeningSteps = INITIAL_OPENING_STEPS.map(s => ({ ...s, done: !!isActuallyOpen }));
+      const actualBusinessDate = apiResult.business_date || businessDate;
 
       const initialStatus: DayStatus = {
         state: initialState,
-        businessDate: businessDate,
+        businessDate: actualBusinessDate,
         openingSteps: initialOpeningSteps,
         closingSteps: INITIAL_CLOSING_STEPS,
         updatedAt: new Date().toISOString(),

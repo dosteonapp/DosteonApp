@@ -101,7 +101,7 @@ export const restaurantOpsService = {
     return data;
   },
 
-  getDayStatus: async (): Promise<DayStatus> => {
+  getDayStatus: async (): Promise<any> => {
     if (useMocks) {
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('mock_day_status');
