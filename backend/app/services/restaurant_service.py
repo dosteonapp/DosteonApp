@@ -120,37 +120,11 @@ class RestaurantService:
         from app.db.prisma import db
         events = await db.inventoryevent.find_many(
             where={"contextual_product_id": item_id},
+            include={"product": True},
             order={"created_at": "desc"},
-            take=50
+            take=30
         )
-        
-        activities = []
-        for e in events:
-            # Map database event types to frontend-friendly labels
-            action = "Updated"
-            if e.event_type == "OPENING": action = "Received"
-            elif e.event_type == "USED": action = "Removed"
-            elif e.event_type == "WASTED": action = "Removed"
-            elif e.event_type == "ADJUSTMENT": action = "Updated"
-
-            # Determine performer (simplified for now)
-            performer = "System Agent"
-            if e.event_type in ["OPENING", "ADJUSTMENT"]:
-                performer = "Procurement Officer"
-            elif e.event_type in ["USED", "WASTED"]:
-                performer = "Kitchen Staff"
-
-            q = int(e.quantity) if e.quantity == int(e.quantity) else e.quantity
-            activities.append({
-                "id": str(e.id),
-                "action": action,
-                "change": f"{'+' if q > 0 else ''}{q} {e.unit or ''}",
-                "performer": performer,
-                "activity": e.metadata.get("reason", "Inventory Update") if e.metadata else "Inventory Update",
-                "timestamp": e.created_at.strftime("%b %d, %Y; %H:%M") if e.created_at else ""
-            })
-            
-        return activities
+        return [self._map_inventory_event(e) for e in events]
 
     async def create_inventory_item(self, organization_id: str, payload: dict):
         name = payload.get("name")
@@ -200,28 +174,56 @@ class RestaurantService:
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
+    def _map_inventory_event(self, e):
+        # Action Label
+        action = "Updated"
+        if e.event_type == "OPENING": action = "Received"
+        elif e.event_type == "USED": action = "Removed"
+        elif e.event_type == "WASTED": action = "Removed"
+        elif e.event_type == "ADJUSTMENT": action = "Updated"
+
+        # Performer
+        performer = "System Agent"
+        if e.event_type in ["OPENING", "ADJUSTMENT"]:
+            performer = "Procurement Officer"
+        elif e.event_type in ["USED", "WASTED"]:
+            performer = "Kitchen Staff"
+
+        # Product Name
+        p_name = "Unknown Item"
+        unit = ""
+        try:
+            # If e.product is loaded via relationship
+            if hasattr(e, 'product') and e.product:
+                p_name = e.product.name
+                unit = e.product.pack_unit
+        except:
+             pass
+
+        # Quantity formatting
+        q = int(e.quantity) if e.quantity == int(e.quantity) else e.quantity
+        change = f"{'+' if q > 0 else ''}{q} {unit or ''}"
+        
+        reason = e.metadata.get("reason", "Inventory Update") if e.metadata else "Inventory Update"
+        timestamp = e.created_at.strftime("%b %d, %Y; %H:%M") if e.created_at else ""
+
+        return {
+            "id": str(e.id),
+            "action": action,
+            "change": change,
+            "performer": performer,
+            "activity": f"{p_name}: {reason}",
+            "title": f"{action}: {p_name}",
+            "description": f"{p_name} updated by {q} {unit}",
+            "time": timestamp,
+            "timestamp": timestamp
+        }
+
     async def get_recent_activities(self, organization_id: str):
         if not organization_id:
             return []
         events = await inventory_repo.get_recent_events(organization_id, limit=5)
-        activities = []
-        for e in events:
-            title = "Inventory Update"
-            if e.event_type == "USED": title = "Stock Log: Usage"
-            elif e.event_type == "WASTED": title = "Stock Log: Waste"
-            elif e.event_type == "ADJUSTMENT": title = "Manual stock update"
-            elif e.event_type == "OPENING": title = "Opening Stock"
-
-            p_name = e.product.name if e.product else "Unknown Item"
-            unit = e.product.pack_unit if e.product else ""
-
-            activities.append({
-                "id": str(e.id),
-                "title": title,
-                "description": f"{abs(e.quantity)} {unit} of {p_name} {e.metadata.get('reason') if e.metadata else ''}",
-                "timestamp": e.created_at.strftime("%b %d, %Y; %H:%M") if e.created_at else ""
-            })
-        return activities
+        return [self._map_inventory_event(e) for e in events]
 
     async def get_opening_checklist(self, organization_id: str):
         if not organization_id:

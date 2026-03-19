@@ -185,8 +185,8 @@ export default function KitchenServicePage() {
               <h2 className="text-[20px] md:text-[22px] font-bold text-[#1E293B] tracking-tight font-figtree">Track Product Usage</h2>
               <FigtreeText className="text-[13px] md:text-[14px] text-slate-400 font-medium">Enter how much of each product you&apos;ve used, or use +/- buttons to adjust</FigtreeText>
             </div>
-            <Link href="/dashboard/kitchen-service/history" className="text-slate-500 font-bold hover:text-indigo-600 transition-colors text-[14px] font-figtree flex items-center shrink-0">
-                View Log History
+            <Link href="/dashboard/activities" className="text-[#3B59DA] font-black hover:underline transition-all text-[15px] font-figtree flex items-center gap-2 shrink-0">
+                <History className="h-4 w-4" /> View Log History
             </Link>
           </div>
 

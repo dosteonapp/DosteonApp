@@ -33,6 +33,8 @@ export interface InventoryActivity {
 export interface Activity {
   id: string;
   type: string;
+  action: string;
+  activity: string;
   title: string;
   description: string;
   time: string;
@@ -115,10 +117,10 @@ export const restaurantOpsService = {
     if (useMocks) {
       await new Promise((resolve) => setTimeout(resolve, 600));
       return [
-        { id: "act-1", type: "confirm", title: "Daily Stock Confirmed", description: "Kitchen team confirmed today's closing stock", time: "2 hours ago" },
-        { id: "act-2", type: "manual", title: "Manual stock update", description: "Admin added 5.5 kg of Fresh Tomato manually", time: "2 hours ago" },
-        { id: "act-3", type: "alert", title: "Stock Discrepancy Alert", description: "Inventory mismatch flagged for Whole Milk", time: "2 hours ago", actionLabel: "Fix Inventory", actionHref: "/dashboard/inventory" },
-        { id: "act-4", type: "reminder", title: "Stock Review Reminder", description: "Don't forget to confirm today's closing stock.", time: "2 hours ago", actionLabel: "Review Inventory", actionHref: "/dashboard/inventory" }
+        { id: "act-1", type: "confirm", action: "Updated", activity: "Daily Stock Confirmed", title: "Daily Stock Confirmed", description: "Kitchen team confirmed today's closing stock", time: "2 hours ago" },
+        { id: "act-2", type: "manual", action: "Updated", activity: "Manual stock update", title: "Manual stock update", description: "Admin added 5.5 kg of Fresh Tomato manually", time: "2 hours ago" },
+        { id: "act-3", type: "alert", action: "Removed", activity: "Stock Discrepancy Alert", title: "Stock Discrepancy Alert", description: "Inventory mismatch flagged for Whole Milk", time: "2 hours ago", actionLabel: "Fix Inventory", actionHref: "/dashboard/inventory" },
+        { id: "act-4", type: "reminder", action: "Updated", activity: "Stock Review Reminder", title: "Stock Review Reminder", description: "Don't forget to confirm today's closing stock.", time: "2 hours ago", actionLabel: "Review Inventory", actionHref: "/dashboard/inventory" }
       ];
     }
     const { data } = await axiosInstance.get("restaurant/recent-activities");
