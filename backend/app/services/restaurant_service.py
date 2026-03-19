@@ -2,6 +2,7 @@ from app.db.repositories.inventory_repository import inventory_repo
 from fastapi import HTTPException, status
 from uuid import UUID
 from datetime import datetime
+from prisma import Json
 
 
 
@@ -249,10 +250,10 @@ class RestaurantService:
             await db.daystatus.update(
                 where={"organization_id": organization_id},
                 data={
-                    "metadata": {
+                    "metadata": Json({
                         "draft_confirmed_ids": confirmed_ids,
                         "draft_counts": counts
-                    }
+                    })
                 }
             )
             return {"success": True}
@@ -283,7 +284,7 @@ class RestaurantService:
                     "is_opening_completed": True,
                     "state": "OPEN",
                     "opened_at": datetime.utcnow(),
-                    "metadata": None
+                    "metadata": Json({})
                 }
             )
             return {"success": True}
@@ -370,7 +371,7 @@ class RestaurantService:
             event_type=mapped_type,
             quantity=-abs(amount),
             unit="units",
-            metadata={"reason": reason} if reason else None
+            metadata=Json({"reason": reason}) if reason else Json({})
         )
         return {"success": True}
 

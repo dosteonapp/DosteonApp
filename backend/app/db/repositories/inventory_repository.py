@@ -2,6 +2,7 @@ from app.db.prisma import db
 from typing import List, Optional
 from uuid import UUID
 from prisma.models import ContextualProduct, CanonicalProduct, InventoryEvent
+from prisma import Json
 
 
 class InventoryRepository:
@@ -238,7 +239,7 @@ class InventoryRepository:
                 "event_type": event_type,
                 "quantity": quantity,
                 "unit": unit,
-                "metadata": metadata if metadata is not None else None
+                "metadata": Json(metadata or {})
             }
         )
 
