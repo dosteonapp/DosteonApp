@@ -2,7 +2,7 @@ from app.db.prisma import db
 from typing import List, Optional
 from uuid import UUID
 from prisma.models import ContextualProduct, CanonicalProduct, InventoryEvent
-from prisma import Json
+
 
 class InventoryRepository:
     async def get_by_organization(self, organization_id: UUID) -> List[dict]:
@@ -238,7 +238,7 @@ class InventoryRepository:
                 "event_type": event_type,
                 "quantity": quantity,
                 "unit": unit,
-                "metadata": Json(metadata) if metadata else Json.null
+                "metadata": metadata if metadata is not None else None
             }
         )
 

@@ -42,7 +42,10 @@ axiosInstance.interceptors.response.use(
       // Retry once after 3s to handle cold starts
       if (!error.config._retry) {
         error.config._retry = true;
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        toast.info("Waking up server...", {
+          description: "Our backend is booting up. This will take about 10-15 seconds...",
+        });
+        await new Promise((resolve) => setTimeout(resolve, 5000));
         try {
           return await axiosInstance(error.config);
         } catch {
@@ -50,7 +53,7 @@ axiosInstance.interceptors.response.use(
         }
       }
       toast.error("Connection Error", {
-        description: "Unable to reach the server. Please try again in a moment.",
+        description: "Unable to reach the server. Please check your internet or try again later.",
       });
       return Promise.reject(error);
     }
@@ -66,6 +69,17 @@ axiosInstance.interceptors.response.use(
     }
 
     const detail = error.response?.data?.detail || "An unexpected error occurred.";
+    const getFriendlyErrorMessage = (msg: string) => {
+      if (msg.includes("Unable to match input value") || msg.includes("metadata") || msg.includes("Prisma")) {
+        return "We encountered a data format issue. Please check your inputs and try again.";
+      }
+      if (msg.includes("Organization not found")) {
+        return "Your organization profile could not be found. Please contact support.";
+      }
+      return msg;
+    };
+
+    const friendlyDetail = getFriendlyErrorMessage(detail);
 
     // 3. Handle 401 — attempt token refresh then retry
     if (errorStatus === 401 && !error.config._retry) {
