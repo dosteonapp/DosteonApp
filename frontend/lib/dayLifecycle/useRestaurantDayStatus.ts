@@ -5,7 +5,9 @@ import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import { useUser } from "@/context/UserContext";
  
 const DEFAULT_ORG_ID = "org_123";
-const DEFAULT_BUSINESS_DATE = "2026-01-24"; // Matching the hardcoded date in UI for consistency
+
+// Determine today's date in local format (YYYY-MM-DD)
+const getTodayString = () => new Date().toISOString().split('T')[0];
 
 const INITIAL_OPENING_STEPS: DayStep[] = [
   { id: "step1", title: "Home — Day Kickoff", targetPath: "/dashboard", done: false },
@@ -25,36 +27,54 @@ export function useRestaurantDayStatus() {
   const queryClient = useQueryClient();
   const { user } = useUser();
   const orgId = user?.organization_id || DEFAULT_ORG_ID;
-  const businessDate = DEFAULT_BUSINESS_DATE;
+  const businessDate = getTodayString();
 
   const { data: status, isLoading } = useQuery({
     queryKey: ["restaurantDayStatus", orgId, businessDate],
     queryFn: async () => {
-      // 1. Try local storage first (persistence)
+      // 1. Try local storage first (immediate UI)
       const saved = restaurantDayStorage.getStatus(orgId, businessDate);
+      
+      // 2. Fetch from service (actual API)
+      try {
+        const apiResult = await restaurantOpsService.getDayStatus();
+        
+        // Transform API results (snake_case to camelCase)
+        const isActuallyOpen = apiResult.is_opening_completed || apiResult.openingCompleted;
+        const apiState = apiResult.state || (isActuallyOpen ? DayState.OPEN : DayState.PRE_OPEN);
+        
+        const initialStatus: DayStatus = {
+            state: apiState,
+            businessDate: apiResult.business_date || businessDate,
+            openingSteps: INITIAL_OPENING_STEPS.map(s => ({ ...s, done: !!isActuallyOpen })),
+            closingSteps: INITIAL_CLOSING_STEPS,
+            metadata: apiResult.metadata,
+            updatedAt: new Date().toISOString(),
+        };
+
+        // If local storage is stale compared to API, prefer API
+        if (!saved || isActuallyOpen || apiState !== saved.state) {
+            restaurantDayStorage.saveStatus(orgId, initialStatus);
+            return initialStatus;
+        }
+      } catch (err) {
+        console.warn("Using local cache for day status due to network issue");
+      }
+
       if (saved) return saved;
 
-      // 2. Fetch from service (actual API)
-      const apiResult = await restaurantOpsService.getDayStatus();
-      
-      // Transform API results to our internal structure (snake_case to camelCase)
-      const isActuallyOpen = apiResult.is_opening_completed || apiResult.openingCompleted;
-      const initialState = isActuallyOpen ? DayState.OPEN : DayState.PRE_OPEN;
-      const initialOpeningSteps = INITIAL_OPENING_STEPS.map(s => ({ ...s, done: !!isActuallyOpen }));
-      const actualBusinessDate = apiResult.business_date || businessDate;
-
-      const initialStatus: DayStatus = {
-        state: initialState,
-        businessDate: actualBusinessDate,
-        openingSteps: initialOpeningSteps,
+      const defaultStatus: DayStatus = {
+        state: DayState.PRE_OPEN,
+        businessDate: businessDate,
+        openingSteps: INITIAL_OPENING_STEPS,
         closingSteps: INITIAL_CLOSING_STEPS,
         updatedAt: new Date().toISOString(),
       };
-
-      restaurantDayStorage.saveStatus(orgId, initialStatus);
-      return initialStatus;
+      
+      restaurantDayStorage.saveStatus(orgId, defaultStatus);
+      return defaultStatus;
     },
-    staleTime: Infinity,
+    staleTime: 60000, // 1 minute stale time for operational status
   });
 
   const updateStatusMutation = useMutation({
@@ -96,47 +116,38 @@ export function useRestaurantDayStatus() {
   };
 
   const finishOpening = async () => {
-    if (!status) {
-        console.error("Cannot finish opening: status is missing");
-        return;
-    }
+    if (!status) return;
     
-    console.log("Finishing opening for", businessDate);
-    const newOpeningSteps = status.openingSteps.map(s => ({ ...s, done: true }));
+    // Create the "OPEN" state locally
     const updatedStatus: DayStatus = {
       ...status,
       state: DayState.OPEN,
-      openingSteps: newOpeningSteps,
+      openingSteps: status.openingSteps.map(s => ({ ...s, done: true })),
       updatedAt: new Date().toISOString(),
     };
 
-    // Update the legacy mock key for consistency with restaurantOpsService
+    // 1. Sync update local storage IMMEDIATELY
+    restaurantDayStorage.saveStatus(orgId, updatedStatus);
+    
+    // 2. Optimistically update React Query for ZERO latency transition
+    queryClient.setQueryData(["restaurantDayStatus", orgId, businessDate], updatedStatus);
+    
+    // 3. Update legacy mock key for hybrid usage support
     if (typeof window !== 'undefined') {
-        const legacyStatus = localStorage.getItem('mock_day_status');
-        const parsed = legacyStatus ? JSON.parse(legacyStatus) : {};
         localStorage.setItem('mock_day_status', JSON.stringify({
-            ...parsed,
             openingCompleted: true,
-            shiftStatus: "Active"
+            shiftStatus: "Active",
+            state: "OPEN"
         }));
     }
 
-    // 1. Direct persistence update (Sync)
-    restaurantDayStorage.saveStatus(orgId, updatedStatus);
-    
-    // 2. IMMEDIATE cache update for zero-latency UI transition
-    queryClient.setQueryData(["restaurantDayStatus", orgId, businessDate], updatedStatus);
-    
-    // 3. Background sync and invalidation
+    // 4. Final background sync
     try {
-        // We don't necessarily need to await this here if we want the toast/overlay to vanish instantly
-        updateStatusMutation.mutate(updatedStatus);
-        console.log("Mutation started in background, kitchen state updated locally");
-        
-        // Invalidate in background to notify other possible observers
-        queryClient.invalidateQueries({ queryKey: ["restaurantDayStatus"] });
+        await updateStatusMutation.mutateAsync(updatedStatus);
+        // Ensure all observers are notified
+        queryClient.invalidateQueries({ queryKey: ["restaurantDayStatus", orgId] });
     } catch (err) {
-        console.error("Failed to mutate status in background:", err);
+        console.error("Delayed background sync in finishOpening:", err);
     }
   };
 
@@ -148,9 +159,7 @@ export function useRestaurantDayStatus() {
       updatedAt: new Date().toISOString(),
     };
     
-    // Immediate cache update
     queryClient.setQueryData(["restaurantDayStatus", orgId, businessDate], updatedStatus);
-    // Background sync
     updateStatusMutation.mutate(updatedStatus);
   };
 
@@ -184,20 +193,15 @@ export function useRestaurantDayStatus() {
       updatedAt: new Date().toISOString(),
     };
 
-    // Update legacy mock key
     if (typeof window !== 'undefined') {
-        const legacyStatus = localStorage.getItem('mock_day_status');
-        const parsed = legacyStatus ? JSON.parse(legacyStatus) : {};
         localStorage.setItem('mock_day_status', JSON.stringify({
-            ...parsed,
             openingCompleted: false,
-            shiftStatus: "Closed"
+            shiftStatus: "Closed",
+            state: "CLOSED"
         }));
     }
 
-    // Immediate cache update
     queryClient.setQueryData(["restaurantDayStatus", orgId, businessDate], updatedStatus);
-    // Background sync
     updateStatusMutation.mutate(updatedStatus);
   };
 
@@ -230,6 +234,7 @@ export function useRestaurantDayStatus() {
     };
 
     await updateStatusMutation.mutateAsync(nextStatus);
+    queryClient.invalidateQueries({ queryKey: ["restaurantDayStatus"] });
   };
 
   const { data: settings } = useQuery({
@@ -240,7 +245,7 @@ export function useRestaurantDayStatus() {
 
   return {
     status,
-    isLoading,
+    isLoading: isLoading && !status, // Only true if we have zero data (neither server nor storage)
     startOpening,
     completeOpeningStep,
     finishOpening,
@@ -253,7 +258,7 @@ export function useRestaurantDayStatus() {
     isOpen: status?.state === DayState.OPEN,
     isOpening: status?.state === DayState.OPENING_IN_PROGRESS,
     isClosing: status?.state === DayState.CLOSING_IN_PROGRESS,
-    isLocked: status?.state !== DayState.OPEN,
+    isLocked: status?.state === DayState.PRE_OPEN || status?.state === DayState.CLOSED,
     isClosed: status?.state === DayState.CLOSED,
     isPreOpen: status?.state === DayState.PRE_OPEN,
     isClosingTimeReached: (() => {

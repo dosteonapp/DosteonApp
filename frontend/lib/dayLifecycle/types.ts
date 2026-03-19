@@ -19,6 +19,7 @@ export interface DayStatus {
   openingSteps: DayStep[];
   closingSteps: DayStep[];
   lockReason?: string;
+  metadata?: any;
   updatedAt: string;
 }
 

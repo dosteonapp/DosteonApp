@@ -43,7 +43,7 @@ import {
 export default function DailyStockCountPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { isLocked } = useRestaurantDayLifecycle();
+  const { isLocked, status } = useRestaurantDayLifecycle();
   const [items, setItems] = useState<OpeningStockItem[]>([]);
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
@@ -56,8 +56,6 @@ export default function DailyStockCountPage() {
       try {
         const data = await restaurantOpsService.getOpeningChecklistItems();
         setItems(data);
-        const confirmed = new Set(data.filter(i => i.isConfirmed).map(i => i.id));
-        setConfirmedIds(confirmed);
       } catch (err) {
         console.error("Failed to fetch opening items:", err);
       } finally {
@@ -66,6 +64,14 @@ export default function DailyStockCountPage() {
     };
     fetchData();
   }, []);
+
+  // Resume from draft
+  useEffect(() => {
+    if (status?.metadata?.draft_confirmed_ids && items.length > 0) {
+        const draftIds = status.metadata.draft_confirmed_ids;
+        setConfirmedIds(new Set(draftIds));
+    }
+  }, [status?.metadata?.draft_confirmed_ids, items.length]);
 
   const handleConfirm = (id: string) => {
     setConfirmedIds(prev => {
@@ -96,7 +102,10 @@ export default function DailyStockCountPage() {
 
   const handleSaveDraft = async () => {
     try {
-        await restaurantOpsService.saveOpeningChecklistDraft({ items });
+        await restaurantOpsService.saveOpeningChecklistDraft({ 
+            confirmedIds: Array.from(confirmedIds),
+            counts: items.reduce((acc, item) => ({ ...acc, [item.id]: item.todayOpening }), {})
+        });
         toast({
             title: "Draft Saved",
             description: "Your progress has been saved to the server."

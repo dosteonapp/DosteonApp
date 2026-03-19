@@ -57,7 +57,7 @@ import {
 
 export default function ClosingPage() {
   const lifecycle = useRestaurantDayLifecycle();
-  const { isOpen, isClosing, isClosed } = lifecycle;
+  const { isOpen, isClosing, isClosed, status } = lifecycle;
   const { isSidebarCollapsed } = useSidebar();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,6 +104,14 @@ export default function ClosingPage() {
     fetchData();
   }, []);
 
+  // Resume from draft
+  useEffect(() => {
+    if (status?.metadata?.draft_confirmed_ids && items.length > 0) {
+        const draftIds = status.metadata.draft_confirmed_ids;
+        setVerifiedItemIds(new Set(draftIds));
+    }
+  }, [status?.metadata?.draft_confirmed_ids, items.length]);
+
   if (isLoading) {
     return <ClosingSkeleton />;
   }
@@ -114,6 +122,38 @@ export default function ClosingPage() {
     alerts: items.filter(i => i.status === 'Low' || i.status === 'Critical').length,
     closingTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   };
+
+  const handleSaveDraft = async () => {
+    try {
+        await restaurantOpsService.saveOpeningChecklistDraft({ 
+            confirmedIds: Array.from(verifiedItemIds),
+            counts: {} // For now just IDs as in opening, expandable late
+        });
+        toast({
+            title: "Progress Saved",
+            description: "Your closing progress has been saved as a draft."
+        });
+    } catch (err) {
+        toast({
+            title: "Error Saving",
+            description: "Failed to persist draft. Please try again.",
+            variant: "destructive"
+        });
+    }
+  };
+
+  // Dynamic Sorting: Unverified items at top, verified at bottom
+  const filteredItems = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    const aVer = verifiedItemIds.has(a.id);
+    const bVer = verifiedItemIds.has(b.id);
+    if (aVer === bVer) return 0;
+    return aVer ? 1 : -1;
+  });
+
+  const progressCount = verifiedItemIds.size;
+  const totalCount = items.length;
+  const progressPercent = totalCount > 0 ? Math.round((progressCount / totalCount) * 100) : 0;
 
   return (
     <AppContainer className="pb-32">
@@ -158,7 +198,7 @@ export default function ClosingPage() {
                                         />
                                         <motion.circle
                                             initial={{ strokeDashoffset: 251 }}
-                                            animate={{ strokeDashoffset: 251 - (251 * 30) / 100 }}
+                                            animate={{ strokeDashoffset: 251 - (251 * progressPercent) / 100 }}
                                             transition={{ duration: 1.5, ease: "easeOut" }}
                                             cx="50%"
                                             cy="50%"
@@ -172,11 +212,11 @@ export default function ClosingPage() {
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <FigtreeText className="text-[20px] font-black text-white leading-none">30%</FigtreeText>
+                                        <FigtreeText className="text-[20px] font-black text-white leading-none">{progressPercent}%</FigtreeText>
                                     </div>
                                 </div>
                                 <div className="space-y-1.5 pt-1">
-                                    <FigtreeText className="text-[22px] font-black text-white tracking-tight leading-none">Progress: {verifiedItemIds.size || 6} of {items.length || 9} Items Counted</FigtreeText>
+                                    <FigtreeText className="text-[22px] font-black text-white tracking-tight leading-none">Progress: {progressCount} of {totalCount} Items Counted</FigtreeText>
                                     <FigtreeText className="text-white/60 font-medium text-[15px] leading-relaxed max-w-[420px]">Finish closing stock count to complete your restaurant operations for the day</FigtreeText>
                                 </div>
                             </div>
@@ -233,7 +273,7 @@ export default function ClosingPage() {
                         {/* List - Wrapped in local horizontal scroll to prevent page overflow issues */}
                         <div className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar pb-6 -mx-2 px-2">
                             <div className="space-y-4 min-w-[1000px] xl:min-w-0">
-                                {items.slice(0, 6).map((item) => (
+                                {sortedItems.map((item) => (
                                     <ClosingCountRow 
                                         key={item.id} 
                                         item={item} 
@@ -264,10 +304,7 @@ export default function ClosingPage() {
                 <div className="w-full h-24 px-8 flex items-center justify-end gap-6">
                     <Button 
                         variant="outline"
-                        onClick={() => toast({ 
-                            title: "Progress Saved", 
-                            description: "Your closing progress has been saved as a draft." 
-                        })}
+                        onClick={handleSaveDraft}
                         className="h-14 px-10 rounded-[8px] border-indigo-100 bg-white font-black text-[#3B59DA] hover:bg-indigo-50 transition-all text-[15px] font-figtree shadow-sm active:scale-95"
                     >
                         Save a draft
@@ -338,7 +375,7 @@ function ClosingCountRow({
                     </div>
                     <div className="flex flex-col text-left space-y-1.5">
                         <FigtreeText className="text-[11px] font-black text-[#3B59DA] uppercase tracking-[0.2em] leading-none">Verified Closing Balance</FigtreeText>
-                        <p className="text-[28px] font-black text-[#3B59DA] font-figtree leading-none tabular-nums truncate">1.2k <span className="text-[14px] font-bold text-[#3B59DA]/30 uppercase ml-0.5">{item.unit}</span></p>
+                        <p className="text-[28px] font-black text-[#3B59DA] font-figtree leading-none tabular-nums truncate">{item.currentStock} <span className="text-[14px] font-bold text-[#3B59DA]/30 uppercase ml-0.5">{item.unit}</span></p>
                     </div>
                 </div>
                 
