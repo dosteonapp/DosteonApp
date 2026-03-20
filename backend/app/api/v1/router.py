@@ -3,11 +3,11 @@ from app.api.v1.endpoints import auth, inventory, restaurant, pos, test_role, su
 from datetime import datetime
 
 api_router = APIRouter()
+
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(inventory.router, prefix="/inventory", tags=["inventory"])
 api_router.include_router(restaurant.router, prefix="/restaurant", tags=["restaurant"])
 api_router.include_router(pos.router, prefix="/pos", tags=["pos"])
-api_router.include_router(supplier.router, prefix="/supplier", tags=["supplier"])
 api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
 api_router.include_router(test_role.router, prefix="/test", tags=["test"])
 
@@ -18,13 +18,16 @@ async def liveness():
 
 @api_router.get("/health/ready", tags=["system"])
 async def readiness():
-    """Readiness probe — checks DB connection without using raw SQL (avoids PgBouncer prepared statement conflict)."""
+    """Readiness probe to confirm DB + dependencies are ready."""
     from app.db.prisma import db
     try:
+        # Check if database is connected or can be pinged
         if not db.is_connected():
-            return {"status": "ready", "database": "disconnected", "error": "Not connected"}
-        # Use a Prisma model query instead of raw SQL to avoid prepared statement issues
-        await db.organization.find_first()
+            return {"status": "ready", "database": "disconnected"}
+            
+        # Optional: perform a simple query to verify DB responsiveness
+        await db.execute_raw("SELECT 1")
+        
         return {"status": "ready", "database": "connected"}
     except Exception as e:
         return {"status": "ready", "database": "disconnected", "error": str(e)}
