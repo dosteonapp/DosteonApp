@@ -38,9 +38,9 @@ def setup_logging():
         root_logger.removeHandler(handler)
         
     handler = logging.StreamHandler(sys.stdout)
-    # Temporary: Use standard format to see tracebacks clearly
-    formatter = logging.Formatter('%(levelname)s: %(name)s - %(message)s')
-    handler.setFormatter(formatter)
+    # In development, you might want a human-readable formatter
+    # In production, use StructuredFormatter
+    handler.setFormatter(StructuredFormatter())
     
     root_logger.addHandler(handler)
     
