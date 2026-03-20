@@ -1,12 +1,39 @@
 import asyncio
 from prisma import Prisma
+import logging
+
+logger = logging.getLogger("dosteon.db")
 
 db = Prisma(auto_register=True)
 
 async def connect_db():
-    if not db.is_connected():
-        await db.connect()
+    """Connect to DB with retry logic."""
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            if not db.is_connected():
+                await db.connect()
+                logger.info("Database connected successfully")
+            return
+        except Exception as e:
+            logger.error(f"DB connection attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(2 ** attempt)  # exponential backoff: 1s, 2s
+            else:
+                logger.error("All DB connection attempts failed")
+                raise
 
 async def disconnect_db():
-    if db.is_connected():
-        await db.disconnect()
+    """Safely disconnect from DB."""
+    try:
+        if db.is_connected():
+            await db.disconnect()
+            logger.info("Database disconnected")
+    except Exception as e:
+        logger.error(f"Error disconnecting from DB: {e}")
+
+async def ensure_connected():
+    """Ensure DB is connected, reconnect if needed. Called before every request."""
+    if not db.is_connected():
+        logger.warning("DB disconnected — attempting reconnect")
+        await connect_db()

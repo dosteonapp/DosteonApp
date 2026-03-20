@@ -1,9 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.db.prisma import connect_db, disconnect_db
+from app.db.prisma import connect_db, disconnect_db, ensure_connected
 from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.core.rate_limit import setup_rate_limiting
@@ -45,6 +45,17 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+@app.middleware("http")
+async def db_reconnect_middleware(request: Request, call_next):
+    """Ensure DB is connected before every request — handles Supabase free tier drops."""
+    try:
+        await ensure_connected()
+    except Exception as e:
+        from app.core.logging import get_logger
+        logger = get_logger("db_middleware")
+        logger.error(f"DB reconnect failed: {e}")
+    return await call_next(request)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
