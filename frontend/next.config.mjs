@@ -15,7 +15,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.BACKEND_URL || 'https://dosteonapp.onrender.com'}/api/:path*`,
+        destination: `${process.env.BACKEND_URL || 'http://localhost:8000' || 'https://dosteonapp.onrender.com'}/api/:path*`,
       },
     ]
   },

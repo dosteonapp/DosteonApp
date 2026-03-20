@@ -1,12 +1,11 @@
+import asyncio
 from app.core.supabase import supabase
 from app.core.config import settings
-
 from app.schemas.auth import UserSignup, UserLogin, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, RefreshTokenRequest
 from app.db.repositories.profile_repository import profile_repo
 from app.db.repositories.organization_repository import organization_repo
 from app.services.email_service import email_service
 from fastapi import HTTPException, status
-from uuid import UUID
 
 # Map frontend role values to valid Prisma UserRole enum values
 ROLE_MAP = {
@@ -23,16 +22,30 @@ ROLE_MAP = {
 }
 
 def map_role(role: str) -> str:
-    """Safely convert any frontend role string to a valid Prisma UserRole."""
     return ROLE_MAP.get(role, "STAFF")
+
+# Human-readable error messages for known Supabase errors
+SUPABASE_ERROR_MAP = {
+    "email address has already been registered": "An account with this email already exists. Please sign in instead.",
+    "email rate limit exceeded": "Too many signup attempts. Please wait a few minutes and try again.",
+    "invalid email": "Please enter a valid email address.",
+    "password should be at least": "Password must be at least 8 characters long.",
+    "unable to validate email address": "This email address could not be validated. Please try a different one.",
+}
+
+def map_supabase_error(error_str: str) -> str:
+    error_lower = error_str.lower()
+    for key, message in SUPABASE_ERROR_MAP.items():
+        if key in error_lower:
+            return message
+    return "Signup failed. Please check your details and try again."
 
 
 class AuthService:
     async def signup(self, user_data: UserSignup):
         try:
             # 1. Create a default organization.
-            # If user skips onboarding, this default name stays until they
-            # update it in Settings. If they complete onboarding, it gets renamed.
+            # If user skips onboarding, this name stays until updated in Settings.
             default_org_name = f"{user_data.first_name}'s Restaurant"
             org = await organization_repo._create_async(default_org_name)
             org_id = org["id"]
@@ -53,7 +66,7 @@ class AuthService:
             if not user_res or not user_res.user:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="User creation failed"
+                    detail="User creation failed. Please try again."
                 )
 
             # 3. Map role to valid Prisma enum value
@@ -78,9 +91,10 @@ class AuthService:
                 }
             )
 
-            # 5. Bootstrap inventory for new org
+            # 5. Bootstrap inventory in background — don't block signup response.
+            # This prevents the ~15s timeout caused by 58 sequential DB inserts.
             from app.db.repositories.inventory_repository import inventory_repo
-            await inventory_repo.bootstrap_organization(str(org_id))
+            asyncio.create_task(inventory_repo.bootstrap_organization(str(org_id)))
 
             # 6. Generate Verification Link
             link_res = supabase.auth.admin.generate_link({
@@ -119,14 +133,14 @@ class AuthService:
         except Exception as e:
             error_str = str(e)
             print(f"Signup error: {e}")
-            if "email rate limit exceeded" in error_str:
+            if "rate limit" in error_str.lower():
                 raise HTTPException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Email rate limit hit. Please configure Google SMTP in Supabase Dashboard."
+                    detail="Too many signup attempts. Please wait a few minutes and try again."
                 )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=error_str
+                detail=map_supabase_error(error_str)
             )
 
     async def login(self, login_data: UserLogin):
@@ -139,7 +153,7 @@ class AuthService:
             if not auth_response.user or not auth_response.session:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid credentials"
+                    detail="Invalid email or password."
                 )
 
             return {
@@ -158,9 +172,16 @@ class AuthService:
         except HTTPException:
             raise
         except Exception as e:
+            error_str = str(e).lower()
+            if "invalid" in error_str or "credentials" in error_str or "password" in error_str:
+                detail = "Invalid email or password."
+            elif "email not confirmed" in error_str:
+                detail = "Please verify your email before signing in."
+            else:
+                detail = "Login failed. Please try again."
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=str(e)
+                detail=detail
             )
 
     async def get_me(self, current_user: dict):
@@ -187,9 +208,8 @@ class AuthService:
 
     async def onboard_user(self, org_data: dict, current_user: dict):
         """
-        Called from the onboarding page when user customizes their org name.
-        If skipped, the default org name set at signup remains and can be
-        changed anytime from Settings.
+        Skippable onboarding — updates the default org name if user provides one.
+        If skipped, the default org name stays and can be changed in Settings.
         """
         try:
             user_id = current_user["id"]
@@ -199,14 +219,12 @@ class AuthService:
             if not org_id:
                 raise HTTPException(
                     status_code=400,
-                    detail="No organization linked to this user"
+                    detail="No organization linked to this user."
                 )
 
-            # Only update if user provided a non-empty name
             if org_name:
                 await organization_repo.update(org_id, {"name": org_name})
 
-            # Sync org_id to Supabase metadata
             supabase.auth.admin.update_user_by_id(
                 user_id,
                 {"user_metadata": {"organization_id": str(org_id)}}
