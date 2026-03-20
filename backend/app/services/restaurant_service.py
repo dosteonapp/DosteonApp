@@ -187,7 +187,9 @@ class RestaurantService:
         unit = ""
         try:
             if hasattr(e, 'product') and e.product:
-                p_name = e.product.name or "Unknown Item"
+                # Fallback to canonical name if contextual name is missing
+                p_name = e.product.name or \
+                         (e.product.canonical.name if hasattr(e.product, 'canonical') and e.product.canonical else "Unknown Item")
                 unit = e.product.pack_unit or ""
         except:
             pass
@@ -204,7 +206,7 @@ class RestaurantService:
             "performer": performer,
             "activity": f"{p_name}: {reason}",
             "title": f"{action}: {p_name}",
-            "description": f"{p_name} updated by {q} {unit}",
+            "description": f"{p_name} updated by {change}",
             "time": timestamp,
             "timestamp": timestamp
         }
@@ -212,8 +214,10 @@ class RestaurantService:
     async def get_recent_activities(self, organization_id: str):
         if not organization_id:
             return []
-        events = await inventory_repo.get_recent_events(organization_id, limit=5)
-        return [self._map_inventory_event(e) for e in events]
+        events = await inventory_repo.get_recent_events(organization_id, limit=20) # Get more to filter 0s
+        # Filter out 0 quantity updates which are non-informative for recent view
+        meaningful_events = [e for e in events if e.quantity != 0]
+        return [self._map_inventory_event(e) for e in meaningful_events[:5]] # Keep the top 5
 
     async def get_opening_checklist(self, organization_id: str):
         if not organization_id:
@@ -270,53 +274,50 @@ class RestaurantService:
             raise HTTPException(status_code=500, detail=str(e))
 
     async def submit_opening_checklist(self, organization_id: str, payload: dict):
+        print(f"DEBUG: submitIncoming: org={organization_id}, counts_size={len(payload.get('counts', {}))}")
         try:
             from app.db.prisma import db
             counts = payload.get("counts", {})
+            
+            # 1. Update all items in a single high-speed transaction
+            print("DEBUG: Starting bulk_add_opening_events...")
+            await inventory_repo.bulk_add_opening_events(organization_id, counts)
+            print("DEBUG: bulk_add_opening_events SUCCESS")
 
-            for item_id, quantity in counts.items():
-                clean_item_id = str(UUID(item_id)) if not isinstance(item_id, UUID) else str(item_id)
-
-                # 1. Reset stock to 0 to prevent double-counting
-                await inventory_repo.update_contextual_product(
-                    UUID(clean_item_id),
-                    {"current_stock": 0.0}
-                )
-                # 2. Add as an event
-                await inventory_repo.add_event(
-                    contextual_product_id=clean_item_id,
-                    event_type="OPENING",
-                    quantity=float(quantity),
-                    unit="units",
-                    metadata={"reason": "Opening stock count"}
-                )
-
-            ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
+            org_id_str = str(organization_id)
+            print(f"DEBUG: Checking DayStatus for {org_id_str}...")
+            ds = await db.daystatus.find_first(where={"organization_id": org_id_str})
+            
             if ds:
+                print("DEBUG: Updating existing DayStatus...")
                 await db.daystatus.update(
-                    where={"organization_id": organization_id},
+                    where={"organization_id": org_id_str},
                     data={
                         "is_opening_completed": True,
                         "state": "OPEN",
                         "opened_at": datetime.utcnow(),
-                        "metadata": Json({})  # FIX: was {} without Json() wrapper
+                        "metadata": Json({}) 
                     }
                 )
             else:
+                print("DEBUG: Creating new DayStatus...")
                 await db.daystatus.create(
                     data={
-                        "organization_id": organization_id,
+                        "organization_id": org_id_str,
                         "is_opening_completed": True,
                         "state": "OPEN",
                         "opened_at": datetime.utcnow(),
                         "updated_at": datetime.utcnow(),
-                        "business_date": datetime.utcnow(),
+                        "business_date": datetime.now().date(),
                         "metadata": Json({})
                     }
                 )
+            print("DEBUG: submit SUCCESSFUL")
             return {"success": True}
         except Exception as e:
-            print("--- BACKEND SUBMIT ERROR ---")
+            print(f"--- BACKEND SUBMIT ERROR for {organization_id} ---")
+            print(f"Error Type: {type(e).__name__}")
+            print(f"Error Detail: {str(e)}")
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
 

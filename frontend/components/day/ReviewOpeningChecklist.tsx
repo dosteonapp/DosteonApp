@@ -32,7 +32,10 @@ export function ReviewOpeningChecklist({ items, onBack, onConfirm }: ReviewOpeni
   const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
-      // Build counts map: { item_id: quantity } — what the backend expects
+      // 1. Instantly transition UI to the unlocked state
+      await finishOpening();
+
+      // 2. Build counts map for backend
       const counts: Record<string, number> = {};
       items.forEach((item: any) => {
         if (item.id) {
@@ -40,11 +43,8 @@ export function ReviewOpeningChecklist({ items, onBack, onConfirm }: ReviewOpeni
         }
       });
 
-      // Submit to backend — sets is_opening_completed = true on the server
+      // 3. Submit to backend (now faster due to batch updates)
       await restaurantOpsService.submitOpeningChecklist({ counts });
-
-      // Update local state to OPEN immediately
-      await finishOpening();
 
       toast({
         title: "Kitchen Opened",

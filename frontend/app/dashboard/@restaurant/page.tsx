@@ -158,16 +158,16 @@ export default function RestaurantDashboardPage() {
                                     <div className="flex items-center gap-3">
                                         <Badge className={cn(
                                             "text-[9px] font-black px-2 py-0.5 rounded-[6px] border-none flex items-center gap-2 w-fit uppercase font-figtree tracking-widest leading-none",
-                                            activity.action === 'Updated' ? "bg-indigo-50 text-indigo-600" :
-                                            activity.action === 'Received' ? "bg-emerald-50 text-emerald-600" :
-                                            "bg-rose-50 text-rose-600"
+                                            activity.action === 'Updated' ? "bg-indigo-50 text-indigo-600 font-figtree" :
+                                            activity.action === 'Received' ? "bg-emerald-50 text-emerald-600 font-figtree" :
+                                            "bg-rose-50 text-rose-600 font-figtree"
                                         )}>
                                             {activity.action}
                                         </Badge>
-                                        <FigtreeText className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none mb-0">{activity.time}</FigtreeText>
+                                        <FigtreeText className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none mb-0 font-figtree">{activity.time}</FigtreeText>
                                     </div>
-                                    <FigtreeText className="font-bold text-[20px] tracking-tight group-hover:text-[#3B59DA] transition-colors leading-tight">{activity.activity}</FigtreeText>
-                                    <FigtreeText className="text-[15px] font-bold text-slate-500 line-clamp-1 leading-relaxed opacity-80 italic">{activity.description}</FigtreeText>
+                                    <FigtreeText className="font-bold text-[20px] tracking-tight group-hover:text-[#3B59DA] transition-colors leading-tight font-figtree">{activity.activity}</FigtreeText>
+                                    <FigtreeText className="text-[15px] font-bold text-slate-500 line-clamp-1 leading-relaxed opacity-80 italic font-figtree">{activity.description}</FigtreeText>
                                 </div>
                                 <div className="shrink-0 ml-6 hidden lg:block">
                                     <Button 

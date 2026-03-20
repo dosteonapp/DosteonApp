@@ -1,8 +1,10 @@
 import asyncio
+import traceback
 from prisma import Prisma
 import logging
 
-logger = logging.getLogger("dosteon.db")
+logger = logging.getLogger("prisma")
+logger.setLevel(logging.DEBUG)
 
 db = Prisma(auto_register=True)
 
@@ -12,7 +14,7 @@ async def connect_db():
     for attempt in range(max_retries):
         try:
             if not db.is_connected():
-                await db.connect()
+                await asyncio.wait_for(db.connect(), timeout=10.0)
                 logger.info("Database connected successfully")
             return
         except Exception as e:
@@ -31,6 +33,7 @@ async def disconnect_db():
             logger.info("Database disconnected")
     except Exception as e:
         logger.error(f"Error disconnecting from DB: {e}")
+        logger.error(traceback.format_exc()) # Log the full traceback
 
 async def ensure_connected():
     """Ensure DB is connected, reconnect if needed. Called before every request."""
