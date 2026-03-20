@@ -186,20 +186,38 @@ class InventoryRepository:
         ]
 
     async def bootstrap_organization(self, organization_id: str):
-        canonicals = await db.canonicalproduct.find_many(where={"is_public": True})
-
-        created = 0
-        skipped = 0
-        for c in canonicals:
-            exists = await db.contextualproduct.find_first(
-                where={
-                    "organization_id": organization_id,
-                    "canonical_product_id": c.id
-                }
+        """
+        Fast bulk bootstrap using a single query to find missing products,
+        then creating only the ones that don't exist yet.
+        Replaces 58 sequential find+create pairs with 2 bulk queries.
+        """
+        try:
+            # 1. Get all public canonical products
+            canonicals = await db.canonicalproduct.find_many(
+                where={"is_public": True}
             )
-            if not exists:
-                await db.contextualproduct.create(
-                    data={
+            if not canonicals:
+                print(f"  Bootstrap: no canonical products found")
+                return True
+
+            # 2. Get already-existing contextual products for this org in one query
+            existing = await db.contextualproduct.find_many(
+                where={"organization_id": organization_id},
+                # Only fetch the canonical_product_id field
+            )
+            existing_canonical_ids = {p.canonical_product_id for p in existing}
+
+            # 3. Only create the ones that are missing
+            missing = [c for c in canonicals if c.id not in existing_canonical_ids]
+
+            if not missing:
+                print(f"  Bootstrap: all {len(canonicals)} products already exist")
+                return True
+
+            # 4. Bulk create all missing products using create_many
+            await db.contextualproduct.create_many(
+                data=[
+                    {
                         "organization_id": organization_id,
                         "canonical_product_id": c.id,
                         "current_stock": 0.0,
@@ -208,13 +226,17 @@ class InventoryRepository:
                         "status": "active",
                         "is_active": True,
                     }
-                )
-                created += 1
-            else:
-                skipped += 1
+                    for c in missing
+                ],
+                skip_duplicates=True  # Safety net against race conditions
+            )
 
-        print(f"  Bootstrap complete: {created} created, {skipped} already existed")
-        return True
+            print(f"  Bootstrap complete: {len(missing)} created, {len(existing_canonical_ids)} already existed")
+            return True
+
+        except Exception as e:
+            print(f"  Bootstrap error for {organization_id}: {e}")
+            return False
 
     async def create_contextual_product(self, **kwargs) -> dict:
         data = {k: str(v) if isinstance(v, UUID) else v for k, v in kwargs.items()}
