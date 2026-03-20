@@ -8,17 +8,34 @@ from app.services.email_service import email_service
 from fastapi import HTTPException, status
 from uuid import UUID
 
+# Map frontend role values to valid Prisma UserRole enum values
+ROLE_MAP = {
+    "restaurant": "OWNER",
+    "supplier": "OWNER",
+    "admin": "OWNER",
+    "manager": "MANAGER",
+    "staff": "STAFF",
+    "chef": "CHEF",
+    "OWNER": "OWNER",
+    "MANAGER": "MANAGER",
+    "CHEF": "CHEF",
+    "STAFF": "STAFF",
+}
+
+def map_role(role: str) -> str:
+    """Safely convert any frontend role string to a valid Prisma UserRole."""
+    return ROLE_MAP.get(role, "STAFF")
+
+
 class AuthService:
     async def signup(self, user_data: UserSignup):
         try:
-            org_id = None
-
-            # 1. Create Organization (if Owner signup)
-            if user_data.organization_name:
-                org = organization_repo.create(user_data.organization_name)
-                org_id = org["id"]
-            elif user_data.invite_code:
-                org_id = user_data.invite_code
+            # 1. Create a default organization.
+            # If user skips onboarding, this default name stays until they
+            # update it in Settings. If they complete onboarding, it gets renamed.
+            default_org_name = f"{user_data.first_name}'s Restaurant"
+            org = await organization_repo._create_async(default_org_name)
+            org_id = org["id"]
 
             # 2. Create User via Supabase Admin API
             user_res = supabase.auth.admin.create_user({
@@ -29,14 +46,20 @@ class AuthService:
                     "first_name": user_data.first_name,
                     "last_name": user_data.last_name,
                     "role": user_data.role,
-                    "organization_id": str(org_id) if org_id else None
+                    "organization_id": str(org_id)
                 }
             })
 
-            if not user_res:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User creation failed")
+            if not user_res or not user_res.user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User creation failed"
+                )
 
-            # 3. Create Profile row in Prisma DB
+            # 3. Map role to valid Prisma enum value
+            prisma_role = map_role(user_data.role)
+
+            # 4. Create Profile row in Prisma DB
             from app.db.prisma import db
             await db.profile.upsert(
                 where={"id": str(user_res.user.id)},
@@ -46,21 +69,20 @@ class AuthService:
                         "email": user_data.email,
                         "first_name": user_data.first_name,
                         "last_name": user_data.last_name,
-                        "role": (user_data.role or "STAFF").upper(),
-                        "organization_id": str(org_id) if org_id else None,
+                        "role": prisma_role,
+                        "organization_id": str(org_id),
                     },
                     "update": {
-                        "organization_id": str(org_id) if org_id else None,
+                        "organization_id": str(org_id),
                     }
                 }
             )
 
-            # 4. Bootstrap inventory for new org owners
-            if org_id and user_data.organization_name:
-                from app.db.repositories.inventory_repository import inventory_repo
-                await inventory_repo.bootstrap_organization(str(org_id))
+            # 5. Bootstrap inventory for new org
+            from app.db.repositories.inventory_repository import inventory_repo
+            await inventory_repo.bootstrap_organization(str(org_id))
 
-            # 5. Generate Verification Link
+            # 6. Generate Verification Link
             link_res = supabase.auth.admin.generate_link({
                 "type": "signup",
                 "email": user_data.email,
@@ -75,7 +97,7 @@ class AuthService:
                     "options": {"email_redirect_to": settings.AUTH_REDIRECT_URL}
                 })
             else:
-                # 6. Send verification email via Gmail SMTP
+                # 7. Send verification email via Gmail SMTP
                 verification_link = link_res.properties.action_link
                 email_sent = email_service.send_verification_email(
                     user_data.email,
@@ -88,10 +110,12 @@ class AuthService:
             return {
                 "status": "ok",
                 "message": "Signup successful. Check email for confirmation link.",
-                "user_id": str(user_res.user.id) if user_res.user else None,
-                "organization_id": org_id
+                "user_id": str(user_res.user.id),
+                "organization_id": str(org_id)
             }
 
+        except HTTPException:
+            raise
         except Exception as e:
             error_str = str(e)
             print(f"Signup error: {e}")
@@ -100,7 +124,10 @@ class AuthService:
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                     detail="Email rate limit hit. Please configure Google SMTP in Supabase Dashboard."
                 )
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_str)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_str
+            )
 
     async def login(self, login_data: UserLogin):
         try:
@@ -110,7 +137,10 @@ class AuthService:
             })
 
             if not auth_response.user or not auth_response.session:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid credentials"
+                )
 
             return {
                 "access_token": auth_response.session.access_token,
@@ -125,8 +155,13 @@ class AuthService:
                     "organization_id": auth_response.user.user_metadata.get("organization_id")
                 }
             }
+        except HTTPException:
+            raise
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=str(e)
+            )
 
     async def get_me(self, current_user: dict):
         return {
@@ -140,10 +175,7 @@ class AuthService:
         }
 
     async def update_me(self, user_id: str, profile_data: dict):
-        # 1. Update Profile in Prisma DB
         updated = await profile_repo.update(user_id, profile_data)
-
-        # 2. Sync to Supabase Auth metadata
         try:
             supabase.auth.admin.update_user_by_id(
                 user_id,
@@ -151,48 +183,42 @@ class AuthService:
             )
         except:
             pass
-
         return updated
 
     async def onboard_user(self, org_data: dict, current_user: dict):
+        """
+        Called from the onboarding page when user customizes their org name.
+        If skipped, the default org name set at signup remains and can be
+        changed anytime from Settings.
+        """
         try:
             user_id = current_user["id"]
-            user_metadata = {"role": current_user.get("role", "STAFF")}
+            org_id = current_user.get("organization_id")
+            org_name = org_data.get("organization_name", "").strip()
 
-            org_name = org_data.get("organization_name")
-            if not org_name:
-                raise HTTPException(status_code=400, detail="Organization name is required")
+            if not org_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No organization linked to this user"
+                )
 
-            # 1. Create Organization
-            org = organization_repo.create(org_name)
-            org_id = org["id"]
+            # Only update if user provided a non-empty name
+            if org_name:
+                await organization_repo.update(org_id, {"name": org_name})
 
-            # 2. Bootstrap inventory from canonical catalog
-            from app.db.repositories.inventory_repository import inventory_repo
-            await inventory_repo.bootstrap_organization(org_id)
-
-            # 3. Upsert Profile in Prisma DB (safe whether profile exists or not)
-            from app.db.prisma import db
-            await db.profile.upsert(
-                where={"id": user_id},
-                data={
-                    "create": {
-                        "id": user_id,
-                        "email": current_user["email"],
-                        "role": current_user.get("role", "STAFF").upper(),
-                        "organization_id": str(org_id),
-                    },
-                    "update": {"organization_id": str(org_id)}
-                }
-            )
-
-            # 4. Sync metadata to Supabase Auth
+            # Sync org_id to Supabase metadata
             supabase.auth.admin.update_user_by_id(
                 user_id,
-                {"user_metadata": {**user_metadata, "organization_id": str(org_id)}}
+                {"user_metadata": {"organization_id": str(org_id)}}
             )
 
-            return {"status": "ok", "organization_id": org_id, "message": "Onboarding completed"}
+            return {
+                "status": "ok",
+                "organization_id": org_id,
+                "message": "Onboarding completed"
+            }
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -203,7 +229,10 @@ class AuthService:
             })
             return {"message": "Password reset link sent to your email"}
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
 
     async def reset_password(self, request: PasswordResetConfirm):
         try:
@@ -211,7 +240,10 @@ class AuthService:
             supabase.auth.update_user({"password": request.new_password})
             return {"message": "Password updated successfully"}
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
 
     async def sign_in_with_magic_link(self, request: MagicLinkRequest):
         try:
@@ -221,7 +253,33 @@ class AuthService:
             })
             return {"message": "Magic link sent to your email"}
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+
+    async def refresh_token(self, request: RefreshTokenRequest):
+        try:
+            res = supabase.auth.refresh_session(request.refresh_token)
+            if not res.session:
+                raise HTTPException(status_code=401, detail="Invalid refresh token")
+            return {
+                "access_token": res.session.access_token,
+                "refresh_token": res.session.refresh_token,
+                "token_type": "bearer",
+                "user": {
+                    "id": res.user.id,
+                    "email": res.user.email,
+                    "role": res.user.user_metadata.get("role", "STAFF"),
+                    "first_name": res.user.user_metadata.get("first_name"),
+                    "last_name": res.user.user_metadata.get("last_name"),
+                    "organization_id": res.user.user_metadata.get("organization_id")
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=401, detail=str(e))
 
     def get_social_login_url(self, provider: str):
         try:
@@ -231,6 +289,10 @@ class AuthService:
             })
             return {"url": res.url}
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+
 
 auth_service = AuthService()

@@ -4,12 +4,19 @@ from uuid import UUID
 from datetime import datetime
 import json
 import traceback
+from prisma import Json
 
 
 class RestaurantService:
     async def get_stats(self, organization_id: str):
         if not organization_id:
-            return {"totalItems": 0, "healthy": 0, "low": 0, "critical": 0}
+            return {"totalItems": 0, "countedItems": 0, "healthy": 0, "low": 0, "critical": 0, "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}}
+
+        try:
+            # Safely verify it's a UUID to prevent Postgres 500s
+            UUID(str(organization_id))
+        except:
+            return {"totalItems": 0, "countedItems": 0, "healthy": 0, "low": 0, "critical": 0, "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}}
 
         inventory = await inventory_repo.get_by_organization(UUID(organization_id))
         total = len(inventory)
@@ -226,32 +233,43 @@ class RestaurantService:
 
     async def save_opening_draft(self, organization_id: str, payload: dict):
         try:
+            if not organization_id:
+                raise ValueError("No organization ID linked to user profile")
+            
+            # Verify UUID format to prevent DB crash
+            org_id_str = str(organization_id)
+            UUID(org_id_str)
+            
             from app.db.prisma import db
             confirmed_ids = payload.get("confirmedIds", [])
             counts = payload.get("counts", {})
             
-            # Using upsert to ensure DayStatus exists before updating draft
+            # Use string or UUID based on what Prisma expects (trying both in upsert)
             await db.daystatus.upsert(
-                where={"organization_id": organization_id},
+                where={"organization_id": org_id_str},
                 data={
                     "create": {
-                        "organization_id": organization_id,
+                        "organization_id": org_id_str,
                         "state": "CLOSED",
-                        "metadata": {
+                        "business_date": datetime.utcnow(),
+                        "updated_at": datetime.utcnow(),
+                        "metadata": Json({
                             "draft_confirmed_ids": confirmed_ids,
                             "draft_counts": counts
-                        }
+                        })
                     },
                     "update": {
-                        "metadata": {
+                        "metadata": Json({
                             "draft_confirmed_ids": confirmed_ids,
                             "draft_counts": counts
-                        }
+                        })
                     }
                 }
             )
             return {"success": True}
         except Exception as e:
+            print(f"--- BACKEND DRAFT ERROR for {organization_id} ---")
+            traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
 
     async def submit_opening_checklist(self, organization_id: str, payload: dict):
@@ -296,7 +314,9 @@ class RestaurantService:
                         "is_opening_completed": True,
                         "state": "OPEN",
                         "opened_at": datetime.utcnow(),
-                        "metadata": {}
+                        "updated_at": datetime.utcnow(),
+                        "business_date": datetime.utcnow(),
+                        "metadata": Json({})
                     }
                 )
             return {"success": True}
@@ -307,35 +327,68 @@ class RestaurantService:
             raise HTTPException(status_code=500, detail=str(e))
 
     async def get_day_status(self, organization_id: str):
-        from app.db.prisma import db
-        ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
-        
-        # Auto-create DayStatus if it's missing (failsafe for first launch)
-        if not ds:
-            ds = await db.daystatus.create(
-                data={
-                    "organization_id": organization_id,
+        try:
+            if not organization_id:
+                # Safe default for unlinked users
+                return {
                     "state": "CLOSED",
-                    "metadata": {}
+                    "business_date": str(datetime.now().date()),
+                    "is_opening_completed": False,
+                    "opened_at": None,
+                    "closed_at": None,
+                    "metadata": {},
                 }
-            )
-            
-        metadata = ds.metadata or {}
-        if isinstance(metadata, str):
-            try:
-                import json
-                metadata = json.loads(metadata)
-            except:
-                metadata = {}
 
-        return {
-            "state": ds.state,
-            "business_date": str(ds.business_date),
-            "is_opening_completed": ds.is_opening_completed,
-            "opened_at": str(ds.opened_at) if ds.opened_at else None,
-            "closed_at": str(ds.closed_at) if ds.closed_at else None,
-            "metadata": metadata,
-        }
+            # Verify UUID format
+            org_id_str = str(organization_id)
+            try:
+                UUID(org_id_str)
+            except:
+                return {
+                    "state": "CLOSED",
+                    "business_date": str(datetime.now().date()),
+                    "is_opening_completed": False,
+                    "opened_at": None,
+                    "metadata": {},
+                }
+
+            from app.db.prisma import db
+            ds = await db.daystatus.find_unique(where={"organization_id": org_id_str})
+            
+            # Auto-create DayStatus if it's missing (failsafe)
+            if not ds:
+                ds = await db.daystatus.create(
+                    data={
+                        "organization_id": org_id_str,
+                        "state": "CLOSED",
+                        "business_date": datetime.utcnow(),
+                        "updated_at": datetime.utcnow(),
+                        "metadata": Json({})
+                    }
+                )
+                
+            metadata = ds.metadata or {}
+            if isinstance(metadata, str):
+                try:
+                    import json
+                    metadata = json.loads(metadata)
+                except:
+                    metadata = {}
+
+            # Explicitly cast every field to a serializable string/primitive
+            return {
+                "state": str(ds.state) if ds.state else "CLOSED",
+                "business_date": ds.business_date.isoformat() if hasattr(ds.business_date, 'isoformat') else str(ds.business_date),
+                "is_opening_completed": bool(ds.is_opening_completed),
+                "opened_at": ds.opened_at.isoformat() if ds.opened_at and hasattr(ds.opened_at, 'isoformat') else (str(ds.opened_at) if ds.opened_at else None),
+                "closed_at": ds.closed_at.isoformat() if ds.closed_at and hasattr(ds.closed_at, 'isoformat') else (str(ds.closed_at) if ds.closed_at else None),
+                "metadata": metadata if isinstance(metadata, dict) else {},
+            }
+        except Exception as e:
+            print(f"--- BACKEND DAY STATUS ERROR for {organization_id} ---")
+            traceback.print_exc()
+            # Still provide friendly detail so frontend can report it
+            raise HTTPException(status_code=500, detail=f"Restaurant Service Error: {str(e)}")
 
     async def get_settings(self, organization_id: str):
         from app.db.prisma import db
@@ -412,7 +465,7 @@ class RestaurantService:
         ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
         return {
             "can_close": ds.is_opening_completed if ds else False,
-            "state": ds.state if ds else "CLOSED",
+            "state": str(ds.state) if ds and ds.state else "CLOSED",
         }
 
     async def get_closing_indicators(self, organization_id: str):

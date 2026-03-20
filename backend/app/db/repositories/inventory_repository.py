@@ -233,13 +233,17 @@ class InventoryRepository:
         await db.contextualproduct.delete(where={"id": str(item_id)})
 
     async def add_event(self, contextual_product_id: str, event_type: str, quantity: float, unit: str, metadata: dict = None):
+        # FIX 1: Use `connect` syntax for the relation field
+        # FIX 2: Wrap metadata in Json() as required by Prisma
         event = await db.inventoryevent.create(
             data={
-                "contextual_product_id": contextual_product_id,
+                "product": {
+                    "connect": {"id": contextual_product_id}
+                },
                 "event_type": event_type,
                 "quantity": quantity,
                 "unit": unit,
-                "metadata": metadata or {}
+                "metadata": Json(metadata or {})
             }
         )
 
@@ -263,5 +267,6 @@ class InventoryRepository:
             order={"created_at": "desc"},
             take=limit
         )
+
 
 inventory_repo = InventoryRepository()

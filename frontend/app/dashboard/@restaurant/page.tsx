@@ -137,7 +137,7 @@ export default function RestaurantDashboardPage() {
                     <div className="space-y-10">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-50 pb-8">
                             <div className="space-y-1.5">
-                                <InriaHeading className="text-[26px] md:text-[28px] font-bold tracking-tight text-[#1E293B]">Recent Stock Activities</InriaHeading>
+                                <FigtreeText className="text-[26px] md:text-[28px] font-bold tracking-tight text-[#1E293B]">Recent Stock Activities</FigtreeText>
                                 <FigtreeText className="text-[15px] font-semibold text-slate-400">Recent stock movements across your inventory</FigtreeText>
                             </div>
                             <Button variant="link" className="text-[#3B59DA] font-black hover:underline transition-all text-[15px] font-figtree p-0 h-fit w-fit" asChild>
@@ -166,7 +166,7 @@ export default function RestaurantDashboardPage() {
                                         </Badge>
                                         <FigtreeText className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none mb-0">{activity.time}</FigtreeText>
                                     </div>
-                                    <InriaHeading className="font-bold text-[20px] tracking-tight group-hover:text-[#3B59DA] transition-colors leading-tight">{activity.activity}</InriaHeading>
+                                    <FigtreeText className="font-bold text-[20px] tracking-tight group-hover:text-[#3B59DA] transition-colors leading-tight">{activity.activity}</FigtreeText>
                                     <FigtreeText className="text-[15px] font-bold text-slate-500 line-clamp-1 leading-relaxed opacity-80 italic">{activity.description}</FigtreeText>
                                 </div>
                                 <div className="shrink-0 ml-6 hidden lg:block">
