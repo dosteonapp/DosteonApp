@@ -4,6 +4,7 @@ from app.core.security import verify_supabase_token
 from app.db.repositories.profile_repository import profile_repo
 from app.core.logging import get_logger
 from typing import List
+from uuid import UUID
 
 logger = get_logger("deps")
 security = HTTPBearer()
@@ -29,47 +30,95 @@ async def get_current_user(credentials=Depends(security)):
     # 3. Auto-create profile if still not found
     # This handles users who signed up via Supabase directly or before the fix
     if not profile:
-        logger.warning(f"Profile not found for {payload.get('email')} — auto-creating")
-        try:
-            from app.db.prisma import db
-            from app.db.repositories.organization_repository import organization_repo
-            import asyncio
+        email = payload.get("email")
+        logger.warning(f"Profile not found for {email} — auto-creating")
 
-            # Create a default org for this user
-            first_name = payload.get("user_metadata", {}).get("first_name") or \
-                         payload.get("email", "User").split("@")[0]
-            org = await organization_repo._create_async(f"{first_name}'s Restaurant")
-            org_id = org["id"]
+        from app.db.prisma import db  # noqa: F401 (kept for engine init side effects)
+        from app.db.repositories.organization_repository import organization_repo
+        from app.db.repositories.inventory_repository import inventory_repo
+        from app.core.supabase import supabase
+        import asyncio
 
-            # Bootstrap inventory in background
-            from app.db.repositories.inventory_repository import inventory_repo
+        user_id = payload["id"]
+        metadata = payload.get("user_metadata") or {}
+        first_name = metadata.get("first_name") or (email.split("@")[0] if email else "User")
+        last_name = metadata.get("last_name")
+
+        async def ensure_profile_and_org() -> dict:
+            # If another request just created the profile, reuse it
+            existing = await profile_repo.get_profile_by_id(user_id)
+            if existing:
+                return existing
+
+            # Try to reuse organization from Supabase metadata when present
+            org_id = metadata.get("organization_id")
+            if org_id:
+                try:
+                    org = await organization_repo._get_by_id_async(UUID(org_id))
+                    if org is None:
+                        org_id = None
+                    else:
+                        org_id = org["id"]
+                except Exception:
+                    org_id = None
+
+            # Create a default organization if none is available
+            if not org_id:
+                org = await organization_repo._create_async(f"{first_name}'s Restaurant")
+                org_id = org["id"]
+
+            # Bootstrap organization inventory in the background (fire-and-forget)
             asyncio.create_task(inventory_repo.bootstrap_organization(str(org_id)))
 
-            # Create profile
-            await db.profile.create(
-                data={
-                    "id": payload["id"],
-                    "email": payload["email"],
-                    "first_name": payload.get("user_metadata", {}).get("first_name"),
-                    "last_name": payload.get("user_metadata", {}).get("last_name"),
-                    "role": "OWNER",
-                    "organization_id": str(org_id),
-                }
-            )
+            # Create or update profile idempotently
+            profile_data = {
+                "id": user_id,
+                "email": email,
+                "first_name": first_name,
+                "last_name": last_name,
+                "role": "OWNER",
+                "organization_id": str(org_id),
+            }
+            profile_obj = await profile_repo.create_profile(profile_data)
 
-            # Sync org_id back to Supabase metadata
-            from app.core.supabase import supabase
-            supabase.auth.admin.update_user_by_id(
-                payload["id"],
-                {"user_metadata": {"organization_id": str(org_id)}}
-            )
+            # Ensure Supabase user_metadata carries the organization_id
+            current_org_meta = metadata.get("organization_id")
+            if current_org_meta != str(org_id):
+                supabase.auth.admin.update_user_by_id(
+                    user_id,
+                    {"user_metadata": {**metadata, "organization_id": str(org_id)}},
+                )
 
-            profile = await profile_repo.get_profile_by_id(payload["id"])
-        except Exception as e:
-            logger.error(f"Auto-create profile failed: {e}")
+            return profile_obj
+
+        # Small, bounded retry to handle transient connection issues / races
+        last_error: Exception | None = None
+        for attempt in range(2):
+            try:
+                profile = await ensure_profile_and_org()
+                if profile:
+                    break
+            except Exception as e:  # pragma: no cover - defensive logging path
+                last_error = e
+                logger.error(
+                    f"Auto-create profile attempt {attempt + 1} failed for {email}: {e}",
+                )
+
+                # If a parallel request succeeded in the meantime, reuse that profile
+                existing = await profile_repo.get_profile_by_id(user_id)
+                if existing:
+                    profile = existing
+                    break
+
+                # Brief backoff before a final retry
+                if attempt == 0:
+                    await asyncio.sleep(0.2)
+
+        if not profile:
+            logger.error(f"Auto-create profile failed: {last_error or ''}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User profile not found and could not be created. Please contact support.",
+                detail="User profile not found and could not be created. Please contact support.",
             )
 
     return profile
