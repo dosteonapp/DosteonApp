@@ -12,9 +12,6 @@ export const RESTAURANT_MODULE_CONFIG: Record<string, ModuleAccess> = {
   "/dashboard/kitchen-service": { path: "/dashboard/kitchen-service", allowReadOnly: true, requiresOpen: true, hasCustomLockedUI: true },
   "/dashboard/inventory": { path: "/dashboard/inventory", allowReadOnly: true, requiresOpen: true, hasCustomLockedUI: true },
   "/dashboard/closing": { path: "/dashboard/closing", allowReadOnly: true, requiresOpen: true, hasCustomLockedUI: true },
-  "/dashboard/orders": { path: "/dashboard/orders", allowReadOnly: false, requiresOpen: true },
-  "/dashboard/finance": { path: "/dashboard/finance", allowReadOnly: false, requiresOpen: true },
-  "/dashboard/analytics": { path: "/dashboard/analytics", allowReadOnly: true, requiresOpen: false },
 };
 
 export function isModuleLocked(path: string, state: DayState): boolean {
@@ -46,14 +43,28 @@ function getModuleConfig(path: string): ModuleAccess | undefined {
 export function canPerformAction(actionType: string, state: DayState): { allowed: boolean; message?: string } {
   if (state === DayState.OPEN) return { allowed: true };
 
-  const blockedStates = [DayState.PRE_OPEN, DayState.OPENING_IN_PROGRESS, DayState.CLOSING_IN_PROGRESS, DayState.CLOSED];
-  
-  if (blockedStates.includes(state)) {
-    return { 
-      allowed: false, 
-      message: `Open the day to perform ${actionType}.` 
-    };
+  switch (state) {
+    case DayState.PRE_OPEN:
+      return {
+        allowed: false,
+        message: `Start your opening checklist to ${actionType}.`,
+      };
+    case DayState.OPENING_IN_PROGRESS:
+      return {
+        allowed: false,
+        message: `Finish your opening checklist to ${actionType}.`,
+      };
+    case DayState.CLOSING_IN_PROGRESS:
+      return {
+        allowed: false,
+        message: `You can't ${actionType} while closing the day.`,
+      };
+    case DayState.CLOSED:
+      return {
+        allowed: false,
+        message: `Re-open the day from the dashboard to ${actionType}.`,
+      };
+    default:
+      return { allowed: true };
   }
-
-  return { allowed: true };
 }

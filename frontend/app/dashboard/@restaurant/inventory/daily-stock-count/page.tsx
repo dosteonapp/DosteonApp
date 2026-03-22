@@ -135,7 +135,7 @@ export default function DailyStockCountPage() {
   const totalCount = items.length;
   const progressPercent = totalCount > 0 ? Math.round((progressCount / totalCount) * 100) : 0;
 
-  if (isLoading) return <OpeningSkeleton />;
+    if (isLoading) return <OpeningSkeleton />;
   
   // Dynamic Sorting: Unconfirmed items at top, confirmed at bottom
   const sortedItems = [...items].sort((a, b) => {
@@ -158,11 +158,29 @@ export default function DailyStockCountPage() {
         </Button>
       </div>
 
-      {/* Main Content Container */}
+            {/* Main Content Container */}
       <div className={cn(
         "relative flex flex-col gap-4 px-0 transition-all duration-500 w-full",
         showReview && "blur-2xl scale-[0.98] pointer-events-none"
       )}>
+
+                {isLocked && (
+                    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 flex items-start gap-3 max-w-2xl">
+                        <div className="mt-0.5">
+                            <Badge variant="warning">Day locked</Badge>
+                        </div>
+                        <div>
+                            <p className="font-semibold">You can’t update stock while the day is locked.</p>
+                            <p className="text-amber-800/90">
+                                {status?.state === "CLOSING_IN_PROGRESS"
+                                    ? "Finish closing or reopen the day from the dashboard to adjust opening stock."
+                                    : status?.state === "CLOSED"
+                                    ? "Re-open the day from the dashboard to adjust opening stock."
+                                    : "Start or finish your opening checklist from the dashboard to unlock daily stock counts."}
+                            </p>
+                        </div>
+                    </div>
+                )}
 
         {/* Hero Progress Header */}
         <UnifiedHeroSurface
@@ -235,6 +253,7 @@ export default function DailyStockCountPage() {
                         onConfirm={() => handleConfirm(item.id)}
                         onEdit={() => handleEditAmount(item)}
                         idx={idx}
+                        isLocked={isLocked}
                     />
                 ))}
             </div>
@@ -293,12 +312,13 @@ export default function DailyStockCountPage() {
   );
 }
 
-function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: { 
+function StockRow({ item, isConfirmed, onConfirm, onEdit, idx, isLocked }: { 
     item: OpeningStockItem, 
     isConfirmed: boolean, 
     onConfirm: () => void, 
     onEdit: () => void,
-    idx: number 
+    idx: number,
+    isLocked: boolean
 }) {
     return (
         <UnifiedListRow 
@@ -344,6 +364,7 @@ function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
                     <Button 
                         variant="outline" 
                         className="h-14 px-8 rounded-[8px] border-slate-200 font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[15px] flex-1 lg:flex-none font-figtree bg-white shadow-sm"
+                        disabled={isLocked}
                         onClick={onEdit}
                     >
                         Edit Amount
@@ -355,9 +376,12 @@ function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
                                 ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" 
                                 : "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-lg shadow-indigo-900/10"
                         )}
+                        disabled={isLocked}
                         onClick={onConfirm}
                     >
-                        {isConfirmed ? (
+                        {isLocked ? (
+                            "Locked"
+                        ) : isConfirmed ? (
                             <span className="flex items-center gap-2">Confirmed <CheckCircle2 className="h-4 w-4" /></span>
                         ) : "Confirm"}
                     </Button>

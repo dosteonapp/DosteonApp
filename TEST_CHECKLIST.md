@@ -1,6 +1,12 @@
 # Test Checklist & Setup Guide
 
-This document outlines the steps to verify the application functionality using a local mock backend.
+This document is **legacy** and describes how to verify the application against an old Node-based mock backend.
+
+The current stack uses **FastAPI + Supabase** as the primary backend. For up-to-date environment and testing guidance, see:
+
+- `docs/ENVIRONMENT.md`
+- `docs/backend.md`
+- `review.md`
 
 ## 1. Setup
 
@@ -17,16 +23,13 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 
 ## 2. Start Services
 
-1. **Start the Mock Backend**:
-   Run the following command in a terminal:
-   ```bash
-   node scripts/mock-api.js
-   ```
+1. **Start the Backend (current stack)**:
+  Follow the instructions in `docs/backend.md` to run the FastAPI app locally.
 
 2. **Start the Frontend** (if not already running):
-   ```bash
-   npm run dev
-   ```
+  ```bash
+  pnpm dev
+  ```
 
 ## 3. Test Scenarios
 
@@ -45,11 +48,11 @@ Go through the following flows to verify integration.
 
 ### B. Dashboard & Data
 - [ ] **Restaurant Dashboard**: Navigate to `/dashboard`.
-  - *Expectation*: Stats (Revenue, Orders) are visible and not zero (loaded from mock).
+  - *Expectation*: Core stats (inventory, usage, etc.) are visible and not zero (loaded from the real API or controlled seed data, not the old mock server).
 - [ ] **Loading States**: Verify skeletons/loaders appear while fetching.
 
 ### C. Inventory Management
-- [ ] **View Inventory**: Go to `/restaurant/inventory` (or equivalent).
+- [ ] **View Inventory**: Go to `/dashboard/inventory`.
   - *Expectation*: List of items (empty or mock data) loads without error.
 - [ ] **Add Item**: Click "Add Item", fill form, submit.
   - *Expectation*: Success toast/message; list updates (if mock supports state, otherwise check console/network).

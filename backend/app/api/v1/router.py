@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, inventory, restaurant, pos, test_role, supplier, orders
+from app.api.v1.endpoints import auth, inventory, restaurant, pos, test_role, supplier, orders, metrics
 from datetime import datetime
 
 api_router = APIRouter()
@@ -10,6 +10,7 @@ api_router.include_router(restaurant.router, prefix="/restaurant", tags=["restau
 api_router.include_router(pos.router, prefix="/pos", tags=["pos"])
 api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
 api_router.include_router(test_role.router, prefix="/test", tags=["test"])
+api_router.include_router(metrics.router, tags=["metrics"])
 
 @api_router.get("/health/live", tags=["system"])
 async def liveness():

@@ -75,6 +75,23 @@ async def get_current_user(credentials=Depends(security)):
     return profile
 
 
+class SecurityContext:
+    def __init__(self, user: dict):
+        self.user = user
+
+    @property
+    def user_id(self) -> str:
+        return str(self.user.get("id")) if self.user.get("id") else None
+
+    @property
+    def organization_id(self) -> str:
+        return str(self.user.get("organization_id")) if self.user.get("organization_id") else None
+
+    @property
+    def role(self) -> str:
+        return self.user.get("role")
+
+
 class RoleChecker:
     def __init__(self, allowed_roles: List[str]):
         self.allowed_roles = allowed_roles
@@ -94,3 +111,16 @@ get_restaurant_user = RoleChecker(RESTAURANT_ROLES)
 get_admin_user = RoleChecker(["OWNER", "MANAGER"])
 get_manager_user = RoleChecker(["OWNER", "MANAGER"])
 get_supplier_user = RoleChecker(["SUPPLIER"])
+
+
+async def get_security_context(user: dict = Depends(get_restaurant_user)) -> SecurityContext:
+    """Standard security context for restaurant endpoints.
+
+    Wraps the authenticated user and exposes organization_id, role, etc.
+    """
+    return SecurityContext(user)
+
+
+async def get_admin_context(user: dict = Depends(get_admin_user)) -> SecurityContext:
+    """Security context for admin-only restaurant endpoints."""
+    return SecurityContext(user)

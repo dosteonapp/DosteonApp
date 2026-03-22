@@ -32,13 +32,17 @@ import {
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 
-export default function SupplierDetailsPage({
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function SupplierDetailsPage({
   params,
-}: {
-  params: { id: string };
-}) {
+}: PageProps) {
+  const { id } = await params;
+
   // In a real app, you would fetch the supplier data based on the ID
-  const supplier = suppliers.find((s) => s.id === params.id) || suppliers[0];
+  const supplier = suppliers.find((s) => s.id === id) || suppliers[0];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -311,11 +315,7 @@ export default function SupplierDetailsPage({
                           </TableCell>
                           <TableCell className="text-right">
                             <Button size="sm" asChild>
-                              <Link
-                                href={`/dashboard/orders/new?supplier=${supplier.id}&product=${product.id}`}
-                              >
-                                Order
-                              </Link>
+                              <Link href="#">Order</Link>
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -367,20 +367,9 @@ export default function SupplierDetailsPage({
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button size="sm" variant="outline" asChild>
-                                <Link href={`/dashboard/orders/${order.id}`}>
-                                  View
-                                </Link>
+                              <Button size="sm" variant="outline" disabled>
+                                View
                               </Button>
-                              {order.status === "Delivered" && (
-                                <Button size="sm" variant="outline" asChild>
-                                  <Link
-                                    href={`/dashboard/orders/new?reorder=${order.id}`}
-                                  >
-                                    Reorder
-                                  </Link>
-                                </Button>
-                              )}
                             </div>
                           </TableCell>
                         </TableRow>

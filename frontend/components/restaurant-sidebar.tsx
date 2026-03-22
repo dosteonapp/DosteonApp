@@ -27,7 +27,7 @@ import { LogoutButton } from "@/components/logout-button";
 
 import { useRestaurantDayLifecycle } from "./day/RestaurantDayLifecycleProvider";
 import { isModuleLocked, shouldBlockModuleAccess } from "@/lib/dayLifecycle/restaurantModuleAccess";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 import { useSidebar } from "@/context/SidebarContext";
@@ -144,14 +144,14 @@ export function RestaurantSidebar() {
           )}
           <div className="flex flex-col gap-2">
               {operationsRoutes.map((route) => (
-              <SidebarLink 
-                  key={route.href} 
-                  route={route} 
-                  pathname={pathname} 
-                  collapsed={isSidebarCollapsed} 
+                <SidebarLink
+                  key={route.href}
+                  route={route}
+                  pathname={pathname}
+                  collapsed={isSidebarCollapsed}
                   isLocked={status ? (isModuleLocked(route.href, status.state) && !isUserUnlocked) : false}
                   shouldBlock={status ? (shouldBlockModuleAccess(route.href, status.state) && !isUserUnlocked) : false}
-              />
+                />
               ))}
           </div>
         </div>
@@ -232,7 +232,9 @@ function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock }: { ro
     const handleClick = (e: React.MouseEvent) => {
       if (shouldBlock) {
         e.preventDefault();
-        toast.error("Module Locked", {
+        toast({
+          variant: "destructive",
+          title: "Module locked",
           description: "Clear your opening prep to unlock this module.",
         });
       }

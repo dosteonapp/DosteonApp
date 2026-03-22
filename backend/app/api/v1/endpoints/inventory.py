@@ -26,9 +26,13 @@ async def search_canonical_catalog(
 
 
 @router.get("/", response_model=List[InventoryItem])
-async def read_inventory(current_user: dict = Depends(get_restaurant_user)):
-    """Read all inventory items for the organization"""
-    return await inventory_service.get_inventory(current_user["organization_id"])
+async def read_inventory(
+    current_user: dict = Depends(get_restaurant_user),
+    offset: int = Query(0, ge=0, description="Number of items to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Maximum number of items to return"),
+):
+    """Read inventory items for the organization with optional pagination."""
+    return await inventory_service.get_inventory(current_user["organization_id"], skip=offset, limit=limit)
 
 
 @router.post("/", response_model=InventoryItem)
@@ -56,5 +60,5 @@ async def delete_item(
     current_user: dict = Depends(get_restaurant_user)
 ):
     """Remove an inventory item"""
-    await inventory_service.remove_item(item_id)
+    await inventory_service.remove_item(current_user["organization_id"], item_id)
     return {"status": "success"}

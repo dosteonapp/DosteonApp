@@ -72,6 +72,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
   const [activities, setActivities] = useState<InventoryActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,7 +84,8 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
         setItem(itemData);
         setActivities(activityData);
       } catch (error) {
-        console.error("Failed to fetch item details:", error);
+                console.error("Failed to fetch item details:", error);
+                setError("We couldn't load this inventory item. It may have been removed or there was a temporary issue.");
       } finally {
         setIsLoading(false);
       }
@@ -91,9 +93,47 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
     fetchData();
   }, [id]);
 
-  if (isLoading || !item) {
+    if (isLoading && !item && !error) {
     return <DetailsSkeleton />;
   }
+
+    if (error) {
+        return (
+            <AppContainer className="pb-40">
+                <div className="mb-8">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => router.back()}
+                        className="h-14 px-8 rounded-[8px] border-slate-200 bg-white font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[15px] active:scale-95 flex items-center gap-3"
+                    >
+                        <ArrowLeft className="h-5 w-5" /> Back
+                    </Button>
+                </div>
+                <div className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 max-w-xl">
+                    {error}
+                </div>
+            </AppContainer>
+        );
+    }
+
+    if (!item) {
+        return (
+            <AppContainer className="pb-40">
+                <div className="mb-8">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => router.back()}
+                        className="h-14 px-8 rounded-[8px] border-slate-200 bg-white font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all font-figtree shadow-sm text-[15px] active:scale-95 flex items-center gap-3"
+                    >
+                        <ArrowLeft className="h-5 w-5" /> Back
+                    </Button>
+                </div>
+                <div className="rounded-[12px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 max-w-xl">
+                    This inventory item could not be found.
+                </div>
+            </AppContainer>
+        );
+    }
 
   return (
     <AppContainer className="pb-40">

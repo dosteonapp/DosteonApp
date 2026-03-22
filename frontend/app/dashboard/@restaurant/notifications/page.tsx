@@ -34,7 +34,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const data = await restaurantOpsService.getNotifications();
+        const data = await restaurantOpsService.getNotifications({ offset: 0, limit: 50 });
         setNotifications(data);
       } catch (err) {
         console.error("Failed to fetch notifications:", err);

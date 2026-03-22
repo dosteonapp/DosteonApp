@@ -2,7 +2,7 @@
 
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
 import { canPerformAction } from "@/lib/dayLifecycle/restaurantModuleAccess";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 export function useRestaurantDayActionGuard() {
   const { status } = useRestaurantDayLifecycle();
@@ -21,7 +21,9 @@ export function useRestaurantDayActionGuard() {
     if (requiresOpen) {
       const result = canPerformAction(actionName, status.state);
       if (!result.allowed) {
-        toast.error("Action Blocked", {
+        toast({
+          variant: "destructive",
+          title: "Action blocked",
           description: message || result.message,
         });
         return;

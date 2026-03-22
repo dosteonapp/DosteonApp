@@ -45,6 +45,7 @@ function AddNewItemContent() {
     currentStock: "",
     unit: "",
     location: "",
+    canonicalId: "",
     expiryMonth: "july",
     expiryDay: "01",
     expiryYear: "2025"
@@ -68,6 +69,7 @@ function AddNewItemContent() {
                 currentStock: item.currentStock.toString(),
                 unit: item.unit,
                 location: item.location || "",
+               canonicalId: "",
                 expiryMonth: "july",
                 expiryDay: "01",
                 expiryYear: "2025"
@@ -127,10 +129,24 @@ function AddNewItemContent() {
     
     try {
       if (isEditMode) {
-        await restaurantOpsService.updateItem(editId!, { ...formData, imageUrl });
+        await restaurantOpsService.updateItem(editId!, {
+          name: formData.name,
+          currentStock: formData.currentStock ? Number(formData.currentStock) : undefined,
+          unit: formData.unit,
+          location: formData.location || undefined,
+          imageUrl,
+        });
         toast({ title: "Item Updated", description: "Changes have been saved." });
       } else {
-        await restaurantOpsService.addItem({ ...formData, imageUrl });
+        await restaurantOpsService.addItem({
+          name: formData.name,
+          category: formData.category,
+          currentStock: formData.currentStock ? Number(formData.currentStock) : undefined,
+          unit: formData.unit,
+          location: formData.location || undefined,
+          imageUrl,
+          canonicalId: formData.canonicalId || undefined,
+        });
         toast({ title: "Item Added", description: `${formData.name} has been added.` });
       }
       router.push("/dashboard/inventory");
@@ -187,7 +203,7 @@ function AddNewItemContent() {
                           value={formData.name}
                           onChange={(e) => {
                              const val = e.target.value;
-                             setFormData({...formData, name: val});
+                            setFormData({...formData, name: val, canonicalId: ""});
                              if (val.length > 1) {
                                 restaurantOpsService.searchCanonicalCatalog(val).then(setSuggestions);
                              } else {
@@ -217,7 +233,8 @@ function AddNewItemContent() {
                                                     ...formData,
                                                     name: s.name,
                                                     category: s.category.toLowerCase(),
-                                                    unit: s.base_unit || "kg"
+                                                unit: s.base_unit || "kg",
+                                                canonicalId: s.id,
                                                 });
                                                 setSuggestions([]);
                                             }}

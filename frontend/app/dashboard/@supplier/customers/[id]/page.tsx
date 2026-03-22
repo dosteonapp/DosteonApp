@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import {
   Card,
   CardContent,
@@ -47,14 +47,37 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-export default function CustomerDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default function CustomerDetailPage({ params }: PageProps) {
+  const { id } = use(params);
+
   const [customer] = useState(() => {
-    return customers.find((c) => c.id === params.id) || customers[0];
+    return customers.find((c) => c.id === id) ?? null;
   });
+
+  if (!customer) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <main className="flex-1 flex items-center justify-center p-4 md:p-8">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold">Customer not found</h1>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              The customer you’re looking for doesn’t exist or may have been removed.
+            </p>
+            <Button asChild>
+              <Link href="/dashboard/customers">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to customers
+              </Link>
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

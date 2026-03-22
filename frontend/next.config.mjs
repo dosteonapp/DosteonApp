@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
-// Force rebuild for Vercel 404 fix
+// Next.js configuration for Dosteon frontend
+const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
+
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -15,7 +17,9 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.BACKEND_URL || 'http://localhost:8000' || 'https://dosteonapp.onrender.com'}/api/:path*`,
+        // All frontend API calls go through this internal /api proxy.
+        // BACKEND_URL must be set in .env/.env.local and in Render for production.
+        destination: `${backendUrl}/api/:path*`,
       },
     ]
   },

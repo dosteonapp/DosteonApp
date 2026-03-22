@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axios";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import {
   Building2,
   ChevronRight,
@@ -36,12 +36,20 @@ const OnboardingPage = () => {
       return data;
     },
     onSuccess: () => {
-      toast.success("Workspace set up! Please sign in to continue.");
+      toast({
+        title: "Workspace set up",
+        description: "Please sign in to continue.",
+      });
       queryClient.invalidateQueries({ queryKey: ["user"] });
       router.push(SIGNIN_URL);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || "Setup failed. You can update this in Settings later.");
+      toast({
+        variant: "destructive",
+        title: "Onboarding failed",
+        description: error.response?.data?.detail ||
+          "Setup failed. You can update this in Settings later.",
+      });
       // Even on error, let them proceed to signin
       router.push(SIGNIN_URL);
     },

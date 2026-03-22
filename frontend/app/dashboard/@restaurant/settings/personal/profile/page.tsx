@@ -25,6 +25,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { toast } from "@/hooks/use-toast";
 
 export default function PersonalDetailsPage() {
   const { user, updateUser } = useUser();
@@ -122,10 +123,17 @@ export default function PersonalDetailsPage() {
                             const url = await uploadImage(file, 'profiles', 'avatars');
                             if (url) {
                                 await updateUser({ avatar_url: url });
-                                import("sonner").then(m => m.toast.success("Avatar updated!"));
+                                toast({
+                                  title: "Avatar updated",
+                                  description: "Your profile photo has been updated.",
+                                });
                             }
                         } catch (err) {
-                            import("sonner").then(m => m.toast.error("Upload failed"));
+                            toast({
+                              variant: "destructive",
+                              title: "Upload failed",
+                              description: "We couldn't upload your avatar. Please try again.",
+                            });
                         }
                     }}
                   />

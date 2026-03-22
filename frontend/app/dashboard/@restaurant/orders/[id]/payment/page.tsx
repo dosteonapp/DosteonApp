@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import {
   Card,
   CardContent,
@@ -26,18 +26,40 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, CreditCard, Download, Menu, Wallet } from "lucide-react";
 import Link from "next/link";
 
-export default function OrderPaymentPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default function OrderPaymentPage({ params }: PageProps) {
+  const { id } = use(params);
   const [paymentMethod, setPaymentMethod] = useState("dpo");
   const [splitPayment, setSplitPayment] = useState(false);
   const [firstPaymentAmount, setFirstPaymentAmount] = useState("50000");
   const [isProcessing, setIsProcessing] = useState(false);
 
   // In a real app, you would fetch the order data based on the ID
-  const order = orders.find((o) => o.id === params.id) || orders[0];
+  const order = orders.find((o) => o.id === id) || null;
+
+  if (!order) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <main className="flex-1 flex items-center justify-center p-4 md:p-8">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold">Order not found</h1>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              The order you’re looking for doesn’t exist or may have been archived.
+            </p>
+            <Button asChild>
+              <Link href="/dashboard/orders">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to orders
+              </Link>
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const handlePayment = () => {
     setIsProcessing(true);
@@ -45,7 +67,7 @@ export default function OrderPaymentPage({
     setTimeout(() => {
       setIsProcessing(false);
       // Redirect to confirmation page
-      window.location.href = `/dashboard/orders/${params.id}/payment/confirmation`;
+      window.location.href = `/dashboard/orders/${id}/payment/confirmation`;
     }, 2000);
   };
 
@@ -60,7 +82,7 @@ export default function OrderPaymentPage({
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/dashboard/orders/${params.id}`}>
+            <Link href={`/dashboard/orders/${id}`}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Order
             </Link>

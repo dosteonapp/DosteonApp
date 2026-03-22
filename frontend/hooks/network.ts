@@ -242,7 +242,11 @@ export const useUserType = (): "restaurant" | "supplier" => {
     throw new Error("User role not available");
   }
 
-  return user.role;
+  if (user.role === "SUPPLIER") {
+    return "supplier";
+  }
+
+  return "restaurant";
 };
 
 // Convenience hooks that automatically determine user type

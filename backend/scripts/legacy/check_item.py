@@ -5,7 +5,6 @@ async def check_item():
     db = Prisma()
     await db.connect()
     
-    # Check for the specific ID the user's browser is requesting
     id_to_check = "75098cbb-f43b-4b3b-8f65-1eb47338dd83"
     print(f"Checking for item: {id_to_check}")
     

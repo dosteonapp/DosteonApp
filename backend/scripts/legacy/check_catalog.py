@@ -1,4 +1,4 @@
-﻿import asyncio, sys, os
+import asyncio, sys, os
 sys.path.append(os.getcwd())
 from app.db.prisma import db
 
@@ -10,4 +10,5 @@ async def main():
     print(f"Public canonical products: {public_count}")
     await db.disconnect()
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

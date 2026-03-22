@@ -44,9 +44,7 @@ export default function GlobalActivitiesPage() {
   useEffect(() => {
     const fetchActivities = async () => {
       try {
-        const data = await restaurantOpsService.getRecentActivities();
-        // For the "full" page, we might want more than 5, but for now we use the same endpoint
-        // In a real app, this would be a paginated endpoint
+        const data = await restaurantOpsService.getRecentActivities({ offset: 0, limit: 50 });
         setActivities(data);
       } catch (err) {
         console.error("Failed to fetch activities:", err);

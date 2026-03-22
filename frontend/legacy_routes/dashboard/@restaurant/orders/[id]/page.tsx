@@ -34,17 +34,10 @@ export default function OrderDetailsPage({
 }: {
   params: { id: string };
 }) {
-  // In a real app, you would fetch the order data based on the ID
   const order = orders.find((o) => o.id === params.id) || orders[0];
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
-        <Menu className="h-6 w-6" />
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">Order Details</h1>
-        </div>
-      </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="outline" size="sm" asChild>
@@ -245,7 +238,6 @@ export default function OrderDetailsPage({
   );
 }
 
-// Helper function to get status badge colors
 function getOrderStatusColor(status: string) {
   switch (status) {
     case "Delivered":
@@ -263,7 +255,6 @@ function getOrderStatusColor(status: string) {
   }
 }
 
-// Helper function to get timeline icon
 function getTimelineIcon(status: string) {
   switch (status) {
     case "Order Placed":
@@ -278,5 +269,3 @@ function getTimelineIcon(status: string) {
       return <Clock className="h-5 w-5 text-muted-foreground" />;
   }
 }
-
-

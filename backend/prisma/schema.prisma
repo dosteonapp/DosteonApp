@@ -155,7 +155,7 @@ enum InventoryEventType {
 model InventoryEvent {
   id                      String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contextual_product_id   String             @db.Uuid
-  organization_id         String?            @db.Uuid
+  organization_id         String             @db.Uuid
   event_type              InventoryEventType 
   quantity                Float              // quantity_delta
   unit                    String    
@@ -180,6 +180,7 @@ model InventoryEvent {
   @@index([contextual_product_id])
   @@index([organization_id])
   @@index([created_at])
+  @@index([organization_id, created_at])
 }
 
 // ---------------------------------------------------------

@@ -1,3 +1,7 @@
-node_modules
-# Keep environment variables out of version control
-.env
+# Backend-specific ignores are handled by the root .gitignore.
+# This file is intentionally minimal so that contributors only
+# need to maintain a single ignore list at the repo root.
+
+# Local virtualenvs created within backend/
+.venv/
+venv/

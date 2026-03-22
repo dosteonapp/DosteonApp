@@ -27,15 +27,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-interface ProductEditPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function ProductEditPage({ params }: ProductEditPageProps) {
+export default function ProductEditPage({ params }: any) {
   const { toast } = useToast();
-  const [product, setProduct] = useState(getProductById(params.id));
+  const { id } = params as { id: string };
+  const [product, setProduct] = useState(getProductById(id));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState([
     "/placeholder.svg?height=200&width=200",
@@ -100,7 +95,7 @@ export default function ProductEditPage({ params }: ProductEditPageProps) {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/dashboard/products/${params.id}`}>
+              <Link href={`/dashboard/products/${id}`}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Product
               </Link>
@@ -114,7 +109,7 @@ export default function ProductEditPage({ params }: ProductEditPageProps) {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
-              <Link href={`/dashboard/products/${params.id}`}>Cancel</Link>
+              <Link href={`/dashboard/products/${id}`}>Cancel</Link>
             </Button>
             <Button onClick={handleSubmit} disabled={isSubmitting}>
               <Save className="mr-2 h-4 w-4" />

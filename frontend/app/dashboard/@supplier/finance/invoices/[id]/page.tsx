@@ -27,13 +27,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default function InvoiceDetailsPage({
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function InvoiceDetailsPage({
   params,
-}: {
-  params: { id: string };
-}) {
+}: PageProps) {
+  const { id } = await params;
+
   // In a real app, you would fetch the invoice data based on the ID
-  const invoice = invoices.find((i) => i.id === params.id) || invoices[0];
+  const invoice = invoices.find((i) => i.id === id) || invoices[0];
 
   return (
     <div className="flex flex-col min-h-screen">

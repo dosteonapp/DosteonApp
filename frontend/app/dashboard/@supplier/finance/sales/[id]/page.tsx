@@ -27,13 +27,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default function SaleDetailsPage({
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function SaleDetailsPage({
   params,
-}: {
-  params: { id: string };
-}) {
+}: PageProps) {
+  const { id } = await params;
+
   // In a real app, you would fetch the sale data based on the ID
-  const sale = sales.find((s) => s.id === params.id) || sales[0];
+  const sale = sales.find((s) => s.id === id) || sales[0];
 
   return (
     <div className="flex flex-col min-h-screen">

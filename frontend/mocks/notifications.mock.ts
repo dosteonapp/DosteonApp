@@ -25,8 +25,8 @@ export const notifications: Notification[] = [
     type: "alert",
     unread: true,
     actionLink: {
-      href: "/dashboard/orders/new?item=1",
-      text: "Order Now",
+      href: "/dashboard/inventory",
+      text: "Review Stock",
     },
   },
   {
@@ -54,8 +54,8 @@ export const notifications: Notification[] = [
     type: "alert",
     unread: true,
     actionLink: {
-      href: "/dashboard/orders/new?item=3",
-      text: "Order Now",
+      href: "/dashboard/inventory",
+      text: "Review Stock",
     },
   },
   {
@@ -89,8 +89,8 @@ export const notifications: Notification[] = [
     type: "alert",
     unread: true,
     actionLink: {
-      href: "/dashboard/orders/new?item=2",
-      text: "Order Now",
+      href: "/dashboard/inventory",
+      text: "Review Stock",
     },
   },
   {

@@ -6,7 +6,7 @@ This is the Next.js frontend application for the Dosteon project. It provides th
 
 - Node.js (Latest LTS)
 - NPM or Yarn
-- A running instance of the Dosteon Backend (`http://localhost:4000`)
+- A running instance of the Dosteon Backend (`http://localhost:8000`)
 
 ## Getting Started
 
@@ -20,7 +20,7 @@ This is the Next.js frontend application for the Dosteon project. It provides th
     ```env
     NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
     NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-    NEXT_PUBLIC_API_URL=http://localhost:4000
+    BACKEND_URL=http://localhost:8000
     ```
 
 3.  **Run in Development Mode**:

@@ -17,8 +17,9 @@
 - **Port**: 3000
 - **URL**: `http://localhost:3000`
 - **Setup**:
-  - Run `npm install`
-  - Create `frontend/.env` from `frontend/.env.example`
+  - Run `npm install` (or `pnpm install` if preferred)
+  - Create `frontend/.env.local` from `frontend/.env.example`
+  - Ensure `BACKEND_URL=http://localhost:8000`
   - Start with `npm run dev`
 
 ## Feature Flags
@@ -28,6 +29,7 @@
 
 ## Consistency Rules
 
-1. Always use `http://localhost:8000` for backend references.
-2. Use `.env.example` as the source of truth for required variables.
-3. No secrets should be committed to Git.
+1. Always use `http://localhost:8000` for backend references in local `.env` files (via `BACKEND_URL`).
+2. The frontend must talk to the backend **only** through the internal `/api` proxy, which forwards to `${BACKEND_URL}/api`.
+3. Use `.env.example` files as the source of truth for required variables.
+4. No secrets should be committed to Git.

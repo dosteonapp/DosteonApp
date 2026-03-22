@@ -38,6 +38,7 @@ export default function InventoryPage() {
   const [runningLowItems, setRunningLowItems] = useState<RunningLowItem[]>([]);
   const [stats, setStats] = useState<any>({ totalItems: 0, healthy: 0, low: 0, critical: 0, changes: { total: 0, healthy: 0, low: 0, critical: 0 } });
   const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -50,7 +51,8 @@ export default function InventoryPage() {
         setRunningLowItems(lowItems);
         setStats(dashboardStats);
       } catch (err) {
-        console.error("Failed to fetch inventory data:", err);
+                console.error("Failed to fetch inventory data:", err);
+                setError("We couldn't load your inventory dashboard. Please try again or refresh the page.");
       } finally {
         setIsLoading(false);
       }
@@ -64,6 +66,11 @@ export default function InventoryPage() {
 
   return (
     <AppContainer className="pb-24">
+            {error && (
+                <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {error}
+                </div>
+            )}
       {/* Top Header Region (Only visible when locked) */}
       {!isOpen && (
         <div className="space-y-6 mb-10">

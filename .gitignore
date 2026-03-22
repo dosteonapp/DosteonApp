@@ -71,6 +71,10 @@ env/
 .pytest_cache/
 .mypy_cache/
 
+# Jupyter / notebooks
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
 # Build artifacts & packages
 dist/
 build/
@@ -100,3 +104,11 @@ backend/check_catalog.py
 backend/check_cols.py
 backend/check_db.py
 backend/check_item.py
+
+# Local planning/notes files (not part of the product repo)
+improvement.md
+levels.md
+review.md
+steps.md
+verify.md
+

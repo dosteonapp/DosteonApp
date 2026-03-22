@@ -357,10 +357,13 @@ export default function PaymentsPage() {
                           payment.status === 'overdue' ? 'text-red-600' :
                           'text-green-600'
                         }`}>
-                          {payment.status === 'upcoming' ? 'Due in ' + payment.daysRemaining + ' days' : 
-                           payment.status === 'due-today' ? 'Due today' : 
-                           payment.status === 'overdue' ? 'Overdue by ' + Math.abs(payment.daysRemaining) + ' days' :
-                           'Paid on ' + payment.paidDate}
+                          {payment.status === 'upcoming'
+                            ? 'Due in ' + (payment.daysRemaining ?? 0) + ' days'
+                            : payment.status === 'due-today'
+                            ? 'Due today'
+                            : payment.status === 'overdue'
+                            ? 'Overdue by ' + Math.abs(payment.daysRemaining ?? 0) + ' days'
+                            : 'Paid on ' + (payment.paidDate ?? '—')}
                         </div>
                         {payment.status !== 'paid' && (
                           <div className="mt-2">

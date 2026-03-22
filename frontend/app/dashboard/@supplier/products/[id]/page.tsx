@@ -33,14 +33,9 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 
-interface ProductDetailPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const [product] = useState(getProductById(params.id));
+export default function ProductDetailPage({ params }: any) {
+  const { id } = params as { id: string };
+  const [product] = useState(getProductById(id));
 
   if (!product) {
     return (

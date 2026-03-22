@@ -26,9 +26,9 @@ import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
-import { addInventoryItem } from "@/lib/services/inventoryService";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import { useProductCategories } from "@/hooks/product-categories";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AddProductModalProps {
   open: boolean;
@@ -46,6 +46,7 @@ export function AddProductModal({
   const [catalogItems, setCatalogItems] = useState<any[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [selectedCanonical, setSelectedCanonical] = useState<string>("");
+  const [isCustomProduct, setIsCustomProduct] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -75,19 +76,22 @@ export function AddProductModal({
     }
   }, [open]);
 
-  const handleCanonicalSelect = (skuId: string) => {
-    setSelectedCanonical(skuId);
-    if (!skuId) return;
-    
-    const item = catalogItems.find(i => i.sku_id === skuId);
+  const handleCanonicalSelect = (canonicalId: string) => {
+    setSelectedCanonical(canonicalId);
+    // Reset custom flag when a canonical item is chosen
+    if (canonicalId) {
+      setIsCustomProduct(false);
+    }
+    if (!canonicalId) return;
+
+    const item = catalogItems.find((i) => i.id === canonicalId);
     if (item) {
-        setFormData(prev => ({
-            ...prev,
-            name: item.canonical_name_en,
-            sku: item.sku_id,
-            category: item.category,
-            unit: item.purchase_unit.split(' ')[0], // extract 'kg', 'litre', etc.
-        }));
+      setFormData((prev) => ({
+        ...prev,
+        name: item.name,
+        category: item.category,
+        unit: item.base_unit || "kg",
+      }));
     }
   };
 
@@ -104,24 +108,35 @@ export function AddProductModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Enforce search-before-create: either a canonical must be
+    // selected, or the user must explicitly confirm creating a
+    // brand-new custom product.
+    if (!selectedCanonical && !isCustomProduct) {
+      toast({
+        title: "Select a standard item or confirm custom",
+        description:
+          "Please choose a product from the catalog, or tick the custom product checkbox if this item truly does not exist in the catalog.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
         name: formData.name,
-        sku: formData.sku || undefined,
-        category: formData.category,
-        currentStock: Number(formData.currentStock),
-        unit: formData.unit,
-        minimumLevel: Number(formData.minimumLevel),
-        preferredSuppliers: formData.preferredSuppliers
-          ? formData.preferredSuppliers.split(",").map((s) => s.trim())
-          : undefined,
-        storageLocation: formData.storageLocation || undefined,
-        expiryDate: formData.expiryDate || undefined,
+        category: formData.category || undefined,
+        currentStock: formData.currentStock ? Number(formData.currentStock) : undefined,
+        unit: formData.unit || undefined,
+        location: formData.storageLocation || undefined,
+        imageUrl: undefined,
+        canonicalId: selectedCanonical || undefined,
       };
-      const res = await addInventoryItem(payload);
-      if (onProductAdded) {
-        onProductAdded(res.data);
+
+      const res = await restaurantOpsService.addItem(payload);
+      if (onProductAdded && res.item) {
+        onProductAdded(res.item);
       }
       toast({
         title: "Inventory Item Added",
@@ -139,6 +154,7 @@ export function AddProductModal({
         sku: "",
       });
       setSelectedCanonical("");
+      setIsCustomProduct(false);
       onOpenChange(false);
     } catch (err: any) {
       toast({
@@ -171,7 +187,7 @@ export function AddProductModal({
                   </Label>
                   <Badge variant="outline" className="bg-white text-indigo-600 border-indigo-200">Auto-fill</Badge>
               </div>
-              <p className="text-xs text-indigo-700/70">Select a standard item to automatically fill in details, or skip to create a custom product.</p>
+              <p className="text-xs text-indigo-700/70">Select a standard item to automatically fill in details, or explicitly confirm that you are creating a brand new product.</p>
               
               <Select value={selectedCanonical} onValueChange={handleCanonicalSelect}>
                 <SelectTrigger className="bg-white border-indigo-200 focus:ring-indigo-500/20 shadow-sm h-11">
@@ -179,19 +195,35 @@ export function AddProductModal({
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
                   {catalogItems.length === 0 && !catalogLoading ? (
-                      <div className="p-4 text-center text-sm text-slate-500">No catalog items available</div>
+                    <div className="p-4 text-center text-sm text-slate-500">No catalog items available</div>
                   ) : (
-                      catalogItems.map(item => (
-                          <SelectItem key={item.sku_id} value={item.sku_id} className="py-2.5">
-                              <div className="flex flex-col">
-                                  <span className="font-bold text-[#1E293B]">{item.canonical_name_en}</span>
-                                  <span className="text-xs text-slate-500">{item.category} • SKU: {item.sku_id}</span>
-                              </div>
-                          </SelectItem>
-                      ))
+                    catalogItems.map(item => (
+                      <SelectItem key={item.id} value={item.id} className="py-2.5">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-[#1E293B]">{item.name}</span>
+                          <span className="text-xs text-slate-500">{item.category}</span>
+                        </div>
+                      </SelectItem>
+                    ))
                   )}
                 </SelectContent>
               </Select>
+
+              <div className="flex items-center gap-2 pt-2">
+                <Checkbox
+                  id="custom-product"
+                  checked={isCustomProduct}
+                  onCheckedChange={(checked) =>
+                    setIsCustomProduct(Boolean(checked))
+                  }
+                />
+                <Label
+                  htmlFor="custom-product"
+                  className="text-xs text-indigo-800"
+                >
+                  This product is not in the catalog – create as a custom item.
+                </Label>
+              </div>
           </div>
 
           <div className="grid gap-5 py-2">

@@ -24,12 +24,13 @@ import { cn } from "@/lib/utils";
 import { FigtreeText } from "@/components/ui/dosteon-ui";
 import { Badge } from "@/components/ui/badge";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 export default function RestaurantProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -63,6 +64,7 @@ export default function RestaurantProfilePage() {
         if (settings.active_days) setActiveDays(settings.active_days);
       } catch (err) {
         console.error("Failed to load settings:", err);
+        setLoadError("We couldn't load your restaurant settings. You can retry or adjust them manually below.");
       } finally {
         setLoading(false);
       }
@@ -75,9 +77,16 @@ export default function RestaurantProfilePage() {
     try {
       await restaurantOpsService.updateSettings({ ...formData, active_days: activeDays });
       setIsSaved(true);
-      toast.success("Settings saved successfully!");
+      toast({
+        title: "Settings saved",
+        description: "Your restaurant profile settings have been updated.",
+      });
     } catch (err: any) {
-      toast.error("Failed to save settings: " + (err.message || "Unknown error"));
+      toast({
+        variant: "destructive",
+        title: "Failed to save settings",
+        description: err?.message || "Unknown error",
+      });
     } finally {
       setSaving(false);
     }
@@ -127,6 +136,11 @@ export default function RestaurantProfilePage() {
 
   return (
     <div className="space-y-6 max-w-4xl pb-10 animate-in fade-in duration-500 mx-auto sm:mx-0">
+      {loadError && (
+        <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {loadError}
+        </div>
+      )}
       <Card className="border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white">
         <CardContent className="p-0">
           <div className="p-6 md:p-8 space-y-1">
@@ -167,10 +181,17 @@ export default function RestaurantProfilePage() {
                                 const url = await uploadImage(file, 'profiles', 'logos');
                                 if (url) {
                                     updateField("logo_url", url);
-                                    toast.success("Logo uploaded!");
+                              toast({
+                                title: "Logo uploaded",
+                                description: "Your restaurant logo has been updated.",
+                              });
                                 }
                             } catch (err) {
-                                toast.error("Upload failed");
+                            toast({
+                              variant: "destructive",
+                              title: "Logo upload failed",
+                              description: "We couldn't upload your logo. Please try again.",
+                            });
                             }
                         }}
                     />

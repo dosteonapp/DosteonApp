@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime
 
@@ -54,3 +54,74 @@ class StockEventCreate(BaseModel):
     quantity: float
     unit: str
     metadata: Optional[dict] = None
+
+
+class RestaurantInventoryItemCreate(BaseModel):
+    """Request payload for creating a contextual inventory item from the restaurant UI."""
+
+    name: str
+    category: str = "General"
+    currentStock: float = 0
+    unit: str = "units"
+    location: str = "Main Storage"
+    imageUrl: Optional[str] = None
+    # Optional link to an existing canonical product (preferred when available)
+    canonicalId: Optional[UUID] = None
+
+
+class RestaurantInventoryItemUpdate(BaseModel):
+    """Request payload for updating a contextual inventory item from the restaurant UI."""
+
+    name: Optional[str] = None
+    currentStock: Optional[float] = None
+    unit: Optional[str] = None
+    location: Optional[str] = None
+    imageUrl: Optional[str] = None
+
+
+class InventoryStockUpdate(BaseModel):
+    """Request payload for manually overriding an item's stock quantity."""
+
+    itemId: str
+    newQuantity: float
+
+
+class OpeningChecklistDraft(BaseModel):
+    """Payload for saving a draft of the opening stock checklist."""
+
+    confirmedIds: List[str] = Field(default_factory=list)
+    counts: Dict[str, float] = Field(default_factory=dict)
+
+
+class OpeningChecklistSubmit(BaseModel):
+    """Payload for submitting the opening stock checklist."""
+
+    counts: Dict[str, float]
+
+
+class KitchenUsageLog(BaseModel):
+    """Payload for logging kitchen usage for an item."""
+
+    itemId: str
+    amount: float
+
+
+class KitchenWasteLog(BaseModel):
+    """Payload for logging kitchen waste for an item."""
+
+    itemId: str
+    amount: float
+    reason: Optional[str] = None
+
+
+class ClosingChecklistSubmit(BaseModel):
+    """Payload for submitting the end-of-day closing checklist.
+
+    For now this accepts a lightweight summary and the raw items array
+    from the frontend so that we can safely persist high-level audit
+    information without constraining the UI too tightly.
+    """
+
+    summary: Dict[str, Any]
+    items: List[Dict[str, Any]]
+

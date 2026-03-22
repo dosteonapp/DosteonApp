@@ -347,9 +347,6 @@ export function OrderItemModal({
             </div>
             <DialogFooter>
               <Button onClick={resetAndClose}>Close</Button>
-              <Button variant="outline" asChild>
-                <a href="/dashboard/orders">View All Orders</a>
-              </Button>
             </DialogFooter>
           </>
         )}

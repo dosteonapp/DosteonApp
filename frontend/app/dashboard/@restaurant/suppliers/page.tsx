@@ -251,13 +251,6 @@ export default function SuppliersPage() {
                                 View
                               </Link>
                             </Button>
-                            <Button size="sm" variant="outline" asChild>
-                              <Link
-                                href={`/dashboard/orders/new?supplier=${supplier.network_user_id}`}
-                              >
-                                Order
-                              </Link>
-                            </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button size="sm" variant="outline">

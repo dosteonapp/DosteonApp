@@ -37,11 +37,6 @@ export function SupplierSidebar() {
       title: "Products",
     },
     {
-      href: "/dashboard/orders",
-      icon: ShoppingCart,
-      title: "Orders",
-    },
-    {
       href: "/dashboard/customers",
       icon: Users,
       title: "Customers",

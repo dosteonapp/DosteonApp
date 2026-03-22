@@ -92,9 +92,9 @@ class RestaurantService:
             for i in inventory
         ]
 
-    async def get_inventory_item_by_id(self, item_id: str):
+    async def get_inventory_item_by_id(self, organization_id: str, item_id: str):
         item = await inventory_repo.get_by_id(UUID(item_id))
-        if not item:
+        if not item or str(item.get("organization_id")) != str(organization_id):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
         return {
             "id": str(item["id"]),
@@ -112,7 +112,11 @@ class RestaurantService:
             "imageUrl": item.get("image_url")
         }
 
-    async def get_item_activities(self, item_id: str):
+    async def get_item_activities(self, organization_id: str, item_id: str):
+        # Ensure the item belongs to the caller's organization before exposing history
+        item = await inventory_repo.get_by_id(UUID(item_id))
+        if not item or str(item.get("organization_id")) != str(organization_id):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
         from app.db.prisma import db
         events = await db.inventoryevent.find_many(
             where={"contextual_product_id": item_id},
@@ -129,30 +133,73 @@ class RestaurantService:
         unit = payload.get("unit", "units")
         location = payload.get("location", "Main Storage")
         image_url = payload.get("imageUrl")
+        canonical_id = payload.get("canonicalId")
 
         if not name:
             raise HTTPException(status_code=400, detail="Item name is required")
 
-        canonical_id = await inventory_repo.ensure_canonical(name, category)
+        # Prefer linking to an existing canonical product when provided; otherwise ensure one exists
+        if canonical_id:
+            canonical_product_id = str(canonical_id)
+        else:
+            canonical_product_id = await inventory_repo.ensure_canonical(name, category)
+        # Create contextual product with zero stock, then record opening stock via events
         item = await inventory_repo.create_contextual_product(
             organization_id=organization_id,
-            canonical_product_id=canonical_id,
+            canonical_product_id=canonical_product_id,
             name=name,
-            current_stock=stock,
+            current_stock=0.0,
             pack_unit=unit,
             storage_type=location,
             image_url=image_url,
             status="Healthy" if stock > 0 else "Critical"
         )
+        if stock > 0:
+            await inventory_repo.add_event(
+                contextual_product_id=str(item["id"]),
+                organization_id=str(organization_id),
+                event_type="OPENING",
+                quantity=stock,
+                unit=unit,
+                metadata={"reason": "Initial item setup"}
+            )
         return {"success": True, "item": item}
 
     async def update_inventory_item(self, organization_id: str, item_id: str, payload: dict):
+        # Enforce that the contextual product belongs to the caller's organization
+        existing = await inventory_repo.get_by_id(UUID(item_id))
+        if not existing or str(existing.get("organization_id")) != str(organization_id):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+
         data = {}
-        if "name" in payload: data["name"] = payload["name"]
-        if "currentStock" in payload: data["current_stock"] = float(payload["currentStock"])
-        if "unit" in payload: data["pack_unit"] = payload["unit"]
-        if "location" in payload: data["storage_type"] = payload["location"]
-        if "imageUrl" in payload: data["image_url"] = payload["imageUrl"]
+        if "name" in payload:
+            data["name"] = payload["name"]
+        if "unit" in payload:
+            data["pack_unit"] = payload["unit"]
+        if "location" in payload:
+            data["storage_type"] = payload["location"]
+        if "imageUrl" in payload:
+            data["image_url"] = payload["imageUrl"]
+
+        # If stock is being updated, record it as an ADJUSTMENT event instead of direct mutation
+        if "currentStock" in payload:
+            try:
+                new_quantity = float(payload["currentStock"])
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail="Invalid currentStock value")
+
+            current_quantity = float(existing.get("current_stock") or 0)
+            delta = new_quantity - current_quantity
+            if delta != 0:
+                unit_value = payload.get("unit") or existing.get("unit") or "units"
+                await inventory_repo.add_event(
+                    contextual_product_id=str(existing["id"]),
+                    organization_id=str(organization_id),
+                    event_type="ADJUSTMENT",
+                    quantity=delta,
+                    unit=unit_value,
+                    metadata={"reason": "Manual stock adjustment via item update"}
+                )
 
         try:
             await inventory_repo.update_contextual_product(UUID(item_id), data)
@@ -161,11 +208,24 @@ class RestaurantService:
             raise HTTPException(status_code=400, detail=str(e))
 
     async def update_item_stock(self, organization_id: str, item_id: str, new_quantity: float):
+        # Enforce that the contextual product belongs to the caller's organization
+        existing = await inventory_repo.get_by_id(UUID(item_id))
+        if not existing or str(existing.get("organization_id")) != str(organization_id):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+
         try:
-            await inventory_repo.update_contextual_product(
-                UUID(item_id),
-                {"current_stock": new_quantity}
-            )
+            current_quantity = float(existing.get("current_stock") or 0)
+            delta = float(new_quantity) - current_quantity
+            if delta != 0:
+                unit_value = existing.get("unit") or "units"
+                await inventory_repo.add_event(
+                    contextual_product_id=str(existing["id"]),
+                    organization_id=str(organization_id),
+                    event_type="ADJUSTMENT",
+                    quantity=delta,
+                    unit=unit_value,
+                    metadata={"reason": "Manual stock override"}
+                )
             return {"success": True}
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -211,13 +271,18 @@ class RestaurantService:
             "timestamp": timestamp
         }
 
-    async def get_recent_activities(self, organization_id: str):
+    async def get_recent_activities(self, organization_id: str, offset: int = 0, limit: int = 5):
         if not organization_id:
             return []
-        events = await inventory_repo.get_recent_events(organization_id, limit=20) # Get more to filter 0s
+
+        # Fetch more than requested to account for zero-quantity events that will be filtered out
+        fetch_limit = max(limit * 3, limit + 10)
+        events = await inventory_repo.get_recent_events(organization_id, limit=fetch_limit)
+
         # Filter out 0 quantity updates which are non-informative for recent view
         meaningful_events = [e for e in events if e.quantity != 0]
-        return [self._map_inventory_event(e) for e in meaningful_events[:5]] # Keep the top 5
+        window = meaningful_events[offset: offset + limit]
+        return [self._map_inventory_event(e) for e in window]
 
     async def get_opening_checklist(self, organization_id: str):
         if not organization_id:
@@ -424,9 +489,10 @@ class RestaurantService:
             **new_settings
         }
 
-    async def get_notifications(self, organization_id: str):
+    async def get_notifications(self, organization_id: str, offset: int = 0, limit: int = 50):
         if not organization_id:
             return []
+
         inventory = await inventory_repo.get_by_organization(UUID(organization_id))
         notifications = []
         for item in inventory:
@@ -444,7 +510,9 @@ class RestaurantService:
                     "type": "warning",
                     "message": f"{item['name']} is running low ({stock} {item.get('unit', 'units')} left)",
                 })
-        return notifications
+
+        # Apply simple offset/limit pagination on the in-memory notifications list
+        return notifications[offset: offset + limit]
 
     async def get_closing_status(self, organization_id: str):
         from app.db.prisma import db
@@ -461,15 +529,73 @@ class RestaurantService:
         return {"used": used, "wasted": wasted}
 
     async def record_kitchen_event(self, organization_id: str, item_id: str, amount: float, event_type: str, reason: str = None):
+        # Ensure the item is within the caller's organization before mutating stock
+        existing = await inventory_repo.get_by_id(UUID(item_id))
+        if not existing or str(existing.get("organization_id")) != str(organization_id):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
         mapped_type = "USED" if event_type == "usage" else "WASTED"
         await inventory_repo.add_event(
             contextual_product_id=item_id,
+            organization_id=str(organization_id),
             event_type=mapped_type,
             quantity=-abs(amount),
             unit="units",
             metadata={"reason": reason} if reason else {}
         )
         return {"success": True}
+
+    async def submit_closing_checklist(self, organization_id: str, payload: dict):
+        """Persist a lightweight record of the closing checklist and mark the day as closed.
+
+        This mirrors the opening checklist submission by updating DayStatus on the
+        backend so future sessions (and other services) can see that the day was
+        properly closed, while still keeping the detailed UI state local-first.
+        """
+        try:
+            from app.db.prisma import db
+
+            org_id_str = str(organization_id)
+            summary = payload.get("summary") or {}
+            items = payload.get("items") or []
+
+            ds = await db.daystatus.find_first(where={"organization_id": org_id_str})
+
+            from prisma.enums import DayState  # type: ignore
+
+            if ds:
+                await db.daystatus.update(
+                    where={"organization_id": org_id_str},
+                    data={
+                        "state": DayState.CLOSED,
+                        "closed_at": datetime.utcnow(),
+                        "updated_at": datetime.utcnow(),
+                        "metadata": Json({
+                            "closing_summary": summary,
+                            "closing_items_count": len(items),
+                        }),
+                    },
+                )
+            else:
+                await db.daystatus.create(
+                    data={
+                        "organization_id": org_id_str,
+                        "state": DayState.CLOSED,
+                        "business_date": datetime.utcnow(),
+                        "closed_at": datetime.utcnow(),
+                        "updated_at": datetime.utcnow(),
+                        "is_opening_completed": False,
+                        "metadata": Json({
+                            "closing_summary": summary,
+                            "closing_items_count": len(items),
+                        }),
+                    }
+                )
+
+            return {"success": True}
+        except Exception as e:
+            print(f"--- BACKEND CLOSING SUBMIT ERROR for {organization_id} ---")
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 restaurant_service = RestaurantService()

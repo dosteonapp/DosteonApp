@@ -1,6 +1,7 @@
 from app.db.repositories.pos_repository import pos_repo
 from app.db.repositories.inventory_repository import inventory_repo
 from fastapi import HTTPException, status
+from uuid import UUID
 
 class POSService:
     async def get_menu(self, organization_id: str):
@@ -17,7 +18,12 @@ class POSService:
 
         # 2. Check if we have enough stock (Optional but good)
         for ingredient in recipe:
-            inv_item = inventory_repo.get_by_id(ingredient["inventory_item_id"])
+            try:
+                item_id = UUID(str(ingredient["inventory_item_id"]))
+            except Exception:
+                continue
+
+            inv_item = await inventory_repo.get_by_id(item_id)
             if not inv_item:
                 continue
             
@@ -30,14 +36,34 @@ class POSService:
         # 3. Deduct stock from inventory
         deductions = []
         for ingredient in recipe:
-            inv_item = inventory_repo.get_by_id(ingredient["inventory_item_id"])
+            try:
+                item_id = UUID(str(ingredient["inventory_item_id"]))
+            except Exception:
+                continue
+
+            inv_item = await inventory_repo.get_by_id(item_id)
             if not inv_item:
                 continue
             
             required = ingredient["quantity_required"] * quantity
-            new_stock = inv_item["current_stock"] - required
-            
-            inventory_repo.update_item(inv_item["id"], {"current_stock": new_stock})
+            # Record consumption as an InventoryEvent and let the
+            # repository helper update current_stock as a cache.
+            delta = -float(required)
+            unit_value = inv_item.get("unit") or "units"
+
+            await inventory_repo.add_event(
+                contextual_product_id=str(inv_item["id"]),
+                organization_id=str(organization_id),
+                event_type="USED",
+                quantity=delta,
+                unit=unit_value,
+                metadata={
+                    "reason": "POS order",
+                    "menu_item_id": menu_item_id,
+                },
+            )
+
+            new_stock = float(inv_item["current_stock"]) + delta
             deductions.append({
                 "item": inv_item["name"],
                 "deducted": required,

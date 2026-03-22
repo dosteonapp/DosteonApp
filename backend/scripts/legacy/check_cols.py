@@ -5,7 +5,6 @@ async def check():
     db = Prisma()
     await db.connect()
     
-    # Check columns
     res = await db.query_raw("SELECT column_name FROM information_schema.columns WHERE table_name='contextual_products' AND table_schema='public';")
     print("Columns in 'contextual_products':")
     for row in res:

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import {
   Card,
   CardContent,
@@ -25,18 +25,19 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 
-export default function SupplierChatPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default function SupplierChatPage({ params }: PageProps) {
+  const { id } = use(params);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>(sampleMessages);
   const [isUrgent, setIsUrgent] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Find supplier based on ID
-  const supplier = suppliers.find((s) => s.id === params.id) || suppliers[0];
+  const supplier = suppliers.find((s) => s.id === id) || suppliers[0];
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -72,7 +73,7 @@ export default function SupplierChatPage({
         <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-10rem)]">
           <div className="flex items-center gap-2 mb-4">
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/dahboard/suppliers/${params.id}`}>
+              <Link href={`/dashboard/suppliers/${id}`}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Supplier
               </Link>

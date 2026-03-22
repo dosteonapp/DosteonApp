@@ -6,13 +6,15 @@ from prisma import Json
 
 
 class InventoryRepository:
-    async def get_by_organization(self, organization_id: UUID) -> List[dict]:
+    async def get_by_organization(self, organization_id: UUID, skip: int = 0, take: Optional[int] = None) -> List[dict]:
         products = await db.contextualproduct.find_many(
-            where={"organization_id": str(organization_id)},
+            where={"organization_id": str(organization_id), "is_active": True},
             include={
                 "canonical": True,
                 "location": True
-            }
+            },
+            skip=skip or 0,
+            take=take
         )
 
         result = []
@@ -83,6 +85,7 @@ class InventoryRepository:
 
             return {
                 "id": p.id,
+                "organization_id": p.organization_id,
                 "name": p.name or (p.canonical.name if p.canonical else "Unknown Item"),
                 "category": p.canonical.category if p.canonical else "General",
                 "subcategory": p.canonical.subcategory if p.canonical else "Other",
@@ -104,24 +107,43 @@ class InventoryRepository:
             return None
 
     async def ensure_canonical(self, name: str, category: str) -> str:
+        """Find or create a canonical product for the given name/category.
+
+        This uses a slightly more robust lookup than a plain name match by
+        checking both the primary name (case-insensitive) and any stored
+        synonyms before creating a new canonical row. This helps avoid
+        accidental duplicates when the same product is entered with small
+        spelling or casing differences.
+        """
+
+        # Normalize input for comparison; keep the original for storage.
+        normalized_name = name.strip()
+
         existing = await db.canonicalproduct.find_first(
-            where={"name": {"equals": name, "mode": "insensitive"}}
+            where={
+                "OR": [
+                    {"name": {"equals": normalized_name, "mode": "insensitive"}},
+                    {"synonyms": {"has": normalized_name}},
+                ]
+            }
         )
         if existing:
             return existing.id
 
         import re, uuid
-        prefix = re.sub(r'[^A-Z]', '', name.upper())[:3] or "USR"
+        prefix = re.sub(r"[^A-Z]", "", normalized_name.upper())[:3] or "USR"
         new_sku = f"{prefix}-{str(uuid.uuid4())[:8].upper()}"
 
         new_c = await db.canonicalproduct.create(
             data={
                 "sku": new_sku,
-                "name": name,
+                "name": normalized_name,
                 "category": category,
                 "base_unit": "units",
                 "is_public": False,
-                "synonyms": []
+                # Store the raw name as a synonym in case we later
+                # adjust naming conventions but still want to match it.
+                "synonyms": [name] if name != normalized_name else [],
             }
         )
         return new_c.id
@@ -234,42 +256,60 @@ class InventoryRepository:
     async def bulk_add_opening_events(self, organization_id: str, counts: dict):
         """
         Bulk update stock levels and create opening events.
-        Uses 3 queries instead of 58×2=116 sequential queries.
-        This prevents uvicorn from crashing on large checklists.
+        Uses a bulk insert for events and a single bulk UPDATE for
+        current_stock, instead of per-item updates.
+
+        This keeps the InventoryEvent log as the source of truth while
+        avoiding N round-trips to the database when the opening
+        checklist has many items.
         """
         if not counts:
             return
 
-        item_ids = [str(UUID(item_id)) for item_id in counts.keys()]
+        # Validate and normalize IDs up-front; this also protects
+        # against malformed UUID input before we build raw SQL.
+        normalized_counts = {
+            str(UUID(item_id)): float(quantity)
+            for item_id, quantity in counts.items()
+        }
 
-        # 1. Reset all counted items to 0 in one query
-        await db.contextualproduct.update_many(
-            where={"id": {"in": item_ids}},
-            data={"current_stock": 0.0}
-        )
-
-        # 2. Bulk create all opening events in one query
+        # 1. Bulk create all opening events in one query
         await db.inventoryevent.create_many(
             data=[
                 {
-                    "contextual_product_id": str(UUID(item_id)),
+                    "contextual_product_id": item_id,
                     "organization_id": organization_id,
                     "event_type": "OPENING",
-                    "quantity": float(quantity),
+                    "quantity": quantity,
                     "unit": "units",
                     "metadata": Json({"reason": "Opening stock count"}),
                 }
-                for item_id, quantity in counts.items()
+                for item_id, quantity in normalized_counts.items()
             ],
             skip_duplicates=True
         )
 
-        # 3. Update each item's current_stock to the submitted quantity
-        for item_id, quantity in counts.items():
-            await db.contextualproduct.update(
-                where={"id": str(UUID(item_id))},
-                data={"current_stock": float(quantity)}
+        # 2. Bulk update contextual_products.current_stock for all
+        #    submitted items in a single SQL statement.
+        #
+        #    We construct a VALUES table of (id, quantity) pairs and
+        #    join it against contextual_products.
+        values_clause_parts = []
+        for item_id, quantity in normalized_counts.items():
+            # item_id is a validated UUID string; quantity is a float.
+            values_clause_parts.append(
+                f"('{item_id}'::uuid, {quantity})"
             )
+
+        if values_clause_parts:
+            values_clause = ",".join(values_clause_parts)
+            query = f"""
+UPDATE contextual_products AS cp
+SET current_stock = v.quantity
+FROM (VALUES {values_clause}) AS v(id, quantity)
+WHERE cp.id = v.id;
+"""
+            await db.execute_raw(query)
 
     async def create_contextual_product(self, **kwargs) -> dict:
         data = {k: str(v) if isinstance(v, UUID) else v for k, v in kwargs.items()}
@@ -285,14 +325,17 @@ class InventoryRepository:
         return ctx.__dict__
 
     async def delete_contextual_product(self, item_id: UUID):
-        await db.contextualproduct.delete(where={"id": str(item_id)})
+        # Soft-delete: archive product instead of hard delete to preserve history
+        await db.contextualproduct.update(
+            where={"id": str(item_id)},
+            data={"is_active": False, "status": "archived"}
+        )
 
-    async def add_event(self, contextual_product_id: str, event_type: str, quantity: float, unit: str, metadata: dict = None):
+    async def add_event(self, contextual_product_id: str, organization_id: str, event_type: str, quantity: float, unit: str, metadata: dict = None):
         event = await db.inventoryevent.create(
             data={
-                "product": {
-                    "connect": {"id": contextual_product_id}
-                },
+                "contextual_product_id": contextual_product_id,
+                "organization_id": organization_id,
                 "event_type": event_type,
                 "quantity": quantity,
                 "unit": unit,
@@ -309,13 +352,7 @@ class InventoryRepository:
 
     async def get_recent_events(self, organization_id: str, limit: int = 5) -> List[InventoryEvent]:
         return await db.inventoryevent.find_many(
-            where={
-                "product": {
-                    "is": {
-                        "organization_id": organization_id
-                    }
-                }
-            },
+            where={"organization_id": organization_id},
             include={"product": True},
             order={"created_at": "desc"},
             take=limit

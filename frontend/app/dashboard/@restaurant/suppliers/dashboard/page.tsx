@@ -204,7 +204,7 @@ function SupplierCard({ supplier, isPinned, onTogglePin }: SupplierCardProps) {
                 <span>{supplier.recentOrder.date}</span>
               </div>
               <Badge
-                variant={getOrderStatusVariant(supplier.recentOrder.status)}
+                variant={getOrderStatusVariant(supplier.recentOrder.status) as any}
               >
                 {supplier.recentOrder.status}
               </Badge>
@@ -226,12 +226,6 @@ function SupplierCard({ supplier, isPinned, onTogglePin }: SupplierCardProps) {
         )}
       </CardContent>
       <CardFooter className="p-4 pt-0 grid grid-cols-2 gap-2">
-        <Button variant="outline" size="sm" asChild className="w-full">
-          <Link href={`/dashboard/orders/new?supplier=${supplier.id}`}>
-            <ShoppingCart className="mr-1 h-3.5 w-3.5" />
-            Order
-          </Link>
-        </Button>
         <Button variant="outline" size="sm" asChild className="w-full">
           <Link href={`/dashboard/suppliers/${supplier.id}`}>
             <Truck className="mr-1 h-3.5 w-3.5" />

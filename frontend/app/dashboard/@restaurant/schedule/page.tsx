@@ -74,12 +74,6 @@ export default function ScheduleOrdersPage() {
               Plan your future deliveries up to 14 days ahead
             </p>
           </div>
-          <Button asChild>
-            <a href="/dashboard/orders/new">
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              New Order
-            </a>
-          </Button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -112,31 +106,33 @@ export default function ScheduleOrdersPage() {
                     scheduled: "border border-primary",
                     suggested: "border border-dashed border-secondary",
                   }}
-                  components={{
-                    DayContent: (props) => {
-                      const isScheduled = scheduledDates.some((date) =>
-                        isSameDay(date, props.date)
-                      );
+                  components={
+                    {
+                      DayContent: (props: any) => {
+                        const isScheduled = scheduledDates.some((date) =>
+                          isSameDay(date, props.date)
+                        );
 
-                      const isSuggested = suggestedDates.some((suggestion) =>
-                        isSameDay(suggestion.date, props.date)
-                      );
+                        const isSuggested = suggestedDates.some((suggestion) =>
+                          isSameDay(suggestion.date, props.date)
+                        );
 
-                      return (
-                        <div className="relative h-9 w-9 p-0 font-normal aria-selected:opacity-100">
-                          <div className="flex h-full w-full items-center justify-center">
-                            {props.day}
+                        return (
+                          <div className="relative h-9 w-9 p-0 font-normal aria-selected:opacity-100">
+                            <div className="flex h-full w-full items-center justify-center">
+                              {props.day}
+                            </div>
+                            {isScheduled && (
+                              <div className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
+                            )}
+                            {isSuggested && !isScheduled && (
+                              <div className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-secondary" />
+                            )}
                           </div>
-                          {isScheduled && (
-                            <div className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
-                          )}
-                          {isSuggested && !isScheduled && (
-                            <div className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-secondary" />
-                          )}
-                        </div>
-                      );
-                    },
-                  }}
+                        );
+                      },
+                    } as any
+                  }
                 />
               </CardContent>
               <CardFooter className="flex justify-between">

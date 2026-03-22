@@ -40,8 +40,8 @@ export default function RestaurantDashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [acts, dashboardStats] = await Promise.all([
-          restaurantOpsService.getRecentActivities(),
+                const [acts, dashboardStats] = await Promise.all([
+                    restaurantOpsService.getRecentActivities({ offset: 0, limit: 5 }),
           restaurantOpsService.getStats()
         ]);
         setActivities(acts);

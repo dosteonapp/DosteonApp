@@ -48,27 +48,46 @@ export default function AllInventoryItemsPage() {
   const { isLocked } = useRestaurantDayLifecycle();
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
+    const [category, setCategory] = useState<string>("all");
+    const [level, setLevel] = useState<string>("all");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const items = await restaurantOpsService.getInventoryItems();
-        setInventoryItems(items);
-      } catch (err) {
-        console.error("Failed to fetch inventory data:", err);
-      } finally {
-        setIsLoading(false);
-      }
+    const fetchData = async (params?: { search?: string; category?: string; level?: string }) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const items = await restaurantOpsService.getInventoryItems(params);
+            setInventoryItems(items);
+        } catch (err) {
+            console.error("Failed to fetch inventory data:", err);
+            setError("We couldn't load your full inventory list. Please try again or refresh the page.");
+        } finally {
+            setIsLoading(false);
+        }
     };
-    fetchData();
-  }, []);
 
-  if (isLoading) {
-    return <InventoryItemsSkeleton />;
-  }
+    useEffect(() => {
+        fetchData({
+            search: search || undefined,
+            category,
+            level,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search, category, level]);
+
+    if (isLoading && !inventoryItems.length && !error) {
+        return <InventoryItemsSkeleton />;
+    }
 
   return (
     <AppContainer className="pb-24">
+
+            {error && (
+                <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {error}
+                </div>
+            )}
 
 
       <div className="mb-8">
@@ -92,8 +111,17 @@ export default function AllInventoryItemsPage() {
         isLocked={false}
         topAction={
             <div className="flex items-center gap-4">
-                <Button variant="outline" className="h-12 px-6 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-3 transition-all shadow-sm active:scale-95 font-figtree">
-                    <RefreshIcon className="h-4 w-4" /> Update Inventory
+                <Button
+                    variant="outline"
+                    className="h-12 px-6 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-3 transition-all shadow-sm active:scale-95 font-figtree"
+                    onClick={() => fetchData({
+                      search: search || undefined,
+                      category,
+                      level,
+                    })}
+                    disabled={isLoading}
+                >
+                    <RefreshIcon className="h-4 w-4" /> {isLoading ? "Refreshing..." : "Update Inventory"}
                 </Button>
                 <Button className="h-12 px-8 bg-[#3B59DA] text-white hover:bg-[#2D46B2] rounded-[8px] font-bold gap-3 transition-all border-none shadow-lg shadow-indigo-100 active:scale-95 font-figtree" asChild>
                     <Link href="/dashboard/inventory/new">
@@ -113,12 +141,17 @@ export default function AllInventoryItemsPage() {
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-8">
                 <div className="flex items-center gap-4 flex-1 w-full max-w-2xl">
                     <div className="relative flex-1">
-                        <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
-                        <Input placeholder="Search items, SKUs, or brand..." className="pl-14 h-14 border-slate-200 rounded-[8px] bg-white focus:ring-[#3B59DA]/5 focus:border-[#3B59DA]/30 placeholder:text-slate-300 font-medium text-base font-figtree shadow-none transition-all outline-none" />
+                                                <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
+                                                <Input
+                                                    placeholder="Search items, SKUs, or brand..."
+                                                    className="pl-14 h-14 border-slate-200 rounded-[8px] bg-white focus:ring-[#3B59DA]/5 focus:border-[#3B59DA]/30 placeholder:text-slate-300 font-medium text-base font-figtree shadow-none transition-all outline-none"
+                                                    value={search}
+                                                    onChange={(e) => setSearch(e.target.value)}
+                                                />
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
-                    <Select defaultValue="all">
+                    <Select value={category} onValueChange={setCategory}>
                         <SelectTrigger className="h-14 border-slate-200 rounded-[8px] w-full sm:w-56 bg-white font-bold text-slate-500 text-sm shadow-sm px-6 hover:border-[#3B59DA]/20 transition-all">
                             <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
@@ -129,7 +162,7 @@ export default function AllInventoryItemsPage() {
                         </SelectContent>
                     </Select>
 
-                    <Select defaultValue="all">
+                    <Select value={level} onValueChange={setLevel}>
                         <SelectTrigger className="h-14 border-slate-200 rounded-[8px] w-full sm:w-44 bg-white font-bold text-slate-500 text-sm shadow-sm px-6 hover:border-[#3B59DA]/20 transition-all">
                             <SelectValue placeholder="All Levels" />
                         </SelectTrigger>
@@ -158,9 +191,16 @@ export default function AllInventoryItemsPage() {
                             <TableHead className="font-bold text-slate-500 text-[13px] font-figtree text-right pr-8">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
-                        <AnimatePresence mode="popLayout">
-                        {inventoryItems.map((item) => (
+                                        <TableBody>
+                                                <AnimatePresence mode="popLayout">
+                                                {inventoryItems.length === 0 && !isLoading && !error && (
+                                                    <TableRow>
+                                                        <TableCell colSpan={9} className="py-10 text-center text-slate-400 font-medium font-figtree">
+                                                            No inventory items match your filters yet.
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
+                                                {inventoryItems.map((item) => (
                             <TableRow key={item.id} className="border-slate-50 hover:bg-[#f8f9ff] transition-all group h-[88px] active:scale-[0.995] cursor-pointer">
                                 <TableCell className="pl-8">
                                     <div className="flex items-center gap-4">
@@ -173,10 +213,17 @@ export default function AllInventoryItemsPage() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-slate-700 text-[16px] leading-tight font-figtree">{item.name}</span>
-                                            <span className="text-[11px] text-slate-400 font-medium uppercase font-figtree tracking-tight">{item.sku || 'SKU ID'}</span>
-                                        </div>
+                                                                                <div className="flex flex-col gap-1">
+                                                                                        <span className="font-bold text-slate-700 text-[16px] leading-tight font-figtree">{item.name}</span>
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <span className="text-[11px] text-slate-400 font-medium uppercase font-figtree tracking-tight">{item.sku || 'SKU ID'}</span>
+                                                                                            {item.canonicalId && (
+                                                                                                <Badge className="h-5 px-2 rounded-full bg-emerald-50 text-emerald-700 border-emerald-100 text-[10px] font-bold font-figtree tracking-tight">
+                                                                                                    Linked to Catalog
+                                                                                                </Badge>
+                                                                                            )}
+                                                                                        </div>
+                                                                                </div>
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-slate-600 font-medium text-sm font-figtree">{item.category}</TableCell>

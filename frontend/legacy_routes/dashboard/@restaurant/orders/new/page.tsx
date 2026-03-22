@@ -89,7 +89,6 @@ export default function NewOrderPage() {
 
     setIsSubmitting(true);
 
-    // Simulate API call
     setTimeout(() => {
       setIsSubmitting(false);
       router.push("/dashboard/orders");
@@ -98,12 +97,6 @@ export default function NewOrderPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
-        <Menu className="h-6 w-6" />
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">New Order</h1>
-        </div>
-      </header> */}
       <main className="flex-1 space-y-4 p-4 md:p-8">
         <div className="flex items-center justify-between">
           <div>
@@ -257,7 +250,6 @@ export default function NewOrderPage() {
                       </div>
                     </TabsContent>
 
-                    {/* Other tabs would filter products by category */}
                     <TabsContent value="produce" className="m-0">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {products
@@ -293,8 +285,6 @@ export default function NewOrderPage() {
                           ))}
                       </div>
                     </TabsContent>
-
-                    {/* Similar content for other tabs */}
                   </Tabs>
                 </CardContent>
               </Card>
@@ -403,12 +393,10 @@ export default function NewOrderPage() {
               <CardFooter>
                 <Button
                   className="w-full"
-                  disabled={
-                    orderItems.length === 0 || !selectedSupplier || isSubmitting
-                  }
+                  disabled={orderItems.length === 0 || !selectedSupplier || isSubmitting}
                   onClick={handleSubmitOrder}
                 >
-                  {isSubmitting ? "Processing..." : "Place Order"}
+                  {isSubmitting ? "Submitting..." : "Submit Order"}
                 </Button>
               </CardFooter>
             </Card>
@@ -419,128 +407,92 @@ export default function NewOrderPage() {
   );
 }
 
-// Types
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  unit: string;
-}
-
-interface OrderItem {
+type OrderItem = {
   id: string;
   name: string;
   price: number;
   unit: string;
   quantity: number;
-}
+};
 
-// Sample data
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  unit: string;
+  category: string;
+};
+
 const suppliers = [
-  { id: "supplier-1", name: "Fresh Farms Inc." },
-  { id: "supplier-2", name: "Metro Meats" },
-  { id: "supplier-3", name: "Global Grocers" },
-  { id: "supplier-4", name: "Organic Supplies Co." },
-  { id: "supplier-5", name: "Dairy Delights" },
+  {
+    id: "fresh-farms",
+    name: "Fresh Farms Inc.",
+  },
+  {
+    id: "metro-meats",
+    name: "Metro Meats",
+  },
+  {
+    id: "global-grocers",
+    name: "Global Grocers",
+  },
+  {
+    id: "organic-supplies",
+    name: "Organic Supplies Co.",
+  },
+];
+
+const recommendedSuppliers = [
+  {
+    id: "fresh-farms",
+    name: "Fresh Farms Inc.",
+    rating: 4.8,
+    reason: "Best freshness score for produce items",
+    categories: ["Produce", "Dairy"],
+  },
+  {
+    id: "metro-meats",
+    name: "Metro Meats",
+    rating: 4.6,
+    reason: "Reliable delivery for meat and poultry",
+    categories: ["Meat & Poultry"],
+  },
+  {
+    id: "global-grocers",
+    name: "Global Grocers",
+    rating: 4.4,
+    reason: "Broad selection of pantry items",
+    categories: ["Dry Goods", "Produce"],
+  },
 ];
 
 const products: Product[] = [
   {
     id: "prod-1",
-    name: "Tomatoes",
-    category: "Produce",
-    price: 2.99,
+    name: "Roma Tomatoes",
+    price: 1200,
     unit: "kg",
+    category: "Produce",
   },
   {
     id: "prod-2",
-    name: "Onions",
-    category: "Produce",
-    price: 1.49,
+    name: "Chicken Breast",
+    price: 4500,
     unit: "kg",
+    category: "Meat",
   },
   {
     id: "prod-3",
-    name: "Potatoes",
-    category: "Produce",
-    price: 1.99,
+    name: "Mozzarella Cheese",
+    price: 6800,
     unit: "kg",
+    category: "Dairy",
   },
   {
     id: "prod-4",
-    name: "Chicken Breast",
-    category: "Meat & Poultry",
-    price: 8.99,
-    unit: "kg",
-  },
-  {
-    id: "prod-5",
-    name: "Ground Beef",
-    category: "Meat & Poultry",
-    price: 7.49,
-    unit: "kg",
-  },
-  { id: "prod-6", name: "Milk", category: "Dairy", price: 3.29, unit: "liter" },
-  { id: "prod-7", name: "Cheese", category: "Dairy", price: 5.99, unit: "kg" },
-  {
-    id: "prod-8",
-    name: "Rice",
-    category: "Dry Goods",
-    price: 2.49,
-    unit: "kg",
-  },
-  {
-    id: "prod-9",
-    name: "Pasta",
-    category: "Dry Goods",
-    price: 1.79,
-    unit: "kg",
-  },
-  {
-    id: "prod-10",
     name: "Olive Oil",
+    price: 12000,
+    unit: "L",
     category: "Dry Goods",
-    price: 9.99,
-    unit: "liter",
-  },
-  {
-    id: "prod-11",
-    name: "Bell Peppers",
-    category: "Produce",
-    price: 3.49,
-    unit: "kg",
-  },
-  {
-    id: "prod-12",
-    name: "Carrots",
-    category: "Produce",
-    price: 1.29,
-    unit: "kg",
-  },
-];
-
-// Sample data for recommended suppliers
-const recommendedSuppliers = [
-  {
-    id: "supplier-1",
-    name: "Fresh Farms Inc.",
-    rating: 4.5,
-    categories: ["Produce", "Dairy"],
-    reason: "Low stock items: Tomatoes, Onions",
-  },
-  {
-    id: "supplier-4",
-    name: "Organic Supplies Co.",
-    rating: 5.0,
-    categories: ["Produce", "Dry Goods"],
-    reason: "Highest quality rating for produce",
-  },
-  {
-    id: "supplier-6",
-    name: "Kigali Fresh Produce",
-    rating: 4.5,
-    categories: ["Produce"],
-    reason: "Fast delivery, 25 min avg. response time",
   },
 ];

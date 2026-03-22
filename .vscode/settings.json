@@ -1,3 +1,4 @@
 {
-  "css.lint.unknownAtRules": "ignore"
+  "css.lint.unknownAtRules": "ignore",
+  "python.defaultInterpreterPath": "C:/Users/jules/dashboard_v0.dev/.venv/Scripts/python.exe"
 }

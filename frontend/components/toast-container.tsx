@@ -9,7 +9,7 @@ export function ToastContainer() {
   return (
     <ToastProvider>
       {toasts.map((toast) => (
-        <Toast key={toast.id} variant={toast.type as any} visible={toast.visible}>
+        <Toast key={toast.id} variant={toast.type as any}>
           <div>
             <ToastTitle>{toast.title}</ToastTitle>
             {toast.description && <ToastDescription>{toast.description}</ToastDescription>}

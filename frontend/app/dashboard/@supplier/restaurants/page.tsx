@@ -188,12 +188,12 @@ export default function RestaurantsPage() {
                     </TableRow>
                   ) : (
                     restaurants.map((restaurant) => (
-                      <TableRow key={restaurant._id}>
+                      <TableRow key={restaurant.id}>
                         <TableCell className="font-medium">
                           <div>
                             <div className="font-medium">
-                              {restaurant.networkUser.firstname}{" "}
-                              {restaurant.networkUser.lastname}
+                              {restaurant.networkUser.first_name}{" "}
+                              {restaurant.networkUser.last_name}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {restaurant.networkUser.active
@@ -205,17 +205,17 @@ export default function RestaurantsPage() {
                         <TableCell>{restaurant.networkUser.email}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            {restaurant.networkUserType}
+                            {restaurant.network_user_type}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {new Date(restaurant.createdAt).toLocaleDateString()}
+                          {new Date(restaurant.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button size="sm" variant="outline" asChild>
                               <Link
-                                href={`/dashboard/restaurants/${restaurant.networkUserId}`}
+                                href={`/dashboard/restaurants/${restaurant.networkUser.id}`}
                               >
                                 View
                               </Link>
@@ -233,8 +233,8 @@ export default function RestaurantsPage() {
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Are you sure you want to remove{" "}
-                                    {restaurant.networkUser.firstname}{" "}
-                                    {restaurant.networkUser.lastname} from your
+                                    {restaurant.networkUser.first_name}{" "}
+                                    {restaurant.networkUser.last_name} from your
                                     network? This action cannot be undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
@@ -243,7 +243,7 @@ export default function RestaurantsPage() {
                                   <AlertDialogAction
                                     onClick={() =>
                                       handleRemoveFromNetwork(
-                                        restaurant.networkUserId
+                                        restaurant.networkUser.id
                                       )
                                     }
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

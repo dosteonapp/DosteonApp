@@ -17,13 +17,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default function ExpenseDetailsPage({
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function ExpenseDetailsPage({
   params,
-}: {
-  params: { id: string };
-}) {
+}: PageProps) {
+  const { id } = await params;
+
   // In a real app, you would fetch the expense data based on the ID
-  const expense = expenses.find((e) => e.id === params.id) || expenses[0];
+  const expense = expenses.find((e) => e.id === id) || expenses[0];
 
   return (
     <div className="flex flex-col min-h-screen">

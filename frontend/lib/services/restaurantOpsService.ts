@@ -19,6 +19,7 @@ export interface InventoryItem {
   imageUrl?: string;
   location?: string;
   avgPrice?: number;
+  canonicalId?: string;
 }
 
 export interface InventoryActivity {
@@ -59,6 +60,44 @@ export interface RunningLowItem {
   needLabel: string;
 }
 
+export interface OpeningChecklistDraftPayload {
+  confirmedIds: string[];
+  counts: Record<string, number>;
+}
+
+export interface OpeningChecklistSubmitPayload {
+  counts: Record<string, number>;
+}
+
+export interface InventoryItemCreatePayload {
+  name: string;
+  category?: string;
+  currentStock?: number;
+  unit?: string;
+  location?: string;
+  imageUrl?: string;
+  canonicalId?: string;
+}
+
+export interface InventoryItemUpdatePayload {
+  name?: string;
+  currentStock?: number;
+  unit?: string;
+  location?: string;
+  imageUrl?: string;
+}
+
+export interface KitchenUsageLogPayload {
+  itemId: string;
+  amount: number;
+}
+
+export interface KitchenWasteLogPayload {
+  itemId: string;
+  amount: number;
+  reason?: string;
+}
+
 export const restaurantOpsService = {
   getStats: async (): Promise<{ totalItems: number; countedItems: number; healthy: number; low: number; critical: number }> => {
     if (useMocks) {
@@ -78,13 +117,13 @@ export const restaurantOpsService = {
     return data;
   },
 
-  saveOpeningChecklistDraft: async (payload: any): Promise<{ success: boolean }> => {
+  saveOpeningChecklistDraft: async (payload: OpeningChecklistDraftPayload): Promise<{ success: boolean }> => {
     if (useMocks) return { success: true };
     const { data } = await axiosInstance.post("restaurant/opening-checklist/save-draft", payload);
     return data;
   },
 
-  submitOpeningChecklist: async (payload: any): Promise<{ success: boolean }> => {
+  submitOpeningChecklist: async (payload: OpeningChecklistSubmitPayload): Promise<{ success: boolean }> => {
     if (useMocks) {
       await new Promise((resolve) => setTimeout(resolve, 50));
       if (typeof window !== 'undefined') {
@@ -113,7 +152,7 @@ export const restaurantOpsService = {
     return data;
   },
 
-  getRecentActivities: async (): Promise<Activity[]> => {
+  getRecentActivities: async (params?: { offset?: number; limit?: number }): Promise<Activity[]> => {
     if (useMocks) {
       await new Promise((resolve) => setTimeout(resolve, 600));
       return [
@@ -123,7 +162,7 @@ export const restaurantOpsService = {
         { id: "act-4", type: "reminder", action: "Updated", activity: "Stock Review Reminder", title: "Stock Review Reminder", description: "Don't forget to confirm today's closing stock.", time: "2 hours ago", actionLabel: "Review Inventory", actionHref: "/dashboard/inventory" }
       ];
     }
-    const { data } = await axiosInstance.get("restaurant/recent-activities");
+    const { data } = await axiosInstance.get("restaurant/recent-activities", { params });
     return data;
   },
 
@@ -161,19 +200,22 @@ export const restaurantOpsService = {
     return data;
   },
 
-  createUsageLog: async (itemId: string, amount: number) => {
+  createUsageLog: async (itemId: string, amount: number): Promise<{ success: boolean }> => {
     if (useMocks) return { success: true };
-    return axiosInstance.post("restaurant/kitchen/log-usage", { itemId, amount });
+    const { data } = await axiosInstance.post("restaurant/kitchen/log-usage", { itemId, amount });
+    return data;
   },
 
-  createWasteLog: async (itemId: string, amount: number, reason: string) => {
+  createWasteLog: async (itemId: string, amount: number, reason: string): Promise<{ success: boolean }> => {
     if (useMocks) return { success: true };
-    return axiosInstance.post("restaurant/kitchen/log-waste", { itemId, amount, reason });
+    const { data } = await axiosInstance.post("restaurant/kitchen/log-waste", { itemId, amount, reason });
+    return data;
   },
 
-  updateItemStock: async (itemId: string, newQuantity: number) => {
+  updateItemStock: async (itemId: string, newQuantity: number): Promise<{ success: boolean }> => {
     if (useMocks) return { success: true };
-    return axiosInstance.post("restaurant/inventory/update-stock", { itemId, newQuantity });
+    const { data } = await axiosInstance.post("restaurant/inventory/update-stock", { itemId, newQuantity });
+    return data;
   },
 
   getClosingIndicators: async () => {
@@ -196,7 +238,7 @@ export const restaurantOpsService = {
     return data;
   },
 
-  submitClosingChecklist: async (payload: any) => {
+  submitClosingChecklist: async (payload: any): Promise<{ success: boolean }> => {
     if (useMocks) {
       if (typeof window !== 'undefined') {
         const current = localStorage.getItem('mock_day_status');
@@ -208,16 +250,17 @@ export const restaurantOpsService = {
       }
       return { success: true };
     }
-    return axiosInstance.post("restaurant/closing/submit", payload);
+    const { data } = await axiosInstance.post("restaurant/closing/submit", payload);
+    return data;
   },
 
-  addItem: async (itemData: any) => {
+  addItem: async (itemData: InventoryItemCreatePayload): Promise<{ success: boolean; item?: InventoryItem }> => {
     if (useMocks) return { success: true };
     const { data } = await axiosInstance.post("restaurant/inventory/items", itemData);
     return data;
   },
 
-  updateItem: async (id: string, itemData: any) => {
+  updateItem: async (id: string, itemData: InventoryItemUpdatePayload): Promise<{ success: boolean }> => {
     if (useMocks) return { success: true };
     const { data } = await axiosInstance.patch(`restaurant/inventory/items/${id}`, itemData);
     return data;
@@ -271,14 +314,14 @@ export const restaurantOpsService = {
     return data;
   },
 
-  getNotifications: async (): Promise<any[]> => {
+  getNotifications: async (params?: { offset?: number; limit?: number }): Promise<any[]> => {
     if (useMocks) {
       return [
         { id: "1", type: "success", title: "Daily Stock Confirmed", description: "Daily stock count has been successfully confirmed for all 18 items.", time: "2 hours ago", unread: true },
         { id: "2", type: "alert", title: "Critical Stock Level", description: "Item 'Tomatoes' has reached critical stock level (0.5kg remaining).", time: "4 hours ago", unread: true },
       ];
     }
-    const { data } = await axiosInstance.get("restaurant/notifications");
+    const { data } = await axiosInstance.get("restaurant/notifications", { params });
     return data;
   },
 

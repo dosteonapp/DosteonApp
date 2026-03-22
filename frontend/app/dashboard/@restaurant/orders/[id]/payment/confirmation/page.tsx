@@ -11,14 +11,18 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Download, Home, Printer } from "lucide-react";
 import Link from "next/link";
 
-export default function PaymentConfirmationPage({
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function PaymentConfirmationPage({
   params,
-}: {
-  params: { id: string };
-}) {
+}: PageProps) {
+  const { id } = await params;
+
   // In a real app, you would fetch the order and payment data based on the ID
   const order = {
-    id: params.id,
+    id,
     supplier: "Fresh Farms Inc.",
     invoiceNumber: "INV-12345",
     paymentAmount: 102900,

@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { restaurantOpsService, InventoryItem } from "@/lib/services/restaurantOpsService";
 import { cn } from "@/lib/utils";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
+import { DayState } from "@/lib/dayLifecycle/types";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -49,7 +50,7 @@ import { formatUserName } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
 
 export default function KitchenServicePage() {
-  const { isOpen, isLoading: isStatusLoading } = useRestaurantDayLifecycle();
+  const { isOpen, isLoading: isStatusLoading, status } = useRestaurantDayLifecycle();
   const { user } = useUser();
   const name = formatUserName(user?.first_name, user?.last_name);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
@@ -60,6 +61,7 @@ export default function KitchenServicePage() {
   const [logType, setLogType] = useState<'usage' | 'waste'>('usage');
   const [kitchenSummary, setKitchenSummary] = useState({ health: "Healthy", healthSubtext: "Checking status...", criticalIngredients: 0, criticalSubtext: "..." });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -73,6 +75,7 @@ export default function KitchenServicePage() {
         setKitchenSummary(summary);
       } catch (error) {
         console.error("Failed to fetch inventory:", error);
+        setError("We couldn't load your kitchen inventory. Please try again or refresh the page.");
       } finally {
         setIsLoading(false);
       }
@@ -91,12 +94,35 @@ export default function KitchenServicePage() {
     item.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isLoading) {
+  if (isLoading && !inventoryItems.length && !error) {
     return <KitchenSkeleton />;
   }
 
   return (
     <AppContainer className="pb-24">
+      {error && (
+        <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {!isOpen && !error && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 flex items-start gap-3 max-w-2xl">
+          <div className="mt-0.5">
+            <Badge variant="warning">Day locked</Badge>
+          </div>
+          <div>
+            <p className="font-semibold">Kitchen service is locked for this business day.</p>
+            <p className="text-amber-800/90">
+              {status?.state === DayState.CLOSING_IN_PROGRESS
+                ? "Finish your closing checklist or reopen the day from the dashboard to continue logging kitchen usage."
+                : status?.state === DayState.CLOSED
+                ? "Re-open the day from the dashboard if you need to log additional kitchen usage."
+                : "Complete your daily stock count to start kitchen service for today."}
+            </p>
+          </div>
+        </div>
+      )}
       {/* Page Header (Only visible when locked) */}
       {!isOpen && (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
@@ -221,12 +247,21 @@ export default function KitchenServicePage() {
                     </div>
                 ))
             ) : (
+                filteredItems.length === 0 && !isLoading && !error ? (
+                  <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+                    <FigtreeText className="text-slate-500 font-medium text-[14px] max-w-md">
+                      No kitchen items match your search yet. Try adjusting your search term, or add items from the Inventory section.
+                    </FigtreeText>
+                  </div>
+                ) : (
                 filteredItems.map((item) => (
                   <Card key={item.id} className="rounded-[8px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 active:scale-[0.98] transition-all group p-5 flex flex-col justify-between space-y-6">
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1 overflow-hidden">
                           <h3 className="font-bold text-[#1E293B] text-[17px] tracking-tight font-figtree truncate">{item.name}</h3>
-                          <FigtreeText className="text-[13px] text-slate-400 font-medium">{item.currentStock} units remaining</FigtreeText>
+                          <FigtreeText className="text-[13px] text-slate-400 font-medium">
+                            {item.currentStock} {item.unit || 'units'} remaining
+                          </FigtreeText>
                         </div>
                         <Badge className={cn(
                           "border-none rounded-[6px] font-bold text-[10px] px-2.5 py-1 uppercase tracking-tight font-figtree shrink-0 shadow-sm",
@@ -259,6 +294,7 @@ export default function KitchenServicePage() {
                       </div>
                   </Card>
                 ))
+                )
             )}
           </div>
         </div>

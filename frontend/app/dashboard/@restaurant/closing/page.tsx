@@ -68,6 +68,7 @@ export default function ClosingPage() {
   const [selectedItemForEdit, setSelectedItemForEdit] = useState<InventoryItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [verifiedItemIds, setVerifiedItemIds] = useState<Set<string>>(new Set());
+    const [error, setError] = useState<string | null>(null);
 
   const handleEditCount = (item: InventoryItem) => {
     setSelectedItemForEdit(item);
@@ -97,6 +98,7 @@ export default function ClosingPage() {
         setClosingIndicators(indicators);
       } catch (err) {
         console.error("Failed to fetch data for closing:", err);
+                setError("We couldn't load your closing checklist data. Please try again or refresh the page.");
       } finally {
         setIsLoading(false);
       }
@@ -112,7 +114,7 @@ export default function ClosingPage() {
     }
   }, [status?.metadata?.draft_confirmed_ids, items.length]);
 
-  if (isLoading) {
+    if (isLoading && !items.length && !error) {
     return <ClosingSkeleton />;
   }
 
@@ -157,6 +159,11 @@ export default function ClosingPage() {
 
   return (
     <AppContainer className="pb-32">
+        {error && (
+            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+            </div>
+        )}
         <ReviewClosingChecklistModal 
             open={isReviewModalOpen}
             onOpenChange={setIsReviewModalOpen}
@@ -273,15 +280,23 @@ export default function ClosingPage() {
                         {/* List - Wrapped in local horizontal scroll to prevent page overflow issues */}
                         <div className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar pb-6 -mx-2 px-2">
                             <div className="space-y-4 min-w-[1000px] xl:min-w-0">
-                                {sortedItems.map((item) => (
-                                    <ClosingCountRow 
-                                        key={item.id} 
-                                        item={item} 
-                                        onEdit={handleEditCount}
-                                        onVerify={handleVerifyItem}
-                                        isVerified={verifiedItemIds.has(item.id)}
-                                    />
-                                ))}
+                                {sortedItems.length === 0 && !isLoading && !error ? (
+                                    <div className="w-full py-10 flex items-center justify-center">
+                                        <FigtreeText className="text-slate-500 font-medium text-[14px]">
+                                            No inventory items match your search for closing. Try adjusting your search term.
+                                        </FigtreeText>
+                                    </div>
+                                ) : (
+                                    sortedItems.map((item) => (
+                                        <ClosingCountRow 
+                                            key={item.id} 
+                                            item={item} 
+                                            onEdit={handleEditCount}
+                                            onVerify={handleVerifyItem}
+                                            isVerified={verifiedItemIds.has(item.id)}
+                                        />
+                                    ))
+                                )}
                             </div>
                         </div>
                     </PrimarySurfaceCard>
@@ -309,10 +324,20 @@ export default function ClosingPage() {
                     >
                         Save a draft
                     </Button>
-                    <Button 
-                        className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[8px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.2)] border-none text-[16px] transition-all active:scale-95 font-figtree"
-                        onClick={() => setIsReviewModalOpen(true)}
-                    >
+                                        <Button 
+                                                className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[8px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.2)] border-none text-[16px] transition-all active:scale-95 font-figtree"
+                                                onClick={() => {
+                                                    if (!verifiedItemIds.size) {
+                                                        toast({
+                                                            variant: "destructive",
+                                                            title: "Nothing to review yet",
+                                                            description: "Verify at least one item before reviewing your closing summary.",
+                                                        });
+                                                        return;
+                                                    }
+                                                    setIsReviewModalOpen(true);
+                                                }}
+                                        >
                         Review & Close Kitchen <ArrowRight className="h-6 w-6" />
                     </Button>
                 </div>
