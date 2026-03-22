@@ -146,7 +146,17 @@ export default function RestaurantDashboardPage() {
                         </div>
                         
                         <div className="flex flex-col gap-5 w-full">
-                        {activities.map((activity) => (
+                        {activities.length === 0 ? (
+                            <div className="w-full py-16 px-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
+                                <FigtreeText className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 font-figtree">
+                                    No recent stock activity yet
+                                </FigtreeText>
+                                <FigtreeText className="text-[14px] font-medium text-slate-500 max-w-md leading-relaxed font-figtree">
+                                    Once you start updating inventory, receiving deliveries, or logging usage, your recent stock activity will appear here.
+                                </FigtreeText>
+                            </div>
+                        ) : (
+                          activities.map((activity) => (
                             <div 
                                 key={activity.id} 
                                 className="bg-white border border-slate-100/80 rounded-[8px] p-6 md:p-8 flex items-center gap-7 transition-all hover:border-[#3B59DA]/20 hover:shadow-[0_20px_60px_rgba(59,89,218,0.05)] hover:bg-white group shadow-[0_4px_12px_rgba(0,0,0,0.01)] active:scale-[0.98] cursor-pointer"
@@ -181,7 +191,8 @@ export default function RestaurantDashboardPage() {
                                     </Button>
                                 </div>
                             </div>
-                        ))}
+                          ))
+                        )}
                         </div>
                     </div>
                 </PrimarySurfaceCard>

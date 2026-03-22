@@ -87,7 +87,10 @@ export default function NotificationsPage() {
         ))}
         {filteredNotifications.length === 0 && (
           <div className="text-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No notifications found</p>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">You&apos;re all caught up</p>
+            <p className="mt-3 text-slate-400 text-xs font-medium max-w-md mx-auto">
+              You don&apos;t have any notifications yet. When something needs your attention, it will appear here.
+            </p>
           </div>
         )}
       </div>
