@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Header, Body
-from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest
+from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest, UserBase
 from app.services.auth_service import auth_service
 from app.api.deps import get_current_user
 from app.core.rate_limit import limiter
@@ -53,6 +53,12 @@ async def forgot_password(request: Request, body: ForgotPasswordRequest):
 @router.post("/reset-password")
 async def reset_password(request: PasswordResetConfirm):
     return await auth_service.reset_password(request)
+
+@router.post("/resend-verification")
+@limiter.limit("5/minute")
+async def resend_verification(request: Request, body: UserBase):
+    """Resend the signup email verification link for a given email address."""
+    return await auth_service.resend_verification(body)
 
 @router.get("/social-login/{provider}")
 async def social_login(provider: str):

@@ -114,23 +114,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const { mutateAsync: resendVerificationMutation } = useMutation({
+    mutationFn: async (email: string) => {
+      const { data } = await axiosInstance.post("auth/resend-verification", { email });
+      return data;
+    },
+  });
+
   const sendMagicLink = async (email: string) => {
     if (bypassAuth) {
       toast.info("Magic links are disabled in bypass mode");
       return { success: true };
     }
-    const { createClient } = await import("@/lib/supabase/client");
-    const supabase = createClient();
-    if (!supabase) return { success: false };
-    
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      }
-    });
-    if (error) throw error;
-    return { success: true };
+
+    try {
+      await axiosInstance.post("auth/magic-link", { email });
+      return { success: true };
+    } catch (error) {
+      const parsed = handleApiError(error);
+      toast.error("Error sending magic link email", {
+        description: parsed.message,
+      });
+      return { success: false };
+    }
   };
 
   const authenticateWithOAuth = async (provider: 'google' | 'apple') => {
@@ -258,11 +264,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const resendVerification = async (email: string) => {
+    try {
+      if (bypassAuth) {
+        toast.info("Email verification is disabled in bypass mode");
+        return { success: true };
+      }
+
+      await resendVerificationMutation(email);
+      toast.success("Verification email resent", {
+        description: `We've sent a new verification link to ${email}.`,
+      });
+      return { success: true };
+    } catch (error) {
+      const handled = handleApiError(error);
+      toast.error("Could not resend verification email", {
+        description: handled.message,
+      });
+      return { success: false };
+    }
+  };
+
   const value = {
     login,
     signup,
     forgotPassword,
     resetPassword,
+    resendVerification,
     resetPasswordData,
     setResetPasswordData,
     sendMagicLink,

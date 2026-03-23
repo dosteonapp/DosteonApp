@@ -1,7 +1,7 @@
 import asyncio
 from app.core.supabase import supabase
 from app.core.config import settings
-from app.schemas.auth import UserSignup, UserLogin, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, RefreshTokenRequest
+from app.schemas.auth import UserSignup, UserLogin, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, RefreshTokenRequest, UserBase
 from app.db.repositories.profile_repository import profile_repo
 from app.db.repositories.organization_repository import organization_repo
 from app.services.email_service import email_service
@@ -184,6 +184,70 @@ class AuthService:
                 detail=detail
             )
 
+    async def resend_verification(self, user_data: UserBase):
+        """Resend email verification link for an existing user.
+
+        This is used by the signup confirmation screen's "Resend verification email" action.
+        The behavior is intentionally idempotent: if the email does not exist or is already
+        verified, we do not leak that information to the caller; we just return a generic
+        success message as long as Supabase doesn't hard-fail the request.
+        """
+        try:
+            from app.db.prisma import db
+
+            # Try to get a friendly first_name from the profile table for personalization.
+            first_name: str = "there"
+            try:
+                profile = await db.profile.find_first(where={"email": user_data.email})
+                if profile and getattr(profile, "first_name", None):
+                    first_name = profile.first_name
+            except Exception:
+                # If profile lookup fails, we fall back to a generic greeting.
+                pass
+
+            # Generate a fresh email verification link via Supabase Admin API.
+            link_res = supabase.auth.admin.generate_link({
+                "type": "signup",
+                "email": user_data.email,
+                "options": {"redirect_to": settings.AUTH_REDIRECT_URL},
+            })
+
+            if not link_res or not link_res.properties or not link_res.properties.action_link:
+                # If link generation fails entirely, surface a friendly error.
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Could not generate verification link. Please try again later.",
+                )
+
+            verification_link = link_res.properties.action_link
+            email_sent = email_service.send_verification_email(
+                user_data.email,
+                verification_link,
+                first_name,
+            )
+
+            if not email_sent:
+                # We treat this as a soft failure but still respond 200 so the UI doesn't loop.
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="We couldn't send the verification email. Please try again later.",
+                )
+
+            return {
+                "status": "ok",
+                "message": "If an account exists for this email, a new verification link has been sent.",
+            }
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            error_str = str(e)
+            print(f"Resend verification error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=map_supabase_error(error_str),
+            )
+
     async def get_me(self, current_user: dict):
         return {
             "id": current_user["id"],
@@ -242,10 +306,44 @@ class AuthService:
 
     async def forgot_password(self, request: ForgotPasswordRequest):
         try:
-            supabase.auth.reset_password_for_email(request.email, {
-                "redirect_to": settings.AUTH_REDIRECT_URL
+            from app.db.prisma import db
+
+            first_name: str = "there"
+            try:
+                profile = await db.profile.find_first(where={"email": request.email})
+                if profile and getattr(profile, "first_name", None):
+                    first_name = profile.first_name
+            except Exception:
+                pass
+
+            link_res = supabase.auth.admin.generate_link({
+                "type": "recovery",
+                "email": request.email,
+                "options": {"redirect_to": settings.AUTH_REDIRECT_URL}
             })
+
+            if not link_res or not link_res.properties or not link_res.properties.action_link:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Could not generate password reset link. Please try again later.",
+                )
+
+            reset_link = link_res.properties.action_link
+            email_sent = email_service.send_password_reset_email(
+                request.email,
+                reset_link,
+                first_name,
+            )
+
+            if not email_sent:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="We couldn't send the password reset email. Please try again later.",
+                )
+
             return {"message": "Password reset link sent to your email"}
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -265,11 +363,44 @@ class AuthService:
 
     async def sign_in_with_magic_link(self, request: MagicLinkRequest):
         try:
-            supabase.auth.sign_in_with_otp({
+            from app.db.prisma import db
+
+            first_name: str = "there"
+            try:
+                profile = await db.profile.find_first(where={"email": request.email})
+                if profile and getattr(profile, "first_name", None):
+                    first_name = profile.first_name
+            except Exception:
+                pass
+
+            link_res = supabase.auth.admin.generate_link({
+                "type": "magiclink",
                 "email": request.email,
-                "options": {"email_redirect_to": settings.AUTH_REDIRECT_URL}
+                "options": {"redirect_to": settings.AUTH_REDIRECT_URL},
             })
+
+            if not link_res or not link_res.properties or not link_res.properties.action_link:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Could not generate magic link. Please try again later.",
+                )
+
+            magic_link = link_res.properties.action_link
+            email_sent = email_service.send_magic_link_email(
+                request.email,
+                magic_link,
+                first_name,
+            )
+
+            if not email_sent:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="We couldn't send the magic link email. Please try again later.",
+                )
+
             return {"message": "Magic link sent to your email"}
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

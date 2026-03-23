@@ -12,6 +12,7 @@ interface EmailCheckScreenProps {
   buttonHref?: string;
   onButtonClick?: () => void;
   role?: "restaurant" | "supplier";
+  onResend?: () => void | Promise<void>;
 }
 
 export const EmailCheckScreen: React.FC<EmailCheckScreenProps> = ({
@@ -21,6 +22,7 @@ export const EmailCheckScreen: React.FC<EmailCheckScreenProps> = ({
   buttonHref,
   onButtonClick,
   role = "restaurant",
+  onResend,
 }) => {
   const isSupplier = role === "supplier";
   const primaryColor = isSupplier ? "bg-[#00a13e] hover:bg-[#008a35]" : "bg-blue-600 hover:bg-blue-700";
@@ -34,7 +36,7 @@ export const EmailCheckScreen: React.FC<EmailCheckScreenProps> = ({
         <Mail className={`w-8 h-8 ${iconTextColor}`} />
       </div>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-2 font-serif text-center">
+      <h1 className="text-2xl font-bold font-heading text-gray-900 mb-2 text-center">
         {title}
       </h1>
       <p className="text-gray-500 text-center mb-8 leading-relaxed">
@@ -58,9 +60,21 @@ export const EmailCheckScreen: React.FC<EmailCheckScreenProps> = ({
         )}
       </div>
 
-      
-      <p className="mt-6 text-sm text-gray-400">
-        Didn't receive the email? Check your spam folder.
+      <p className="mt-6 text-sm text-gray-400 text-center">
+        {onResend ? (
+          <>
+            Didn't receive the email?{" "}
+            <button
+              type="button"
+              onClick={onResend}
+              className="text-blue-600 hover:text-blue-700 font-medium underline-offset-2 hover:underline"
+            >
+              Resend verification email
+            </button>
+          </>
+        ) : (
+          <>Didn't receive the email? Check your spam folder.</>
+        )}
       </p>
     </div>
   );

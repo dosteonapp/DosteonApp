@@ -26,7 +26,7 @@ import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signup, authenticateWithOAuth } = useAuth();
+  const { signup, authenticateWithOAuth, resendVerification } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [successEmail, setSuccessEmail] = useState<string | null>(null);
 
@@ -61,6 +61,11 @@ export default function RegisterPage() {
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!successEmail) return;
+    await resendVerification(successEmail);
+  };
+
   return (
     <div className="w-full max-w-xl mx-auto">
       {successEmail ? (
@@ -70,6 +75,7 @@ export default function RegisterPage() {
           buttonText="Back to Sign Up"
           onButtonClick={() => setSuccessEmail(null)}
           role="supplier"
+          onResend={handleResendVerification}
         />
       ) : (
         <div className="bg-white rounded-3xl shadow-xl p-6 md:p-12">

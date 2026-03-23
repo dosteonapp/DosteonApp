@@ -26,7 +26,7 @@ import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signup, authenticateWithOAuth } = useAuth();
+  const { signup, authenticateWithOAuth, resendVerification } = useAuth();
   const defaultRole = searchParams.get("role") || "restaurant";
   const [selectedRole, setSelectedRole] = useState(defaultRole);
   const [showPassword, setShowPassword] = useState(false);
@@ -65,6 +65,11 @@ export default function RegisterPage() {
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!email) return;
+    await resendVerification(email);
+  };
+
   if (isVerifying) {
     return (
       <EmailCheckScreen
@@ -72,6 +77,7 @@ export default function RegisterPage() {
         description={`We've sent a verification link to ${email}. Please click the link in the email to activate your account.`}
         buttonText="Back to Sign Up"
         onButtonClick={() => setIsVerifying(false)}
+        onResend={handleResendVerification}
       />
     );
   }
