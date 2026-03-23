@@ -3,9 +3,6 @@
 const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
 
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
