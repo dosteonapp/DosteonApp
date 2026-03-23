@@ -33,7 +33,7 @@ class MagicLinkRequest(UserBase):
     pass
 
 class ForgotPasswordRequest(UserBase):
-    pass
+    account_type: Optional[Literal["restaurant", "supplier"]] = None
 
 class PasswordResetConfirm(BaseModel):
     new_password: str

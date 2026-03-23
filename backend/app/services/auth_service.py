@@ -316,10 +316,18 @@ class AuthService:
             except Exception:
                 pass
 
+            # Choose redirect URL based on account_type so that recovery
+            # links land on the correct reset-password page.
+            base_redirect = settings.AUTH_REDIRECT_URL
+            if request.account_type == "supplier":
+                redirect_url = f"{base_redirect}?account_type=supplier"
+            else:
+                redirect_url = base_redirect
+
             link_res = supabase.auth.admin.generate_link({
                 "type": "recovery",
                 "email": request.email,
-                "options": {"redirect_to": settings.AUTH_REDIRECT_URL}
+                "options": {"redirect_to": redirect_url}
             })
 
             if not link_res or not link_res.properties or not link_res.properties.action_link:

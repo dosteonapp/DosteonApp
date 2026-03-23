@@ -431,8 +431,20 @@ class RestaurantService:
                 except:
                     metadata = {}
 
+            # If the record is effectively a stub (no opening or closing
+            # activity has ever been recorded), surface it as PRE_OPEN so
+            # the UI can run Daily Stock Count instead of appearing locked.
+            is_stub = (
+                str(ds.state) == "CLOSED"
+                and not bool(ds.is_opening_completed)
+                and not ds.opened_at
+                and not ds.closed_at
+            )
+
+            effective_state = "PRE_OPEN" if is_stub else (str(ds.state) if ds.state else "CLOSED")
+
             return {
-                "state": str(ds.state) if ds.state else "CLOSED",
+                "state": effective_state,
                 "business_date": ds.business_date.isoformat() if hasattr(ds.business_date, 'isoformat') else str(ds.business_date),
                 "is_opening_completed": bool(ds.is_opening_completed),
                 "opened_at": ds.opened_at.isoformat() if ds.opened_at and hasattr(ds.opened_at, 'isoformat') else (str(ds.opened_at) if ds.opened_at else None),
@@ -533,6 +545,7 @@ class RestaurantService:
         existing = await inventory_repo.get_by_id(UUID(item_id))
         if not existing or str(existing.get("organization_id")) != str(organization_id):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+
         mapped_type = "USED" if event_type == "usage" else "WASTED"
         await inventory_repo.add_event(
             contextual_product_id=item_id,

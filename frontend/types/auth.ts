@@ -46,6 +46,7 @@ export interface SignupValues {
 
 export interface ForgotPasswordValues {
   email: string;
+  accountType?: "restaurant" | "supplier";
 }
 
 export interface ResetPasswordValues {

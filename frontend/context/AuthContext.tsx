@@ -92,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async (values: ForgotPasswordValues) => {
       const { data } = await axiosInstance.post("auth/forgot-password", {
         email: values.email,
+        account_type: values.accountType,
       });
       return data;
     },
@@ -239,7 +240,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<{ success: boolean } | void> => {
     try {
       resetFormStatus(helpers);
-      await forgotPasswordMutation(values);
+      // Infer which tenant is using the flow from the current path.
+      // This lets the backend generate a reset link that returns
+      // to the correct reset-password page (restaurant vs supplier).
+      const inferredAccountType: "restaurant" | "supplier" =
+        typeof window !== "undefined" && window.location.pathname.includes("/supplier/")
+          ? "supplier"
+          : "restaurant";
+
+      await forgotPasswordMutation({
+        ...values,
+        accountType: values.accountType ?? inferredAccountType,
+      });
       return { success: true };
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
