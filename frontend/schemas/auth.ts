@@ -24,6 +24,11 @@ export const SigninValidationSchema = Yup.object().shape({
   password: Yup.string().required("Password is required"),
 });
 
+// For magic-link sign-in, only email is required.
+export const MagicSigninValidationSchema = Yup.object().shape({
+  email: emailSchema,
+});
+
 export const SignupValidationSchema = Yup.object().shape({
   firstname: Yup.string()
     .min(2, "First name must be at least 2 characters")

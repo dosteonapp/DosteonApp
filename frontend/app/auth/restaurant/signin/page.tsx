@@ -13,7 +13,7 @@ import {
   FormikFormControl,
   FormikFormMessage,
 } from "@/components/ui/formik-form";
-import { SigninValidationSchema } from "@/schemas/auth";
+import { SigninValidationSchema, MagicSigninValidationSchema } from "@/schemas/auth";
 import { LoginValues } from "@/types/auth";
 import { useAuth } from "@/context/AuthContext";
 import { EmailCheckScreen } from "@/components/auth/EmailCheckScreen";
@@ -107,7 +107,7 @@ export default function LoginPage() {
 
       <Formik
         initialValues={{ email: "", password: "" }}
-        validationSchema={SigninValidationSchema}
+        validationSchema={loginMethod === "password" ? SigninValidationSchema : MagicSigninValidationSchema}
         onSubmit={handleSubmit}
       >
         {({ isSubmitting, status, values }) => (
