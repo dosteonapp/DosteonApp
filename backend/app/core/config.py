@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     SMTP_PASS: Optional[str] = Field(None, validation_alias="SMTP_PASS")
     FROM_EMAIL: Optional[str] = Field(None, validation_alias="FROM_EMAIL")
 
+    # Resend API (primary email provider in production)
+    RESEND_API_KEY: Optional[str] = Field(None, validation_alias="RESEND_API_KEY")
+    RESEND_FROM_EMAIL: Optional[str] = Field(None, validation_alias="RESEND_FROM_EMAIL")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

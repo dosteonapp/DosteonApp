@@ -1,30 +1,83 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import httpx
+
 from app.core.config import settings
 
+
 class EmailService:
-    def __init__(self):
-        self.smtp_host = getattr(settings, 'SMTP_HOST', 'smtp.gmail.com')
-        self.smtp_port = getattr(settings, 'SMTP_PORT', 587)
-        self.smtp_user = getattr(settings, 'SMTP_USER', None)
-        self.smtp_pass = getattr(settings, 'SMTP_PASS', None)
-        self.from_email = getattr(settings, 'FROM_EMAIL', None) or self.smtp_user
+    def __init__(self) -> None:
+        # SMTP config (used as fallback or for local/dev)
+        self.smtp_host = getattr(settings, "SMTP_HOST", "smtp.gmail.com")
+        self.smtp_port = getattr(settings, "SMTP_PORT", 587)
+        self.smtp_user = getattr(settings, "SMTP_USER", None)
+        self.smtp_pass = getattr(settings, "SMTP_PASS", None)
+        self.from_email = getattr(settings, "FROM_EMAIL", None) or self.smtp_user
 
-    def send_verification_email(self, to_email: str, verification_link: str, first_name: str) -> bool:
-        if not self.smtp_user or not self.smtp_pass:
-            # In development: just print the link to the terminal so you can test
-            print(f"\n{'='*60}")
-            print(f"DEV MODE — SMTP not configured.")
-            print(f"Verification link for {to_email}:")
-            print(f"{verification_link}")
-            print(f"{'='*60}\n")
-            return True  # Return True so signup doesn't fail in dev
+        # Resend configuration (primary provider in production)
+        self.resend_api_key = getattr(settings, "RESEND_API_KEY", None)
+        # Prefer RESEND_FROM_EMAIL, fall back to FROM_EMAIL/SMTP user
+        self.resend_from_email = getattr(settings, "RESEND_FROM_EMAIL", None) or self.from_email
 
-        message = MIMEMultipart("alternative")
-        message["Subject"] = "Activate Your Dosteon Account"
-        message["From"] = f"Dosteon <{self.from_email}>"
-        message["To"] = to_email
+    def _send_via_resend(
+        self,
+        to_email: str,
+        subject: str,
+        html: str,
+        email_type: str,
+    ) -> bool:
+        """Send an email using Resend HTTP API if configured.
+
+        Returns True on success, False if Resend is not configured or the API call fails.
+        """
+
+        if not self.resend_api_key:
+            return False
+
+        from_address = self.resend_from_email or self.from_email
+        if not from_address:
+            print(
+                "Resend configured but no FROM address set "
+                "(RESEND_FROM_EMAIL or FROM_EMAIL)."
+            )
+            return False
+
+        try:
+            response = httpx.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {self.resend_api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": f"Dosteon <{from_address}>",
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html,
+                },
+                timeout=10.0,
+            )
+            if response.status_code in (200, 201):
+                print(f"{email_type} email sent via Resend to {to_email}")
+                return True
+            else:
+                print(
+                    f"Resend API error sending {email_type} email to {to_email}: "
+                    f"status={response.status_code}, body={response.text}"
+                )
+                return False
+        except httpx.HTTPError as e:
+            print(f"HTTP error calling Resend for {email_type} email to {to_email}: {e}")
+            return False
+
+    def send_verification_email(
+        self,
+        to_email: str,
+        verification_link: str,
+        first_name: str,
+    ) -> bool:
+        subject = "Activate Your Dosteon Account"
 
         html = f"""
         <html>
@@ -47,47 +100,57 @@ class EmailService:
         </html>
         """
 
-        message.attach(MIMEText(html, "html"))
-
-        try:
-            # 10 second timeout — prevents the 3 minute hang when network is unreachable
-            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=10) as server:
-                server.starttls()
-                server.login(self.smtp_user, self.smtp_pass)
-                server.sendmail(self.from_email, to_email, message.as_string())
-            print(f"Verification email sent to {to_email}")
+        # 1) Try Resend first if configured (best option in production)
+        if self._send_via_resend(to_email, subject, html, email_type="Verification"):
             return True
-        except smtplib.SMTPAuthenticationError:
-            print(f"SMTP auth failed — check SMTP_USER and SMTP_PASS in .env")
-            return False
-        except smtplib.SMTPException as e:
-            print(f"SMTP error sending to {to_email}: {e}")
-            return False
-        except OSError as e:
-            print(f"Network error sending email (is SMTP_HOST reachable?): {e}")
-            # Print the link to terminal as fallback so dev can still test
-            print(f"\nFallback — Verification link for {to_email}:\n{verification_link}\n")
-            return False
 
-    def send_magic_link_email(self, to_email: str, magic_link: str, first_name: str) -> bool:
-        """Send a sign-in magic link email using the same SMTP configuration.
+        # 2) Fallback to SMTP if configured (useful for local dev or alternative provider)
+        if self.smtp_user and self.smtp_pass:
+            message = MIMEMultipart("alternative")
+            message["Subject"] = subject
+            message["From"] = f"Dosteon <{self.from_email}>"
+            message["To"] = to_email
+            message.attach(MIMEText(html, "html"))
 
-        This mirrors the behavior of send_verification_email so that magic link
-        sign-in works consistently in both local and deployed environments.
+            try:
+                # 10 second timeout — prevents the 3 minute hang when network is unreachable
+                with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=10) as server:
+                    server.starttls()
+                    server.login(self.smtp_user, self.smtp_pass)
+                    server.sendmail(self.from_email, to_email, message.as_string())
+                print(f"Verification email sent to {to_email} via SMTP")
+                return True
+            except smtplib.SMTPAuthenticationError:
+                print("SMTP auth failed — check SMTP_USER and SMTP_PASS in .env")
+            except smtplib.SMTPException as e:
+                print(f"SMTP error sending verification email to {to_email}: {e}")
+            except OSError as e:
+                print(
+                    "Network error sending verification email "
+                    f"(is SMTP_HOST reachable?): {e}"
+                )
+                print(f"\nFallback — Verification link for {to_email}:\n{verification_link}\n")
+
+        # 3) Final dev fallback: just print the link so flows still work
+        print(f"\n{'='*60}")
+        print("DEV MODE — No email provider configured.")
+        print(f"Verification link for {to_email}:")
+        print(verification_link)
+        print(f"{'='*60}\n")
+        return True
+
+    def send_magic_link_email(
+        self,
+        to_email: str,
+        magic_link: str,
+        first_name: str,
+    ) -> bool:
+        """Send a sign-in magic link email.
+
+        Prefers Resend if configured, falls back to SMTP, then dev print.
         """
-        if not self.smtp_user or not self.smtp_pass:
-            # In development: print link so magic-link flow is still testable
-            print(f"\n{'='*60}")
-            print("DEV MODE — SMTP not configured.")
-            print(f"Magic sign-in link for {to_email}:")
-            print(magic_link)
-            print(f"{'='*60}\n")
-            return True
 
-        message = MIMEMultipart("alternative")
-        message["Subject"] = "Your Dosteon Magic Sign-In Link"
-        message["From"] = f"Dosteon <{self.from_email}>"
-        message["To"] = to_email
+        subject = "Your Dosteon Magic Sign-In Link"
 
         html = f"""
         <html>
@@ -110,40 +173,56 @@ class EmailService:
         </html>
         """
 
-        message.attach(MIMEText(html, "html"))
-
-        try:
-            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=10) as server:
-                server.starttls()
-                server.login(self.smtp_user, self.smtp_pass)
-                server.sendmail(self.from_email, to_email, message.as_string())
-            print(f"Magic link email sent to {to_email}")
-            return True
-        except smtplib.SMTPAuthenticationError:
-            print(f"SMTP auth failed — check SMTP_USER and SMTP_PASS in .env")
-            return False
-        except smtplib.SMTPException as e:
-            print(f"SMTP error sending magic link to {to_email}: {e}")
-            return False
-        except OSError as e:
-            print(f"Network error sending magic link email (is SMTP_HOST reachable?): {e}")
-            print(f"\nFallback — Magic sign-in link for {to_email}:\n{magic_link}\n")
-            return False
-
-    def send_password_reset_email(self, to_email: str, reset_link: str, first_name: str) -> bool:
-        """Send a password reset email via SMTP so reset works in all envs."""
-        if not self.smtp_user or not self.smtp_pass:
-            print(f"\n{'='*60}")
-            print("DEV MODE — SMTP not configured.")
-            print(f"Password reset link for {to_email}:")
-            print(reset_link)
-            print(f"{'='*60}\n")
+        # 1) Try Resend first
+        if self._send_via_resend(to_email, subject, html, email_type="Magic link"):
             return True
 
-        message = MIMEMultipart("alternative")
-        message["Subject"] = "Reset Your Dosteon Password"
-        message["From"] = f"Dosteon <{self.from_email}>"
-        message["To"] = to_email
+        # 2) Fallback to SMTP if configured
+        if self.smtp_user and self.smtp_pass:
+            message = MIMEMultipart("alternative")
+            message["Subject"] = subject
+            message["From"] = f"Dosteon <{self.from_email}>"
+            message["To"] = to_email
+            message.attach(MIMEText(html, "html"))
+
+            try:
+                with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=10) as server:
+                    server.starttls()
+                    server.login(self.smtp_user, self.smtp_pass)
+                    server.sendmail(self.from_email, to_email, message.as_string())
+                print(f"Magic link email sent to {to_email} via SMTP")
+                return True
+            except smtplib.SMTPAuthenticationError:
+                print("SMTP auth failed — check SMTP_USER and SMTP_PASS in .env")
+            except smtplib.SMTPException as e:
+                print(f"SMTP error sending magic link to {to_email}: {e}")
+            except OSError as e:
+                print(
+                    "Network error sending magic link email "
+                    f"(is SMTP_HOST reachable?): {e}"
+                )
+                print(f"\nFallback — Magic sign-in link for {to_email}:\n{magic_link}\n")
+
+        # 3) Final dev fallback: print link
+        print(f"\n{'='*60}")
+        print("DEV MODE — No email provider configured.")
+        print(f"Magic sign-in link for {to_email}:")
+        print(magic_link)
+        print(f"{'='*60}\n")
+        return True
+
+    def send_password_reset_email(
+        self,
+        to_email: str,
+        reset_link: str,
+        first_name: str,
+    ) -> bool:
+        """Send a password reset email.
+
+        Prefers Resend if configured, falls back to SMTP, then dev print.
+        """
+
+        subject = "Reset Your Dosteon Password"
 
         html = f"""
         <html>
@@ -166,25 +245,43 @@ class EmailService:
         </html>
         """
 
-        message.attach(MIMEText(html, "html"))
-
-        try:
-            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=10) as server:
-                server.starttls()
-                server.login(self.smtp_user, self.smtp_pass)
-                server.sendmail(self.from_email, to_email, message.as_string())
-            print(f"Password reset email sent to {to_email}")
+        # 1) Try Resend first
+        if self._send_via_resend(to_email, subject, html, email_type="Password reset"):
             return True
-        except smtplib.SMTPAuthenticationError:
-            print(f"SMTP auth failed — check SMTP_USER and SMTP_PASS in .env")
-            return False
-        except smtplib.SMTPException as e:
-            print(f"SMTP error sending password reset to {to_email}: {e}")
-            return False
-        except OSError as e:
-            print(f"Network error sending password reset email (is SMTP_HOST reachable?): {e}")
-            print(f"\nFallback — Password reset link for {to_email}:\n{reset_link}\n")
-            return False
+
+        # 2) Fallback to SMTP if configured
+        if self.smtp_user and self.smtp_pass:
+            message = MIMEMultipart("alternative")
+            message["Subject"] = subject
+            message["From"] = f"Dosteon <{self.from_email}>"
+            message["To"] = to_email
+            message.attach(MIMEText(html, "html"))
+
+            try:
+                with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=10) as server:
+                    server.starttls()
+                    server.login(self.smtp_user, self.smtp_pass)
+                    server.sendmail(self.from_email, to_email, message.as_string())
+                print(f"Password reset email sent to {to_email} via SMTP")
+                return True
+            except smtplib.SMTPAuthenticationError:
+                print("SMTP auth failed — check SMTP_USER and SMTP_PASS in .env")
+            except smtplib.SMTPException as e:
+                print(f"SMTP error sending password reset to {to_email}: {e}")
+            except OSError as e:
+                print(
+                    "Network error sending password reset email "
+                    f"(is SMTP_HOST reachable?): {e}"
+                )
+                print(f"\nFallback — Password reset link for {to_email}:\n{reset_link}\n")
+
+        # 3) Final dev fallback: print link
+        print(f"\n{'='*60}")
+        print("DEV MODE — No email provider configured.")
+        print(f"Password reset link for {to_email}:")
+        print(reset_link)
+        print(f"{'='*60}\n")
+        return True
 
 
 email_service = EmailService()
