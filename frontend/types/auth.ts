@@ -73,6 +73,7 @@ export interface AuthContextType {
   ) => Promise<void>;
   sendMagicLink: (email: string) => Promise<{ success: boolean }>;
   authenticateWithOAuth: (provider: 'google' | 'apple') => Promise<void>;
+  resendVerification: (email: string) => Promise<{ success: boolean }>;
   resetPasswordData: { email?: string; selector?: string } | null;
   setResetPasswordData: (
     data: { email?: string; selector?: string } | null
