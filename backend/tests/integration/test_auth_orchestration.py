@@ -2,11 +2,16 @@ import httpx
 import asyncio
 import sys
 import os
+import pytest
 
 # Add parent directory to path to allow imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 BASE_URL = "http://localhost:8000/api/v1"
+
+pytestmark = pytest.mark.skip(
+    reason="Manual integration script; requires live backend at http://localhost:8000"
+)
 
 async def test_auth_flow():
     email = "gatetejules1@gmail.com"

@@ -3,8 +3,13 @@ import json
 import uuid
 import time
 import os
+import pytest
 
 BASE_URL = "http://localhost:8000/api/v1"
+
+pytestmark = pytest.mark.skip(
+    reason="Manual onboarding flow; sends real email and requires live backend at http://localhost:8000"
+)
 
 def test_onboarding_flow():
     print("--- TESTING ONBOARDING FLOW (REAL EMAIL) ---")

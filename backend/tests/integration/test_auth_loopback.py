@@ -1,5 +1,10 @@
 import httpx
 import json
+import pytest
+
+pytestmark = pytest.mark.skip(
+    reason="Manual integration script; requires live backend at http://localhost:8000"
+)
 
 async def test_auth_loopback():
     async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
