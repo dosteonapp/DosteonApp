@@ -305,15 +305,27 @@ class AuthService:
             raise HTTPException(status_code=400, detail=str(e))
 
     async def forgot_password(self, request: ForgotPasswordRequest):
-        try:
-            from app.db.prisma import db
+        """Initiate a password reset flow.
 
-            first_name: str = "there"
+        This endpoint is intentionally idempotent and non-leaky:
+        - It does not reveal whether an email exists in the system.
+        - Operational issues with Supabase or email providers are treated as
+          soft failures: we log them but still return 200 with a generic
+          success message so the UI never sees a hard 4xx/5xx.
+        """
+
+        from app.db.prisma import db
+
+        # Default friendly name in case profile lookup fails.
+        first_name: str = "there"
+
+        try:
             try:
                 profile = await db.profile.find_first(where={"email": request.email})
                 if profile and getattr(profile, "first_name", None):
                     first_name = profile.first_name
             except Exception:
+                # Profile lookup is best-effort only; never fail the flow on this.
                 pass
 
             # Choose redirect URL based on account_type so that recovery
@@ -324,17 +336,30 @@ class AuthService:
             else:
                 redirect_url = base_redirect
 
-            link_res = supabase.auth.admin.generate_link({
-                "type": "recovery",
-                "email": request.email,
-                "options": {"redirect_to": redirect_url}
-            })
+            try:
+                link_res = supabase.auth.admin.generate_link({
+                    "type": "recovery",
+                    "email": request.email,
+                    "options": {"redirect_to": redirect_url}
+                })
+            except Exception as e:
+                # Log Supabase issues but don't surface raw details to the client.
+                print(f"Forgot password link generation error for {request.email}: {e}")
+                # Fall through to generic success response below.
+                return {
+                    "status": "ok",
+                    "message": "If an account exists for this email, a password reset link has been sent.",
+                }
 
             if not link_res or not link_res.properties or not link_res.properties.action_link:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Could not generate password reset link. Please try again later.",
+                print(
+                    "Forgot password: Supabase returned no action_link for",
+                    request.email,
                 )
+                return {
+                    "status": "ok",
+                    "message": "If an account exists for this email, a password reset link has been sent.",
+                }
 
             reset_link = link_res.properties.action_link
             email_sent = email_service.send_password_reset_email(
@@ -344,19 +369,24 @@ class AuthService:
             )
 
             if not email_sent:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="We couldn't send the password reset email. Please try again later.",
+                print(
+                    "Forgot password: failed to send reset email to",
+                    request.email,
                 )
 
-            return {"message": "Password reset link sent to your email"}
-        except HTTPException:
-            raise
+            # Always return a generic success message so the client
+            # never sees a hard error or learns whether the email exists.
+            return {
+                "status": "ok",
+                "message": "If an account exists for this email, a password reset link has been sent.",
+            }
         except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
+            # Catch-all: log, but still respond 200 with generic message.
+            print(f"Forgot password unexpected error for {request.email}: {e}")
+            return {
+                "status": "ok",
+                "message": "If an account exists for this email, a password reset link has been sent.",
+            }
 
     async def reset_password(self, request: PasswordResetConfirm):
         try:
