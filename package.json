@@ -1,0 +1,9 @@
+{
+  "name": "dashboard-v0-dev-root",
+  "private": true,
+  "scripts": {
+    "lint": "cd frontend && npm run lint",
+    "type-check": "cd frontend && npm run type-check",
+    "test:backend": "cd backend && pytest -q"
+  }
+}
