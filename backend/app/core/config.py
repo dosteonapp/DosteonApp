@@ -22,7 +22,6 @@ class Settings(BaseSettings):
     # Auth Redirect (for Email Verification/Callback)
     AUTH_REDIRECT_URL: str = Field(
     "http://localhost:3000/auth/callback",
-    "http://dosteon-app.vercel.app/auth/callback",
     validation_alias="AUTH_REDIRECT_URL"
     )
     
