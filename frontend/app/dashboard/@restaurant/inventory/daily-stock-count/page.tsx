@@ -164,23 +164,7 @@ export default function DailyStockCountPage() {
         showReview && "blur-2xl scale-[0.98] pointer-events-none"
       )}>
 
-                {isLocked && (
-                    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 flex items-start gap-3 max-w-2xl">
-                        <div className="mt-0.5">
-                            <Badge variant="warning">Day locked</Badge>
-                        </div>
-                        <div>
-                            <p className="font-semibold">You can’t update stock while the day is locked.</p>
-                            <p className="text-amber-800/90">
-                                {status?.state === "CLOSING_IN_PROGRESS"
-                                    ? "Finish closing or reopen the day from the dashboard to adjust opening stock."
-                                    : status?.state === "CLOSED"
-                                    ? "Re-open the day from the dashboard to adjust opening stock."
-                                    : "Start or finish your opening checklist from the dashboard to unlock daily stock counts."}
-                            </p>
-                        </div>
-                    </div>
-                )}
+                {/* Removed the yellow 'Day locked' banner to keep the layout clean and aligned with the premium design. */}
 
         {/* Hero Progress Header */}
         <UnifiedHeroSurface

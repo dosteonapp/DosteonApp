@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,8 +15,56 @@ import {
   Package,
 } from "lucide-react";
 import Link from "next/link";
+import axiosInstance from "@/lib/axios";
 
 export default function SupplierNotificationsPage() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const { data } = await axiosInstance.get<Notification[]>("/notifications");
+        setNotifications(data || []);
+      } catch (err: any) {
+        // axiosInstance already toasts errors globally; keep UI minimal here
+        setError(
+          err?.response?.data?.detail ||
+            "We couldn't load your notifications. Please try again later."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  const unreadCount = notifications.filter((n) => n.unread).length;
+
+  const unreadNotifications = notifications.filter((n) => n.unread);
+  const orderNotifications = notifications.filter((n) => n.type === "order");
+  const inventoryNotifications = notifications.filter((n) => n.type === "inventory");
+  const paymentNotifications = notifications.filter((n) => n.type === "payment");
+
+  const renderEmptyState = () => (
+    <div className="mt-8 flex flex-col items-center justify-center text-center gap-3 py-10 border border-dashed border-slate-200 rounded-2xl bg-slate-50/60">
+      <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-1">
+        <Bell className="h-5 w-5" />
+      </div>
+      <h2 className="text-base md:text-lg font-semibold text-slate-900">
+        You're all caught up
+      </h2>
+      <p className="text-xs md:text-sm text-slate-500 max-w-sm">
+        There are no notifications to show right now. New updates about orders,
+        inventory and payments will appear here.
+      </p>
+    </div>
+  );
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 md:hidden">
@@ -45,59 +96,84 @@ export default function SupplierNotificationsPage() {
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="unread">
-              Unread <Badge className="ml-2 bg-primary">8</Badge>
+              Unread
+              {unreadCount > 0 && (
+                <Badge className="ml-2 bg-primary">{unreadCount}</Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="space-y-4 mt-4">
-            {notifications.map((notification) => (
-              <NotificationCard
-                key={notification.id}
-                notification={notification}
-              />
-            ))}
+            {isLoading && <p className="text-sm text-muted-foreground">Loading notifications...</p>}
+            {!isLoading && notifications.length === 0 && renderEmptyState()}
+            {!isLoading && notifications.length > 0 && (
+              <div className="space-y-4">
+                {notifications.map((notification) => (
+                  <NotificationCard
+                    key={notification.id}
+                    notification={notification}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="unread" className="space-y-4 mt-4">
-            {notifications
-              .filter((notification) => notification.unread)
-              .map((notification) => (
-                <NotificationCard
-                  key={notification.id}
-                  notification={notification}
-                />
-              ))}
+            {isLoading && <p className="text-sm text-muted-foreground">Loading notifications...</p>}
+            {!isLoading && unreadNotifications.length === 0 && renderEmptyState()}
+            {!isLoading && unreadNotifications.length > 0 && (
+              <div className="space-y-4">
+                {unreadNotifications.map((notification) => (
+                  <NotificationCard
+                    key={notification.id}
+                    notification={notification}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="orders" className="space-y-4 mt-4">
-            {notifications
-              .filter((notification) => notification.type === "order")
-              .map((notification) => (
-                <NotificationCard
-                  key={notification.id}
-                  notification={notification}
-                />
-              ))}
+            {isLoading && <p className="text-sm text-muted-foreground">Loading notifications...</p>}
+            {!isLoading && orderNotifications.length === 0 && renderEmptyState()}
+            {!isLoading && orderNotifications.length > 0 && (
+              <div className="space-y-4">
+                {orderNotifications.map((notification) => (
+                  <NotificationCard
+                    key={notification.id}
+                    notification={notification}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="inventory" className="space-y-4 mt-4">
-            {notifications
-              .filter((notification) => notification.type === "inventory")
-              .map((notification) => (
-                <NotificationCard
-                  key={notification.id}
-                  notification={notification}
-                />
-              ))}
+            {isLoading && <p className="text-sm text-muted-foreground">Loading notifications...</p>}
+            {!isLoading && inventoryNotifications.length === 0 && renderEmptyState()}
+            {!isLoading && inventoryNotifications.length > 0 && (
+              <div className="space-y-4">
+                {inventoryNotifications.map((notification) => (
+                  <NotificationCard
+                    key={notification.id}
+                    notification={notification}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="payments" className="space-y-4 mt-4">
-            {notifications
-              .filter((notification) => notification.type === "payment")
-              .map((notification) => (
-                <NotificationCard
-                  key={notification.id}
-                  notification={notification}
-                />
-              ))}
+            {isLoading && <p className="text-sm text-muted-foreground">Loading notifications...</p>}
+            {!isLoading && paymentNotifications.length === 0 && renderEmptyState()}
+            {!isLoading && paymentNotifications.length > 0 && (
+              <div className="space-y-4">
+                {paymentNotifications.map((notification) => (
+                  <NotificationCard
+                    key={notification.id}
+                    notification={notification}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
@@ -168,120 +244,4 @@ interface Notification {
   };
 }
 
-// Sample data
-const notifications: Notification[] = [
-  {
-    id: "1",
-    title: "New Order Received",
-    message: "Bistro Bella has placed a new order #ORD-7891.",
-    time: "10 minutes ago",
-    type: "order",
-    unread: true,
-    actionLink: {
-      href: "/dashboard/orders/ORD-7891",
-      text: "View Order",
-    },
-  },
-  {
-    id: "2",
-    title: "Low Stock Alert: Tomatoes",
-    message:
-      "Tomatoes are running low. Current stock: 25kg (below minimum threshold).",
-    time: "1 hour ago",
-    type: "inventory",
-    unread: true,
-    actionLink: {
-      href: "/dashboard/products?filter=low-stock",
-      text: "View Inventory",
-    },
-  },
-  {
-    id: "3",
-    title: "Payment Received",
-    message:
-      "Payment of RWF 320,750 received from Cafe Milano for order #ORD-7890.",
-    time: "2 hours ago",
-    type: "payment",
-    unread: true,
-    actionLink: {
-      href: "/dashboard/finance/transactions",
-      text: "View Transaction",
-    },
-  },
-  {
-    id: "4",
-    title: "Order Confirmed",
-    message: "You've confirmed order #ORD-7890 for Cafe Milano.",
-    time: "3 hours ago",
-    type: "order",
-    unread: true,
-  },
-  {
-    id: "5",
-    title: "New Order Received",
-    message: "The Green Plate has placed a new order #ORD-7893.",
-    time: "5 hours ago",
-    type: "order",
-    unread: true,
-    actionLink: {
-      href: "/dashboard/orders/ORD-7893",
-      text: "View Order",
-    },
-  },
-  {
-    id: "6",
-    title: "Low Stock Alert: Onions",
-    message:
-      "Onions are running low. Current stock: 30kg (below minimum threshold).",
-    time: "Yesterday",
-    type: "inventory",
-    unread: true,
-    actionLink: {
-      href: "/dashboard/products?filter=low-stock",
-      text: "View Inventory",
-    },
-  },
-  {
-    id: "7",
-    title: "Order Marked as Delivered",
-    message: "Order #ORD-7888 for Spice Garden has been marked as delivered.",
-    time: "Yesterday",
-    type: "order",
-    unread: true,
-  },
-  {
-    id: "8",
-    title: "Payment Received",
-    message:
-      "Payment of RWF 210,000 received from Organic Supplies Co. for order #ORD-7888.",
-    time: "Yesterday",
-    type: "payment",
-    unread: true,
-    actionLink: {
-      href: "/dashboard/finance/transactions",
-      text: "View Transaction",
-    },
-  },
-  {
-    id: "9",
-    title: "New Customer Registration",
-    message:
-      "A new restaurant 'Taste of Asia' has registered and can now place orders.",
-    time: "2 days ago",
-    type: "alert",
-    unread: false,
-    actionLink: {
-      href: "/dashboard/customers",
-      text: "View Customers",
-    },
-  },
-  {
-    id: "10",
-    title: "Product Price Updated",
-    message:
-      "You've updated the price of 'Organic Chicken Breast' to RWF 9,500/kg.",
-    time: "3 days ago",
-    type: "inventory",
-    unread: false,
-  },
-];
+// Notifications are now fetched from the backend; no local mock data.

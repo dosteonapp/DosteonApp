@@ -1,5 +1,6 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer
+from fastapi.security.http import HTTPAuthorizationCredentials
 from app.core.security import verify_supabase_token
 from app.db.repositories.profile_repository import profile_repo
 from app.core.logging import get_logger
@@ -8,8 +9,10 @@ from uuid import UUID
 
 logger = get_logger("deps")
 security = HTTPBearer()
+optional_security = HTTPBearer(auto_error=False)
 
-async def get_current_user(credentials=Depends(security)):
+
+async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentials) -> dict:
     token = credentials.credentials
     payload = await verify_supabase_token(token)
 
@@ -122,6 +125,20 @@ async def get_current_user(credentials=Depends(security)):
             )
 
     return profile
+
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    return await _resolve_user_from_credentials(credentials)
+
+
+async def get_optional_user(credentials: HTTPAuthorizationCredentials | None = Depends(optional_security)):
+    """Return the current user when Authorization is present; otherwise None.
+
+    Used for endpoints where authentication is preferred but onboarding can be skipped.
+    """
+    if not credentials:
+        return None
+    return await _resolve_user_from_credentials(credentials)
 
 
 class SecurityContext:

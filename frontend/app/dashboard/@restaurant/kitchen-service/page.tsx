@@ -105,24 +105,6 @@ export default function KitchenServicePage() {
           {error}
         </div>
       )}
-
-      {!isOpen && !error && (
-        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 flex items-start gap-3 max-w-2xl">
-          <div className="mt-0.5">
-            <Badge variant="warning">Day locked</Badge>
-          </div>
-          <div>
-            <p className="font-semibold">Kitchen service is locked for this business day.</p>
-            <p className="text-amber-800/90">
-              {status?.state === DayState.CLOSING_IN_PROGRESS
-                ? "Finish your closing checklist or reopen the day from the dashboard to continue logging kitchen usage."
-                : status?.state === DayState.CLOSED
-                ? "Re-open the day from the dashboard if you need to log additional kitchen usage."
-                : "Complete your daily stock count to start kitchen service for today."}
-            </p>
-          </div>
-        </div>
-      )}
       {/* Page Header (Only visible when locked) */}
       {!isOpen && (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">

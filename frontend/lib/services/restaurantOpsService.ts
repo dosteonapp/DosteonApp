@@ -322,7 +322,38 @@ export const restaurantOpsService = {
       ];
     }
     const { data } = await axiosInstance.get("restaurant/notifications", { params });
-    return data;
+
+    const rawList: any[] = Array.isArray(data) ? data : [];
+
+    // Normalize backend notifications (which currently return
+    // `{ id, type: "critical"|"warning", message }`) into the
+    // richer shape expected by the restaurant notifications UI.
+    return rawList.map((n, index) => {
+      // If the backend is already returning the rich shape, keep it.
+      if (n.title || n.description) {
+        return n;
+      }
+
+      const backendType = String(n.type || "info").toLowerCase();
+      let mappedType: string = "info";
+      if (backendType === "critical") mappedType = "alert";
+      else if (backendType === "warning") mappedType = "warning";
+
+      const message: string = n.message || "Notification from your inventory";
+
+      return {
+        id: String(n.id ?? index),
+        type: mappedType,
+        title: mappedType === "alert"
+          ? "Action required in inventory"
+          : mappedType === "warning"
+          ? "Check stock levels"
+          : "Inventory update",
+        description: message,
+        time: n.time || n.timestamp || "Just now",
+        unread: true,
+      };
+    });
   },
 
   getMenu: async (): Promise<any[]> => {

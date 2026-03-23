@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Header, Body
 from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest, UserBase
 from app.services.auth_service import auth_service
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_optional_user
 from app.core.rate_limit import limiter
 from fastapi import Request
 
@@ -30,10 +30,23 @@ async def update_me(
 
 @router.post("/onboard")
 async def onboard_user(
-    org_data: dict = Body(...), 
-    current_user: dict = Depends(get_current_user)
+    org_data: dict = Body(...),
+    current_user: dict | None = Depends(get_optional_user),
 ):
-    """Initialize organization and link to user profile"""
+    """Initialize organization and link to user profile.
+
+    If the user is authenticated, we update their organization name.
+    If unauthenticated (e.g. coming from a stale link), we treat this as a
+    skipped onboarding step and return a harmless success so the UI can
+    continue the flow.
+    """
+    if not current_user:
+        return {
+            "status": "ok",
+            "organization_id": None,
+            "message": "Onboarding skipped (user not authenticated)",
+        }
+
     return await auth_service.onboard_user(org_data, current_user)
 
 @router.post("/refresh", response_model=Token)

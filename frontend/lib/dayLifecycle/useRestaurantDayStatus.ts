@@ -39,13 +39,44 @@ export function useRestaurantDayStatus() {
       try {
         const apiResult = await restaurantOpsService.getDayStatus();
         
+        // Normalise API business date to local YYYY-MM-DD for comparison
+        let apiBusinessDate = businessDate;
+        if (apiResult.business_date) {
+          try {
+            apiBusinessDate = new Date(apiResult.business_date).toISOString().split('T')[0];
+          } catch {
+            apiBusinessDate = businessDate;
+          }
+        }
+
+        // If the last recorded day was fully closed and belongs to a
+        // previous calendar date, automatically roll forward to a new
+        // PRE_OPEN day so Daily Stock Count can run again.
+        const isClosedPreviousDay =
+          apiResult.state === "CLOSED" &&
+          apiBusinessDate < businessDate;
+
+        if (isClosedPreviousDay) {
+          const resetStatus: DayStatus = {
+            state: DayState.PRE_OPEN,
+            businessDate,
+            openingSteps: INITIAL_OPENING_STEPS,
+            closingSteps: INITIAL_CLOSING_STEPS,
+            metadata: {},
+            updatedAt: new Date().toISOString(),
+          };
+
+          restaurantDayStorage.saveStatus(orgId, resetStatus);
+          return resetStatus;
+        }
+
         // Transform API results (snake_case to camelCase)
         const isActuallyOpen = apiResult.is_opening_completed || apiResult.openingCompleted;
         const apiState = apiResult.state || (isActuallyOpen ? DayState.OPEN : DayState.PRE_OPEN);
         
         const initialStatus: DayStatus = {
             state: apiState,
-            businessDate: apiResult.business_date || businessDate,
+            businessDate: apiBusinessDate,
             openingSteps: INITIAL_OPENING_STEPS.map(s => ({ ...s, done: !!isActuallyOpen })),
             closingSteps: INITIAL_CLOSING_STEPS,
             metadata: apiResult.metadata,
@@ -258,7 +289,11 @@ export function useRestaurantDayStatus() {
     isOpen: status?.state === DayState.OPEN,
     isOpening: status?.state === DayState.OPENING_IN_PROGRESS,
     isClosing: status?.state === DayState.CLOSING_IN_PROGRESS,
-    isLocked: status?.state === DayState.PRE_OPEN || status?.state === DayState.CLOSED,
+    // Only treat the day as locked when it is explicitly
+    // marked CLOSED. PRE_OPEN represents a fresh day where
+    // opening workflows (like Daily Stock Count) should be
+    // available.
+    isLocked: status?.state === DayState.CLOSED,
     isClosed: status?.state === DayState.CLOSED,
     isPreOpen: status?.state === DayState.PRE_OPEN,
     isClosingTimeReached: (() => {
