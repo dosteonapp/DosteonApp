@@ -105,10 +105,11 @@ class AuthService:
                 error_str = str(e)
                 print(f"Supabase admin.create_user failed: {error_str}")
 
-                # In local development, fall back to the standard sign_up flow
-                # if the service role key is not allowed. This avoids blocking
-                # local testing when SUPABASE_SERVICE_ROLE_KEY is misconfigured.
-                if settings.ENV == "development" and "user not allowed" in error_str.lower():
+                # Fall back to the standard sign_up flow if the service role
+                # key is not allowed (e.g. using anon key in any environment).
+                # This keeps signup working even if SUPABASE_SERVICE_ROLE_KEY
+                # is missing or misconfigured in production.
+                if "user not allowed" in error_str.lower():
                     fallback_res = supabase.auth.sign_up({
                         "email": user_data.email,
                         "password": user_data.password,
