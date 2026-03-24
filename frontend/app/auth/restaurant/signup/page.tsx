@@ -51,9 +51,13 @@ export default function RegisterPage() {
       if (response && response.success) {
         setEmail(values.email);
         setIsVerifying(true);
+      } else {
+        // On any signup failure, show the Authentication Failed status page
+        router.push("/auth/restaurant/status/failed");
       }
     } catch (error) {
-      helpers.setStatus({ error: "Signup failed. Please try again." });
+      // As an extra safety net, redirect to the failed status page
+      router.push("/auth/restaurant/status/failed");
     }
   };
 

@@ -74,11 +74,16 @@ export function RestaurantSidebar() {
       icon: Bell,
       title: "Notifications",
     },
-    {
-      href: "/dashboard/settings",
-      icon: Settings,
-      title: "Settings",
-    },
+    // Settings is only visible to Owner/manager roles
+    ...(user && ["OWNER", "MANAGER"].includes(user.role)
+      ? [
+          {
+            href: "/dashboard/settings",
+            icon: Settings,
+            title: "Settings",
+          } as const,
+        ]
+      : []),
   ];
 
   return (

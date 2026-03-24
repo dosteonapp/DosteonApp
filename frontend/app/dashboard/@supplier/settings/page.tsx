@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -59,6 +59,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 const supplierRoles = [
   {
@@ -244,9 +246,27 @@ interface TeamMember {
 }
 
 export default function SupplierSettingsPage() {
+  const router = useRouter();
+  const { user, fetchingUser } = useUser();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+
+  // Simple guard: only supplier accounts can access supplier settings.
+  useEffect(() => {
+    if (fetchingUser) return;
+    if (!user) {
+      router.replace("/dashboard");
+      return;
+    }
+    if (user.role !== "SUPPLIER") {
+      router.replace("/dashboard");
+    }
+  }, [user, fetchingUser, router]);
+
+  if (fetchingUser || !user || user.role !== "SUPPLIER") {
+    return null;
+  }
 
   const getRoleInfo = (roleId: string) => {
     return supplierRoles.find((role) => role.id === roleId);

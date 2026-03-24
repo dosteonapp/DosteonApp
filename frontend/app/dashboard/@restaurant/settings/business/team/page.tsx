@@ -41,6 +41,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import axiosInstance from "@/lib/axios";
+import { toast } from "sonner";
 
 const teamMembers = [
   // ... (keep teamMembers as is)
@@ -89,13 +91,43 @@ export default function TeamManagementPage() {
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = React.useState(false);
   const [inviteStep, setInviteStep] = React.useState<"form" | "sending" | "success">("form");
+  const [inviteName, setInviteName] = React.useState("");
+  const [inviteEmail, setInviteEmail] = React.useState("");
+  const [inviteRole, setInviteRole] = React.useState<"owner" | "procurement" | "kitchen">("owner");
 
-  const handleInvite = () => {
+  const handleInvite = async () => {
+    if (!inviteEmail || !inviteName) {
+      toast.error("Please provide both name and email for the invite.");
+      return;
+    }
+
     setInviteStep("sending");
-    // Simulate API call
-    setTimeout(() => {
+
+    const [first_name, ...rest] = inviteName.trim().split(" ");
+    const last_name = rest.join(" ");
+
+    const roleKey =
+      inviteRole === "owner"
+        ? "owner_manager"
+        : inviteRole === "procurement"
+        ? "procurement_officer"
+        : "kitchen_staff";
+
+    try {
+      await axiosInstance.post("restaurant/team/invite", {
+        email: inviteEmail,
+        first_name,
+        last_name,
+        role: roleKey,
+      });
       setInviteStep("success");
-    }, 1500);
+      toast.success("Invitation sent successfully.");
+    } catch (error: any) {
+      setInviteStep("form");
+      const message =
+        error?.response?.data?.detail || "Failed to send invitation. Please try again.";
+      toast.error(message);
+    }
   };
 
   const resetInvite = () => {
@@ -151,6 +183,8 @@ export default function TeamManagementPage() {
                             <Input 
                               placeholder="e.g. Hilmi Yusuf"
                               className="h-14 pl-12 rounded-2xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800"
+                              value={inviteName}
+                              onChange={(e) => setInviteName(e.target.value)}
                             />
                           </div>
                         </div>
@@ -163,13 +197,15 @@ export default function TeamManagementPage() {
                               type="email"
                               placeholder="e.g. hilmi@example.com"
                               className="h-14 pl-12 rounded-2xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800"
+                              value={inviteEmail}
+                              onChange={(e) => setInviteEmail(e.target.value)}
                             />
                           </div>
                         </div>
 
                         <div className="space-y-3">
                           <Label className="text-sm font-bold text-slate-500">Assign Role</Label>
-                          <Select defaultValue="owner">
+                          <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as any)}>
                             <SelectTrigger className="h-14 rounded-2xl border-slate-200 focus:ring-indigo-500 font-bold text-slate-800 px-5">
                               <SelectValue placeholder="Select a role" />
                             </SelectTrigger>

@@ -1,11 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
     const requestUrl = new URL(request.url)
-    const cookieStore = await cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = createClient()
     const { email, password } = await request.json()
 
     const { data: { user }, error } = await supabase.auth.signInWithPassword({

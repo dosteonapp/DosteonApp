@@ -67,13 +67,15 @@ class AuthService:
                 return
 
             verification_link = link_res.properties.action_link
-            email_sent = email_service.send_verification_email(
-                user_data.email,
-                verification_link,
-                user_data.first_name,
-            )
-            if not email_sent:
-                print(f"FAILED to send verification email to {user_data.email}")
+            try:
+                email_service.send_verification_email(
+                    user_data.email,
+                    verification_link,
+                    user_data.first_name,
+                )
+            except Exception as e:
+                # Log but never break signup if background email sending fails.
+                print(f"FAILED to send verification email to {user_data.email}: {e}")
         except Exception as e:
             # Never break signup if email sending fails; just log.
             print(f"Background verification email error for {user_data.email}: {e}")
@@ -235,14 +237,14 @@ class AuthService:
                 )
 
             verification_link = link_res.properties.action_link
-            email_sent = email_service.send_verification_email(
-                user_data.email,
-                verification_link,
-                first_name,
-            )
-
-            if not email_sent:
-                # We treat this as a soft failure but still respond 200 so the UI doesn't loop.
+            try:
+                email_service.send_verification_email(
+                    user_data.email,
+                    verification_link,
+                    first_name,
+                )
+            except Exception:
+                # Surface a friendly error if email sending fails.
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail="We couldn't send the verification email. Please try again later.",
@@ -306,7 +308,7 @@ class AuthService:
 
             supabase.auth.admin.update_user_by_id(
                 user_id,
-                {"user_metadata": {"organization_id": str(org_id)}}
+			{"user_metadata": {"organization_id": str(org_id), "onboarding_completed": True}}
             )
 
             return {
@@ -377,16 +379,18 @@ class AuthService:
                 }
 
             reset_link = link_res.properties.action_link
-            email_sent = email_service.send_password_reset_email(
-                request.email,
-                reset_link,
-                first_name,
-            )
-
-            if not email_sent:
+            try:
+                email_service.send_password_reset_email(
+                    request.email,
+                    reset_link,
+                    first_name,
+                )
+            except Exception as e:
+                # Log operational issues but keep the endpoint idempotent and non-leaky.
                 print(
                     "Forgot password: failed to send reset email to",
                     request.email,
+                    e,
                 )
 
             # Always return a generic success message so the client
@@ -439,13 +443,13 @@ class AuthService:
                 )
 
             magic_link = link_res.properties.action_link
-            email_sent = email_service.send_magic_link_email(
-                request.email,
-                magic_link,
-                first_name,
-            )
-
-            if not email_sent:
+            try:
+                email_service.send_magic_link_email(
+                    request.email,
+                    magic_link,
+                    first_name,
+                )
+            except Exception:
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail="We couldn't send the magic link email. Please try again later.",
@@ -487,7 +491,7 @@ class AuthService:
         try:
             res = supabase.auth.sign_in_with_oauth({
                 "provider": provider,
-                "options": {"redirect_to": "http://localhost:3000/auth/callback"}
+				"options": {"redirect_to": settings.AUTH_REDIRECT_URL}
             })
             return {"url": res.url}
         except Exception as e:

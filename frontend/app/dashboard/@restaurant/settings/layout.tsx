@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUser } from "@/context/UserContext";
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ interface SettingsLayoutProps {
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, fetchingUser } = useUser();
 
   // Determine current active module based on pathname
   const getActiveModule = () => {
@@ -39,6 +41,22 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
   };
 
   const moduleInfo = moduleSettings[activeModule as keyof typeof moduleSettings] || moduleSettings.business;
+
+  // RBAC guard: only Owner/manager roles may access any settings pages.
+  useEffect(() => {
+    if (fetchingUser) return;
+    if (!user) {
+      router.replace("/dashboard");
+      return;
+    }
+    if (!["OWNER", "MANAGER"].includes(user.role)) {
+      router.replace("/dashboard");
+    }
+  }, [user, fetchingUser, router]);
+
+  if (fetchingUser || !user || !["OWNER", "MANAGER"].includes(user.role)) {
+    return null;
+  }
 
   const handleModuleChange = (value: string) => {
     if (value === "personal") router.push("/dashboard/settings/personal/profile");

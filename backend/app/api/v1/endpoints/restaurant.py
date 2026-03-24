@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Body, Query
 from app.services.restaurant_service import restaurant_service
+from app.services.team_service import team_service
 from app.api.deps import (
     get_restaurant_user,
     get_admin_user,
@@ -17,6 +18,7 @@ from app.schemas.inventory import (
     KitchenWasteLog,
     ClosingChecklistSubmit,
 )
+from app.schemas.auth import TeamInviteRequest, TeamRoleUpdate
 
 router = APIRouter()
 
@@ -98,8 +100,8 @@ async def get_day_status(ctx: SecurityContext = Depends(get_security_context)):
     return await restaurant_service.get_day_status(ctx.organization_id)
 
 @router.get("/settings")
-async def get_settings(ctx: SecurityContext = Depends(get_security_context)):
-    """Get organization settings like opening/closing times"""
+async def get_settings(ctx: SecurityContext = Depends(get_admin_context)):
+    """Get organization settings like opening/closing times (Owner/manager only)"""
     return await restaurant_service.get_settings(ctx.organization_id)
 
 @router.patch("/settings")
@@ -109,6 +111,50 @@ async def update_settings(
 ):
     """Update organization settings (Admin only)"""
     return await restaurant_service.update_settings(ctx.organization_id, settings)
+
+
+@router.get("/team")
+async def list_team(ctx: SecurityContext = Depends(get_admin_context)):
+    """List all team members in the current organization (Owner/manager only)."""
+    return await team_service.list_team_members(ctx.organization_id)
+
+
+@router.post("/team/invite")
+async def invite_team_member(
+    body: TeamInviteRequest,
+    ctx: SecurityContext = Depends(get_admin_context),
+):
+    """Invite a new team member by email with an assigned role."""
+    return await team_service.invite_member(
+        organization_id=ctx.organization_id,
+        inviter_id=ctx.user_id,
+        payload=body.model_dump(),
+    )
+
+
+@router.patch("/team/role")
+async def update_team_member_role(
+    body: TeamRoleUpdate,
+    ctx: SecurityContext = Depends(get_admin_context),
+):
+    """Update the RBAC role of an existing team member (Owner/manager only)."""
+    return await team_service.update_member_role(
+        organization_id=ctx.organization_id,
+        user_id=str(body.user_id),
+        role_key=body.role,
+    )
+
+
+@router.delete("/team/{user_id}")
+async def remove_team_member(
+    user_id: str,
+    ctx: SecurityContext = Depends(get_admin_context),
+):
+    """Remove a team member from the organization (Owner/manager only)."""
+    return await team_service.remove_member(
+        organization_id=ctx.organization_id,
+        user_id=user_id,
+    )
 
 # Placeholder Kitchen Endpoints to prevent frontend 404s
 @router.get("/kitchen/summary")

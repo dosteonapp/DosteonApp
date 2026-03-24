@@ -84,3 +84,15 @@ class Token(BaseModel):
 
 class UserMe(Profile):
     session_valid: bool = True
+
+
+class TeamInviteRequest(BaseModel):
+    email: EmailStr
+    first_name: str
+    last_name: str
+    role: Literal["owner_manager", "procurement_officer", "kitchen_staff"]
+
+
+class TeamRoleUpdate(BaseModel):
+    user_id: UUID
+    role: Literal["owner_manager", "procurement_officer", "kitchen_staff"]

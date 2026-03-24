@@ -36,15 +36,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { createClient } = await import("@/lib/supabase/client");
       try {
         const supabase = createClient();
-        
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
-          // Invalidate user query to trigger UI refresh
+
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event: string, _session: any) => {
+          // Invalidate user query to trigger UI refresh on any auth change
           queryClient.invalidateQueries({ queryKey: ["user"] });
-          
-          // Handle specific auth events if needed
-          if (event === 'SIGNED_OUT') {
-             router.push("/");
-          }
         });
 
         return () => {

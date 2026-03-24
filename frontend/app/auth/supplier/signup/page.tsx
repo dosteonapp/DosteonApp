@@ -47,9 +47,13 @@ export default function RegisterPage() {
       const response = await signup(values, helpers);
       if (response && response.success) {
         setSuccessEmail(values.email);
+      } else {
+        // On any signup failure, show the Authentication Failed status page
+        router.push("/auth/supplier/status/failed");
       }
     } catch (error) {
-      helpers.setStatus({ error: "Signup failed. Please try again." });
+      // As an extra safety net, redirect to the failed status page
+      router.push("/auth/supplier/status/failed");
     }
   };
 
