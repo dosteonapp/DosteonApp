@@ -16,9 +16,9 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-// After onboarding (or skip), always redirect to signin with ?verified=true
-// so the signin page can show a "Your email has been verified" success message.
-const SIGNIN_URL = "/auth/restaurant/signin?verified=true";
+// After onboarding (or skip), redirect to an email verification
+// completion screen before taking the user to signin.
+const POST_ONBOARDING_URL = "/auth/restaurant/status/email-verified";
 
 const OnboardingPage = () => {
   const router = useRouter();
@@ -38,10 +38,10 @@ const OnboardingPage = () => {
     onSuccess: () => {
       toast({
         title: "Workspace set up",
-        description: "Please sign in to continue.",
+        description: "Your workspace is ready.",
       });
       queryClient.invalidateQueries({ queryKey: ["user"] });
-      router.push(SIGNIN_URL);
+      router.push(POST_ONBOARDING_URL);
     },
     onError: (error: any) => {
       toast({
@@ -58,7 +58,7 @@ const OnboardingPage = () => {
   // Skip — org name stays as default "{FirstName}'s Restaurant"
   // User can rename it anytime in Settings
   const handleSkip = () => {
-    router.push(SIGNIN_URL);
+    router.push(POST_ONBOARDING_URL);
   };
 
   const renderStep = () => {
