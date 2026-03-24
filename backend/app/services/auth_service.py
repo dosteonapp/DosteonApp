@@ -31,6 +31,7 @@ SUPABASE_ERROR_MAP = {
     "invalid email": "Please enter a valid email address.",
     "password should be at least": "Password must be at least 8 characters long.",
     "unable to validate email address": "This email address could not be validated. Please try a different one.",
+    "error sending confirmation email": "We couldn't send a confirmation email right now. Please try again in a few minutes or contact support.",
 }
 
 def map_supabase_error(error_str: str) -> str:

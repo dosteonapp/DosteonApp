@@ -31,11 +31,30 @@ export default function LoginPage() {
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    if (searchParams.get("verified") === "true") {
-      toast.success("Email verified successfully! You can now sign in.");
-      // Remove the query param so the message is only shown once
-      router.replace("/auth/restaurant/signin");
-    }
+    const maybeShowVerifiedToast = async () => {
+      if (searchParams.get("verified") !== "true") return;
+
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        // Only show the toast when there is an active session
+        // (i.e. right after email verification), not when fully logged out.
+        if (session) {
+          toast.success("Email verified successfully! You can now sign in.");
+        }
+      } catch (err) {
+        console.warn("Skipping verified toast due to auth check error", err);
+      } finally {
+        // Always clean up the URL so the flag doesn't persist
+        router.replace("/auth/restaurant/signin");
+      }
+    };
+
+    void maybeShowVerifiedToast();
   }, [router, searchParams]);
 
 
