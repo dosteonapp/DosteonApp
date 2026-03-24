@@ -32,8 +32,10 @@ export default function LoginPage() {
   useEffect(() => {
     if (searchParams.get("verified") === "true") {
       toast.success("Email verified successfully! You can now sign in.");
+      // Remove the query param so the message is only shown once
+      router.replace("/auth/restaurant/signin");
     }
-  }, [searchParams]);
+  }, [router, searchParams]);
 
 
   const handleSubmit = async (
