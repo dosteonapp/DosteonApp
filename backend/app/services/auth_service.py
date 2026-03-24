@@ -42,6 +42,42 @@ def map_supabase_error(error_str: str) -> str:
 
 
 class AuthService:
+    async def _send_verification_email_background(self, user_data: UserSignup, org_id):
+        """Generate verification link and send email in the background.
+
+        This runs outside the main signup response path so slow email providers
+        or occasional Supabase slowness don't block the user-facing request.
+        """
+        try:
+            # Generate Verification Link via Supabase Admin API
+            link_res = supabase.auth.admin.generate_link({
+                "type": "signup",
+                "email": user_data.email,
+                "options": {"redirect_to": settings.AUTH_REDIRECT_URL}
+            })
+
+            if not link_res or not link_res.properties or not link_res.properties.action_link:
+                print("Link generation failed, falling back to standard signup email flow")
+                # Fall back to Supabase's built-in email flow
+                supabase.auth.sign_up({
+                    "email": user_data.email,
+                    "password": user_data.password,
+                    "options": {"email_redirect_to": settings.AUTH_REDIRECT_URL}
+                })
+                return
+
+            verification_link = link_res.properties.action_link
+            email_sent = email_service.send_verification_email(
+                user_data.email,
+                verification_link,
+                user_data.first_name,
+            )
+            if not email_sent:
+                print(f"FAILED to send verification email to {user_data.email}")
+        except Exception as e:
+            # Never break signup if email sending fails; just log.
+            print(f"Background verification email error for {user_data.email}: {e}")
+
     async def signup(self, user_data: UserSignup):
         try:
             # 1. Create a default organization.
@@ -96,30 +132,9 @@ class AuthService:
             from app.db.repositories.inventory_repository import inventory_repo
             asyncio.create_task(inventory_repo.bootstrap_organization(str(org_id)))
 
-            # 6. Generate Verification Link
-            link_res = supabase.auth.admin.generate_link({
-                "type": "signup",
-                "email": user_data.email,
-                "options": {"redirect_to": settings.AUTH_REDIRECT_URL}
-            })
-
-            if not link_res or not link_res.properties or not link_res.properties.action_link:
-                print("Link generation failed, falling back to standard signup")
-                supabase.auth.sign_up({
-                    "email": user_data.email,
-                    "password": user_data.password,
-                    "options": {"email_redirect_to": settings.AUTH_REDIRECT_URL}
-                })
-            else:
-                # 7. Send verification email via Gmail SMTP
-                verification_link = link_res.properties.action_link
-                email_sent = email_service.send_verification_email(
-                    user_data.email,
-                    verification_link,
-                    user_data.first_name
-                )
-                if not email_sent:
-                    print(f"FAILED to send manual email to {user_data.email}")
+            # 6. Kick off verification email in the background so the
+            #    signup response can return quickly.
+            asyncio.create_task(self._send_verification_email_background(user_data, org_id))
 
             return {
                 "status": "ok",
