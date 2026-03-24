@@ -51,13 +51,10 @@ export default function RegisterPage() {
       if (response && response.success) {
         setEmail(values.email);
         setIsVerifying(true);
-      } else {
-        // On any signup failure, show the Authentication Failed status page
-        router.push("/auth/restaurant/status/failed");
       }
     } catch (error) {
-      // As an extra safety net, redirect to the failed status page
-      router.push("/auth/restaurant/status/failed");
+      // Errors are already surfaced via Formik status by AuthContext.signup
+      // Optionally, you could add a toast here, but we stay on the form.
     }
   };
 
