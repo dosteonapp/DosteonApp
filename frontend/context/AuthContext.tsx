@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }));
         
         router.push("/dashboard");
-        return;
+        return true;
       }
 
       const data = await loginMutation(values);
@@ -202,8 +202,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       router.push("/dashboard");
+
+      return true;
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
+      // Route to a dedicated failure status screen for clearer UX
+      if (typeof window !== "undefined") {
+        const isSupplier = window.location.pathname.includes("/supplier/");
+        const failedPath = isSupplier
+          ? "/auth/supplier/status/failed"
+          : "/auth/restaurant/status/failed";
+        router.push(failedPath);
+      }
+
+      return false;
     } finally {
       helpers.setSubmitting(false);
     }

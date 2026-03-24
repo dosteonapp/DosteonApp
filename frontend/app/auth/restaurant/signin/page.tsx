@@ -28,6 +28,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'password' | 'magic'>('password');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("verified") === "true") {
@@ -51,7 +52,11 @@ export default function LoginPage() {
         await sendMagicLink(values.email);
         setMagicLinkSent(true);
       } else {
-        await login(values, helpers);
+        setRedirecting(true);
+        const success = await login(values, helpers);
+        if (!success) {
+          setRedirecting(false);
+        }
       }
     } catch (err: any) {
       helpers.setStatus({ error: err.message || "Authentication failed" });
@@ -59,6 +64,14 @@ export default function LoginPage() {
       helpers.setSubmitting(false);
     }
   };
+
+  if (redirecting) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   if (magicLinkSent) {
     return (

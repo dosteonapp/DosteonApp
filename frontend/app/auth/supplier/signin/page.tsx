@@ -26,12 +26,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'password' | 'magic'>('password');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
 
   const handleSubmit = async (
     values: LoginValues,
     helpers: FormikHelpers<LoginValues>
   ) => {
+    let success = false;
     try {
       if (loginMethod === 'magic') {
         if (!values.email) {
@@ -40,13 +42,18 @@ export default function LoginPage() {
         }
         await sendMagicLink(values.email);
         setMagicLinkSent(true);
+        success = true;
       } else {
-        await login(values, helpers);
+        setRedirecting(true);
+        success = await login(values, helpers);
       }
     } catch (err: any) {
       helpers.setStatus({ error: err.message || "Authentication failed" });
     } finally {
       helpers.setSubmitting(false);
+      if (!success) {
+        setRedirecting(false);
+      }
     }
   };
 
@@ -57,6 +64,14 @@ export default function LoginPage() {
       toast.error(err.message || "Social login failed");
     }
   };
+
+  if (redirecting) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-xl mx-auto">

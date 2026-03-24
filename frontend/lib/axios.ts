@@ -81,8 +81,18 @@ axiosInstance.interceptors.response.use(
 
     const friendlyDetail = getFriendlyErrorMessage(detail);
 
+    // Detect auth login endpoint to avoid treating credential errors
+    // as session expiry (we want the caller to handle these)
+    const isAuthLoginRequest = url.endsWith("/auth/login") || url === "auth/login";
+
     // 3. Handle 401 — attempt token refresh then retry
     if (errorStatus === 401 && !error.config._retry) {
+      // For direct login calls, skip global 401 handling so the
+      // signin pages can show their own error / failed screen.
+      if (isAuthLoginRequest) {
+        return Promise.reject(error);
+      }
+
       error.config._retry = true;
       try {
         const { createClient } = await import("./supabase/client");
@@ -97,11 +107,18 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(error.config);
       } catch {
         // Refresh failed — redirect to login
-        if (typeof window !== "undefined" && window.location.pathname !== "/auth/restaurant/signin") {
+        if (typeof window !== "undefined") {
+          const currentPath = window.location.pathname;
+          const redirectPath = currentPath.includes("/supplier")
+            ? "/auth/supplier/signin"
+            : "/auth/restaurant/signin";
+
+          if (currentPath !== redirectPath) {
           toast.warning("Session Expired", { description: "Please sign in again to continue." });
           setTimeout(() => {
-            window.location.href = "/auth/restaurant/signin";
+              window.location.href = redirectPath;
           }, 1500);
+          }
         }
       }
       return Promise.reject(error);
@@ -110,8 +127,15 @@ axiosInstance.interceptors.response.use(
     // 4. Handle specific status codes
     switch (errorStatus) {
       case 401:
-        if (typeof window !== "undefined" && window.location.pathname !== "/auth/restaurant/signin") {
-          toast.warning("Session Expired", { description: "Please sign in again to continue." });
+        if (!isAuthLoginRequest && typeof window !== "undefined") {
+          const currentPath = window.location.pathname;
+          const redirectPath = currentPath.includes("/supplier")
+            ? "/auth/supplier/signin"
+            : "/auth/restaurant/signin";
+
+          if (currentPath !== redirectPath) {
+            toast.warning("Session Expired", { description: "Please sign in again to continue." });
+          }
         }
         break;
       case 404:
