@@ -89,17 +89,44 @@ class AuthService:
             org_id = org["id"]
 
             # 2. Create User via Supabase Admin API
-            user_res = supabase.auth.admin.create_user({
-                "email": user_data.email,
-                "password": user_data.password,
-                "email_confirm": False,
-                "user_metadata": {
-                    "first_name": user_data.first_name,
-                    "last_name": user_data.last_name,
-                    "role": user_data.role,
-                    "organization_id": str(org_id)
-                }
-            })
+            try:
+                user_res = supabase.auth.admin.create_user({
+                    "email": user_data.email,
+                    "password": user_data.password,
+                    "email_confirm": False,
+                    "user_metadata": {
+                        "first_name": user_data.first_name,
+                        "last_name": user_data.last_name,
+                        "role": user_data.role,
+                        "organization_id": str(org_id)
+                    }
+                })
+            except Exception as e:
+                error_str = str(e)
+                print(f"Supabase admin.create_user failed: {error_str}")
+
+                # In local development, fall back to the standard sign_up flow
+                # if the service role key is not allowed. This avoids blocking
+                # local testing when SUPABASE_SERVICE_ROLE_KEY is misconfigured.
+                if settings.ENV == "development" and "user not allowed" in error_str.lower():
+                    fallback_res = supabase.auth.sign_up({
+                        "email": user_data.email,
+                        "password": user_data.password,
+                        "options": {
+                            "email_redirect_to": settings.AUTH_REDIRECT_URL,
+                            "data": {
+                                "first_name": user_data.first_name,
+                                "last_name": user_data.last_name,
+                                "role": user_data.role,
+                                "organization_id": str(org_id),
+                            },
+                        },
+                    })
+                    user_res = fallback_res
+                else:
+                    # In non-dev environments or for other errors, propagate
+                    # so we can surface a proper signup failure.
+                    raise
 
             if not user_res or not user_res.user:
                 raise HTTPException(
