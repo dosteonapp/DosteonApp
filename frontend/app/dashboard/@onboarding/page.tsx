@@ -227,21 +227,6 @@ const OnboardingPage = () => {
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-50/30 rounded-full -ml-16 -mb-16 blur-3xl opacity-50" />
         </div>
 
-        {/* Footer */}
-        <div className="mt-12 flex items-center justify-center gap-6 text-slate-400 font-bold text-sm tracking-tight px-4">
-          <div className="flex items-center gap-2">
-            <div className="h-5 w-5 rounded-full bg-slate-100 flex items-center justify-center">
-              <CheckCircle2 size={12} className="text-slate-400" />
-            </div>
-            <span>Secure Session</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-5 w-5 rounded-full bg-slate-100 flex items-center justify-center">
-              <CheckCircle2 size={12} className="text-slate-400" />
-            </div>
-            <span>Compliance Ready</span>
-          </div>
-        </div>
       </div>
     </div>
   );
