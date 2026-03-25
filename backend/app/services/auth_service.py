@@ -438,9 +438,19 @@ class AuthService:
 
     async def reset_password(self, request: PasswordResetConfirm):
         try:
-            supabase.auth.set_session(request.access_token, "")
-            supabase.auth.update_user({"password": request.new_password})
+            user_res = supabase.auth.get_user(request.access_token)
+            if not user_res or not user_res.user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid or expired reset token."
+                )
+            supabase.auth.admin.update_user_by_id(
+                user_res.user.id,
+                {"password": request.new_password}
+            )
             return {"message": "Password updated successfully"}
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

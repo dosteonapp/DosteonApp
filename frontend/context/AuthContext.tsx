@@ -277,7 +277,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetFormStatus(helpers);
       await resetPasswordMutation(values);
       toast.success("Password has been reset successfully");
-      router.push("/");
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
     } finally {

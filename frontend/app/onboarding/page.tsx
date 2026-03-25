@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 // After onboarding (or skip), redirect to an email verification
 // completion screen before taking the user to signin.
 const POST_ONBOARDING_URL = "/auth/restaurant/status/email-verified";
+const SIGNIN_URL = "/auth/restaurant/signin";
 
 const OnboardingPage = () => {
   const router = useRouter();
