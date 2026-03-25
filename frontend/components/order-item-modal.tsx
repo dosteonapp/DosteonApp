@@ -25,10 +25,18 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+type OrderItem = {
+  name?: string;
+  unit?: string;
+  supplier?: string;
+  currentStock: number;
+  minLevel: number;
+};
+
 interface OrderItemModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item: any;
+  item: OrderItem;
 }
 
 export function OrderItemModal({

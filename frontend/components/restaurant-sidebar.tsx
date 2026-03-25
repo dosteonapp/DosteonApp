@@ -231,7 +231,13 @@ export function RestaurantSidebar() {
   );
 }
 
-function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock }: { route: any, pathname: string, collapsed: boolean, isLocked: boolean, shouldBlock: boolean }) {
+type SidebarRoute = {
+  href: string;
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock }: { route: SidebarRoute, pathname: string, collapsed: boolean, isLocked: boolean, shouldBlock: boolean }) {
     const isActive = pathname === route.href || (route.href !== "/dashboard" && pathname.startsWith(route.href));
     
     const handleClick = (e: React.MouseEvent) => {

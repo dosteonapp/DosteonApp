@@ -13,11 +13,22 @@ import { Input } from "@/components/ui/input";
 // import { CalendarIcon } from "lucide-react";
 // import { format } from "date-fns";
 
+type InventoryItemLite = {
+  name?: string;
+};
+
+type UsageLog = {
+  date: string;
+  openingStock: number;
+  usedStock: number;
+  closingStock: number;
+};
+
 interface LogUsageModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item: any;
-  onSave: (log: any) => void;
+  item: InventoryItemLite;
+  onSave: (log: UsageLog) => void;
   latestDate: string;
   currentLevel: number;
 }

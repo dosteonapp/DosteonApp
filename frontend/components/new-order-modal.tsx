@@ -355,7 +355,7 @@ export function NewOrderModal({ open, onOpenChange }: NewOrderModalProps) {
           <>
             <DialogHeader>
               <DialogTitle>New Order - Schedule Delivery</DialogTitle>
-              <DialogDescription>Choose when you'd like this order to be delivered</DialogDescription>
+              <DialogDescription>Choose when you&apos;d like this order to be delivered</DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               <div className="space-y-2">

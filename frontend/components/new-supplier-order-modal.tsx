@@ -435,7 +435,7 @@ export function NewSupplierOrderModal({
             <DialogHeader>
               <DialogTitle>New Order - Schedule Delivery</DialogTitle>
               <DialogDescription>
-                Choose when you'd like this order to be delivered
+                Choose when you&apos;d like this order to be delivered
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
@@ -587,7 +587,7 @@ export function NewSupplierOrderModal({
               <div className="rounded-md bg-blue-50 border border-blue-200 p-2 text-blue-800 text-sm">
                 <p className="font-medium">First Order with New Supplier</p>
                 <p className="mt-1">
-                  After placing this order, we'll add {supplier.name} to your
+                  After placing this order, we&apos;ll add {supplier.name} to your
                   list of connected suppliers for easier ordering in the future.
                 </p>
               </div>

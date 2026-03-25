@@ -79,10 +79,17 @@ export function ReviewOpeningChecklistModal({
       } else {
         onOpenChange(false);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === "string"
+          ? (error as { response: { data: { message: string } } }).response.data.message
+          : "Something went wrong while submitting the checklist.";
       toast({
         title: "Submission Failed",
-        description: error?.response?.data?.message || "Something went wrong while submitting the checklist.",
+        description: message,
         variant: "destructive",
       });
     } finally {
