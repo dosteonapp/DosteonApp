@@ -7,7 +7,7 @@ Apply to: `Production` (and `Preview` if needed)
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://vtgdoxvvxosrcyhbfiii.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0Z2RveHZ2eG9zcmN5aGJmaWlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNDk5NTUsImV4cCI6MjA4ODYyNTk1NX0.kXuhKCDPLDoEI4av0nuCX4iJJCqTB-ZBhLcm-nCeOOg
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your_supabase_anon_key>
 
 # Points to the Render backend — server-side only (not exposed to browser)
 BACKEND_URL=https://dosteonapp.onrender.com
