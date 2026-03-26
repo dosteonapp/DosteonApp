@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { RestaurantSidebar } from "@/components/restaurant-sidebar";
 import { ToastContainer } from "@/components/toast-container";
 import { Metadata } from "next";
@@ -6,6 +7,7 @@ import { RestaurantDayLifecycleProvider } from "@/components/day/RestaurantDayLi
 import { RestaurantDayLifecycleOverlay } from "@/components/day/RestaurantDayLifecycleOverlay";
 import { RestaurantDayRouteGuard } from "@/components/day/RestaurantDayRouteGuard";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { createClient } from "@/lib/supabase/server";
 
 import { SidebarProvider } from "@/context/SidebarContext";
 
@@ -16,11 +18,17 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RestaurantLayout({
+export default async function RestaurantLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !user.user_metadata?.onboarding_completed) {
+    redirect("/onboarding");
+  }
+
   return (
     <RestaurantDayLifecycleProvider>
       <SidebarProvider>
@@ -31,7 +39,7 @@ export default function RestaurantLayout({
               <DashboardHeader />
             </Suspense>
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                <div className="p-8 space-y-8">
+                <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
                     <RestaurantDayLifecycleOverlay />
                     <RestaurantDayRouteGuard>
                         {children}

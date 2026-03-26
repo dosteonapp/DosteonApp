@@ -123,6 +123,12 @@ export const restaurantOpsService = {
     return data;
   },
 
+  saveClosingChecklistDraft: async (payload: OpeningChecklistDraftPayload): Promise<{ success: boolean }> => {
+    if (useMocks) return { success: true };
+    const { data } = await axiosInstance.post("restaurant/closing/save-draft", payload);
+    return data;
+  },
+
   submitOpeningChecklist: async (payload: OpeningChecklistSubmitPayload): Promise<{ success: boolean }> => {
     if (useMocks) {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -137,6 +143,25 @@ export const restaurantOpsService = {
       return { success: true };
     }
     const { data } = await axiosInstance.post("restaurant/opening-checklist/submit", payload);
+    return data;
+  },
+
+  getSystemState: async (): Promise<{
+    systemState: "LOCKED" | "UNLOCKED";
+    canStartOpening: boolean;
+    openingAvailableAt: string | null;
+  }> => {
+    if (useMocks) {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('mock_day_status');
+        if (saved) {
+          const s = JSON.parse(saved);
+          return { systemState: s.state === "OPEN" ? "UNLOCKED" : "LOCKED", canStartOpening: true, openingAvailableAt: null };
+        }
+      }
+      return { systemState: "LOCKED", canStartOpening: true, openingAvailableAt: null };
+    }
+    const { data } = await axiosInstance.get("restaurant/system-state");
     return data;
   },
 

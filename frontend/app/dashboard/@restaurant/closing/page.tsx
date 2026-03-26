@@ -26,7 +26,6 @@ import {
   Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
   Select, 
@@ -44,10 +43,10 @@ import { useToast } from "@/hooks/use-toast";
 import { ReviewClosingChecklistModal } from "@/components/kitchen/ReviewClosingChecklistModal";
 import { InventoryUpdateItemModal } from "@/components/inventory/InventoryUpdateItemModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSidebar } from "@/context/SidebarContext";
-import { 
-    UnifiedHeroSurface, 
-    UnifiedStatCard, 
+import {
+    UnifiedHeroSurface,
+    UnifiedStatCard,
+    UnifiedErrorBanner,
     AppContainer, 
     InriaHeading, 
     FigtreeText,
@@ -58,7 +57,6 @@ import {
 export default function ClosingPage() {
   const lifecycle = useRestaurantDayLifecycle();
   const { isOpen, isClosing, isClosed, status } = lifecycle;
-  const { isSidebarCollapsed } = useSidebar();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [closingIndicators, setClosingIndicators] = useState({ itemsUsed: 0, itemsWasted: 0 });
@@ -68,7 +66,12 @@ export default function ClosingPage() {
   const [selectedItemForEdit, setSelectedItemForEdit] = useState<InventoryItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [verifiedItemIds, setVerifiedItemIds] = useState<Set<string>>(new Set());
+  const [closingCounts, setClosingCounts] = useState<Record<string, number>>({});
     const [error, setError] = useState<string | null>(null);
+
+  const handleCountChange = (itemId: string, value: number) => {
+    setClosingCounts(prev => ({ ...prev, [itemId]: value }));
+  };
 
   const handleEditCount = (item: InventoryItem) => {
     setSelectedItemForEdit(item);
@@ -108,11 +111,11 @@ export default function ClosingPage() {
 
   // Resume from draft
   useEffect(() => {
-    if (status?.metadata?.draft_confirmed_ids && items.length > 0) {
-        const draftIds = status.metadata.draft_confirmed_ids;
+    if (status?.metadata?.closing_draft_confirmed_ids && items.length > 0) {
+        const draftIds = status.metadata.closing_draft_confirmed_ids;
         setVerifiedItemIds(new Set(draftIds));
     }
-  }, [status?.metadata?.draft_confirmed_ids, items.length]);
+  }, [status?.metadata?.closing_draft_confirmed_ids, items.length]);
 
     if (isLoading && !items.length && !error) {
     return <ClosingSkeleton />;
@@ -127,9 +130,9 @@ export default function ClosingPage() {
 
   const handleSaveDraft = async () => {
     try {
-        await restaurantOpsService.saveOpeningChecklistDraft({ 
+        await restaurantOpsService.saveClosingChecklistDraft({
             confirmedIds: Array.from(verifiedItemIds),
-            counts: {} // For now just IDs as in opening, expandable late
+            counts: closingCounts
         });
         toast({
             title: "Progress Saved",
@@ -159,16 +162,15 @@ export default function ClosingPage() {
 
   return (
     <AppContainer className="pb-32">
-        {error && (
-            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {error}
-            </div>
-        )}
-        <ReviewClosingChecklistModal 
+        {error && <UnifiedErrorBanner message={error} />}
+        <ReviewClosingChecklistModal
             open={isReviewModalOpen}
             onOpenChange={setIsReviewModalOpen}
             summary={closingSummary}
-            items={items}
+            items={items.map(item => ({
+                ...item,
+                physicalCount: closingCounts[item.id] ?? item.currentStock
+            }))}
         />
 
 
@@ -288,12 +290,14 @@ export default function ClosingPage() {
                                     </div>
                                 ) : (
                                     sortedItems.map((item) => (
-                                        <ClosingCountRow 
-                                            key={item.id} 
-                                            item={item} 
+                                        <ClosingCountRow
+                                            key={item.id}
+                                            item={item}
                                             onEdit={handleEditCount}
                                             onVerify={handleVerifyItem}
                                             isVerified={verifiedItemIds.has(item.id)}
+                                            physicalCount={closingCounts[item.id] ?? item.currentStock}
+                                            onCountChange={handleCountChange}
                                         />
                                     ))
                                 )}
@@ -310,35 +314,32 @@ export default function ClosingPage() {
 
         {/* Fixed Closing Action Footer */}
         {isClosing && (
-            <div 
-                className={cn(
-                    "fixed bottom-0 right-0 left-0 transition-all duration-500 z-[100] p-0 bg-white/90 backdrop-blur-2xl border-t border-slate-100 flex items-center justify-end shadow-[0_-20px_50px_rgba(0,0,0,0.05)]",
-                    isSidebarCollapsed ? "md:left-[90px]" : "md:left-[300px]"
-                )}
+            <div
+                className="fixed bottom-0 right-0 left-0 md:left-[var(--sidebar-width)] transition-[left] duration-500 z-[100] bg-white/95 backdrop-blur-2xl border-t border-slate-100 shadow-[0_-20px_50px_rgba(0,0,0,0.05)]"
             >
-                <div className="w-full h-24 px-8 flex items-center justify-end gap-6">
-                    <Button 
+                <div className="w-full px-4 sm:px-8 py-4 flex items-center justify-end gap-3 sm:gap-4">
+                    <Button
                         variant="outline"
                         onClick={handleSaveDraft}
-                        className="h-14 px-10 rounded-[8px] border-indigo-100 bg-white font-black text-[#3B59DA] hover:bg-indigo-50 transition-all text-[15px] font-figtree shadow-sm active:scale-95"
+                        className="h-11 px-6 sm:px-8 rounded-[8px] border-indigo-100 bg-white font-bold text-[#3B59DA] hover:bg-indigo-50 transition-all text-[13px] sm:text-[14px] font-figtree shadow-sm active:scale-95"
                     >
-                        Save a draft
+                        Save draft
                     </Button>
-                                        <Button 
-                                                className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[8px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.2)] border-none text-[16px] transition-all active:scale-95 font-figtree"
-                                                onClick={() => {
-                                                    if (!verifiedItemIds.size) {
-                                                        toast({
-                                                            variant: "destructive",
-                                                            title: "Nothing to review yet",
-                                                            description: "Verify at least one item before reviewing your closing summary.",
-                                                        });
-                                                        return;
-                                                    }
-                                                    setIsReviewModalOpen(true);
-                                                }}
-                                        >
-                        Review & Close Kitchen <ArrowRight className="h-6 w-6" />
+                    <Button
+                        className="h-11 px-8 sm:px-10 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[8px] font-black gap-3 shadow-[0_8px_24px_rgba(59,89,218,0.25)] border-none text-[13px] sm:text-[15px] transition-all active:scale-95 font-figtree"
+                        onClick={() => {
+                            if (!verifiedItemIds.size) {
+                                toast({
+                                    variant: "destructive",
+                                    title: "Nothing to review yet",
+                                    description: "Verify at least one item before reviewing your closing summary.",
+                                });
+                                return;
+                            }
+                            setIsReviewModalOpen(true);
+                        }}
+                    >
+                        Review & Close <ArrowRight className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
@@ -356,16 +357,20 @@ export default function ClosingPage() {
   );
 }
 
-function ClosingCountRow({ 
-    item, 
-    onEdit, 
-    onVerify, 
-    isVerified 
-}: { 
-    item: InventoryItem, 
+function ClosingCountRow({
+    item,
+    onEdit,
+    onVerify,
+    isVerified,
+    physicalCount,
+    onCountChange
+}: {
+    item: InventoryItem,
     onEdit: (item: InventoryItem) => void,
     onVerify: (id: string) => void,
-    isVerified: boolean
+    isVerified: boolean,
+    physicalCount: number,
+    onCountChange: (itemId: string, value: number) => void
 }) {
     return (
         <UnifiedListRow className="p-5 md:p-6 transition-all hover:bg-[#F8FAFF]">
@@ -399,8 +404,21 @@ function ClosingCountRow({
                         <p className="text-[20px] font-black text-[#1E293B] font-figtree leading-none tabular-nums">0.00 <span className="text-[13px] font-bold text-slate-300 uppercase ml-0.5">{item.unit}</span></p>
                     </div>
                     <div className="flex flex-col text-left space-y-1.5">
-                        <FigtreeText className="text-[11px] font-black text-[#3B59DA] uppercase tracking-[0.2em] leading-none">Verified Closing Balance</FigtreeText>
-                        <p className="text-[28px] font-black text-[#3B59DA] font-figtree leading-none tabular-nums truncate">{item.currentStock} <span className="text-[14px] font-bold text-[#3B59DA]/30 uppercase ml-0.5">{item.unit}</span></p>
+                        <FigtreeText className="text-[11px] font-black text-[#3B59DA] uppercase tracking-[0.2em] leading-none">Physical Count</FigtreeText>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="number"
+                                min={0}
+                                step="any"
+                                value={physicalCount}
+                                onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    if (!isNaN(val) && val >= 0) onCountChange(item.id, val);
+                                }}
+                                className="w-28 h-10 text-[18px] font-black text-[#3B59DA] font-figtree tabular-nums border-[#3B59DA]/20 focus-visible:ring-indigo-500/20 bg-indigo-50/30 rounded-[8px] px-3"
+                            />
+                            <span className="text-[13px] font-bold text-[#3B59DA]/40 uppercase">{item.unit}</span>
+                        </div>
                     </div>
                 </div>
                 

@@ -27,6 +27,7 @@ import { LogoutButton } from "@/components/logout-button";
 
 import { useRestaurantDayLifecycle } from "./day/RestaurantDayLifecycleProvider";
 import { isModuleLocked, shouldBlockModuleAccess } from "@/lib/dayLifecycle/restaurantModuleAccess";
+import { isAdminRole } from "@/lib/permissions";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
@@ -74,8 +75,8 @@ export function RestaurantSidebar() {
       icon: Bell,
       title: "Notifications",
     },
-    // Settings is only visible to Owner/manager roles
-    ...(user && ["OWNER", "MANAGER"].includes(user.role)
+    // Settings is only visible to Owner/Manager roles
+    ...(user && isAdminRole(user.role)
       ? [
           {
             href: "/dashboard/settings",
@@ -246,7 +247,7 @@ function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock }: { ro
         toast({
           variant: "destructive",
           title: "Module locked",
-          description: "Clear your opening prep to unlock this module.",
+          description: "Complete Opening Stock to start the day.",
         });
       }
     };

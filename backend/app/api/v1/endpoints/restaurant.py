@@ -6,6 +6,7 @@ from app.api.deps import (
     get_admin_user,
     get_security_context,
     get_admin_context,
+    get_inventory_write_context,
     SecurityContext,
 )
 from app.schemas.inventory import (
@@ -40,26 +41,26 @@ async def get_inventory_items(ctx: SecurityContext = Depends(get_security_contex
 @router.post("/inventory/items")
 async def add_inventory_item(
     payload: RestaurantInventoryItemCreate,
-    ctx: SecurityContext = Depends(get_security_context)
+    ctx: SecurityContext = Depends(get_inventory_write_context),
 ):
-    """Add a new item to the restaurant inventory"""
+    """Add a new item to the restaurant inventory. Requires Owner/Manager/Procurement Officer."""
     return await restaurant_service.create_inventory_item(ctx.organization_id, payload.dict())
 
 @router.patch("/inventory/items/{id}")
 async def update_inventory_item(
     id: str,
     payload: RestaurantInventoryItemUpdate,
-    ctx: SecurityContext = Depends(get_security_context)
+    ctx: SecurityContext = Depends(get_inventory_write_context),
 ):
-    """Update an existing inventory item"""
+    """Update an existing inventory item. Requires Owner/Manager/Procurement Officer."""
     return await restaurant_service.update_inventory_item(ctx.organization_id, id, payload.dict(exclude_unset=True))
 
 @router.post("/inventory/update-stock")
 async def update_stock(
     payload: InventoryStockUpdate,
-    ctx: SecurityContext = Depends(get_security_context)
+    ctx: SecurityContext = Depends(get_inventory_write_context),
 ):
-    """Manually override current stock levels"""
+    """Manually override current stock levels. Requires Owner/Manager/Procurement Officer."""
     return await restaurant_service.update_item_stock(ctx.organization_id, payload.itemId, payload.newQuantity)
 
 @router.get("/inventory/items/{id}")
@@ -80,19 +81,24 @@ async def get_opening_checklist(ctx: SecurityContext = Depends(get_security_cont
 @router.post("/opening-checklist/save-draft")
 async def save_opening_checklist_draft(
     payload: OpeningChecklistDraft,
-    ctx: SecurityContext = Depends(get_security_context)
+    ctx: SecurityContext = Depends(get_inventory_write_context),
 ):
-    """Save progress of the daily opening stock count without submitting"""
+    """Save progress of the daily opening stock count. Requires Owner/Manager/Procurement Officer."""
     return await restaurant_service.save_opening_draft(ctx.organization_id, payload.dict())
 
 @router.post("/opening-checklist/submit")
 async def submit_opening_checklist(
     payload: OpeningChecklistSubmit,
-    ctx: SecurityContext = Depends(get_security_context)
+    ctx: SecurityContext = Depends(get_inventory_write_context),
 ):
-    """Submit the daily opening stock count"""
+    """Submit the daily opening stock count. Requires Owner/Manager/Procurement Officer."""
     return await restaurant_service.submit_opening_checklist(ctx.organization_id, payload.dict())
 
+
+@router.get("/system-state")
+async def get_system_state(ctx: SecurityContext = Depends(get_security_context)):
+    """Central source of truth: returns LOCKED or UNLOCKED based on DayStatus."""
+    return await restaurant_service.get_system_state(ctx.organization_id)
 
 @router.get("/day-status")
 async def get_day_status(ctx: SecurityContext = Depends(get_security_context)):
@@ -215,10 +221,19 @@ async def get_closing_indicators(ctx: SecurityContext = Depends(get_security_con
     return await restaurant_service.get_closing_indicators(ctx.organization_id)
 
 
+@router.post("/closing/save-draft")
+async def save_closing_checklist_draft(
+    payload: OpeningChecklistDraft,
+    ctx: SecurityContext = Depends(get_inventory_write_context),
+):
+    """Save progress of the closing stock count. Requires Owner/Manager/Procurement Officer."""
+    return await restaurant_service.save_closing_draft(ctx.organization_id, payload.dict())
+
+
 @router.post("/closing/submit")
 async def submit_closing_checklist(
     payload: ClosingChecklistSubmit,
-    ctx: SecurityContext = Depends(get_security_context)
+    ctx: SecurityContext = Depends(get_inventory_write_context),
 ):
-    """Submit the end-of-day closing checklist and mark the day as closed."""
+    """Submit the end-of-day closing checklist. Requires Owner/Manager/Procurement Officer."""
     return await restaurant_service.submit_closing_checklist(ctx.organization_id, payload.dict())

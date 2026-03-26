@@ -33,6 +33,9 @@
     --ring: 224 72% 54%;
 
     --radius: 0.5rem;
+
+    /* Sidebar width — set by JS; default prevents layout flash */
+    --sidebar-width: 300px;
   }
 
   .dark {
@@ -70,37 +73,103 @@
   * {
     @apply border-border;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground font-figtree;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Headings use Figtree in base; pages that want Inria Serif use InriaHeading component */
   h1, h2, h3, h4, h5, h6 {
     @apply font-figtree;
     letter-spacing: -0.01em;
   }
+
+  /* Consistent focus rings across interactive elements */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.4);
+    outline-offset: 2px;
+  }
 }
 
-/* Custom styles for tabs */
+/* ─────────────────────────────────────────
+   Scrollbar utilities
+   ───────────────────────────────────────── */
+
+/* Hide scrollbar while keeping scroll functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Styled thin scrollbar for modals / panels */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #e2e8f0;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #cbd5e1;
+}
+
+/* ─────────────────────────────────────────
+   Component utilities
+   ───────────────────────────────────────── */
+
+/* Active tab underline */
 .tabs-underline [data-state="active"] {
   @apply border-b-2 border-primary-500 font-medium;
 }
 
-/* Subtle hover effects for cards */
+/* Card hover interaction */
 .card-hover {
   @apply transition-all duration-200 hover:shadow-md hover:border-primary-100;
 }
 
-/* Gradient accents */
+/* Brand gradient */
 .accent-gradient {
   background: linear-gradient(135deg, #3851dd 0%, #02ca4e 100%);
 }
 
-/* Status indicators */
+/* Inline status dot */
 .status-indicator {
   @apply inline-block h-2 w-2 rounded-full;
 }
 
-/* Basic calendar styles */
+/* ─────────────────────────────────────────
+   Hero gradients
+   ───────────────────────────────────────── */
+
+.bg-hero-closing {
+  background: linear-gradient(135deg, #1b32b8 0%, #761dc3 50%, #091558 100%);
+}
+
+.bg-hero-locked-red {
+  background: linear-gradient(135deg, #3B59DA 0%, #DA3B3B 100%);
+}
+
+/* ─────────────────────────────────────────
+   React Day Picker overrides
+   ───────────────────────────────────────── */
+
 .rdp {
   --rdp-cell-size: 40px;
   --rdp-accent-color: hsl(var(--primary));
@@ -125,12 +194,4 @@
 .rdp-day_selected:hover {
   background-color: var(--rdp-accent-color);
   color: white;
-}
-/* Hero Page Gradients */
-.bg-hero-closing {
-  background: linear-gradient(135deg, #1b32b8 0%, #761dc3 50%, #091558 100%);
-}
-
-.bg-hero-locked-red {
-  background: linear-gradient(135deg, #3B59DA 0%, #DA3B3B 100%);
 }

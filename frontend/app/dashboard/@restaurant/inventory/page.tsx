@@ -24,17 +24,22 @@ import { restaurantOpsService, RunningLowItem } from "@/lib/services/restaurantO
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
+import { useUser } from "@/context/UserContext";
+import { canWriteInventory } from "@/lib/permissions";
 import { motion } from "framer-motion";
-import { 
-    UnifiedHeroSurface, 
-    UnifiedStatCard, 
-    AppContainer, 
-    InriaHeading, 
-    FigtreeText 
+import {
+    UnifiedHeroSurface,
+    UnifiedStatCard,
+    AppContainer,
+    InriaHeading,
+    FigtreeText,
+    UnifiedErrorBanner
 } from "@/components/ui/dosteon-ui";
 
 export default function InventoryPage() {
   const { isOpen } = useRestaurantDayLifecycle();
+  const { user } = useUser();
+  const hasInventoryWrite = canWriteInventory(user?.role);
   const [runningLowItems, setRunningLowItems] = useState<RunningLowItem[]>([]);
   const [stats, setStats] = useState<any>({ totalItems: 0, healthy: 0, low: 0, critical: 0, changes: { total: 0, healthy: 0, low: 0, critical: 0 } });
   const [isLoading, setIsLoading] = useState(true);
@@ -66,11 +71,7 @@ export default function InventoryPage() {
 
   return (
     <AppContainer className="pb-24">
-            {error && (
-                <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {error}
-                </div>
-            )}
+            {error && <UnifiedErrorBanner message={error} />}
       {/* Top Header Region (Only visible when locked) */}
       {!isOpen && (
         <div className="space-y-6 mb-10">
@@ -84,21 +85,23 @@ export default function InventoryPage() {
                   <FigtreeText className="text-slate-400 font-semibold text-[15px]">Manage your item stock levels and categories</FigtreeText>
               </div>
               
-              <div className="flex items-center gap-3">
-                  <Button 
-                    variant="outline" 
+              {hasInventoryWrite && (
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
                     disabled={true}
                     className="h-11 px-6 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white opacity-80 font-bold gap-3 shadow-none transition-all font-figtree text-[14px] cursor-not-allowed pointer-events-none"
                   >
-                      <RefreshIcon className="h-4 w-4" /> Update Inventory
+                    <RefreshIcon className="h-4 w-4" /> Update Inventory
                   </Button>
-                  <Button 
+                  <Button
                     disabled={true}
                     className="h-11 px-7 bg-[#3B59DA] text-white opacity-80 rounded-[8px] font-bold gap-3 transition-all border-none shadow-xl shadow-indigo-100 font-figtree text-[14px] cursor-not-allowed pointer-events-none"
                   >
-                      <PlusIcon className="h-4 w-4" /> Add New Product
+                    <PlusIcon className="h-4 w-4" /> Add New Product
                   </Button>
-              </div>
+                </div>
+              )}
           </div>
         </div>
       )}
@@ -122,7 +125,7 @@ export default function InventoryPage() {
                 <FigtreeText className="text-[13px] font-bold text-white leading-none whitespace-nowrap">{stats.totalItems} items need counting</FigtreeText>
             </div>
         ) : undefined}
-        topAction={isOpen && (
+        topAction={isOpen && hasInventoryWrite && (
             <div className="flex items-center gap-3">
                 <Button variant="outline" className="h-10 px-5 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-2.5 transition-all shadow-sm active:scale-95 font-figtree text-sm">
                     <RefreshIcon className="h-4 w-4" /> Update Inventory
@@ -293,14 +296,17 @@ export default function InventoryPage() {
 
 function RunningLowPanel({ items }: { items: RunningLowItem[] }) {
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[10px] border border-red-500 bg-white overflow-hidden shadow-sm p-8 md:p-10 mt-6"
+            className="rounded-[10px] border border-rose-200/80 bg-white overflow-hidden shadow-sm p-6 md:p-8 mt-6"
         >
-            <div className="flex items-center gap-3 mb-6 px-1">
-                <WarningIcon className="h-5 w-5 text-red-500 stroke-[2.5px]" />
-                <h3 className="text-base font-bold text-red-500 font-figtree tracking-tight">What's Running Low</h3>
+            <div className="flex items-center gap-3 mb-5 px-1">
+                <div className="h-8 w-8 rounded-[6px] bg-rose-50 flex items-center justify-center shrink-0">
+                    <WarningIcon className="h-4 w-4 text-rose-500 stroke-[2.5px]" />
+                </div>
+                <h3 className="text-[15px] font-bold text-[#1E293B] font-figtree tracking-tight">Running Low</h3>
+                <span className="text-[12px] font-semibold text-rose-500 font-figtree ml-1">— needs restocking</span>
             </div>
             
             <div className="space-y-4">
@@ -376,12 +382,17 @@ function InventoryLockedOverlay() {
 
 function InventorySkeleton() {
     return (
-        <div className="p-10 space-y-12 min-h-screen bg-white">
+        <div className="p-4 sm:p-6 md:p-10 space-y-8 min-h-screen">
             <div className="flex justify-between items-center">
-                <Skeleton className="h-12 w-64 rounded-[8px]" />
-                <Skeleton className="h-14 w-80 rounded-[8px]" />
+                <Skeleton className="h-10 w-48 rounded-[8px]" />
+                <Skeleton className="h-11 w-64 rounded-[8px]" />
             </div>
-            <Skeleton className="h-[440px] w-full rounded-[10px]" />
+            <Skeleton className="h-[360px] w-full rounded-[10px]" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-[140px] rounded-[8px]" />
+                ))}
+            </div>
         </div>
     );
 }

@@ -23,4 +23,6 @@ export interface DayStatus {
   updatedAt: string;
 }
 
+export type SystemState = "LOCKED" | "UNLOCKED";
+
 export type Role = "restaurant" | "supplier";

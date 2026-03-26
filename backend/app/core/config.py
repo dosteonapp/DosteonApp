@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     RESEND_API_KEY: Optional[str] = Field(None, validation_alias="RESEND_API_KEY")
     RESEND_FROM_EMAIL: Optional[str] = Field(None, validation_alias="RESEND_FROM_EMAIL")
 
+    # Internal admin API key — used to protect product review endpoints
+    ADMIN_API_KEY: Optional[str] = Field(None, validation_alias="ADMIN_API_KEY")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

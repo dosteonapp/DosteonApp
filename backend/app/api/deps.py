@@ -1,10 +1,11 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Header, status
 from fastapi.security import HTTPBearer
 from fastapi.security.http import HTTPAuthorizationCredentials
 from app.core.security import verify_supabase_token
 from app.db.repositories.profile_repository import profile_repo
 from app.core.logging import get_logger
-from typing import List
+from app.core.config import settings
+from typing import List, Optional
 from uuid import UUID
 
 logger = get_logger("deps")
@@ -38,7 +39,6 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
 
         from app.db.prisma import db  # noqa: F401 (kept for engine init side effects)
         from app.db.repositories.organization_repository import organization_repo
-        from app.db.repositories.inventory_repository import inventory_repo
         from app.core.supabase import supabase
         import asyncio
 
@@ -70,8 +70,8 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
                 org = await organization_repo._create_async(f"{first_name}'s Restaurant")
                 org_id = org["id"]
 
-            # Bootstrap organization inventory in the background (fire-and-forget)
-            asyncio.create_task(inventory_repo.bootstrap_organization(str(org_id)))
+            # NOTE: inventory is NOT bootstrapped here.
+            # ContextualProducts are created only from the user's onboarding selection.
 
             # Create or update profile idempotently
             profile_data = {
@@ -171,22 +171,63 @@ class RoleChecker:
         return user
 
 
-# Helper instances
+# ---------------------------------------------------------------------------
+# Role groups
+# ---------------------------------------------------------------------------
+# OWNER / MANAGER  → full access (settings, team, inventory, kitchen)
+# CHEF             → Procurement Officer: inventory write + kitchen
+# STAFF            → Kitchen Staff: kitchen only (read-only inventory)
+# ---------------------------------------------------------------------------
+
+# Human-readable display names exposed to the API (e.g. in error messages)
+ROLE_LABELS: dict[str, str] = {
+    "OWNER":    "Owner",
+    "MANAGER":  "Manager",
+    "CHEF":     "Procurement Officer",
+    "STAFF":    "Kitchen Staff",
+}
+
 RESTAURANT_ROLES = ["OWNER", "MANAGER", "CHEF", "STAFF"]
+
+# All authenticated restaurant users (read-only operations)
 get_restaurant_user = RoleChecker(RESTAURANT_ROLES)
+
+# Owner / Manager only (settings, team management)
 get_admin_user = RoleChecker(["OWNER", "MANAGER"])
 get_manager_user = RoleChecker(["OWNER", "MANAGER"])
+
+# Inventory writers: Owner, Manager, and Procurement Officer (CHEF)
+get_inventory_writer = RoleChecker(["OWNER", "MANAGER", "CHEF"])
+
 get_supplier_user = RoleChecker(["SUPPLIER"])
 
 
 async def get_security_context(user: dict = Depends(get_restaurant_user)) -> SecurityContext:
-    """Standard security context for restaurant endpoints.
-
-    Wraps the authenticated user and exposes organization_id, role, etc.
-    """
+    """Standard security context for restaurant endpoints (any authenticated role)."""
     return SecurityContext(user)
 
 
 async def get_admin_context(user: dict = Depends(get_admin_user)) -> SecurityContext:
-    """Security context for admin-only restaurant endpoints."""
+    """Security context for Owner/Manager-only endpoints (settings, team)."""
     return SecurityContext(user)
+
+
+async def get_inventory_write_context(user: dict = Depends(get_inventory_writer)) -> SecurityContext:
+    """Security context for inventory write endpoints.
+
+    Allowed roles: OWNER, MANAGER, CHEF (Procurement Officer).
+    Kitchen Staff (STAFF) receive 403.
+    """
+    return SecurityContext(user)
+
+
+def require_admin_key(x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key")):
+    """Validate the internal admin API key header.
+
+    Used to protect Dosteon-internal product review endpoints.
+    Set ADMIN_API_KEY in backend .env to enable.
+    """
+    if not settings.ADMIN_API_KEY:
+        raise HTTPException(status_code=503, detail="Admin API not configured on this server.")
+    if x_admin_key != settings.ADMIN_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid or missing X-Admin-Key header.")

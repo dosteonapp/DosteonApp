@@ -33,7 +33,7 @@ class InventoryService:
             await inventory_repo.add_event(
                 contextual_product_id=ctx["id"],
                 organization_id=str(organization_id),
-                event_type="OPENING",
+                event_type="OPENING_STOCK",
                 quantity=item_data.opening_stock,
                 unit=item_data.pack_unit or "units",
                 metadata={"reason": "Initial item setup"}

@@ -21,6 +21,7 @@ model Organization {
   id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name          String
   type          String          @default("restaurant")
+  address       String?
   logo_url      String?
   settings      Json?           @default("{\"opening_time\": \"08:00\", \"closing_time\": \"22:00\"}")
   created_at    DateTime        @default(now()) @db.Timestamptz(6)
@@ -124,6 +125,8 @@ model ContextualProduct {
   status                String    @default("active")
   image_url             String?
   is_active             Boolean   @default(true)
+  // true = user-created product awaiting admin promotion to CanonicalProduct
+  pending_canonical_review Boolean @default(false)
   created_at            DateTime  @default(now()) @db.Timestamptz(6)
   updated_at            DateTime  @default(now()) @db.Timestamptz(6)
 
@@ -143,13 +146,13 @@ model ContextualProduct {
 // ---------------------------------------------------------
 
 enum InventoryEventType {
-  OPENING
+  OPENING_STOCK
   RECEIVED
   USED
   WASTED
-  ADJUSTMENT
+  ADJUSTED
   TRANSFER
-  CLOSING_CORRECTION
+  CLOSING_STOCK
 }
 
 model InventoryEvent {

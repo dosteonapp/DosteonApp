@@ -7,18 +7,26 @@ from app.db.repositories.organization_repository import organization_repo
 from app.services.email_service import email_service
 from fastapi import HTTPException, status
 
-# Map frontend role values to valid Prisma UserRole enum values
+# Map frontend role values to valid Prisma UserRole enum values.
+# DB roles: OWNER / MANAGER (full access), CHEF (Procurement Officer), STAFF (Kitchen Staff)
 ROLE_MAP = {
-    "restaurant": "OWNER",
-    "supplier": "OWNER",
-    "admin": "OWNER",
-    "manager": "MANAGER",
-    "staff": "STAFF",
-    "chef": "CHEF",
-    "OWNER": "OWNER",
-    "MANAGER": "MANAGER",
-    "CHEF": "CHEF",
-    "STAFF": "STAFF",
+    # Signup/onboarding
+    "restaurant":           "OWNER",
+    "supplier":             "OWNER",
+    "admin":                "OWNER",
+    # Invite role keys (from TeamInviteRequest)
+    "owner_manager":        "MANAGER",
+    "procurement_officer":  "CHEF",
+    "kitchen_staff":        "STAFF",
+    # Raw enum strings (idempotent round-trips)
+    "OWNER":    "OWNER",
+    "MANAGER":  "MANAGER",
+    "CHEF":     "CHEF",
+    "STAFF":    "STAFF",
+    # Legacy lowercase aliases
+    "manager":  "MANAGER",
+    "staff":    "STAFF",
+    "chef":     "CHEF",
 }
 
 def map_role(role: str) -> str:
@@ -158,12 +166,7 @@ class AuthService:
                 }
             )
 
-            # 5. Bootstrap inventory in background — don't block signup response.
-            # This prevents the ~15s timeout caused by 58 sequential DB inserts.
-            from app.db.repositories.inventory_repository import inventory_repo
-            asyncio.create_task(inventory_repo.bootstrap_organization(str(org_id)))
-
-            # 6. Kick off verification email in the background so the
+            # 5. Kick off verification email in the background so the
             #    signup response can return quickly.
             asyncio.create_task(self._send_verification_email_background(user_data, org_id))
 
@@ -317,23 +320,55 @@ class AuthService:
         return updated
 
     async def onboard_user(self, org_data: dict, current_user: dict):
-        """
-        Skippable onboarding — updates the default org name if user provides one.
-        If skipped, the default org name stays and can be changed in Settings.
+        """Required onboarding — all 5 fields must be provided.
+
+        Fields expected in org_data:
+          organization_name       (str, required)
+          address                 (str, required)
+          opening_time            (str HH:MM, required)
+          closing_time            (str HH:MM, required)
+          selected_canonical_ids  (list[str], required, min 1)
         """
         try:
             user_id = current_user["id"]
             org_id = current_user.get("organization_id")
-            org_name = org_data.get("organization_name", "").strip()
 
             if not org_id:
+                raise HTTPException(status_code=400, detail="No organization linked to this user.")
+
+            org_name = (org_data.get("organization_name") or "").strip()
+            address = (org_data.get("address") or "").strip()
+            opening_time = (org_data.get("opening_time") or "").strip()
+            closing_time = (org_data.get("closing_time") or "").strip()
+            selected_ids: list = org_data.get("selected_canonical_ids") or []
+
+            missing = []
+            if not org_name:
+                missing.append("organization_name")
+            if not address:
+                missing.append("address")
+            if not opening_time:
+                missing.append("opening_time")
+            if not closing_time:
+                missing.append("closing_time")
+            if not selected_ids:
+                missing.append("selected_canonical_ids")
+
+            if missing:
                 raise HTTPException(
                     status_code=400,
-                    detail="No organization linked to this user."
+                    detail=f"Missing required fields: {', '.join(missing)}",
                 )
 
-            if org_name:
-                await organization_repo.update(org_id, {"name": org_name})
+            await organization_repo.update(org_id, {
+                "name": org_name,
+                "address": address,
+                "opening_time": opening_time,
+                "closing_time": closing_time,
+            })
+
+            from app.db.repositories.inventory_repository import inventory_repo
+            await inventory_repo.create_from_canonical_selection(str(org_id), selected_ids)
 
             supabase.auth.admin.update_user_by_id(
                 user_id,

@@ -11,10 +11,13 @@ from app.services.email_service import email_service
 
 
 INVITE_ROLE_MAP = {
-    # Maps invite payload roles to Prisma role + human-readable label
-    "owner_manager": ("OWNER", "Owner/manager"),
-    "procurement_officer": ("STAFF", "Proculement Officer"),
-    "kitchen_staff": ("CHEF", "kitchen staff"),
+    # Maps invite payload roles to Prisma UserRole enum + human-readable label
+    # OWNER/MANAGER → full access + settings
+    # CHEF (Procurement Officer) → inventory write + kitchen
+    # STAFF (Kitchen Staff) → kitchen only
+    "owner_manager":       ("MANAGER", "Owner/Manager"),
+    "procurement_officer": ("CHEF",    "Procurement Officer"),
+    "kitchen_staff":       ("STAFF",   "Kitchen Staff"),
 }
 
 

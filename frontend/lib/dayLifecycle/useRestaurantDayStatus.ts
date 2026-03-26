@@ -1,11 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { DayState, DayStatus, DayStep } from "./types";
+import { DayState, DayStatus, DayStep, SystemState } from "./types";
 import { restaurantDayStorage } from "./storage";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import { useUser } from "@/context/UserContext";
  
-const DEFAULT_ORG_ID = "org_123";
-
 // Determine today's date in local format (YYYY-MM-DD)
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
@@ -26,14 +24,15 @@ const INITIAL_CLOSING_STEPS: DayStep[] = [
 export function useRestaurantDayStatus() {
   const queryClient = useQueryClient();
   const { user } = useUser();
-  const orgId = user?.organization_id || DEFAULT_ORG_ID;
+  const orgId = user?.organization_id ?? null;
   const businessDate = getTodayString();
 
   const { data: status, isLoading } = useQuery({
     queryKey: ["restaurantDayStatus", orgId, businessDate],
+    enabled: !!orgId,
     queryFn: async () => {
       // 1. Try local storage first (immediate UI)
-      const saved = restaurantDayStorage.getStatus(orgId, businessDate);
+      const saved = restaurantDayStorage.getStatus(orgId!, businessDate);
       
       // 2. Fetch from service (actual API)
       try {
@@ -66,7 +65,7 @@ export function useRestaurantDayStatus() {
             updatedAt: new Date().toISOString(),
           };
 
-          restaurantDayStorage.saveStatus(orgId, resetStatus);
+          restaurantDayStorage.saveStatus(orgId!, resetStatus);
           return resetStatus;
         }
 
@@ -85,7 +84,7 @@ export function useRestaurantDayStatus() {
 
         // If local storage is stale compared to API, prefer API
         if (!saved || isActuallyOpen || apiState !== saved.state) {
-            restaurantDayStorage.saveStatus(orgId, initialStatus);
+            restaurantDayStorage.saveStatus(orgId!, initialStatus);
             return initialStatus;
         }
       } catch (err) {
@@ -102,7 +101,7 @@ export function useRestaurantDayStatus() {
         updatedAt: new Date().toISOString(),
       };
       
-      restaurantDayStorage.saveStatus(orgId, defaultStatus);
+      restaurantDayStorage.saveStatus(orgId!, defaultStatus);
       return defaultStatus;
     },
     staleTime: 60000, // 1 minute stale time for operational status
@@ -110,7 +109,7 @@ export function useRestaurantDayStatus() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: DayStatus) => {
-      restaurantDayStorage.saveStatus(orgId, newStatus);
+      if (orgId) restaurantDayStorage.saveStatus(orgId, newStatus);
       return newStatus;
     },
     onSuccess: (newStatus) => {
@@ -158,7 +157,7 @@ export function useRestaurantDayStatus() {
     };
 
     // 1. Sync update local storage IMMEDIATELY
-    restaurantDayStorage.saveStatus(orgId, updatedStatus);
+    restaurantDayStorage.saveStatus(orgId!, updatedStatus);
     
     // 2. Optimistically update React Query for ZERO latency transition
     queryClient.setQueryData(["restaurantDayStatus", orgId, businessDate], updatedStatus);
@@ -274,6 +273,17 @@ export function useRestaurantDayStatus() {
     enabled: !!orgId
   });
 
+  // Poll system state every 60 s so the 6-hour gap unblocks automatically
+  const { data: systemStateData } = useQuery({
+    queryKey: ["restaurantSystemState", orgId],
+    queryFn: () => restaurantOpsService.getSystemState(),
+    enabled: !!orgId,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
+  const isOpen = status?.state === DayState.OPEN;
+
   return {
     status,
     isLoading: isLoading && !status, // Only true if we have zero data (neither server nor storage)
@@ -286,16 +296,19 @@ export function useRestaurantDayStatus() {
     forceClose,
     startNextDay,
     // Selectors
-    isOpen: status?.state === DayState.OPEN,
+    isOpen,
     isOpening: status?.state === DayState.OPENING_IN_PROGRESS,
     isClosing: status?.state === DayState.CLOSING_IN_PROGRESS,
-    // Only treat the day as locked when it is explicitly
-    // marked CLOSED. PRE_OPEN represents a fresh day where
-    // opening workflows (like Daily Stock Count) should be
-    // available.
-    isLocked: status?.state === DayState.CLOSED,
+    // LOCKED = anything except OPEN (including PRE_OPEN, CLOSING_IN_PROGRESS, CLOSED)
+    // The Opening Stock workflow is the only feature available when LOCKED.
+    isLocked: !isOpen,
     isClosed: status?.state === DayState.CLOSED,
     isPreOpen: status?.state === DayState.PRE_OPEN,
+    // Central system state (spec: OPEN → UNLOCKED, everything else → LOCKED)
+    systemState: (isOpen ? "UNLOCKED" : "LOCKED") as SystemState,
+    // 6-hour gap: whether Opening Stock is currently available
+    canStartOpening: systemStateData?.canStartOpening ?? true,
+    openingAvailableAt: systemStateData?.openingAvailableAt ?? null,
     isClosingTimeReached: (() => {
         const closingStart = settings?.closing_start || "08:00 PM";
         const [time, period] = closingStart.split(" ");

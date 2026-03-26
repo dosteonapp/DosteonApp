@@ -127,6 +127,7 @@ class RestaurantService:
         return [self._map_inventory_event(e) for e in events]
 
     async def create_inventory_item(self, organization_id: str, payload: dict):
+        await self._require_unlocked(organization_id)
         name = payload.get("name")
         category = payload.get("category", "General")
         stock = float(payload.get("currentStock") or 0)
@@ -138,7 +139,10 @@ class RestaurantService:
         if not name:
             raise HTTPException(status_code=400, detail="Item name is required")
 
-        # Prefer linking to an existing canonical product when provided; otherwise ensure one exists
+        # Prefer linking to an existing canonical product when provided; otherwise ensure one exists.
+        # When the user creates a brand-new product (no canonical_id), flag it for admin review
+        # so it can be promoted to the global catalog if appropriate.
+        is_user_created = not canonical_id
         if canonical_id:
             canonical_product_id = str(canonical_id)
         else:
@@ -152,13 +156,14 @@ class RestaurantService:
             pack_unit=unit,
             storage_type=location,
             image_url=image_url,
-            status="Healthy" if stock > 0 else "Critical"
+            status="Healthy" if stock > 0 else "Critical",
+            pending_canonical_review=is_user_created,
         )
         if stock > 0:
             await inventory_repo.add_event(
                 contextual_product_id=str(item["id"]),
                 organization_id=str(organization_id),
-                event_type="OPENING",
+                event_type="OPENING_STOCK",
                 quantity=stock,
                 unit=unit,
                 metadata={"reason": "Initial item setup"}
@@ -166,6 +171,7 @@ class RestaurantService:
         return {"success": True, "item": item}
 
     async def update_inventory_item(self, organization_id: str, item_id: str, payload: dict):
+        await self._require_unlocked(organization_id)
         # Enforce that the contextual product belongs to the caller's organization
         existing = await inventory_repo.get_by_id(UUID(item_id))
         if not existing or str(existing.get("organization_id")) != str(organization_id):
@@ -195,7 +201,7 @@ class RestaurantService:
                 await inventory_repo.add_event(
                     contextual_product_id=str(existing["id"]),
                     organization_id=str(organization_id),
-                    event_type="ADJUSTMENT",
+                    event_type="ADJUSTED",
                     quantity=delta,
                     unit=unit_value,
                     metadata={"reason": "Manual stock adjustment via item update"}
@@ -208,6 +214,7 @@ class RestaurantService:
             raise HTTPException(status_code=400, detail=str(e))
 
     async def update_item_stock(self, organization_id: str, item_id: str, new_quantity: float):
+        await self._require_unlocked(organization_id)
         # Enforce that the contextual product belongs to the caller's organization
         existing = await inventory_repo.get_by_id(UUID(item_id))
         if not existing or str(existing.get("organization_id")) != str(organization_id):
@@ -221,7 +228,7 @@ class RestaurantService:
                 await inventory_repo.add_event(
                     contextual_product_id=str(existing["id"]),
                     organization_id=str(organization_id),
-                    event_type="ADJUSTMENT",
+                    event_type="ADJUSTED",
                     quantity=delta,
                     unit=unit_value,
                     metadata={"reason": "Manual stock override"}
@@ -232,13 +239,13 @@ class RestaurantService:
 
     def _map_inventory_event(self, e):
         action = "Updated"
-        if e.event_type == "OPENING": action = "Received"
+        if e.event_type == "OPENING_STOCK": action = "Received"
         elif e.event_type == "USED": action = "Removed"
         elif e.event_type == "WASTED": action = "Removed"
-        elif e.event_type == "ADJUSTMENT": action = "Updated"
+        elif e.event_type == "ADJUSTED": action = "Updated"
 
         performer = "System Agent"
-        if e.event_type in ["OPENING", "ADJUSTMENT"]:
+        if e.event_type in ["OPENING_STOCK", "ADJUSTED"]:
             performer = "Procurement Officer"
         elif e.event_type in ["USED", "WASTED"]:
             performer = "Kitchen Staff"
@@ -334,38 +341,62 @@ class RestaurantService:
             )
             return {"success": True}
         except Exception as e:
-            print(f"--- BACKEND DRAFT ERROR for {organization_id} ---")
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
+
+    async def save_closing_draft(self, organization_id: str, payload: dict):
+        try:
+            if not organization_id:
+                raise ValueError("No organization ID linked to user profile")
+
+            org_id_str = str(organization_id)
+            UUID(org_id_str)
+
+            from app.db.prisma import db
+            confirmed_ids = payload.get("confirmedIds", [])
+
+            ds = await db.daystatus.find_first(where={"organization_id": org_id_str})
+            if ds:
+                existing_meta = dict(ds.metadata) if ds.metadata else {}
+                existing_meta["closing_draft_confirmed_ids"] = confirmed_ids
+                await db.daystatus.update(
+                    where={"organization_id": org_id_str},
+                    data={"metadata": Json(existing_meta)}
+                )
+            return {"success": True}
+        except Exception as e:
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
 
     async def submit_opening_checklist(self, organization_id: str, payload: dict):
-        print(f"DEBUG: submitIncoming: org={organization_id}, counts_size={len(payload.get('counts', {}))}")
+        # Enforce 6-hour gap between closing and next Opening Stock submission
+        state = await self.get_system_state(organization_id)
+        if not state["canStartOpening"]:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Opening Stock is not available yet. Available at: {state['openingAvailableAt']}",
+            )
         try:
             from app.db.prisma import db
             counts = payload.get("counts", {})
-            
+
             # 1. Update all items in a single high-speed transaction
-            print("DEBUG: Starting bulk_add_opening_events...")
             await inventory_repo.bulk_add_opening_events(organization_id, counts)
-            print("DEBUG: bulk_add_opening_events SUCCESS")
 
             org_id_str = str(organization_id)
-            print(f"DEBUG: Checking DayStatus for {org_id_str}...")
             ds = await db.daystatus.find_first(where={"organization_id": org_id_str})
-            
+
             if ds:
-                print("DEBUG: Updating existing DayStatus...")
                 await db.daystatus.update(
                     where={"organization_id": org_id_str},
                     data={
                         "is_opening_completed": True,
                         "state": "OPEN",
                         "opened_at": datetime.utcnow(),
-                        "metadata": Json({}) 
+                        "metadata": Json({})
                     }
                 )
             else:
-                print("DEBUG: Creating new DayStatus...")
                 await db.daystatus.create(
                     data={
                         "organization_id": org_id_str,
@@ -377,14 +408,62 @@ class RestaurantService:
                         "metadata": Json({})
                     }
                 )
-            print("DEBUG: submit SUCCESSFUL")
             return {"success": True}
         except Exception as e:
-            print(f"--- BACKEND SUBMIT ERROR for {organization_id} ---")
-            print(f"Error Type: {type(e).__name__}")
-            print(f"Error Detail: {str(e)}")
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
+
+    OPENING_GAP_HOURS = 6  # Minimum hours between closing and next Opening Stock
+
+    async def get_system_state(self, organization_id: str):
+        """Single source of truth for system state.
+
+        Returns:
+          systemState       – "LOCKED" | "UNLOCKED"
+          canStartOpening   – whether Opening Stock is available right now
+          openingAvailableAt – ISO-8601 UTC datetime when it becomes available
+                               (None if already available or no previous close)
+        """
+        from app.db.prisma import db
+        from datetime import timedelta, timezone
+
+        if not organization_id:
+            return {"systemState": "LOCKED", "canStartOpening": True, "openingAvailableAt": None}
+
+        try:
+            ds = await db.daystatus.find_unique(where={"organization_id": str(organization_id)})
+
+            if ds and str(ds.state) == "OPEN":
+                return {"systemState": "UNLOCKED", "canStartOpening": False, "openingAvailableAt": None}
+
+            # LOCKED — check 6-hour gap since last close
+            can_start = True
+            available_at = None
+
+            if ds and ds.closed_at:
+                closed_utc = ds.closed_at.replace(tzinfo=timezone.utc) if ds.closed_at.tzinfo is None else ds.closed_at
+                gap_end = closed_utc + timedelta(hours=self.OPENING_GAP_HOURS)
+                now_utc = datetime.now(timezone.utc)
+                can_start = now_utc >= gap_end
+                if not can_start:
+                    available_at = gap_end.isoformat()
+
+            return {
+                "systemState": "LOCKED",
+                "canStartOpening": can_start,
+                "openingAvailableAt": available_at,
+            }
+        except Exception:
+            return {"systemState": "LOCKED", "canStartOpening": True, "openingAvailableAt": None}
+
+    async def _require_unlocked(self, organization_id: str):
+        """Raise 403 if the day is not OPEN (LOCKED state)."""
+        state = await self.get_system_state(organization_id)
+        if state["systemState"] != "UNLOCKED":
+            raise HTTPException(
+                status_code=403,
+                detail="Action not allowed: complete Opening Stock to unlock this feature."
+            )
 
     async def get_day_status(self, organization_id: str):
         try:
@@ -452,7 +531,6 @@ class RestaurantService:
                 "metadata": metadata if isinstance(metadata, dict) else {},
             }
         except Exception as e:
-            print(f"--- BACKEND DAY STATUS ERROR for {organization_id} ---")
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=f"Restaurant Service Error: {str(e)}")
 
@@ -541,6 +619,7 @@ class RestaurantService:
         return {"used": used, "wasted": wasted}
 
     async def record_kitchen_event(self, organization_id: str, item_id: str, amount: float, event_type: str, reason: str = None):
+        await self._require_unlocked(organization_id)
         # Ensure the item is within the caller's organization before mutating stock
         existing = await inventory_repo.get_by_id(UUID(item_id))
         if not existing or str(existing.get("organization_id")) != str(organization_id):
@@ -559,11 +638,13 @@ class RestaurantService:
 
     async def submit_closing_checklist(self, organization_id: str, payload: dict):
         """Persist a lightweight record of the closing checklist and mark the day as closed.
+        Only allowed when UNLOCKED (day is OPEN).
 
         This mirrors the opening checklist submission by updating DayStatus on the
         backend so future sessions (and other services) can see that the day was
         properly closed, while still keeping the detailed UI state local-first.
         """
+        await self._require_unlocked(organization_id)
         try:
             from app.db.prisma import db
 
@@ -604,9 +685,29 @@ class RestaurantService:
                     }
                 )
 
+            # Record CLOSING_STOCK snapshot events — physical count only, no stock mutation
+            for item in items:
+                item_id = item.get("id")
+                # Prefer user-entered physical count; fall back to system currentStock
+                raw_count = item.get("physicalCount") if item.get("physicalCount") is not None else item.get("currentStock")
+                if not item_id or raw_count is None:
+                    continue
+                try:
+                    closing_qty = float(raw_count)
+                except (TypeError, ValueError):
+                    continue
+                unit = item.get("unit") or "units"
+                await inventory_repo.record_snapshot_event(
+                    contextual_product_id=str(item_id),
+                    organization_id=org_id_str,
+                    event_type="CLOSING_STOCK",
+                    quantity=closing_qty,
+                    unit=unit,
+                    metadata={"reason": "Closing stock verification"},
+                )
+
             return {"success": True}
         except Exception as e:
-            print(f"--- BACKEND CLOSING SUBMIT ERROR for {organization_id} ---")
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
 

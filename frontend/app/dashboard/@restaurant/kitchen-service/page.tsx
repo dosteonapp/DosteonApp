@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { restaurantOpsService, InventoryItem } from "@/lib/services/restaurantOpsService";
@@ -37,13 +36,14 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { 
-    UnifiedHeroSurface, 
-    UnifiedStatCard, 
-    AppContainer, 
-    InriaHeading, 
+import {
+    UnifiedHeroSurface,
+    UnifiedStatCard,
+    AppContainer,
+    InriaHeading,
     FigtreeText,
-    UnifiedModal
+    UnifiedModal,
+    UnifiedErrorBanner
 } from "@/components/ui/dosteon-ui";
 import { KitchenLogModals } from "@/components/kitchen/KitchenLogModals";
 import { formatUserName } from "@/lib/utils";
@@ -100,11 +100,7 @@ export default function KitchenServicePage() {
 
   return (
     <AppContainer className="pb-24">
-      {error && (
-        <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <UnifiedErrorBanner message={error} />}
       {/* Page Header (Only visible when locked) */}
       {!isOpen && (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
@@ -237,44 +233,44 @@ export default function KitchenServicePage() {
                   </div>
                 ) : (
                 filteredItems.map((item) => (
-                  <Card key={item.id} className="rounded-[8px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 active:scale-[0.98] transition-all group p-5 flex flex-col justify-between space-y-6">
+                  <div key={item.id} className="rounded-[8px] border border-slate-100 overflow-hidden bg-white shadow-sm hover:shadow-[0_8px_24px_rgba(59,89,218,0.06)] hover:border-[#3B59DA]/20 active:scale-[0.98] transition-all group p-5 flex flex-col justify-between gap-5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1 overflow-hidden">
-                          <h3 className="font-bold text-[#1E293B] text-[17px] tracking-tight font-figtree truncate">{item.name}</h3>
-                          <FigtreeText className="text-[13px] text-slate-400 font-medium">
+                          <h3 className="font-bold text-[#1E293B] text-[16px] tracking-tight font-figtree truncate">{item.name}</h3>
+                          <FigtreeText className="text-[12px] text-slate-400 font-medium">
                             {item.currentStock} {item.unit || 'units'} remaining
                           </FigtreeText>
                         </div>
                         <Badge className={cn(
-                          "border-none rounded-[6px] font-bold text-[10px] px-2.5 py-1 uppercase tracking-tight font-figtree shrink-0 shadow-sm",
-                          item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" : 
+                          "border-none rounded-[6px] font-bold text-[10px] px-2 py-1 uppercase tracking-tight font-figtree shrink-0",
+                          item.status === 'Healthy' ? "bg-emerald-50 text-emerald-600" :
                           item.status === 'Low' ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
                         )}>
                           {item.status}
                         </Badge>
                       </div>
-     
-                      <div className="flex gap-3">
-                        <button 
-                          className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-[8px] border border-slate-100 bg-white hover:bg-emerald-50/50 hover:border-emerald-100 transition-all duration-300 group/btn active:scale-95" 
+
+                      <div className="flex gap-2.5">
+                        <button
+                          className="flex-1 flex flex-col items-center justify-center gap-2 py-3.5 rounded-[8px] border border-slate-100 bg-white hover:bg-emerald-50/50 hover:border-emerald-200/80 transition-all duration-200 group/btn active:scale-95"
                           onClick={() => handleLogClick(item, 'usage')}
                         >
-                          <div className="h-10 w-10 rounded-[6px] bg-emerald-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
-                            <Package className="h-5 w-5 text-emerald-500" />
+                          <div className="h-9 w-9 rounded-[6px] bg-emerald-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+                            <Package className="h-4 w-4 text-emerald-500" />
                           </div>
-                          <span className="text-[11px] font-bold text-slate-500 group-hover/btn:text-emerald-600">Log Usage</span>
+                          <span className="text-[11px] font-bold text-slate-400 group-hover/btn:text-emerald-600 transition-colors">Log Usage</span>
                         </button>
-                        <button 
-                          className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-[8px] border border-slate-100 bg-white hover:bg-rose-50/50 hover:border-rose-100 transition-all duration-300 group/btn active:scale-95" 
+                        <button
+                          className="flex-1 flex flex-col items-center justify-center gap-2 py-3.5 rounded-[8px] border border-slate-100 bg-white hover:bg-rose-50/50 hover:border-rose-200/80 transition-all duration-200 group/btn active:scale-95"
                           onClick={() => handleLogClick(item, 'waste')}
                         >
-                          <div className="h-10 w-10 rounded-[6px] bg-rose-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
-                            <Trash2 className="h-5 w-5 text-rose-500" />
+                          <div className="h-9 w-9 rounded-[6px] bg-rose-50 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+                            <Trash2 className="h-4 w-4 text-rose-500" />
                           </div>
-                          <span className="text-[11px] font-bold text-slate-500 group-hover/btn:text-rose-600">Log Waste</span>
+                          <span className="text-[11px] font-bold text-slate-400 group-hover/btn:text-rose-600 transition-colors">Log Waste</span>
                         </button>
                       </div>
-                  </Card>
+                  </div>
                 ))
                 )
             )}
@@ -353,11 +349,11 @@ function KitchenServiceLockedOverlay() {
 
 function KitchenSkeleton() {
     return (
-        <div className="p-10 space-y-12 min-h-screen bg-white">
-            <Skeleton className="h-[360px] w-full rounded-2xl" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="p-4 sm:p-6 md:p-10 space-y-8 min-h-screen">
+            <Skeleton className="h-[260px] w-full rounded-[10px]" />
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
-                    <Skeleton key={i} className="h-64 w-full rounded-[28px]" />
+                    <Skeleton key={i} className="h-52 w-full rounded-[8px]" />
                 ))}
             </div>
         </div>

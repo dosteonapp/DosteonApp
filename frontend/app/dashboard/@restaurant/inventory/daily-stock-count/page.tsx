@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
+import {
   Package,
   ArrowRight,
   CheckCircle2,
   X,
   ArrowLeft,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,13 +44,38 @@ import {
 export default function DailyStockCountPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { isLocked, status } = useRestaurantDayLifecycle();
+  const { status, canStartOpening, openingAvailableAt, isOpen } = useRestaurantDayLifecycle();
+
+  // Day already open — opening stock is no longer relevant
+  useEffect(() => {
+    if (isOpen) {
+      router.replace("/dashboard/inventory");
+    }
+  }, [isOpen, router]);
   const [items, setItems] = useState<OpeningStockItem[]>([]);
   const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [showReview, setShowReview] = useState(false);
   const [editingItem, setEditingItem] = useState<OpeningStockItem | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [now, setNow] = useState(() => new Date());
+
+  // Keep the countdown live — update every second while gap is active
+  useEffect(() => {
+    if (canStartOpening) return;
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, [canStartOpening]);
+
+  const timeUntilOpen = useMemo(() => {
+    if (!openingAvailableAt || canStartOpening) return null;
+    const diff = new Date(openingAvailableAt).getTime() - now.getTime();
+    if (diff <= 0) return null;
+    const h = Math.floor(diff / 3_600_000);
+    const m = Math.floor((diff % 3_600_000) / 60_000);
+    const s = Math.floor((diff % 60_000) / 1_000);
+    return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+  }, [openingAvailableAt, canStartOpening, now]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -136,7 +162,51 @@ export default function DailyStockCountPage() {
   const progressPercent = totalCount > 0 ? Math.round((progressCount / totalCount) * 100) : 0;
 
     if (isLoading) return <OpeningSkeleton />;
-  
+
+  // 6-hour gap — show a waiting screen until opening becomes available
+  if (!canStartOpening) {
+    const readableTime = openingAvailableAt
+      ? new Date(openingAvailableAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : null;
+    return (
+      <AppContainer>
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            className="h-10 px-6 rounded-[8px] border-slate-200 bg-white text-slate-600 hover:text-[#3B59DA] font-semibold gap-2 transition-all shadow-sm active:scale-95 font-figtree"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back
+          </Button>
+        </div>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center gap-8 px-4">
+          <div className="h-24 w-24 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100">
+            <Clock className="h-12 w-12 text-[#3B59DA]" />
+          </div>
+          <div className="space-y-3 max-w-md">
+            <h2 className="text-[28px] font-bold text-[#1E293B] tracking-tight font-figtree">
+              Opening Not Available Yet
+            </h2>
+            <p className="text-slate-500 font-medium text-[15px] leading-relaxed font-figtree">
+              A 6-hour rest period is required between closing and the next opening.
+              {readableTime && (
+                <> Opening Stock will be available at <span className="font-bold text-[#3B59DA]">{readableTime}</span>.</>
+              )}
+            </p>
+          </div>
+          {timeUntilOpen && (
+            <div className="bg-[#f5f6ff] border border-[#98a6f9] rounded-[16px] px-10 py-6 text-center">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-2 font-figtree">Opens in</p>
+              <p className="text-[40px] font-black text-[#3B59DA] font-figtree tabular-nums leading-none">
+                {timeUntilOpen}
+              </p>
+            </div>
+          )}
+        </div>
+      </AppContainer>
+    );
+  }
+
   // Dynamic Sorting: Unconfirmed items at top, confirmed at bottom
   const sortedItems = [...items].sort((a, b) => {
     const aConf = confirmedIds.has(a.id);
@@ -230,14 +300,13 @@ export default function DailyStockCountPage() {
 
             <div className="grow space-y-4">
                 {sortedItems.map((item, idx) => (
-                    <StockRow 
-                        key={item.id} 
-                        item={item} 
+                    <StockRow
+                        key={item.id}
+                        item={item}
                         isConfirmed={confirmedIds.has(item.id)}
                         onConfirm={() => handleConfirm(item.id)}
                         onEdit={() => handleEditAmount(item)}
                         idx={idx}
-                        isLocked={isLocked}
                     />
                 ))}
             </div>
@@ -245,30 +314,33 @@ export default function DailyStockCountPage() {
       </div>
 
       {/* Sticky Bottom Bar */}
-      <div 
-        className="fixed bottom-0 right-0 z-[60] p-10 bg-white/95 backdrop-blur-xl border-t border-slate-100 shadow-[0_-20px_60px_rgba(0,0,0,0.05)] transition-[left] duration-500"
-        style={{ left: 'var(--sidebar-width)' }}
+      <div
+        className="fixed bottom-0 right-0 left-0 md:left-[var(--sidebar-width)] z-[60] px-4 sm:px-8 py-5 bg-white/95 backdrop-blur-xl border-t border-slate-100 shadow-[0_-20px_60px_rgba(0,0,0,0.05)] transition-[left] duration-500"
       >
-          <motion.div 
+          <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="w-full flex items-center justify-end gap-6"
+            className="w-full flex items-center justify-end gap-3 sm:gap-4"
           >
-              <Button 
-                  variant="outline" 
-                  className="h-16 px-12 rounded-[8px] border-[#3B59DA] text-[#3B59DA] hover:bg-slate-50 font-semibold transition-all text-[17px] shadow-sm font-figtree"
+              <Button
+                  variant="outline"
+                  className="h-12 px-6 sm:px-10 rounded-[8px] border-[#3B59DA] text-[#3B59DA] hover:bg-indigo-50 font-semibold transition-all text-[14px] sm:text-[15px] shadow-sm font-figtree active:scale-95"
                   onClick={handleSaveDraft}
               >
-                  Save a draft
+                  Save draft
               </Button>
-              <Button 
+              <Button
                   className={cn(
-                      "h-16 px-14 rounded-[8px] font-black gap-4 transition-all border-none text-[18px] shadow-2xl flex items-center bg-[#3B59DA] hover:bg-[#2D46B2] text-white"
+                      "h-12 px-8 sm:px-12 rounded-[8px] font-black gap-3 transition-all border-none text-[14px] sm:text-[16px] shadow-xl flex items-center active:scale-95",
+                      confirmedIds.size >= items.length && items.length > 0
+                          ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-indigo-900/20"
+                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
                   )}
+                  disabled={confirmedIds.size < items.length || items.length === 0}
                   onClick={handleComplete}
               >
-                  Review & Complete Opening
-                  <ArrowRight className="h-6 w-6" />
+                  Review & Complete
+                  <ArrowRight className="h-5 w-5" />
               </Button>
           </motion.div>
       </div>
@@ -296,13 +368,12 @@ export default function DailyStockCountPage() {
   );
 }
 
-function StockRow({ item, isConfirmed, onConfirm, onEdit, idx, isLocked }: { 
-    item: OpeningStockItem, 
-    isConfirmed: boolean, 
-    onConfirm: () => void, 
+function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
+    item: OpeningStockItem,
+    isConfirmed: boolean,
+    onConfirm: () => void,
     onEdit: () => void,
-    idx: number,
-    isLocked: boolean
+    idx: number
 }) {
     return (
         <UnifiedListRow 
@@ -345,27 +416,23 @@ function StockRow({ item, isConfirmed, onConfirm, onEdit, idx, isLocked }: {
 
                 {/* Actions */}
                 <div className="flex items-center gap-4 w-full lg:w-auto shrink-0 mt-2 lg:mt-0">
-                    <Button 
-                        variant="outline" 
+                    <Button
+                        variant="outline"
                         className="h-14 px-8 rounded-[8px] border-slate-200 font-bold text-slate-500 hover:text-[#3B59DA] hover:border-[#3B59DA] transition-all text-[15px] flex-1 lg:flex-none font-figtree bg-white shadow-sm"
-                        disabled={isLocked}
                         onClick={onEdit}
                     >
-                        Edit Amount
+                        Edit Amount Added
                     </Button>
-                    <Button 
+                    <Button
                         className={cn(
                             "h-14 px-10 rounded-[8px] font-black transition-all flex-1 lg:flex-none min-w-[140px] font-figtree text-[15px] border-none",
-                            isConfirmed 
-                                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" 
+                            isConfirmed
+                                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
                                 : "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-lg shadow-indigo-900/10"
                         )}
-                        disabled={isLocked}
                         onClick={onConfirm}
                     >
-                        {isLocked ? (
-                            "Locked"
-                        ) : isConfirmed ? (
+                        {isConfirmed ? (
                             <span className="flex items-center gap-2">Confirmed <CheckCircle2 className="h-4 w-4" /></span>
                         ) : "Confirm"}
                     </Button>
@@ -535,15 +602,13 @@ function CircularProgress({ percentage }: { percentage: number }) {
 
 function OpeningSkeleton() {
     return (
-        <div className="p-10 space-y-12 bg-white min-h-screen">
-            <div className="flex justify-between items-center">
-                <Skeleton className="h-12 w-40 rounded-xl" />
-            </div>
-            <Skeleton className="h-[360px] w-full rounded-[32px]" />
-            <div className="space-y-6">
-                 <Skeleton className="h-32 w-full rounded-[28px]" />
-                 <Skeleton className="h-32 w-full rounded-[28px]" />
-                 <Skeleton className="h-32 w-full rounded-[28px]" />
+        <div className="p-4 sm:p-6 md:p-10 space-y-8 min-h-screen">
+            <Skeleton className="h-10 w-24 rounded-[8px]" />
+            <Skeleton className="h-[260px] w-full rounded-[10px]" />
+            <div className="space-y-4">
+                <Skeleton className="h-28 w-full rounded-[8px]" />
+                <Skeleton className="h-28 w-full rounded-[8px]" />
+                <Skeleton className="h-28 w-full rounded-[8px]" />
             </div>
         </div>
     );

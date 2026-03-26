@@ -279,7 +279,7 @@ class InventoryRepository:
                 {
                     "contextual_product_id": item_id,
                     "organization_id": organization_id,
-                    "event_type": "OPENING",
+                    "event_type": "OPENING_STOCK",
                     "quantity": quantity,
                     "unit": "units",
                     "metadata": Json({"reason": "Opening stock count"}),
@@ -350,6 +350,23 @@ WHERE cp.id = v.id;
 
         return event
 
+    async def record_snapshot_event(self, contextual_product_id: str, organization_id: str, event_type: str, quantity: float, unit: str, metadata: dict = None):
+        """Insert an audit event without mutating current_stock.
+
+        Use for snapshot-style events (e.g. CLOSING_STOCK) where the quantity
+        is a physical count, not a delta to apply to the running balance.
+        """
+        return await db.inventoryevent.create(
+            data={
+                "contextual_product_id": contextual_product_id,
+                "organization_id": organization_id,
+                "event_type": event_type,
+                "quantity": quantity,
+                "unit": unit,
+                "metadata": Json(metadata or {})
+            }
+        )
+
     async def get_recent_events(self, organization_id: str, limit: int = 5) -> List[InventoryEvent]:
         return await db.inventoryevent.find_many(
             where={"organization_id": organization_id},
@@ -357,6 +374,70 @@ WHERE cp.id = v.id;
             order={"created_at": "desc"},
             take=limit
         )
+
+    async def create_from_canonical_selection(self, organization_id: str, canonical_ids: List[str]) -> int:
+        """Bulk-create ContextualProducts for the given canonical IDs.
+
+        Idempotent: skips any canonical IDs that already have a ContextualProduct
+        for this organization. Returns the count of newly created products.
+        """
+        if not canonical_ids:
+            return 0
+
+        existing = await db.contextualproduct.find_many(
+            where={
+                "organization_id": organization_id,
+                "canonical_product_id": {"in": canonical_ids},
+            }
+        )
+        existing_canonical_ids = {p.canonical_product_id for p in existing}
+        missing_ids = [cid for cid in canonical_ids if cid not in existing_canonical_ids]
+
+        if not missing_ids:
+            return 0
+
+        canonicals = await db.canonicalproduct.find_many(
+            where={"id": {"in": missing_ids}}
+        )
+        if not canonicals:
+            return 0
+
+        await db.contextualproduct.create_many(
+            data=[
+                {
+                    "organization_id": organization_id,
+                    "canonical_product_id": c.id,
+                    "current_stock": 0.0,
+                    "reorder_threshold": 5.0,
+                    "critical_threshold": 2.0,
+                    "status": "active",
+                    "is_active": True,
+                }
+                for c in canonicals
+            ],
+            skip_duplicates=True,
+        )
+        return len(canonicals)
+
+    async def get_pending_review_products(self) -> List[dict]:
+        """Return all ContextualProducts flagged for admin promotion review."""
+        products = await db.contextualproduct.find_many(
+            where={"pending_canonical_review": True},
+            include={"canonical": True, "organization": True},
+        )
+        result = []
+        for p in products:
+            result.append({
+                "id": p.id,
+                "organization_id": p.organization_id,
+                "organization_name": p.organization.name if p.organization else None,
+                "name": p.name or (p.canonical.name if p.canonical else "Unknown"),
+                "category": p.canonical.category if p.canonical else "General",
+                "sku": p.sku or (p.canonical.sku if p.canonical else None),
+                "canonical_product_id": p.canonical_product_id,
+                "created_at": p.created_at,
+            })
+        return result
 
 
 inventory_repo = InventoryRepository()

@@ -54,7 +54,7 @@ class OrganizationRepository:
     async def update(self, org_id: str, data: dict) -> dict:
         """Flexible update for organization fields"""
         # Extract fields that belong to the model direct, others go to settings
-        model_fields = ["name", "type", "logo_url"]
+        model_fields = ["name", "type", "logo_url", "address"]
         update_data = {}
         settings_data = {}
 

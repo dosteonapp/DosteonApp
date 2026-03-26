@@ -205,16 +205,9 @@ export default function RestaurantDashboardPage() {
 
 function DashboardSkeleton() {
   return (
-    <div className="p-6 md:p-10 space-y-10 min-h-screen bg-white">
-      <Skeleton className="h-[420px] w-full rounded-[32px]" />
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-48 rounded-xl" />
-        <div className="grid grid-cols-1 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-2xl" />
-          ))}
-        </div>
-      </div>
+    <div className="p-4 sm:p-6 md:p-10 space-y-8 min-h-screen">
+      <Skeleton className="h-[280px] w-full rounded-[10px]" />
+      <Skeleton className="h-[400px] w-full rounded-[10px]" />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { X, Lock, ArrowRight } from "lucide-react";
+import { X, Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
@@ -28,8 +28,21 @@ export const FigtreeText = ({ className, children, ...props }: React.HTMLAttribu
  * DOS 02: Spacing & Grid Layout
  */
 export const AppContainer = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <div className={cn("w-full space-y-8", className)}>
+  <div className={cn("w-full space-y-6 md:space-y-8", className)}>
     {children}
+  </div>
+);
+
+/**
+ * DOS 02b: Standardized error banner
+ */
+export const UnifiedErrorBanner = ({ message, className }: { message: string, className?: string }) => (
+  <div className={cn(
+    "flex items-start gap-3 rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 font-figtree",
+    className
+  )}>
+    <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+    <span className="font-medium leading-relaxed">{message}</span>
   </div>
 );
 
@@ -77,28 +90,28 @@ export const UnifiedStatCard = ({
 
   return (
     <div className={cn(
-      "bg-white rounded-[8px] p-5 md:p-7 min-h-[120px] border border-slate-100 transition-all font-figtree w-full min-w-0 shadow-[0_4px_16px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.05)] hover:border-indigo-100 active:scale-[0.98] flex flex-col justify-between overflow-hidden",
+      "bg-white rounded-[8px] p-4 md:p-6 min-h-[110px] border border-slate-100 transition-all font-figtree w-full min-w-0 shadow-[0_4px_16px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.05)] hover:border-indigo-100 active:scale-[0.98] flex flex-col justify-between overflow-hidden",
       className
     )}>
-      <div className="flex items-center gap-3 shrink-0">
-        <div className={cn("h-8 w-8 md:h-10 md:w-10 rounded-[6px] flex items-center justify-center shadow-sm shrink-0", colors[variant])}>
-          <Icon className="h-4 w-4 md:h-5 md:w-5 stroke-[2px]" />
+      <div className="flex items-center gap-2.5 shrink-0">
+        <div className={cn("h-8 w-8 rounded-[6px] flex items-center justify-center shadow-sm shrink-0", colors[variant])}>
+          <Icon className="h-4 w-4 stroke-[2px]" />
         </div>
-        <span className="text-[12px] md:text-[14px] font-semibold text-slate-500 leading-tight line-clamp-1">{label}</span>
+        <span className="text-[11px] md:text-[13px] font-semibold text-slate-500 leading-tight line-clamp-2">{label}</span>
       </div>
 
-      <div className="flex flex-col gap-2 py-2">
+      <div className="flex flex-col gap-1.5 pt-1">
         <div className={cn(
-        "relative z-10 w-full flex flex-col h-full",
-        textColors[variant], 
-        "font-semibold tracking-tight leading-none",
-        "text-[24px] md:text-[28px]",
-        valueClassName
-      )}>
+          "relative z-10 w-full flex flex-col h-full",
+          textColors[variant],
+          "font-bold tracking-tight leading-none",
+          "text-[22px] md:text-[26px]",
+          valueClassName
+        )}>
           {value}
         </div>
         {subtext && (
-          <div className="text-[12px] font-normal text-slate-400 leading-tight mt-1">
+          <div className="text-[11px] font-normal text-slate-400 leading-tight">
             {subtext}
           </div>
         )}
@@ -343,10 +356,11 @@ export const UnifiedListRow = ({
   className?: string,
   onClick?: () => void
 }) => (
-  <div 
+  <div
     onClick={onClick}
     className={cn(
-      "p-6 md:p-8 bg-white border border-slate-100 rounded-[8px] flex flex-col xl:flex-row items-center justify-between gap-8 transition-all group hover:border-[#3B59DA]/20 hover:shadow-md cursor-pointer",
+      "p-5 md:p-7 bg-white border border-slate-100 rounded-[8px] flex flex-col xl:flex-row items-center justify-between gap-6 md:gap-8 transition-all group hover:border-[#3B59DA]/20 hover:shadow-md",
+      onClick && "cursor-pointer",
       className
     )}
   >
