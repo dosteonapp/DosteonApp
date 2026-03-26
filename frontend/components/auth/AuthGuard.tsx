@@ -56,8 +56,13 @@ export function AuthGuard({
         if (!session && !cancelled) {
           router.replace(redirectTo || "/auth/restaurant/signin");
         }
-      } catch {
+      } catch (err: unknown) {
         if (!cancelled) {
+          const error = err as any;
+          const isNetworkError = error.message === 'Failed to fetch' || !error.response;
+          if (!isNetworkError) {
+            console.error("AuthGuard session check failure:", err);
+          }
           router.replace(redirectTo || "/auth/restaurant/signin");
         }
       }

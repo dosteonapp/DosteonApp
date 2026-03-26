@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Header, Body
-from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest, UserBase
+from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest, UserBase, OnboardRequest
 from app.services.auth_service import auth_service
 from app.api.deps import get_current_user, get_optional_user
 from app.core.rate_limit import limiter
@@ -30,7 +30,7 @@ async def update_me(
 
 @router.post("/onboard")
 async def onboard_user(
-    org_data: dict = Body(...),
+    org_data: OnboardRequest,
     current_user: dict | None = Depends(get_optional_user),
 ):
     """Initialize organization and link to user profile.
@@ -47,7 +47,7 @@ async def onboard_user(
             "message": "Onboarding skipped (user not authenticated)",
         }
 
-    return await auth_service.onboard_user(org_data, current_user)
+    return await auth_service.onboard_user(org_data.model_dump(exclude_unset=False), current_user)
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(request: RefreshTokenRequest):

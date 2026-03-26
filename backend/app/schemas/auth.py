@@ -96,3 +96,12 @@ class TeamInviteRequest(BaseModel):
 class TeamRoleUpdate(BaseModel):
     user_id: UUID
     role: Literal["owner_manager", "procurement_officer", "kitchen_staff"]
+
+
+class OnboardRequest(BaseModel):
+    organization_name: str
+    address: str
+    phone: Optional[str] = None
+    opening_time: str
+    closing_time: str
+    selected_canonical_ids: list[str]

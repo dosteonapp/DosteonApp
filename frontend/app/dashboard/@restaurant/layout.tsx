@@ -23,7 +23,7 @@ export default async function RestaurantLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || !user.user_metadata?.onboarding_completed) {
     redirect("/onboarding");

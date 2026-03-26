@@ -9,6 +9,7 @@ import {
 import { User, UserContextType } from "@/types/user";
 import axiosInstance from "@/lib/axios";
 import { bypassAuth } from "@/lib/flags";
+import { toast } from "sonner";
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -40,12 +41,14 @@ const UserContent: React.FC<{ children: React.ReactNode; queryClient: QueryClien
           // Attempt to get real profile if backend is alive
           const { data } = await axiosInstance.get("auth/me");
           return data;
-        } catch (error) {
+        } catch {
           const savedMock = localStorage.getItem('mock_user');
           if (savedMock) {
             try {
               return JSON.parse(savedMock) as User;
-            } catch (e) {}
+            } catch {
+              // Silently fail mock parse
+            }
           }
           return {
             id: "mock-restaurant-id",
@@ -72,12 +75,25 @@ const UserContent: React.FC<{ children: React.ReactNode; queryClient: QueryClien
         // Fetch the backend profile now that we have a confirmed session
         const { data } = await axiosInstance.get("auth/me");
         return data;
-      } catch (err: any) {
-        // Only log if it's NOT a standard 401/404 (which we handle as 'No User')
-        if (err.response?.status !== 401 && err.response?.status !== 404) {
-          console.error("Error fetching user profile:", err);
+      } catch (err: unknown) {
+        // 3. Graceful error handling for network/Supabase failures
+        const error = err as any;
+        const isNetworkError = error.message === 'Failed to fetch' || !error.response;
+        
+        if (isNetworkError) {
+          // If we're offline or Supabase is down, don't spam the console with a Stack Trace
+          // Just let the UI handle the 'No User' state.
+          console.warn("User profile fetch skipped: Network unreachable or Supabase project is down.");
+        } else {
+          const errorStatus = error.response?.status;
+          const friendlyDetail = error.response?.data?.detail || error.message;
+          if (typeof errorStatus === "number" && errorStatus >= 400 && errorStatus !== 401 && errorStatus !== 404) {
+            toast.error(`Error ${errorStatus}`, { description: friendlyDetail });
+          } else if (errorStatus !== 401 && errorStatus !== 404) {
+            console.error("Error fetching user profile:", error);
+          }
         }
-        return null; // Return null so React Query sees it as "Success: No User"
+        return null;
       }
     },
     retry: false,

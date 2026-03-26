@@ -58,14 +58,19 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 2. Log unexpected errors (skip 401, 403, 404)
-    if (typeof errorStatus === "number" && errorStatus >= 400 && ![401, 403, 404].includes(errorStatus)) {
+    // 2. Log unexpected errors (skip 401, 403, 404, 500)
+    // Note: We skip 500 here because we handle it via toast and want to avoid noisy console logs
+    // when the database is disconnected during development.
+    if (typeof errorStatus === "number" && errorStatus >= 400 && ![401, 403, 404, 500].includes(errorStatus)) {
       console.error(`[AxiosError] ${errorStatus} - ${fullUrl}`, {
         url: error.config?.url,
         baseURL: error.config?.baseURL,
         method: error.config?.method,
-        data: error.response?.data,
       });
+    }
+
+    if (errorStatus === 500) {
+      console.warn(`[Backend Connection Issue] 500 - ${fullUrl}: Database might be unreachable.`);
     }
 
     const detail = error.response?.data?.detail || "An unexpected error occurred.";
@@ -153,7 +158,7 @@ axiosInstance.interceptors.response.use(
         break;
       default:
         if (typeof errorStatus === "number" && errorStatus >= 400) {
-          toast.error(`Error ${errorStatus}`, { description: detail });
+          toast.error(`Error ${errorStatus}`, { description: friendlyDetail });
         }
     }
 

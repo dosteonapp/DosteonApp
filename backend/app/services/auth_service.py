@@ -338,6 +338,7 @@ class AuthService:
 
             org_name = (org_data.get("organization_name") or "").strip()
             address = (org_data.get("address") or "").strip()
+            phone = (org_data.get("phone") or "").strip()
             opening_time = (org_data.get("opening_time") or "").strip()
             closing_time = (org_data.get("closing_time") or "").strip()
             selected_ids: list = org_data.get("selected_canonical_ids") or []
@@ -363,6 +364,7 @@ class AuthService:
             await organization_repo.update(org_id, {
                 "name": org_name,
                 "address": address,
+                "phone": phone,
                 "opening_time": opening_time,
                 "closing_time": closing_time,
             })
