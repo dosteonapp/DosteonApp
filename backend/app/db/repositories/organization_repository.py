@@ -54,7 +54,11 @@ class OrganizationRepository:
     async def update(self, org_id: str, data: dict) -> dict:
         """Flexible update for organization fields"""
         # Extract fields that belong to the model direct, others go to settings
-        model_fields = ["name", "type", "logo_url", "address"]
+        # Keep the top-level model footprint minimal; most configurable
+        # organization properties (address, phone, opening/closing times)
+        # are stored in the settings JSON blob for forward-compatibility
+        # across schema changes.
+        model_fields = ["name", "type", "logo_url"]
         update_data = {}
         settings_data = {}
 
@@ -67,7 +71,20 @@ class OrganizationRepository:
         if settings_data:
             # Get current settings first
             current = await db.organization.find_unique(where={"id": org_id})
-            current_settings = json.loads(current.settings) if current and current.settings else {}
+
+            # Prisma may return settings either as a JSON string or a dict,
+            # depending on how the field is defined and previous writes.
+            raw_settings = current.settings if current else None
+            if raw_settings:
+                if isinstance(raw_settings, str):
+                    current_settings = json.loads(raw_settings)
+                elif isinstance(raw_settings, dict):
+                    current_settings = raw_settings.copy()
+                else:
+                    current_settings = {}
+            else:
+                current_settings = {}
+
             current_settings.update(settings_data)
             update_data["settings"] = json.dumps(current_settings)
 

@@ -71,10 +71,18 @@ const UserContent: React.FC<{ children: React.ReactNode; queryClient: QueryClien
         
         // No session = no point calling the backend auth/me
         if (!session) return null;
-        
+
+        const metadata = (session.user?.user_metadata ?? {}) as Record<string, any>;
+
         // Fetch the backend profile now that we have a confirmed session
         const { data } = await axiosInstance.get("auth/me");
-        return data;
+        return {
+          ...data,
+          // Map Supabase metadata (snake_case) into frontend booleans
+          onboardingCompleted: Boolean(metadata.onboarding_completed),
+          onboardingSkipped: Boolean(metadata.onboarding_skipped),
+          emailVerified: Boolean(metadata.email_verified),
+        } as User;
       } catch (err: unknown) {
         // 3. Graceful error handling for network/Supabase failures
         const error = err as any;

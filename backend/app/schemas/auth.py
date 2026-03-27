@@ -84,6 +84,9 @@ class Token(BaseModel):
 
 class UserMe(Profile):
     session_valid: bool = True
+    onboarding_completed: Optional[bool] = None
+    onboarding_skipped: Optional[bool] = None
+    email_verified: Optional[bool] = None
 
 
 class TeamInviteRequest(BaseModel):
@@ -105,3 +108,6 @@ class OnboardRequest(BaseModel):
     opening_time: str
     closing_time: str
     selected_canonical_ids: list[str]
+    # Optional map of canonical product ID -> opening quantity.
+    # Used to seed initial stock counts during onboarding.
+    opening_quantities: Optional[dict[str, float]] = None

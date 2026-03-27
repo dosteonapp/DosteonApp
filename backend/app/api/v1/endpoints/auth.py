@@ -29,7 +29,9 @@ async def update_me(
     return await auth_service.update_me(current_user["id"], profile_data)
 
 @router.post("/onboard")
+@limiter.limit("5/minute")
 async def onboard_user(
+    request: Request,
     org_data: OnboardRequest,
     current_user: dict | None = Depends(get_optional_user),
 ):

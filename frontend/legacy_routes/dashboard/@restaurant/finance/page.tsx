@@ -1,48 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-} from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import Link from "next/link";
 import { useRestaurantDayActionGuard } from "@/hooks/useRestaurantDayActionGuard";
-import { useSearchParams } from "next/navigation";
 import { DailyReportsModal } from "@/components/daily-reports-modal";
 
 export default function FinancePage() {
-  const searchParams = useSearchParams();
-  const defaultTab = searchParams.get("tab") || "overview";
   const [reportsModalOpen, setReportsModalOpen] = useState(false);
   const { guard } = useRestaurantDayActionGuard();
 

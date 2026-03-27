@@ -8,8 +8,23 @@ on:
 
 jobs:
   backend:
-    name: Backend Tests
+    name: Backend Tests & Migrations
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     defaults:
       run:
@@ -24,17 +39,31 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Set up Postgres service (environment)
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres" >> $GITHUB_ENV
+          echo "DIRECT_URL=postgresql://postgres:postgres@localhost:5432/postgres" >> $GITHUB_ENV
+          echo "SUPABASE_URL=https://example.supabase.co" >> $GITHUB_ENV
+          echo "SUPABASE_ANON_KEY=placeholder-anon-key" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_ROLE_KEY=placeholder-service-role-key" >> $GITHUB_ENV
+
       - name: Install backend dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-asyncio
 
+      - name: Generate Prisma client
+        run: python -m prisma generate
+
+      - name: Run Prisma migrations
+        run: python -m prisma migrate deploy --schema prisma/schema.prisma
+
       - name: Run backend tests
         run: pytest -q
 
   frontend:
-    name: Frontend Lint & Types
+    name: Frontend Lint, Types & Build
     runs-on: ubuntu-latest
 
     defaults:
@@ -58,3 +87,6 @@ jobs:
 
       - name: Run type checks
         run: npm run type-check
+
+      - name: Build frontend
+        run: npm run build

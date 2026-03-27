@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
-    "type-check": "tsc --noEmit"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "type-check": "tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.2",
@@ -69,11 +70,12 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "eslint": "^9.0.0",
-    "eslint-config-next": "^15.0.0",
+    "@playwright/test": "^1.58.2",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.0.0",
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"

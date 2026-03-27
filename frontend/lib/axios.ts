@@ -10,6 +10,12 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(async (config) => {
+  if (process.env.NODE_ENV === "production" && bypassAuth) {
+    throw new Error(
+      "bypassAuth must be disabled in production (axios client). Check NEXT_PUBLIC_BYPASS_AUTH."
+    );
+  }
+
   if (bypassAuth) {
     const devToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYWRtaW4ifQ.devtokenjules";
     config.headers.Authorization = `Bearer ${devToken}`;

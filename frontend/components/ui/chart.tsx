@@ -69,7 +69,7 @@ ChartContainer.displayName = "Chart"
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
-    ([_, config]) => config.theme || config.color
+    ([, itemConfig]) => itemConfig.theme || itemConfig.color
   )
 
   if (!colorConfig.length) {
@@ -275,7 +275,7 @@ ChartTooltipContent.displayName = "ChartTooltip"
 const ChartLegend = RechartsPrimitive.Legend
 
 type ChartLegendContentProps = React.ComponentProps<"div"> & {
-  payload?: any[]
+  payload?: unknown[]
   verticalAlign?: "top" | "bottom" | "middle"
   hideIcon?: boolean
   nameKey?: string

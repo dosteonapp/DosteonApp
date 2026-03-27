@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
-  ArrowLeft, 
   Upload, 
   X, 
   ImageIcon,
@@ -21,14 +20,21 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
     AppContainer, 
-    InriaHeading, 
     FigtreeText, 
     PrimarySurfaceCard 
 } from "@/components/ui/dosteon-ui";
+import Image from "next/image";
+
+type CatalogSuggestion = {
+  id: string;
+  name: string;
+  category: string;
+  base_unit?: string | null;
+  sku?: string | null;
+};
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 
 function AddNewItemContent() {
@@ -51,7 +57,7 @@ function AddNewItemContent() {
     expiryYear: "2025"
   });
   
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<CatalogSuggestion[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -77,6 +83,7 @@ function AddNewItemContent() {
              if (item.imageUrl) setImages([item.imageUrl]);
           }
         } catch (err) {
+          console.error(err);
           toast({ variant: "destructive", title: "Load Failed", description: "Could not fetch item details." });
         } finally {
           setIsLoading(false);
@@ -84,7 +91,7 @@ function AddNewItemContent() {
       };
       fetchItem();
     }
-  }, [editId, isEditMode]);
+  }, [editId, isEditMode, toast]);
 
   const categories = ["Vegetables", "Meat", "Dairy", "Grains", "Spices", "Beverages", "Supplies", "Other"];
   const units = ["kg", "g", "l", "ml", "units", "pcs", "boxes", "packs", "bags"];
@@ -107,7 +114,8 @@ function AddNewItemContent() {
                 toast({ title: "Image Uploaded", description: "Product image successfully uploaded." });
             }
         } catch (err) {
-            toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload image." });
+          console.error(err);
+          toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload image." });
         } finally {
             setUploading(false);
         }
@@ -151,6 +159,7 @@ function AddNewItemContent() {
       }
       router.push("/dashboard/inventory");
     } catch (error) {
+      console.error(error);
       toast({ variant: "destructive", title: "Error", description: "Failed to save item." });
     } finally {
       setIsSaving(false);
@@ -365,8 +374,8 @@ function AddNewItemContent() {
                                 <div className="flex flex-wrap items-center justify-center gap-8">
                                     {images.map((img, i) => (
                                         <div key={i} className="relative group transition-all hover:-translate-y-2">
-                                            <div className="h-40 w-40 rounded-[8px] overflow-hidden border-4 border-white shadow-2xl">
-                                                <img src={img} className="h-full w-full object-cover" />
+                                        <div className="relative h-40 w-40 rounded-[8px] overflow-hidden border-4 border-white shadow-2xl">
+                                          <Image src={img} alt="Inventory item image" fill className="object-cover" />
                                             </div>
                                             <button 
                                                 onClick={() => removeImage(i)}

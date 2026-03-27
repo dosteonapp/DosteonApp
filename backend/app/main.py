@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator, metrics as prom_metrics
+
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -21,6 +23,14 @@ app = FastAPI(
 metrics_store = MetricsStore()
 app.state.metrics_store = metrics_store
 
+# Prometheus metrics instrumentator
+instrumentator = Instrumentator(
+    should_group_status_codes=True,
+    should_ignore_untemplated=True,
+)
+
+instrumentator.add(prom_metrics.default())
+
 # Core Middleware
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
@@ -37,6 +47,14 @@ async def startup_event():
         from app.core.logging import get_logger
         logger = get_logger("startup")
         logger.error(f"Failed to connect to database on startup: {e}")
+
+    # Attach Prometheus metrics endpoint and instrumentation
+    try:
+        instrumentator.instrument(app).expose(app, include_in_schema=False, endpoint="/metrics")
+    except Exception as e:
+        from app.core.logging import get_logger
+        logger = get_logger("metrics")
+        logger.error(f"Failed to initialize Prometheus metrics: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -77,8 +95,32 @@ async def root():
 
 @app.get("/health")
 async def health():
-    """Health check endpoint — used by UptimeRobot to keep Render warm."""
+    """Legacy health check endpoint — kept for backwards compatibility."""
     return {"status": "ok"}
+
+
+@app.get("/health/live")
+async def health_live():
+    """Liveness probe — no DB check, just confirms the process is running."""
+    return {"status": "ok"}
+
+
+@app.get("/health/ready")
+async def health_ready():
+    """Readiness probe — verifies Prisma can reach the database.
+
+    Returns 200 with {"status": "ok"} on success or 503 with
+    {"status": "error", "detail": "..."} on failure.
+    """
+    from app.db.prisma import db
+    try:
+        await db.execute_raw("SELECT 1")
+        return {"status": "ok"}
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "error", "detail": str(e)},
+        )
 
 
 @app.exception_handler(HTTPException)

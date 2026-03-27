@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Trash2, Menu, Star, StarHalf } from "lucide-react";
+import { Search, Plus, Trash2, Star, StarHalf } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function NewOrderPage() {

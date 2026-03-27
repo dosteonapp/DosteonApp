@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from app.schemas.inventory import InventoryItem, InventoryItemCreate, InventoryItemUpdate, CanonicalCatalogItem
 from app.services.inventory_service import inventory_service
 from typing import List
 from app.api.deps import get_restaurant_user
+from app.core.rate_limit import limiter
 
 router = APIRouter()
 
@@ -36,7 +37,9 @@ async def read_inventory(
 
 
 @router.post("/", response_model=InventoryItem)
+@limiter.limit("60/minute")
 async def create_item(
+    request: Request,
     item: InventoryItemCreate,
     current_user: dict = Depends(get_restaurant_user)
 ):
@@ -45,7 +48,9 @@ async def create_item(
 
 
 @router.patch("/{item_id}", response_model=InventoryItem)
+@limiter.limit("120/minute")
 async def update_item(
+    request: Request,
     item_id: str,
     item: InventoryItemUpdate,
     current_user: dict = Depends(get_restaurant_user)
@@ -55,7 +60,9 @@ async def update_item(
 
 
 @router.delete("/{item_id}")
+@limiter.limit("60/minute")
 async def delete_item(
+    request: Request,
     item_id: str,
     current_user: dict = Depends(get_restaurant_user)
 ):

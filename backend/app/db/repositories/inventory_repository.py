@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 from prisma.models import ContextualProduct, CanonicalProduct, InventoryEvent
 from prisma import Json
+from app.core.metrics import INVENTORY_OPENING_EVENTS_COUNTER
 
 
 class InventoryRepository:
@@ -310,6 +311,13 @@ FROM (VALUES {values_clause}) AS v(id, quantity)
 WHERE cp.id = v.id;
 """
             await db.execute_raw(query)
+
+        # Update Prometheus counter with the number of opening events recorded
+        try:
+            INVENTORY_OPENING_EVENTS_COUNTER.inc(len(normalized_counts))
+        except Exception:
+            # Metrics must never break business logic
+            pass
 
     async def create_contextual_product(self, **kwargs) -> dict:
         data = {k: str(v) if isinstance(v, UUID) else v for k, v in kwargs.items()}

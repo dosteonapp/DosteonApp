@@ -3,7 +3,7 @@ from fastapi.security import HTTPBearer
 from fastapi.security.http import HTTPAuthorizationCredentials
 from app.core.security import verify_supabase_token
 from app.db.repositories.profile_repository import profile_repo
-from app.core.logging import get_logger
+from app.core.logging import get_logger, set_log_user_context
 from app.core.config import settings
 from typing import List, Optional
 from uuid import UUID
@@ -123,6 +123,33 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User profile not found and could not be created. Please contact support.",
             )
+
+    # Attach selected Supabase user_metadata flags to the profile dict so
+    # downstream callers (e.g. /auth/me) can expose them without having
+    # to re-fetch the Supabase user.
+    metadata = payload.get("user_metadata") or {}
+    try:
+        profile["onboarding_completed"] = metadata.get("onboarding_completed")
+        profile["onboarding_skipped"] = metadata.get("onboarding_skipped")
+        profile["email_verified"] = metadata.get("email_verified")
+    except TypeError:
+        # In case profile is not directly mutable, fall back to a plain dict
+        profile = {
+            **dict(profile),
+            "onboarding_completed": metadata.get("onboarding_completed"),
+            "onboarding_skipped": metadata.get("onboarding_skipped"),
+            "email_verified": metadata.get("email_verified"),
+        }
+
+    # Populate structured log context for this request
+    try:
+        set_log_user_context(
+            str(profile.get("id")) if profile.get("id") else None,
+            str(profile.get("organization_id")) if profile.get("organization_id") else None,
+        )
+    except Exception:
+        # Logging context should never break auth resolution
+        pass
 
     return profile
 

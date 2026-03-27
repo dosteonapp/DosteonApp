@@ -21,7 +21,6 @@ import {
   Printer,
   Download,
   ShoppingCart,
-  Menu,
   Truck,
   CheckCircle,
   Clock,

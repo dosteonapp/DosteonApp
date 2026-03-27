@@ -6,6 +6,9 @@ export const createClient = () => {
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!url || !key) {
+        if (process.env.NODE_ENV === "production" && bypassAuth) {
+            throw new Error("bypassAuth cannot be used in production; Supabase environment variables are required.");
+        }
         if (bypassAuth) {
             console.warn("Supabase environment variables are missing, but bypassAuth is enabled.");
             return null as any;

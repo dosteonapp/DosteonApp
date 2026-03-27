@@ -2,7 +2,12 @@ import logging
 import sys
 import json
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+from contextvars import ContextVar
+
+
+_user_id_ctx: ContextVar[Optional[str]] = ContextVar("log_user_id", default=None)
+_org_id_ctx: ContextVar[Optional[str]] = ContextVar("log_org_id", default=None)
 
 class StructuredFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -13,7 +18,9 @@ class StructuredFormatter(logging.Formatter):
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
-            "request_id": get_request_id()
+            "request_id": get_request_id(),
+            "user_id": _user_id_ctx.get(),
+            "organization_id": _org_id_ctx.get(),
         }
         
         # Add extra context if provided
@@ -52,6 +59,16 @@ def setup_logging():
 
 def get_logger(name: str):
     return logging.getLogger(f"dosteon.{name}")
+
+
+def set_log_user_context(user_id: Optional[str], organization_id: Optional[str]) -> None:
+    """Set per-request user/org context for structured logs.
+
+    Called from auth dependency resolution so that all subsequent log lines
+    for the request automatically include these fields.
+    """
+    _user_id_ctx.set(user_id)
+    _org_id_ctx.set(organization_id)
 
 # Usage Example:
 # logger.info("User logged in", extra={"extra_context": {"user_id": "123"}})

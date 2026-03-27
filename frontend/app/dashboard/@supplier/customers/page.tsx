@@ -31,16 +31,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Search,
-  Plus,
   MoreHorizontal,
   ArrowUpDown,
   Phone,
   Mail,
   MapPin,
-  Filter,
   Download,
-  BarChart,
-  Users,
   MessageSquare,
 } from "lucide-react";
 import {
@@ -56,6 +52,10 @@ export default function CustomersPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  // Capture a stable "now" value once for this session to keep
+  // sorting deterministic without calling Date.now during render.
+  const [now] = useState(() => Date.now());
 
   // Filter customers based on search query and active tab
   const filteredCustomers = customers
@@ -95,21 +95,21 @@ export default function CustomersPage() {
     });
 
   function getDateValue(dateStr: string): number {
-    if (dateStr === "Today") return Date.now();
-    if (dateStr === "Yesterday") return Date.now() - 86400000;
+    if (dateStr === "Today") return now;
+    if (dateStr === "Yesterday") return now - 86400000;
     if (dateStr === "Never") return 0;
 
     if (dateStr.includes("days ago")) {
       const days = Number.parseInt(dateStr.split(" ")[0]);
-      return Date.now() - days * 86400000;
+      return now - days * 86400000;
     }
     if (dateStr.includes("week")) {
       const weeks = Number.parseInt(dateStr.split(" ")[0]);
-      return Date.now() - weeks * 7 * 86400000;
+      return now - weeks * 7 * 86400000;
     }
     if (dateStr.includes("month")) {
       const months = Number.parseInt(dateStr.split(" ")[0]);
-      return Date.now() - months * 30 * 86400000;
+      return now - months * 30 * 86400000;
     }
 
     return 0;

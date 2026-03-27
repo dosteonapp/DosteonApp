@@ -1,6 +1,7 @@
 import asyncio
 from app.core.supabase import supabase
 from app.core.config import settings
+from app.core.metrics import ONBOARDING_COMPLETED_COUNTER
 from app.schemas.auth import UserSignup, UserLogin, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, RefreshTokenRequest, UserBase
 from app.db.repositories.profile_repository import profile_repo
 from app.db.repositories.organization_repository import organization_repo
@@ -305,7 +306,10 @@ class AuthService:
             "first_name": current_user.get("first_name"),
             "last_name": current_user.get("last_name"),
             "organization_id": current_user.get("organization_id"),
-            "team_id": current_user.get("team_id")
+            "team_id": current_user.get("team_id"),
+            "onboarding_completed": current_user.get("onboarding_completed"),
+            "onboarding_skipped": current_user.get("onboarding_skipped"),
+            "email_verified": current_user.get("email_verified"),
         }
 
     async def update_me(self, user_id: str, profile_data: dict):
@@ -322,19 +326,38 @@ class AuthService:
     async def onboard_user(self, org_data: dict, current_user: dict):
         """Required onboarding — all 5 fields must be provided.
 
-        Fields expected in org_data:
-          organization_name       (str, required)
-          address                 (str, required)
-          opening_time            (str HH:MM, required)
-          closing_time            (str HH:MM, required)
-          selected_canonical_ids  (list[str], required, min 1)
+                Fields expected in org_data:
+                    organization_name       (str, required)
+                    address                 (str, required)
+                    opening_time            (str HH:MM, required)
+                    closing_time            (str HH:MM, required)
+                    selected_canonical_ids  (list[str], required, min 1)
+                    opening_quantities      (dict[canonical_id, float], optional)
         """
         try:
             user_id = current_user["id"]
             org_id = current_user.get("organization_id")
 
+            # If the profile exists but is not linked to an organization yet,
+            # create a default organization on-the-fly so onboarding can
+            # complete instead of failing with a 400.
             if not org_id:
-                raise HTTPException(status_code=400, detail="No organization linked to this user.")
+                fallback_name = (org_data.get("organization_name") or current_user.get("first_name") or "New Restaurant").strip()
+                org = await organization_repo._create_async(fallback_name or "New Restaurant")
+                org_id = org["id"]
+
+                # Persist the organization link on the profile for future requests.
+                await profile_repo.update(user_id, {"organization_id": str(org_id)})
+
+                # Best-effort: ensure Supabase user_metadata also carries org ID.
+                try:
+                    supabase.auth.admin.update_user_by_id(
+                        user_id,
+                        {"user_metadata": {"organization_id": str(org_id)}}
+                    )
+                except Exception:
+                    # Never fail onboarding purely because metadata sync failed.
+                    pass
 
             org_name = (org_data.get("organization_name") or "").strip()
             address = (org_data.get("address") or "").strip()
@@ -342,6 +365,7 @@ class AuthService:
             opening_time = (org_data.get("opening_time") or "").strip()
             closing_time = (org_data.get("closing_time") or "").strip()
             selected_ids: list = org_data.get("selected_canonical_ids") or []
+            opening_quantities: dict | None = org_data.get("opening_quantities") or None
 
             missing = []
             if not org_name:
@@ -370,12 +394,80 @@ class AuthService:
             })
 
             from app.db.repositories.inventory_repository import inventory_repo
+            # 1. Create contextual products for the selected canonical items.
             await inventory_repo.create_from_canonical_selection(str(org_id), selected_ids)
+
+            # 1b. For legacy organizations that previously had the full
+            #     canonical catalog bootstrapped, deactivate any
+            #     legacy-bootstrapped items that were *not* selected
+            #     during this onboarding step so that core inventory
+            #     reflects the user's choices.
+            try:
+                from uuid import UUID  # Local import to avoid polluting module scope
+                from app.db.prisma import db
+
+                org_id_str = str(org_id)
+
+                # Normalize and validate canonical IDs to protect the
+                # raw SQL we are about to build.
+                normalized: set[str] = set()
+                for cid in selected_ids:
+                    try:
+                        normalized.add(str(UUID(str(cid))))
+                    except Exception:
+                        continue
+
+                if normalized:
+                    values_clause = ",".join(f"'{cid}'::uuid" for cid in normalized)
+                    trim_query = f"""
+UPDATE contextual_products
+SET is_active = FALSE,
+    status = 'archived'
+WHERE organization_id = '{org_id_str}'
+  AND metadata ->> 'legacy_bootstrapped' = 'true'
+  AND canonical_product_id NOT IN ({values_clause});
+"""
+                    await db.execute_raw(trim_query)
+            except Exception:
+                # Never fail onboarding purely because legacy inventory
+                # trimming is unavailable; the user can still operate on
+                # the full set of items.
+                pass
+
+            # 2. If opening quantities were provided, translate canonical IDs
+            #    to contextual IDs and seed opening stock via bulk events.
+            if opening_quantities:
+                from app.db.prisma import db
+
+                canonical_ids = [cid for cid in selected_ids if cid in opening_quantities]
+                if canonical_ids:
+                    ctx_products = await db.contextualproduct.find_many(
+                        where={
+                            "organization_id": str(org_id),
+                            "canonical_product_id": {"in": canonical_ids},
+                        }
+                    )
+
+                    ctx_counts: dict[str, float] = {}
+                    for p in ctx_products:
+                        qty = float(opening_quantities.get(p.canonical_product_id) or 0)
+                        if qty > 0:
+                            ctx_counts[p.id] = qty
+
+                    if ctx_counts:
+                        await inventory_repo.bulk_add_opening_events(str(org_id), ctx_counts)
 
             supabase.auth.admin.update_user_by_id(
                 user_id,
-			{"user_metadata": {"organization_id": str(org_id), "onboarding_completed": True}}
+                {"user_metadata": {"organization_id": str(org_id), "onboarding_completed": True}}
             )
+
+            # Increment onboarding completion counter for observability
+            try:
+                ONBOARDING_COMPLETED_COUNTER.inc()
+            except Exception:
+                # Metrics must never break the main flow
+                pass
 
             return {
                 "status": "ok",
@@ -385,7 +477,10 @@ class AuthService:
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            # Treat unexpected failures (e.g. database connectivity) as
+            # server-side errors so the frontend can surface them as
+            # backend issues rather than client input problems.
+            raise HTTPException(status_code=500, detail=str(e))
 
     async def forgot_password(self, request: ForgotPasswordRequest):
         """Initiate a password reset flow.

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Menu, Calendar } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRestaurantDayActionGuard } from "@/hooks/useRestaurantDayActionGuard";
 import { NewOrderModal } from "@/components/new-order-modal";
@@ -210,32 +210,5 @@ const currentOrders = [
     totalItems: 12,
     totalAmount: 178.25,
     status: "In Transit",
-  },
-];
-
-const scheduledOrders = [
-  {
-    id: "ORD-7895",
-    supplier: "Fresh Farms Inc.",
-    scheduledDate: "May 10, 2023",
-    timeSlot: "Morning (8:00 AM - 12:00 PM)",
-    totalItems: 10,
-    totalAmount: 275.5,
-  },
-  {
-    id: "ORD-7896",
-    supplier: "Metro Meats",
-    scheduledDate: "May 12, 2023",
-    timeSlot: "Afternoon (12:00 PM - 4:00 PM)",
-    totalItems: 6,
-    totalAmount: 350.25,
-  },
-  {
-    id: "ORD-7897",
-    supplier: "Dairy Delights",
-    scheduledDate: "May 15, 2023",
-    timeSlot: "Morning (8:00 AM - 12:00 PM)",
-    totalItems: 8,
-    totalAmount: 180.75,
   },
 ];
