@@ -14,14 +14,14 @@ Use this catalog when you want to **reactivate** or **upgrade** one of these fea
 
 ## 1. Restaurant Orders v1 (Mock-First)
 
-**Status**: Legacy, mock-driven, not in MVP
+**Status**: Legacy (code removed), mock-driven, not in MVP
 
 **Previous routes (restaurant context):**
 - `/dashboard/orders`
 - `/dashboard/orders/[id]`
 - `/dashboard/orders/new`
 
-**Current legacy code locations:**
+**Previous legacy code locations (now removed):**
 - `frontend/legacy_routes/dashboard/@restaurant/orders/page.tsx`
 - `frontend/legacy_routes/dashboard/@restaurant/orders/loading.tsx`
 - `frontend/legacy_routes/dashboard/@restaurant/orders/new/page.tsx`
@@ -52,12 +52,12 @@ Use this catalog when you want to **reactivate** or **upgrade** one of these fea
 
 ## 2. Restaurant Analytics v1
 
-**Status**: Legacy, mostly mock dashboards, not in MVP
+**Status**: Legacy (code removed), mostly mock dashboards, not in MVP
 
 **Previous route (restaurant context):**
 - `/dashboard/analytics`
 
-**Current legacy code location:**
+**Previous legacy code location (now removed):**
 - `frontend/legacy_routes/dashboard/@restaurant/analytics/page.tsx`
 
 **What exists in the legacy implementation:**
@@ -76,12 +76,12 @@ Use this catalog when you want to **reactivate** or **upgrade** one of these fea
 
 ## 3. Restaurant Finance v1
 
-**Status**: Legacy, mock-driven, not in MVP
+**Status**: Legacy (code removed), mock-driven, not in MVP
 
 **Previous route (restaurant context):**
 - `/dashboard/finance`
 
-**Current legacy code location:**
+**Previous legacy code location (now removed):**
 - `frontend/legacy_routes/dashboard/@restaurant/finance/page.tsx`
 
 **What exists in the legacy implementation:**

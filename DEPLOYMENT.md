@@ -62,9 +62,14 @@ gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
 Next.js requires these at **Build Time** (for client-side access):
 
 ```env
-NEXT_PUBLIC_API_URL=          # e.g., https://api.yourapp.com
-NEXT_PUBLIC_SUPABASE_URL=     
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_URL=      # Your Supabase project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY= # Project anon key (public)
+```
+
+In addition, the Node.js environment for the frontend must know how to reach the backend API:
+
+```env
+BACKEND_URL=                   # e.g., https://dosteon-backend.onrender.com
 ```
 
 For local development, mirror these variables in `frontend/.env.local` (use `frontend/.env.example` as a template) and ensure:
@@ -117,6 +122,29 @@ A `render.yaml` file has been provided in the root directory. This allows for:
 4. Correct use of **Gunicorn** for the backend production server.
 
 Simply connect your repository to Render using the "Blueprint" feature.
+
+## 📈 Before You Scale (Render free tier)
+
+Dosteon currently runs both services on the Render free tier. This is fine for MVP and small pilots, but has important limitations you should understand before onboarding real restaurants.
+
+### Free plan limitations (Render)
+
+- Backend and frontend can be put to sleep after periods of inactivity, causing cold-start latency on the next request.
+- CPU and memory are capped; sustained traffic or expensive work can trigger throttling or restarts.
+- Only a single instance runs; there is no horizontal scaling or high availability.
+
+### When you're ready to scale
+
+- Update the backend service in [render.yaml](render.yaml) from `plan: free` to `plan: starter`.
+- Increase `numInstances` in the backend service if you need more concurrency or redundancy.
+- Revisit database and Supabase plan limits (connections, storage, row counts) and upgrade if needed.
+
+### Load testing before changing plans
+
+- Before bumping the plan or instance count, run a light load test against your staging or production backend.
+- Use the k6 smoke script at [tests/load/k6_smoke.js](tests/load/k6_smoke.js) to:
+	- Exercise `/health/ready`, login, and inventory reads.
+	- Verify that p95 latency and error rates stay within the SLOs defined in [docs/SLOs.md](docs/SLOs.md).
 
 ---
 
@@ -235,7 +263,7 @@ Use this list **before every production deployment**. If any item is not checked
 
 ### 4. Frontend (Next.js)
 
-- [ ] Production frontend env vars are set: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- [ ] Production frontend env vars are set: `BACKEND_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - [ ] `npm run build` passes for the target commit.
 - [ ] Staging frontend successfully talks to staging backend via `/api` proxy.
 - [ ] Manual smoke test on staging: login, dashboard load, inventory list, opening checklist, and at least one end-to-end restaurant flow complete without errors.

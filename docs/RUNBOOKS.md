@@ -104,3 +104,48 @@ These runbooks describe **practical procedures** for operating the MVP in produc
   - Initial request latency should drop to normal (<1–2 seconds).
   - Fewer or no `Connection Error` toasts on first navigation.
 - Check hosting metrics for fewer restarts/cold starts over time.
+
+---
+
+## 4. Local observability stack (Prometheus + Grafana)
+
+This stack is for local debugging and performance exploration. It should not be exposed directly to the public internet.
+
+### 4.1 Starting Prometheus and Grafana
+
+1. Ensure the backend is running locally on port `8000` and exposes `/metrics`.
+2. From the repository root, start the observability stack:
+
+  ```bash
+  docker compose -f docker-compose.observability.yml up -d
+  ```
+
+3. Services:
+  - Prometheus: http://localhost:9090
+  - Grafana: http://localhost:3001 (default login `admin` / `admin`)
+
+Prometheus is configured via `prometheus.yml` to scrape `host.docker.internal:8000/metrics` every 15 seconds.
+
+### 4.2 Importing the default dashboard
+
+1. Open Grafana at http://localhost:3001 and log in.
+2. Add a Prometheus data source pointing to `http://prometheus:9090`.
+3. Go to "Dashboards" → "Import".
+4. Upload or paste the contents of [docs/grafana_dashboard.json](docs/grafana_dashboard.json).
+5. When prompted, select the Prometheus data source for `${DS_PROMETHEUS}`.
+
+You should now see:
+
+- Request rate and p95 latency by endpoint.
+- Error rates by endpoint.
+- Business counters for onboarding completions and opening inventory events.
+
+### 4.3 Tearing down
+
+To stop the local observability stack:
+
+```bash
+docker compose -f docker-compose.observability.yml down
+```
+
+This will stop Prometheus and Grafana containers but preserve Grafana data in the named volume.

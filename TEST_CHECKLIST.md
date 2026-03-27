@@ -15,9 +15,9 @@ The current stack uses **FastAPI + Supabase** as the primary backend. For up-to-
 - Dependencies installed (`npm install`)
 
 ### Environment Variables
-Ensure your `.env.local` or `.env` file points to the mock API:
+Ensure your `.env.local` or `.env` file points the frontend backend proxy at the mock API:
 ```
-NEXT_PUBLIC_API_URL=http://localhost:4000
+BACKEND_URL=http://localhost:4000
 ```
 *(Note: The provided mock server runs on port 4000 by default)*
 
@@ -62,5 +62,5 @@ Go through the following flows to verify integration.
 - [ ] **Product Categories**: Check if categories dropdowns are populated (Mock returns Vegetables, Meat, Dairy).
 
 ## 4. Troubleshooting
-- **CORS Errors**: Ensure the mock server is setting headers and the port matches `NEXT_PUBLIC_API_URL`.
+- **CORS Errors**: Ensure the mock server is setting headers and the port matches `BACKEND_URL`.
 - **Axios Errors**: Check the browser console network tab. If calls go to `localhost:3000/api/v1/...`, your env var is not set correctly.

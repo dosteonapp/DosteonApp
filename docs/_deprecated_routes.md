@@ -1,13 +1,13 @@
-# Deprecated / Mock-Only Routes (Quarantined)
+# Deprecated / Mock-Only Routes (Removed)
 
-The following routes are built using 100% mock data or are not prioritized for the current **Restaurant MVP**. They have been removed from the active restaurant routing tree and/or navigation, but the code remains in the repo for future reuse.
+The following routes are built using 100% mock data or are not prioritized for the current **Restaurant MVP**. They have been removed from the active restaurant routing tree and navigation, and their legacy route implementations have now been removed from the codebase.
 
-For the **authoritative mapping from feature → legacy code location → reintegration notes**, see:
+For historical notes and guidance on how these flows could be reimplemented in the future, see:
 - `docs/LEGACY_FEATURE_CATALOG.md`
 
 ## Restaurant routes
 
-These were previously under `app/dashboard/@restaurant/**` and are now quarantined in `frontend/legacy_routes/...`:
+These were previously under `app/dashboard/@restaurant/**` and were later quarantined in `frontend/legacy_routes/...` before being fully removed:
 
 - `/dashboard/orders`: Procurement order tracking (Mock)
 - `/dashboard/orders/[id]`: Order detail (Mock)

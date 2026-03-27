@@ -2,11 +2,15 @@
 # This file automates the deployment of both Frontend and Backend.
 
 services:
+  # TODO: upgrade to plan: starter before scaling beyond MVP traffic
+  # Free tier has cold starts and resource limits — see docs/DEPLOYMENT.md
   - type: web
     name: dosteon-backend
     env: python
     region: ohio # Or your preferred region
     plan: free
+    healthCheckPath: /health/ready
+    numInstances: 1
     # Root directory for this service
     rootDir: backend
     # Build command: install dependencies and generate Prisma client

@@ -25,6 +25,7 @@ model Organization {
   logo_url      String?
   settings      Json?           @default("{\"opening_time\": \"08:00\", \"closing_time\": \"22:00\"}")
   created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  deleted_at    DateTime?       @db.Timestamptz(6)
   
   profiles      Profile[]
   locations     Location[]
@@ -50,10 +51,12 @@ model Profile {
   avatar_url      String?
   organization_id String?       @db.Uuid
   created_at      DateTime      @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime?     @db.Timestamptz(6)
 
   organization    Organization? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 
   @@map("profiles")
+  @@index([email])
   @@index([organization_id])
 }
 
@@ -158,7 +161,7 @@ enum InventoryEventType {
 model InventoryEvent {
   id                      String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contextual_product_id   String             @db.Uuid
-  organization_id         String             @db.Uuid
+  organization_id         String?            @db.Uuid
   event_type              InventoryEventType 
   quantity                Float              // quantity_delta
   unit                    String    

@@ -7,7 +7,7 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.prisma import connect_db, disconnect_db, ensure_connected
-from app.middleware.request_id import RequestIDMiddleware
+from app.middleware.request_id import RequestIDMiddleware, get_request_id
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.middleware.metrics import MetricsMiddleware, MetricsStore
 from app.core.rate_limit import setup_rate_limiting
@@ -113,13 +113,20 @@ async def health_ready():
     {"status": "error", "detail": "..."} on failure.
     """
     from app.db.prisma import db
+    from app.core.logging import get_logger
+    logger = get_logger("health_ready")
     try:
         await db.execute_raw("SELECT 1")
         return {"status": "ok"}
     except Exception as e:
+        logger.error("Readiness check failed", exc_info=e)
         return JSONResponse(
             status_code=503,
-            content={"status": "error", "detail": str(e)},
+            content={
+                "status": "error",
+                "detail": "Dependency check failed. See logs with this request_id for details.",
+                "request_id": get_request_id(),
+            },
         )
 
 
@@ -127,8 +134,17 @@ async def health_ready():
 async def http_exception_handler(request: Request, exc: HTTPException):
     from app.core.logging import get_logger
     logger = get_logger("http_exception")
-    logger.warning("HTTPException raised", extra={"extra_context": {"status_code": exc.status_code, "detail": exc.detail}})
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    logger.warning(
+        "HTTPException raised",
+        extra={"extra_context": {"status_code": exc.status_code, "detail": exc.detail}},
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "detail": exc.detail,
+            "request_id": get_request_id(),
+        },
+    )
 
 
 @app.exception_handler(Exception)
@@ -138,7 +154,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error("Unhandled exception", exc_info=exc)
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error. Please try again later."},
+        content={
+            "detail": "Internal server error. Please try again later.",
+            "request_id": get_request_id(),
+        },
     )
 
 @app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
@@ -156,5 +175,6 @@ async def catch_all(path_name: str, request: Request):
         content={
             "detail": "Not Found by Dosteon Backend",
             "path_received": path_name,
+            "request_id": get_request_id(),
         },
     )

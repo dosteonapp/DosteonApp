@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Header, Body
 from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest, UserBase, OnboardRequest
 from app.services.auth_service import auth_service
-from app.api.deps import get_current_user, get_optional_user
+from app.api.deps import get_current_user, get_optional_user, get_admin_context, SecurityContext
 from app.core.rate_limit import limiter
 from fastapi import Request
 
@@ -78,3 +78,15 @@ async def resend_verification(request: Request, body: UserBase):
 @router.get("/social-login/{provider}")
 async def social_login(provider: str):
     return auth_service.get_social_login_url(provider)
+
+
+@router.delete("/account", status_code=204)
+async def delete_account(ctx: SecurityContext = Depends(get_admin_context)):
+    """Permanently delete the authenticated owner's account.
+
+    This endpoint is restricted to OWNER/MANAGER roles via get_admin_context.
+    It performs a soft-delete/anonymization of Profile, Organization, and
+    inventory events, and deletes the underlying Supabase auth user.
+    """
+    await auth_service.delete_account(ctx.user)
+    return None

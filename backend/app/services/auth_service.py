@@ -1,7 +1,9 @@
 import asyncio
+from datetime import datetime
 from app.core.supabase import supabase
 from app.core.config import settings
 from app.core.metrics import ONBOARDING_COMPLETED_COUNTER
+from app.core.retry import with_retry
 from app.schemas.auth import UserSignup, UserLogin, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, RefreshTokenRequest, UserBase
 from app.db.repositories.profile_repository import profile_repo
 from app.db.repositories.organization_repository import organization_repo
@@ -323,6 +325,67 @@ class AuthService:
             pass
         return updated
 
+    async def delete_account(self, current_user: dict) -> None:
+        """Delete the authenticated user's account and anonymize operational data.
+
+        This is an OWNER/MANAGER-only operation, enforced at the API layer.
+        The flow is best-effort: failures in one step should not prevent
+        the others from running, but all errors are logged.
+        """
+        from app.db.prisma import db
+        from app.core.logging import get_logger
+
+        logger = get_logger("auth.delete_account")
+
+        user_id = str(current_user.get("id"))
+        org_id = current_user.get("organization_id")
+
+        # 1. Delete Supabase auth user (best-effort)
+        if user_id:
+            try:
+                supabase.auth.admin.delete_user(user_id)
+            except Exception as e:  # pragma: no cover - defensive logging
+                logger.error("Failed to delete Supabase user", extra={"extra_context": {"user_id": user_id, "error": str(e)}})
+
+        # 2. Soft-delete and anonymize Profile
+        if user_id:
+            try:
+                anonymized_email = f"deleted+{user_id}@example.invalid"
+                await db.profile.update(
+                    where={"id": user_id},
+                    data={
+                        "email": anonymized_email,
+                        "first_name": None,
+                        "last_name": None,
+                        "avatar_url": None,
+                        "deleted_at": datetime.utcnow(),
+                    },
+                )
+            except Exception as e:  # pragma: no cover - defensive logging
+                logger.error("Failed to soft-delete profile", extra={"extra_context": {"user_id": user_id, "error": str(e)}})
+
+        # 3. Soft-delete Organization and anonymize InventoryEvents
+        if org_id:
+            org_id_str = str(org_id)
+            try:
+                await db.organization.update(
+                    where={"id": org_id_str},
+                    data={
+                        "deleted_at": datetime.utcnow(),
+                        "name": f"Deleted Organization {org_id_str}",
+                    },
+                )
+            except Exception as e:  # pragma: no cover - defensive logging
+                logger.error("Failed to soft-delete organization", extra={"extra_context": {"organization_id": org_id_str, "error": str(e)}})
+
+            try:
+                await db.inventoryevent.update_many(
+                    where={"organization_id": org_id_str},
+                    data={"organization_id": None},
+                )
+            except Exception as e:  # pragma: no cover - defensive logging
+                logger.error("Failed to anonymize inventory events", extra={"extra_context": {"organization_id": org_id_str, "error": str(e)}})
+
     async def onboard_user(self, org_data: dict, current_user: dict):
         """Required onboarding — all 5 fields must be provided.
 
@@ -385,17 +448,30 @@ class AuthService:
                     detail=f"Missing required fields: {', '.join(missing)}",
                 )
 
-            await organization_repo.update(org_id, {
-                "name": org_name,
-                "address": address,
-                "phone": phone,
-                "opening_time": opening_time,
-                "closing_time": closing_time,
-            })
+            # Critical organization update — wrap in retry/backoff to
+            # ride out brief database connectivity issues.
+            await with_retry(
+                lambda: organization_repo.update(
+                    org_id,
+                    {
+                        "name": org_name,
+                        "address": address,
+                        "phone": phone,
+                        "opening_time": opening_time,
+                        "closing_time": closing_time,
+                    },
+                )
+            )
 
             from app.db.repositories.inventory_repository import inventory_repo
             # 1. Create contextual products for the selected canonical items.
-            await inventory_repo.create_from_canonical_selection(str(org_id), selected_ids)
+            # These bulk writes are critical to opening flows, so we add
+            # retry/backoff to tolerate transient DB errors.
+            await with_retry(
+                lambda: inventory_repo.create_from_canonical_selection(
+                    str(org_id), selected_ids
+                )
+            )
 
             # 1b. For legacy organizations that previously had the full
             #     canonical catalog bootstrapped, deactivate any
@@ -455,7 +531,11 @@ WHERE organization_id = '{org_id_str}'
                             ctx_counts[p.id] = qty
 
                     if ctx_counts:
-                        await inventory_repo.bulk_add_opening_events(str(org_id), ctx_counts)
+                        await with_retry(
+                            lambda: inventory_repo.bulk_add_opening_events(
+                                str(org_id), ctx_counts
+                            )
+                        )
 
             supabase.auth.admin.update_user_by_id(
                 user_id,
