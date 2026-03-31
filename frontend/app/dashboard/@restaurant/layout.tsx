@@ -1,5 +1,4 @@
 import React, { Suspense } from "react";
-import { redirect } from "next/navigation";
 import { RestaurantSidebar } from "@/components/restaurant-sidebar";
 import { ToastContainer } from "@/components/toast-container";
 import { Metadata } from "next";
@@ -7,8 +6,6 @@ import { RestaurantDayLifecycleProvider } from "@/components/day/RestaurantDayLi
 import { RestaurantDayLifecycleOverlay } from "@/components/day/RestaurantDayLifecycleOverlay";
 import { RestaurantDayRouteGuard } from "@/components/day/RestaurantDayRouteGuard";
 import { DashboardHeader } from "@/components/dashboard-header";
-import { createClient } from "@/lib/supabase/server";
-
 import { SidebarProvider } from "@/context/SidebarContext";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,12 +20,8 @@ export default async function RestaurantLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || !user.user_metadata?.onboarding_completed) {
-    redirect("/onboarding");
-  }
-
+  // Onboarding routing is handled by RoleProvider in dashboard/layout.tsx.
+  // This slot only renders when the user has an organization — no redirect needed here.
   return (
     <RestaurantDayLifecycleProvider>
       <SidebarProvider>

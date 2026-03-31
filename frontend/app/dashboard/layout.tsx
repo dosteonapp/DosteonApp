@@ -14,16 +14,13 @@ const DashboardLayout: React.FC<{
   const { user, fetchingUser } = useUser();
   const router = useRouter();
 
-  // Enforce onboarding gate for restaurant-side dashboard in non-bypass mode.
+  // Onboarding is now handled only in the dedicated signup/verification flow.
+  // Signed-in users reaching the dashboard should never be redirected back
+  // into onboarding here.
   useEffect(() => {
     if (bypassAuth) return;
     if (fetchingUser) return;
     if (!user) return; // AuthGuard handles unauthenticated redirects
-
-    const isSupplier = user.role === "SUPPLIER";
-    if (!isSupplier && user.onboardingCompleted !== true) {
-      router.replace("/onboarding");
-    }
   }, [user, fetchingUser, router]);
 
   return (

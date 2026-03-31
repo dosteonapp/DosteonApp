@@ -307,6 +307,7 @@ class AuthService:
             "role": current_user.get("role") or "STAFF",
             "first_name": current_user.get("first_name"),
             "last_name": current_user.get("last_name"),
+            "avatar_url": current_user.get("avatar_url"),
             "organization_id": current_user.get("organization_id"),
             "team_id": current_user.get("team_id"),
             "onboarding_completed": current_user.get("onboarding_completed"),

@@ -189,9 +189,9 @@ export function RestaurantSidebar() {
           {!isSidebarCollapsed && (
             <div className="flex items-center gap-4 px-2 group cursor-pointer transition-all hover:translate-x-1">
               <div className="h-12 w-12 rounded-2xl bg-[#3B59DA]/10 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-                  {user?.image_url ? (
+                  {user?.avatar_url || user?.image_url ? (
                       <img 
-                          src={user.image_url} 
+                          src={(user.avatar_url || user.image_url) as string}
                           alt="User" 
                           className="object-cover h-full w-full"
                       />

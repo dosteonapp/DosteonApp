@@ -187,7 +187,8 @@ const OnboardingPage = () => {
     {
       stepLabel: "STEP 3 OF 3",
       title: "What does your kitchen stock?",
-      subtitle: "Select every item you use. You can always add more later.",
+      subtitle:
+        "Select the ingredients you track every day. These become your core inventory for Daily Stock Count, Kitchen Service, and Inventory.",
     },
   ] as const;
 
@@ -317,443 +318,469 @@ const OnboardingPage = () => {
           </p>
         </div>
 
-        {/* Form Card */}
-        <div className="w-full max-w-5xl bg-white rounded-[24px] shadow-[0_10px_40px_-15px_rgba(15,23,42,0.3)] border border-slate-100">
-          <div className="p-8 md:p-10 border-b border-slate-50">
-            {step === 1 && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="space-y-1">
-                  <h2 className="text-xl font-bold text-slate-900">Business Details</h2>
-                  <p className="text-sm text-slate-500">Basic information about your restaurant.</p>
-                </div>
-
-                <div className="space-y-5 pt-4">
-                  <div className="space-y-2">
-                    <label className="text-[13px] font-bold text-slate-600 uppercase tracking-wide">Restaurant Name *</label>
-                    <Input 
-                      className="h-12 border-slate-200 rounded-xl px-4 focus:ring-[#3B52D4]"
-                      placeholder="Your Restaurant Name"
-                      value={orgName}
-                      onChange={e => setOrgName(e.target.value)}
-                    />
+        {/* Steps 1–2: Centered card layout */}
+        {step !== 3 && (
+          <div className="w-full max-w-5xl bg-white rounded-[24px] shadow-[0_10px_40px_-15px_rgba(15,23,42,0.3)] border border-slate-100">
+            <div className="p-8 md:p-10 border-b border-slate-50">
+              {step === 1 && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="space-y-1">
+                    <h2 className="text-xl font-bold text-slate-900">Business Details</h2>
+                    <p className="text-sm text-slate-500">Basic information about your restaurant.</p>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[13px] font-bold text-slate-600 uppercase tracking-wide">Phone Number</label>
-                    <div className="flex gap-2">
-                      <div className="flex items-center gap-2 border border-slate-200 rounded-xl px-3 bg-slate-50/50 min-w-[130px]">
-                        <span className="h-5 w-7 rounded-sm relative overflow-hidden flex flex-col">
-                          <span className="h-2/4 w-full" style={{ backgroundColor: flagColors[0] }} />
-                          <span className="h-1/4 w-full" style={{ backgroundColor: flagColors[1] }} />
-                          <span className="h-1/4 w-full" style={{ backgroundColor: flagColors[2] }} />
-                        </span>
-                        <input
-                          className="w-16 bg-transparent border-none outline-none text-sm font-bold text-slate-600"
-                          value={countryCode}
-                          onChange={(e) => handleCountryCodeChange(e.target.value)}
-                          placeholder="+250"
-                        />
-                      </div>
-                      <Input 
-                        className="h-12 border-slate-200 rounded-xl px-4 flex-1"
-                        type="tel"
-                        inputMode="numeric"
-                        placeholder="781234567"
-                        value={phone}
-                        onChange={e => handlePhoneChange(e.target.value)}
+                  <div className="space-y-5 pt-4">
+                    <div className="space-y-2">
+                      <label className="text-[13px] font-bold text-slate-600 uppercase tracking-wide">Restaurant Name *</label>
+                      <Input
+                        className="h-12 border-slate-200 rounded-xl px-4 focus:ring-[#3B52D4]"
+                        placeholder="Your Restaurant Name"
+                        value={orgName}
+                        onChange={(e) => setOrgName(e.target.value)}
                       />
                     </div>
-                    <p className="text-xs text-slate-400 font-medium">Used for important account alerts via Phone or WhatsApp.</p>
+
+                    <div className="space-y-2">
+                      <label className="text-[13px] font-bold text-slate-600 uppercase tracking-wide">Phone Number</label>
+                      <div className="flex gap-2">
+                        <div className="flex items-center gap-2 border border-slate-200 rounded-xl px-3 bg-slate-50/50 min-w-[130px]">
+                          <span className="h-5 w-7 rounded-sm relative overflow-hidden flex flex-col">
+                            <span className="h-2/4 w-full" style={{ backgroundColor: flagColors[0] }} />
+                            <span className="h-1/4 w-full" style={{ backgroundColor: flagColors[1] }} />
+                            <span className="h-1/4 w-full" style={{ backgroundColor: flagColors[2] }} />
+                          </span>
+                          <input
+                            className="w-16 bg-transparent border-none outline-none text-sm font-bold text-slate-600"
+                            value={countryCode}
+                            onChange={(e) => handleCountryCodeChange(e.target.value)}
+                            placeholder="+250"
+                          />
+                        </div>
+                        <Input
+                          className="h-12 border-slate-200 rounded-xl px-4 flex-1"
+                          type="tel"
+                          inputMode="numeric"
+                          placeholder="781234567"
+                          value={phone}
+                          onChange={(e) => handlePhoneChange(e.target.value)}
+                        />
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium">Used for important account alerts via Phone or WhatsApp.</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {step === 2 && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                <div className="space-y-1">
-                  <h2 className="text-xl font-bold text-slate-900">Operating Hours</h2>
-                  <p className="text-sm text-slate-500">Define when your kitchen is open. This sets your daily tracking schedule automatically.</p>
-                </div>
+              {step === 2 && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="space-y-1">
+                    <h2 className="text-xl font-bold text-slate-900">Operating Hours</h2>
+                    <p className="text-sm text-slate-500">Define when your kitchen is open. This sets your daily tracking schedule automatically.</p>
+                  </div>
 
-                <div className="space-y-5 pt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[13px] font-bold text-slate-600 uppercase tracking-wide">Opening Time</label>
-                      <div className="relative group">
-                        <Sun size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 group-hover:scale-110 transition-transform" />
-                        <select 
-                          className="w-full h-12 border border-slate-200 rounded-xl pl-11 pr-4 bg-white focus:outline-none focus:ring-2 focus:ring-[#3B52D4] appearance-none cursor-pointer font-medium text-slate-700"
-                          value={openingTime}
-                          onChange={e => setOpeningTime(e.target.value)}
-                        >
-                          {TIME_OPTIONS.map(t => <option key={t} value={t}>{formatTimeDisplay(t)}</option>)}
-                        </select>
-                        <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
+                  <div className="space-y-5 pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[13px] font-bold text-slate-600 uppercase tracking-wide">Opening Time</label>
+                        <div className="relative group">
+                          <Sun size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 group-hover:scale-110 transition-transform" />
+                          <select
+                            className="w-full h-12 border border-slate-200 rounded-xl pl-11 pr-4 bg-white focus:outline-none focus:ring-2 focus:ring-[#3B52D4] appearance-none cursor-pointer font-medium text-slate-700"
+                            value={openingTime}
+                            onChange={(e) => setOpeningTime(e.target.value)}
+                          >
+                            {TIME_OPTIONS.map((t) => (
+                              <option key={t} value={t}>
+                                {formatTimeDisplay(t)}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[13px] font-bold text-slate-600 uppercase tracking-wide">Closing Time</label>
+                        <div className="relative group">
+                          <Moon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 group-hover:scale-110 transition-transform" />
+                          <select
+                            className="w-full h-12 border border-slate-200 rounded-xl pl-11 pr-4 bg-white focus:outline-none focus:ring-2 focus:ring-[#3B52D4] appearance-none cursor-pointer font-medium text-slate-700"
+                            value={closingTime}
+                            onChange={(e) => setClosingTime(e.target.value)}
+                          >
+                            {TIME_OPTIONS.map((t) => (
+                              <option key={t} value={t}>
+                                {formatTimeDisplay(t)}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[13px] font-bold text-slate-600 uppercase tracking-wide">Closing Time</label>
-                      <div className="relative group">
-                        <Moon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 group-hover:scale-110 transition-transform" />
-                        <select 
-                          className="w-full h-12 border border-slate-200 rounded-xl pl-11 pr-4 bg-white focus:outline-none focus:ring-2 focus:ring-[#3B52D4] appearance-none cursor-pointer font-medium text-slate-700"
-                          value={closingTime}
-                          onChange={e => setClosingTime(e.target.value)}
-                        >
-                          {TIME_OPTIONS.map(t => <option key={t} value={t}>{formatTimeDisplay(t)}</option>)}
-                        </select>
-                        <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#EBEDFF] rounded-xl p-4 flex gap-4">
-                    <div className="h-6 w-6 mt-0.5 rounded-full border-2 border-[#3B52D4] flex items-center justify-center flex-shrink-0">
+                    <div className="bg-[#EBEDFF] rounded-xl p-4 flex gap-4">
+                      <div className="h-6 w-6 mt-0.5 rounded-full border-2 border-[#3B52D4] flex items-center justify-center flex-shrink-0">
                         <Clock size={12} className="text-[#3B52D4]" strokeWidth={3} />
-                    </div>
-                    <p className="text-sm text-[#3B52D4] font-medium leading-relaxed">
-                      Your standard operating window is <span className="font-bold">{operatingHours} hours</span>. Daily stock counts and closing workflows will be scheduled based on these times.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                {stockStep === "select" ? (
-                  <>
-                    <div className="space-y-1">
-                      <h2 className="text-lg font-semibold text-slate-900">What does your kitchen stock?</h2>
-                      <p className="text-sm text-slate-500">
-                        Select every item you use. You can always add more later.
+                      </div>
+                      <p className="text-sm text-[#3B52D4] font-medium leading-relaxed">
+                        Your standard operating window is <span className="font-bold">{operatingHours} hours</span>. Daily stock counts and closing workflows will be scheduled based on these times.
                       </p>
                     </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
-                    <div className="mt-2 flex gap-8">
-                      {/* Categories Sidebar */}
-                      <aside className="w-56 border-r border-slate-100 pr-6 hidden md:block">
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em] mb-3">
-                          Categories
+            {/* Card Footer Progress Bar */}
+            <div className="bg-[#F4F6FF] p-6 md:px-10 flex items-center justify-between rounded-b-[24px]">
+              <div className="space-y-2 flex-1 mr-8">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-800">Setup {progressPercent}% Complete</span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#3B52D4] transition-all duration-700 ease-out shadow-[0_0_10px_rgba(59,82,212,0.3)]"
+                    style={{ width: progressPercent + "%" }}
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wide">
+                  Review your details before completing the onboarding process.
+                </p>
+              </div>
+
+              <Button
+                className="px-8 h-12 bg-[#2155FF] hover:bg-[#1a46c7] text-white font-semibold rounded-xl flex items-center gap-2 group shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
+                onClick={() => {
+                  if (step < 3) {
+                    setStep(step + 1);
+                  }
+                }}
+                disabled={isPending || (step === 1 && !orgName)}
+              >
+                {isPending ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <>
+                    Continue
+                    <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Full overlay-style layout */}
+        {step === 3 && (
+          <section className="w-full max-w-6xl mt-4 flex flex-col gap-6">
+            {stockStep === "select" ? (
+              <>
+                <div className="space-y-1">
+                  <h2 className="text-[22px] md:text-[24px] font-bold text-slate-900">
+                    What does your kitchen stock?
+                  </h2>
+                  <p className="text-sm text-slate-500 max-w-3xl">
+                    Select every item you use. These choices power your Daily Stock Count, Kitchen Service,
+                    and Inventory views. You can always add more later.
+                  </p>
+                </div>
+
+                <div className="mt-2 flex gap-8 items-start">
+                  {/* Categories Sidebar */}
+                  <aside className="w-60 border-r border-slate-100 pr-6 hidden md:block">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em] mb-3">
+                      Categories
+                    </p>
+                    <div className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => setActiveCategory("All Items")}
+                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors ${
+                          activeCategory === "All Items"
+                            ? "bg-[#F3F4FF] text-slate-900"
+                            : "text-slate-500 hover:bg-slate-50"
+                        }`}
+                      >
+                        <span>All Items</span>
+                        <span className="inline-flex h-5 min-w-[24px] items-center justify-center rounded-full bg-white px-2 text-[10px] font-semibold text-slate-500 shadow-sm">
+                          {catalog.length}
+                        </span>
+                      </button>
+
+                      {categoryList.map(([category, count]) => (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() => setActiveCategory(category)}
+                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors ${
+                            activeCategory === category
+                              ? "bg-[#F3F4FF] text-slate-900"
+                              : "text-slate-500 hover:bg-slate-50"
+                          }`}
+                        >
+                          <span className="truncate">{category}</span>
+                          <span className="inline-flex h-5 min-w-[24px] items-center justify-center rounded-full bg-white px-2 text-[10px] font-semibold text-slate-500 shadow-sm">
+                            {count}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </aside>
+
+                  {/* Catalog Grid */}
+                  <div className="flex-1 flex flex-col gap-4">
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <Search
+                          size={18}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        />
+                        <Input
+                          className="h-12 pl-11 border-slate-200 rounded-xl"
+                          placeholder="Search for ingredients (e.g., Tomatoes, Beef)..."
+                          value={catalogSearch}
+                          onChange={(e) => setCatalogSearch(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <h3 className="text-sm font-semibold text-slate-900">All Items</h3>
+                          <p className="text-xs text-slate-500">
+                            Select items to add them to your core inventory draft. You can set opening
+                            quantities next.
+                          </p>
+                        </div>
+                        <p className="text-xs font-medium text-slate-500 whitespace-nowrap">
+                          {selectedIds.size} item{selectedIds.size === 1 ? "" : "s"} selected
                         </p>
-                        <div className="space-y-1">
-                          <button
-                            type="button"
-                            onClick={() => setActiveCategory("All Items")}
-                            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors ${
-                              activeCategory === "All Items"
-                                ? "bg-[#F3F4FF] text-slate-900"
-                                : "text-slate-500 hover:bg-slate-50"
-                            }`}
-                          >
-                            <span>All Items</span>
-                            <span className="inline-flex h-5 min-w-[24px] items-center justify-center rounded-full bg-white px-2 text-[10px] font-semibold text-slate-500 shadow-sm">
-                              {catalog.length}
-                            </span>
-                          </button>
+                      </div>
+                    </div>
 
-                          {categoryList.map(([category, count]) => (
-                            <button
-                              key={category}
-                              type="button"
-                              onClick={() => setActiveCategory(category)}
-                              className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors ${
-                                activeCategory === category
-                                  ? "bg-[#F3F4FF] text-slate-900"
-                                  : "text-slate-500 hover:bg-slate-50"
-                              }`}
-                            >
-                              <span className="truncate">{category}</span>
-                              <span className="inline-flex h-5 min-w-[24px] items-center justify-center rounded-full bg-white px-2 text-[10px] font-semibold text-slate-500 shadow-sm">
-                                {count}
-                              </span>
-                            </button>
-                          ))}
+                    <div className="max-h-[480px] overflow-y-auto pr-1 custom-scrollbar">
+                      {catalogLoading ? (
+                        <div className="flex flex-col items-center py-12 gap-3">
+                          <Loader2 className="animate-spin text-indigo-500" size={32} />
+                          <p className="text-slate-400 font-medium">Loading catalog...</p>
                         </div>
-                      </aside>
-
-                      {/* Catalog Grid */}
-                      <div className="flex-1 flex flex-col gap-4">
-                        <div className="space-y-3">
-                          <div className="relative">
-                            <Search
-                              size={18}
-                              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                            />
-                            <Input
-                              className="h-12 pl-11 border-slate-200 rounded-xl"
-                              placeholder="Search for ingredients (e.g., Tomatoes, Beef)..."
-                              value={catalogSearch}
-                              onChange={(e) => setCatalogSearch(e.target.value)}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between gap-4">
-                            <div>
-                              <h3 className="text-sm font-semibold text-slate-900">All Items</h3>
-                              <p className="text-xs text-slate-500">
-                                Select items to add them to your core inventory draft. You can set opening
-                                quantities next.
-                              </p>
-                            </div>
-                            <p className="text-xs font-medium text-slate-500 whitespace-nowrap">
-                              {selectedIds.size} item{selectedIds.size === 1 ? "" : "s"} selected
-                            </p>
-                          </div>
+                      ) : visibleItems.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                          {visibleItems.map((item) => {
+                            const isSelected = selectedIds.has(item.id);
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (isSelected) next.delete(item.id);
+                                    else next.add(item.id);
+                                    return next;
+                                  });
+                                }}
+                                className={`flex items-center justify-between rounded-xl border px-3 py-3 text-left text-sm shadow-[0_1px_3px_rgba(15,23,42,0.04)] transition-all ${
+                                  isSelected
+                                    ? "border-[#2155FF] bg-[#F5F7FF] shadow-[0_6px_18px_-10px_rgba(37,99,235,0.6)]"
+                                    : "border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="h-9 w-9 rounded-lg bg-slate-50 flex items-center justify-center text-[11px] font-semibold text-slate-400">
+                                    {item.name.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="space-y-0.5 min-w-0">
+                                    <p
+                                      className={`truncate text-sm font-semibold ${
+                                        isSelected ? "text-slate-900" : "text-slate-800"
+                                      }`}
+                                    >
+                                      {item.name}
+                                    </p>
+                                    <p className="text-[11px] text-slate-400 truncate">
+                                      {item.base_unit} · {item.subcategory || item.category}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div
+                                  className={`flex h-8 w-8 items-center justify-center rounded-md border text-xs font-semibold transition-colors ${
+                                    isSelected
+                                      ? "border-[#2155FF] bg-[#2155FF] text-white"
+                                      : "border-slate-300 bg-white text-slate-500"
+                                  }`}
+                                >
+                                  {isSelected ? <Check size={16} strokeWidth={3} /> : <Plus size={16} />}
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
+                      ) : (
+                        <div className="flex h-40 items-center justify-center text-sm text-slate-400">
+                          No matching items found.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-emerald-500 uppercase tracking-[0.18em]">
+                    Almost done
+                  </p>
+                  <h2 className="mt-1 text-[22px] md:text-[24px] font-bold text-slate-900">
+                    How much do you have right now?
+                  </h2>
+                  <p className="text-sm text-slate-500 max-w-3xl">
+                    Enter your current stock. These opening quantities seed your first Daily Stock Count.
+                    Skip any you&apos;re unsure about; you can update later.
+                  </p>
+                </div>
 
-                        <div className="max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
-                          {catalogLoading ? (
-                            <div className="flex flex-col items-center py-12 gap-3">
-                              <Loader2 className="animate-spin text-indigo-500" size={32} />
-                              <p className="text-slate-400 font-medium">Loading catalog...</p>
-                            </div>
-                          ) : visibleItems.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                              {visibleItems.map((item) => {
-                                const isSelected = selectedIds.has(item.id);
-                                return (
+                <div className="mt-4 space-y-6 max-h-[520px] overflow-y-auto pr-1 custom-scrollbar">
+                  {selectedItems.length === 0 ? (
+                    <p className="text-sm text-slate-400">
+                      No items selected. Go back and add items to set opening quantities.
+                    </p>
+                  ) : (
+                    Object.entries(
+                      selectedItems.reduce<Record<string, CatalogItem[]>>((acc, item) => {
+                        const key = item.category;
+                        acc[key] = acc[key] || [];
+                        acc[key].push(item);
+                        return acc;
+                      }, {}),
+                    ).map(([category, items]) => (
+                      <div key={category} className="space-y-3">
+                        <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
+                          {category}
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {items.map((item) => {
+                            const value = openingQuantities[item.id] ?? "";
+                            return (
+                              <div
+                                key={item.id}
+                                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="h-9 w-9 rounded-lg bg-slate-50 flex items-center justify-center text-[11px] font-semibold text-slate-400">
+                                    {item.name.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="space-y-0.5 min-w-0">
+                                    <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
+                                    <p className="text-[11px] text-slate-400 truncate">
+                                      {item.subcategory || item.category}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <div className="flex flex-col items-end gap-1">
+                                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.16em]">
+                                      Opening Qty
+                                    </span>
+                                    <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1">
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        className="w-16 border-0 bg-transparent text-right text-sm font-medium text-slate-900 focus:outline-none"
+                                        value={value}
+                                        onChange={(e) =>
+                                          setOpeningQuantities((prev) => ({
+                                            ...prev,
+                                            [item.id]: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                      <span className="text-[11px] text-slate-400 font-medium">
+                                        {item.base_unit}
+                                      </span>
+                                    </div>
+                                  </div>
                                   <button
-                                    key={item.id}
                                     type="button"
+                                    className="text-slate-300 hover:text-slate-500 text-xs font-medium"
                                     onClick={() => {
                                       setSelectedIds((prev) => {
                                         const next = new Set(prev);
-                                        if (isSelected) next.delete(item.id);
-                                        else next.add(item.id);
+                                        next.delete(item.id);
                                         return next;
                                       });
+                                      setOpeningQuantities((prev) => {
+                                        const { [item.id]: _, ...rest } = prev;
+                                        return rest;
+                                      });
                                     }}
-                                    className={`flex items-center justify-between rounded-xl border px-3 py-3 text-left text-sm shadow-[0_1px_3px_rgba(15,23,42,0.04)] transition-all ${
-                                      isSelected
-                                        ? "border-[#2155FF] bg-[#F5F7FF] shadow-[0_6px_18px_-10px_rgba(37,99,235,0.6)]"
-                                        : "border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md"
-                                    }`}
                                   >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <div className="h-9 w-9 rounded-lg bg-slate-50 flex items-center justify-center text-[11px] font-semibold text-slate-400">
-                                        {item.name.charAt(0).toUpperCase()}
-                                      </div>
-                                      <div className="space-y-0.5 min-w-0">
-                                        <p
-                                          className={`truncate text-sm font-semibold ${
-                                            isSelected ? "text-slate-900" : "text-slate-800"
-                                          }`}
-                                        >
-                                          {item.name}
-                                        </p>
-                                        <p className="text-[11px] text-slate-400 truncate">
-                                          {item.base_unit} · {item.subcategory || item.category}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div
-                                      className={`flex h-8 w-8 items-center justify-center rounded-md border text-xs font-semibold transition-colors ${
-                                        isSelected
-                                          ? "border-[#2155FF] bg-[#2155FF] text-white"
-                                          : "border-slate-300 bg-white text-slate-500"
-                                      }`}
-                                    >
-                                      {isSelected ? <Check size={16} strokeWidth={3} /> : <Plus size={16} />}
-                                    </div>
+                                    Remove
                                   </button>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="flex h-40 items-center justify-center text-sm text-slate-400">
-                              No matching items found.
-                            </div>
-                          )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    </div>
-                  </>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Bottom action bar for step 3 */}
+            <div className="mt-6 flex items-center justify-between gap-4 border-t border-slate-100 pt-4">
+              <div className="text-xs text-slate-500">
+                {stockStep === "select" ? (
+                  <span>
+                    {selectedIds.size === 0
+                      ? "Select at least one ingredient to create your core inventory."
+                      : `${selectedIds.size} item${selectedIds.size === 1 ? "" : "s"} selected`}
+                  </span>
                 ) : (
-                  <>
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-emerald-500 uppercase tracking-[0.18em]">
-                        Almost done
-                      </p>
-                      <h2 className="mt-1 text-lg font-semibold text-slate-900">How much do you have right now?</h2>
-                      <p className="text-sm text-slate-500">
-                        Enter your current stock. Skip any you&apos;re unsure about; you can update later.
-                      </p>
-                    </div>
-
-                    <div className="mt-4 space-y-6 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
-                      {selectedItems.length === 0 ? (
-                        <p className="text-sm text-slate-400">
-                          No items selected. Go back and add items to set opening quantities.
-                        </p>
-                      ) : (
-                        Object.entries(
-                          selectedItems.reduce<Record<string, CatalogItem[]>>((acc, item) => {
-                            const key = item.category;
-                            acc[key] = acc[key] || [];
-                            acc[key].push(item);
-                            return acc;
-                          }, {}),
-                        ).map(([category, items]) => (
-                          <div key={category} className="space-y-3">
-                            <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
-                              {category}
-                            </p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {items.map((item) => {
-                                const value = openingQuantities[item.id] ?? "";
-                                return (
-                                  <div
-                                    key={item.id}
-                                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
-                                  >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <div className="h-9 w-9 rounded-lg bg-slate-50 flex items-center justify-center text-[11px] font-semibold text-slate-400">
-                                        {item.name.charAt(0).toUpperCase()}
-                                      </div>
-                                      <div className="space-y-0.5 min-w-0">
-                                        <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
-                                        <p className="text-[11px] text-slate-400 truncate">{item.subcategory || item.category}</p>
-                                      </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3">
-                                      <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1">
-                                        <input
-                                          type="number"
-                                          min={0}
-                                          className="w-16 border-0 bg-transparent text-right text-sm font-medium text-slate-900 focus:outline-none"
-                                          value={value}
-                                          onChange={(e) =>
-                                            setOpeningQuantities((prev) => ({
-                                              ...prev,
-                                              [item.id]: e.target.value,
-                                            }))
-                                          }
-                                        />
-                                        <span className="text-[11px] text-slate-400 font-medium">
-                                          {item.base_unit}
-                                        </span>
-                                      </div>
-                                      <button
-                                        type="button"
-                                        className="text-slate-300 hover:text-slate-500 text-xs font-medium"
-                                        onClick={() => {
-                                          setSelectedIds((prev) => {
-                                            const next = new Set(prev);
-                                            next.delete(item.id);
-                                            return next;
-                                          });
-                                          setOpeningQuantities((prev) => {
-                                            const { [item.id]: _, ...rest } = prev;
-                                            return rest;
-                                          });
-                                        }}
-                                      >
-                                        Remove
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </>
+                  <span>You can update these any time from the inventory screen.</span>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* Card Footer Progress Bar */}
-          <div className="bg-[#F4F6FF] p-6 md:px-10 flex items-center justify-between rounded-b-[24px]">
-            <div className="space-y-2 flex-1 mr-8">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-slate-800">Setup {progressPercent}% Complete</span>
-              </div>
-              <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-[#3B52D4] transition-all duration-700 ease-out shadow-[0_0_10px_rgba(59,82,212,0.3)]" 
-                  style={{ width: `${progressPercent}%` }} 
-                />
-              </div>
-              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wide">Review your details before completing the onboarding process.</p>
-            </div>
-
-            <Button
-              className="px-8 h-12 bg-[#2155FF] hover:bg-[#1a46c7] text-white font-semibold rounded-xl flex items-center gap-2 group shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
-              onClick={() => {
-                if (step < 3) {
-                  setStep(step + 1);
-                  return;
-                }
-
-                // Step 3 internals
-                if (stockStep === "select") {
-                  // Initialize quantities when moving into the quantities view.
-                  setOpeningQuantities((prev) => {
-                    const next = { ...prev };
-                    selectedIds.forEach((id) => {
-                      if (next[id] === undefined) next[id] = "";
+              <Button
+                className="px-8 h-12 bg-[#2155FF] hover:bg-[#1a46c7] text-white font-semibold rounded-xl flex items-center gap-2 group shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
+                onClick={() => {
+                  if (stockStep === "select") {
+                    setOpeningQuantities((prev) => {
+                      const next = { ...prev };
+                      selectedIds.forEach((id) => {
+                        if (next[id] === undefined) next[id] = "";
+                      });
+                      return next;
                     });
-                    return next;
-                  });
-                  setStockStep("quantities");
-                  return;
-                }
+                    setStockStep("quantities");
+                    return;
+                  }
+                  completeOnboarding();
+                }}
+                disabled={isPending || (stockStep === "select" && selectedIds.size === 0)}
+              >
+                {isPending ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <>
+                    {stockStep === "select" ? "Set opening quantities" : "Finish Setup"}
+                    <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </section>
+        )}
 
-                completeOnboarding();
-              }}
-              disabled={
-                isPending ||
-                (step === 1 && !orgName) ||
-                (step === 3 && stockStep === "select" && selectedIds.size === 0)
-              }
-            >
-              {isPending ? <Loader2 size={18} className="animate-spin" /> : (
-                <>
-                  {step === 3
-                    ? stockStep === "select"
-                      ? "Set opening quantities"
-                      : "Finish Setup"
-                    : "Continue"}
-                  <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </Button>
+        {/* Global Footer (hidden on step 3 overlay) */}
+        {step !== 3 && (
+          <div className="w-full mt-12 md:mt-16">
+            <AuthFooter />
           </div>
-        </div>
-
-        {/* Global Footer */}
-        <div className="w-full mt-12 md:mt-16">
-          <AuthFooter />
-        </div>
+        )}
       </main>
-
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800;900&display=swap');
-        
-        body {
-          font-family: 'Figtree', sans-serif;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #F8FAFC;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #3B52D433;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #3B52D4;
-        }
-      `}</style>
     </div>
   );
 };

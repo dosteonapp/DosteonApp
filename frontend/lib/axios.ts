@@ -2,6 +2,60 @@ import axios from "axios";
 import { bypassAuth } from "./flags";
 import { toast } from "sonner";
 
+type UiErrorHint = {
+  match: string;
+  title: string;
+  description?: string;
+};
+
+const KNOWN_ERROR_UI_HINTS: UiErrorHint[] = [
+  {
+    match: "An account with this email already exists",
+    title: "Account Already Exists",
+  },
+  {
+    match: "Too many signup attempts",
+    title: "Too Many Attempts",
+  },
+  {
+    match: "Please enter a valid email address",
+    title: "Invalid Email Address",
+  },
+  {
+    match: "Password must be at least",
+    title: "Password Too Short",
+  },
+  {
+    match: "This email address could not be validated",
+    title: "Email Could Not Be Verified",
+  },
+  {
+    match: "We couldn't send a confirmation email right now",
+    title: "Email Delivery Issue",
+  },
+  {
+    match: "Signup failed. Please check your details and try again.",
+    title: "Signup Failed",
+  },
+  {
+    match: "Invalid email or password.",
+    title: "Invalid Credentials",
+  },
+  {
+    match: "Please verify your email before signing in.",
+    title: "Email Not Verified",
+  },
+  {
+    match: "Login failed. Please try again.",
+    title: "Login Failed",
+  },
+];
+
+const findUiErrorHint = (detail: string): UiErrorHint | undefined => {
+  const lower = detail.toLowerCase();
+  return KNOWN_ERROR_UI_HINTS.find((hint) => lower.includes(hint.match.toLowerCase()));
+};
+
 const axiosInstance = axios.create({
   baseURL: "/api/v1",
   headers: {
@@ -164,7 +218,12 @@ axiosInstance.interceptors.response.use(
         break;
       default:
         if (typeof errorStatus === "number" && errorStatus >= 400) {
-          toast.error(`Error ${errorStatus}`, { description: friendlyDetail });
+          const hint = findUiErrorHint(friendlyDetail);
+          if (hint) {
+            toast.error(hint.title, { description: hint.description ?? friendlyDetail });
+          } else {
+            toast.error(`Error ${errorStatus}`, { description: friendlyDetail });
+          }
         }
     }
 

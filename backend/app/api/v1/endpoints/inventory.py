@@ -2,15 +2,20 @@ from fastapi import APIRouter, Depends, Query, Request
 from app.schemas.inventory import InventoryItem, InventoryItemCreate, InventoryItemUpdate, CanonicalCatalogItem
 from app.services.inventory_service import inventory_service
 from typing import List
-from app.api.deps import get_restaurant_user
+from app.api.deps import get_restaurant_user, get_optional_user
 from app.core.rate_limit import limiter
 
 router = APIRouter()
 
 
 @router.get("/catalog", response_model=List[CanonicalCatalogItem])
-async def read_canonical_catalog(current_user: dict = Depends(get_restaurant_user)):
-    """Read the full canonical global catalog"""
+async def read_canonical_catalog(current_user: dict | None = Depends(get_optional_user)):
+    """Read the full canonical global catalog.
+
+    This endpoint is readable without authentication so onboarding step 3
+    can display the global catalog even before a full session is established.
+    When Authorization is present, it will still be validated.
+    """
     return await inventory_service.get_catalog()
 
 
