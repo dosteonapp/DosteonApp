@@ -132,6 +132,7 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
         profile["onboarding_completed"] = metadata.get("onboarding_completed")
         profile["onboarding_skipped"] = metadata.get("onboarding_skipped")
         profile["email_verified"] = metadata.get("email_verified")
+        profile["password_changed_at"] = metadata.get("password_changed_at")
     except TypeError:
         # In case profile is not directly mutable, fall back to a plain dict
         profile = {
@@ -139,6 +140,7 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
             "onboarding_completed": metadata.get("onboarding_completed"),
             "onboarding_skipped": metadata.get("onboarding_skipped"),
             "email_verified": metadata.get("email_verified"),
+            "password_changed_at": metadata.get("password_changed_at"),
         }
 
     # Populate structured log context for this request

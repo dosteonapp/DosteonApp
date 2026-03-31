@@ -87,6 +87,7 @@ class UserMe(Profile):
     onboarding_completed: Optional[bool] = None
     onboarding_skipped: Optional[bool] = None
     email_verified: Optional[bool] = None
+    password_changed_at: Optional[str] = None
 
 
 class TeamInviteRequest(BaseModel):

@@ -31,6 +31,20 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 
+function relativeTime(isoString: string): string {
+  const diff = Date.now() - new Date(isoString).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} day${days !== 1 ? "s" : ""} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months !== 1 ? "s" : ""} ago`;
+  const years = Math.floor(months / 12);
+  return `${years} year${years !== 1 ? "s" : ""} ago`;
+}
+
 export default function PersonalDetailsPage() {
   const { user, updateUser } = useUser();
   const [isSaved, setIsSaved] = React.useState(false);
@@ -331,7 +345,9 @@ export default function PersonalDetailsPage() {
                 <div className="flex justify-between items-start gap-4">
                   <div className="space-y-1">
                     <h3 className="text-[15px] font-bold text-slate-800">Password</h3>
-                    <p className="text-xs text-slate-400 font-medium">Last changed 3 months ago</p>
+                    {user?.password_changed_at && (
+                      <p className="text-xs text-slate-400 font-medium">Last changed {relativeTime(user.password_changed_at)}</p>
+                    )}
                   </div>
                   
                   <Dialog open={showPasswordModal} onOpenChange={(open) => {

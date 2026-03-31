@@ -24,5 +24,6 @@ export interface User {
   team_id?: string;
   image_url?: string;
   avatar_url?: string;
+  password_changed_at?: string;
 }
 

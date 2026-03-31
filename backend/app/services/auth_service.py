@@ -313,6 +313,7 @@ class AuthService:
             "onboarding_completed": current_user.get("onboarding_completed"),
             "onboarding_skipped": current_user.get("onboarding_skipped"),
             "email_verified": current_user.get("email_verified"),
+            "password_changed_at": current_user.get("password_changed_at"),
         }
 
     async def update_me(self, user_id: str, profile_data: dict):
@@ -684,10 +685,13 @@ WHERE organization_id = '{org_id_str}'
                     detail="Current password is incorrect."
                 )
 
-            # Update password via admin API
+            # Update password via admin API, recording the change timestamp
             supabase.auth.admin.update_user_by_id(
                 user_id,
-                {"password": new_password}
+                {
+                    "password": new_password,
+                    "user_metadata": {"password_changed_at": datetime.utcnow().isoformat()},
+                }
             )
             return {"message": "Password updated successfully"}
         except HTTPException:
