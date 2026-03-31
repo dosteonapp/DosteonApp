@@ -98,6 +98,28 @@ export interface KitchenWasteLogPayload {
   reason?: string;
 }
 
+const formatRelativeTime = (isoLike: string | undefined): string => {
+  if (!isoLike) return "Just now";
+  const parsed = new Date(isoLike);
+  if (Number.isNaN(parsed.getTime())) return isoLike;
+
+  const now = new Date();
+  const diffMs = now.getTime() - parsed.getTime();
+  const diffSec = Math.max(0, Math.floor(diffMs / 1000));
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+
+  if (diffMin < 1) return "Just now";
+  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffHr < 24) return `${diffHr} hour${diffHr === 1 ? "" : "s"} ago`;
+  if (diffDay === 1) return "Yesterday";
+  if (diffDay < 7) return `${diffDay} days ago`;
+
+  // Fallback to locale date for older notifications
+  return parsed.toLocaleDateString();
+};
+
 export const restaurantOpsService = {
   getStats: async (): Promise<{ totalItems: number; countedItems: number; healthy: number; low: number; critical: number }> => {
     if (useMocks) {
@@ -351,8 +373,8 @@ export const restaurantOpsService = {
     const rawList: any[] = Array.isArray(data) ? data : [];
 
     // Normalize backend notifications (which currently return
-    // `{ id, type: "critical"|"warning", message }`) into the
-    // richer shape expected by the restaurant notifications UI.
+    // `{ id, type: "critical"|"warning", message, timestamp? }`)
+    // into the richer shape expected by the restaurant notifications UI.
     return rawList.map((n, index) => {
       // If the backend is already returning the rich shape, keep it.
       if (n.title || n.description) {
@@ -366,6 +388,18 @@ export const restaurantOpsService = {
 
       const message: string = n.message || "Notification from your inventory";
 
+       const rawTimestamp: string | undefined =
+         typeof n.timestamp === "string"
+           ? n.timestamp
+           : typeof n.updated_at === "string"
+           ? n.updated_at
+           : typeof n.created_at === "string"
+           ? n.created_at
+           : undefined;
+
+       const timestamp = rawTimestamp;
+       const timeLabel: string = n.time || formatRelativeTime(timestamp);
+
       return {
         id: String(n.id ?? index),
         type: mappedType,
@@ -375,7 +409,9 @@ export const restaurantOpsService = {
           ? "Check stock levels"
           : "Inventory update",
         description: message,
-        time: n.time || n.timestamp || "Just now",
+        time: timeLabel,
+        timestamp,
+        href: "/dashboard/inventory",
         unread: true,
       };
     });

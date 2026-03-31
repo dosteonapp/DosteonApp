@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   CheckCircle2,
   AlertCircle,
@@ -23,9 +24,12 @@ interface Notification {
   time: string;
   unread: boolean;
   by?: string;
+  href?: string;
+  timestamp?: string;
 }
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState("All");
@@ -52,6 +56,24 @@ export default function NotificationsPage() {
     if (filter === "Alerts") return n.type === 'alert' || n.type === 'warning';
     return true;
   });
+
+  const handleOpen = (notification: Notification) => {
+    setNotifications(prev =>
+      prev.map(n => (n.id === notification.id ? { ...n, unread: false } : n))
+    );
+
+    if (notification.href) {
+      router.push(notification.href);
+      return;
+    }
+
+    // Fallback routing based on type
+    if (notification.type === "alert" || notification.type === "warning") {
+      router.push("/dashboard/inventory");
+    } else {
+      router.push("/dashboard");
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto w-full pb-20 font-figtree animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -83,7 +105,11 @@ export default function NotificationsPage() {
       {/* Notifications List */}
       <div className="space-y-3">
         {filteredNotifications.map((notification) => (
-          <NotificationItem key={notification.id} notification={notification} />
+          <NotificationItem
+            key={notification.id}
+            notification={notification}
+            onOpen={handleOpen}
+          />
         ))}
         {filteredNotifications.length === 0 && (
           <div className="text-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
@@ -105,7 +131,7 @@ export default function NotificationsPage() {
   );
 }
 
-function NotificationItem({ notification }: { notification: Notification }) {
+function NotificationItem({ notification, onOpen }: { notification: Notification; onOpen: (notification: Notification) => void }) {
   const config = {
     success: { icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50" },
     alert: { icon: AlertCircle, color: "text-red-500", bg: "bg-red-50" },
@@ -120,7 +146,9 @@ function NotificationItem({ notification }: { notification: Notification }) {
     <Card className={cn(
       "border-slate-100 shadow-sm transition-all rounded-[20px] bg-white group hover:border-indigo-100 hover:shadow-md cursor-pointer",
       notification.unread && "border-l-[6px] border-l-[#3B59DA]"
-    )}>
+    )}
+      onClick={() => onOpen(notification)}
+    >
       <CardContent className="p-5 flex items-start gap-5">
         <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center shrink-0 border border-slate-100/50", bg)}>
           <Icon className={cn("h-5 w-5", color)} />
@@ -149,7 +177,15 @@ function NotificationItem({ notification }: { notification: Notification }) {
         </div>
         
         <div className="pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-[#3B59DA]">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-[#3B59DA]"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpen(notification);
+              }}
+            >
                 <ChevronRight className="h-4 w-4" />
             </Button>
         </div>

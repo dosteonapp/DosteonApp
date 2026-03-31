@@ -36,7 +36,7 @@ export const EmailCheckScreen: React.FC<EmailCheckScreenProps> = ({
         <Mail className={`w-8 h-8 ${iconTextColor}`} />
       </div>
 
-      <h1 className="text-2xl font-bold font-heading text-gray-900 mb-2 text-center">
+      <h1 className="text-2xl font-bold font-figtree text-gray-900 mb-2 text-center">
         {title}
       </h1>
       <p className="text-gray-500 text-center mb-8 leading-relaxed">

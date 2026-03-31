@@ -19,11 +19,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
+import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 
 import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 
@@ -34,11 +37,76 @@ export default function PersonalDetailsPage() {
   const [fName, setFName] = React.useState(user?.first_name || "");
   const [lName, setLName] = React.useState(user?.last_name || "");
 
+  const [countryCode, setCountryCode] = React.useState("+250");
+  const [phoneLocal, setPhoneLocal] = React.useState("");
+  const [orgSettings, setOrgSettings] = React.useState<any | null>(null);
+
   const [showPasswordModal, setShowPasswordModal] = React.useState(false);
   const [passwordStep, setPasswordStep] = React.useState<"form" | "success">("form");
   const [showCurrentPassword, setShowCurrentPassword] = React.useState(false);
   const [showNewPassword, setShowNewPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
+  const flagPalette: Array<{ prefix: string; colors: [string, string, string] }> = [
+    { prefix: "+250", colors: ["#00A1DE", "#FAD201", "#20603D"] }, // Rwanda
+    { prefix: "+254", colors: ["#000000", "#BB0000", "#006600"] }, // Kenya (approx.)
+    { prefix: "+255", colors: ["#1EB53A", "#FCD116", "#000000"] }, // Tanzania
+    { prefix: "+256", colors: ["#000000", "#FCDC04", "#D90012"] }, // Uganda
+    { prefix: "+257", colors: ["#20603D", "#FFFFFF", "#D21034"] }, // Burundi
+    { prefix: "+234", colors: ["#008751", "#FFFFFF", "#008751"] }, // Nigeria
+  ];
+
+  const handleCountryCodeChange = (raw: string) => {
+    let value = raw.replace(/\s+/g, "");
+
+    if (!value.startsWith("+")) {
+      value = "+" + value;
+    }
+
+    const digits = value.slice(1).replace(/\D/g, "");
+    setCountryCode("+" + digits);
+  };
+
+  const handlePhoneChange = (raw: string) => {
+    const digitsOnly = raw.replace(/\D/g, "");
+    setPhoneLocal(digitsOnly);
+  };
+
+  React.useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const settings = await restaurantOpsService.getSettings();
+        if (!isMounted || !settings) return;
+
+        const { id, ...rest } = settings as any;
+        setOrgSettings(rest);
+
+        const fullPhone = (rest as any).phone as string | undefined;
+        if (fullPhone && typeof fullPhone === "string") {
+          const normalized = fullPhone.replace(/\s+/g, "");
+          const match = flagPalette.find((entry) => normalized.startsWith(entry.prefix));
+          if (match) {
+            setCountryCode(match.prefix);
+            setPhoneLocal(normalized.slice(match.prefix.length));
+          } else if (normalized.startsWith("+")) {
+            // Fallback: treat first 4 chars as country code
+            const cc = normalized.slice(0, 4);
+            setCountryCode(cc);
+            setPhoneLocal(normalized.slice(cc.length));
+          } else {
+            setPhoneLocal(normalized);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load organization settings for profile page:", e);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const resetModal = () => {
     setPasswordStep("form");
@@ -173,20 +241,35 @@ export default function PersonalDetailsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="text-sm font-bold text-slate-500">Phone Number</Label>
                   <div className="flex gap-3">
-                    <div className="relative group">
-                      <div className="h-14 px-4 rounded-xl border border-slate-200 bg-white flex items-center gap-3 cursor-pointer hover:border-slate-300 transition-all min-w-[120px]">
-                        <div className="flex items-center gap-2">
-                          <div className="flex flex-col gap-0.5 w-6 h-4">
-                            <div className="bg-emerald-600 flex-1 w-full rounded-[1px]"></div>
-                            <div className="bg-white flex-1 w-full rounded-[1px]"></div>
-                            <div className="bg-emerald-600 flex-1 w-full rounded-[1px]"></div>
-                          </div>
-                          <span className="font-bold text-slate-800 text-sm font-mono">+234</span>
-                        </div>
-                        <ChevronDown className="h-4 w-4 text-slate-400" />
-                      </div>
+                    <div className="flex items-center gap-2 border border-slate-200 rounded-xl px-4 bg-slate-50/60 min-w-[150px]">
+                      <span className="h-5 w-7 rounded-sm relative overflow-hidden flex flex-col">
+                        {(() => {
+                          const normalized = countryCode.replace(/\s+/g, "");
+                          const match = flagPalette.find((entry) => normalized.startsWith(entry.prefix));
+                          const colors = match?.colors || ["#059669", "#FFFFFF", "#059669"];
+                          return (
+                            <>
+                              <span className="flex-1 w-full" style={{ backgroundColor: colors[0] }} />
+                              <span className="flex-1 w-full" style={{ backgroundColor: colors[1] }} />
+                              <span className="flex-1 w-full" style={{ backgroundColor: colors[2] }} />
+                            </>
+                          );
+                        })()}
+                      </span>
+                      <input
+                        className="w-16 bg-transparent border-none outline-none text-sm font-bold text-slate-700"
+                        value={countryCode}
+                        onChange={(e) => handleCountryCodeChange(e.target.value)}
+                        placeholder="+250"
+                      />
+                      <ChevronDown className="h-4 w-4 text-slate-400" />
                     </div>
-                    <Input id="phone" defaultValue="8023456789" className="h-14 rounded-xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800 flex-1" />
+                    <Input
+                      id="phone"
+                      value={phoneLocal}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      className="h-14 rounded-xl border-slate-200 focus:ring-indigo-500 font-medium text-slate-800 flex-1"
+                    />
                   </div>
                 </div>
               </div>
@@ -228,8 +311,12 @@ export default function PersonalDetailsPage() {
                       {passwordStep === "form" ? (
                         <>
                           <div className="p-8 space-y-2 relative">
-                            <h2 className="text-2xl font-bold text-slate-800">Change Password</h2>
-                            <p className="text-[15px] text-slate-400 font-medium">Update your password to keep your account secure.</p>
+                            <DialogTitle className="text-2xl font-bold text-slate-800">
+                              Change Password
+                            </DialogTitle>
+                            <DialogDescription className="text-[15px] text-slate-400 font-medium">
+                              Update your password to keep your account secure.
+                            </DialogDescription>
                             <Button 
                               variant="ghost" 
                               size="icon" 
@@ -379,6 +466,13 @@ export default function PersonalDetailsPage() {
             setSaving(true);
             try {
               await updateUser({ first_name: fName, last_name: lName });
+
+              if (orgSettings) {
+                const fullPhone = `${countryCode}${phoneLocal}`.trim();
+                const nextSettings = { ...orgSettings, phone: fullPhone };
+                await restaurantOpsService.updateSettings(nextSettings);
+                setOrgSettings(nextSettings);
+              }
               setIsSaved(true);
             } finally {
               setSaving(false);

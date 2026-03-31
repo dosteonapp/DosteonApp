@@ -378,7 +378,13 @@ WHERE cp.id = v.id;
     async def get_recent_events(self, organization_id: str, limit: int = 5) -> List[InventoryEvent]:
         return await db.inventoryevent.find_many(
             where={"organization_id": organization_id},
-            include={"product": True},
+            include={
+                "product": {
+                    "include": {
+                        "canonical": True,
+                    }
+                }
+            },
             order={"created_at": "desc"},
             take=limit
         )

@@ -120,7 +120,7 @@ export default function LoginPage() {
             <div className="w-16 h-16 rounded-xl border border-blue-100 flex items-center justify-center mb-4 bg-blue-50/30">
               <Mail className="w-8 h-8 text-blue-600" />
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold font-heading text-gray-900 text-center mt-1">
+            <h2 className="text-2xl md:text-3xl font-bold font-figtree text-gray-900 text-center mt-1">
               Sign in as a Restaurant With Magic Link
             </h2>
             <p className="text-gray-500 text-center max-w-sm mt-2">
@@ -129,7 +129,7 @@ export default function LoginPage() {
           </>
         ) : (
           <>
-            <h2 className="text-3xl font-bold font-heading text-gray-900 text-center mt-2">
+            <h2 className="text-3xl font-bold font-figtree text-gray-900 text-center mt-2">
               Sign In to Dosteon
             </h2>
             <p className="text-gray-500 text-center max-w-sm">

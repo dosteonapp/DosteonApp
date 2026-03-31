@@ -254,28 +254,50 @@ class RestaurantService:
         unit = ""
         try:
             if hasattr(e, 'product') and e.product:
-                # Fallback to canonical name if contextual name is missing
-                p_name = e.product.name or \
-                         (e.product.canonical.name if hasattr(e.product, 'canonical') and e.product.canonical else "Unknown Item")
-                unit = e.product.pack_unit or ""
-        except:
-            pass
+                # Prefer contextual name, then canonical fallback
+                if getattr(e.product, "name", None):
+                    p_name = e.product.name
+                elif hasattr(e.product, "canonical") and e.product.canonical and getattr(e.product.canonical, "name", None):
+                    p_name = e.product.canonical.name
+
+                # Ensure we always have a non-empty, human-friendly name
+                if not p_name or p_name.strip() == "":
+                    p_name = "Inventory Item"
+
+                unit = getattr(e.product, "pack_unit", None) or ""
+        except Exception:
+            # Mapping errors must never break the activity feed
+            p_name = "Inventory Item"
 
         q = int(e.quantity) if e.quantity == int(e.quantity) else e.quantity
         change = f"{'+' if q > 0 else ''}{q} {unit or ''}"
-        reason = e.metadata.get("reason", "Inventory Update") if e.metadata else "Inventory Update"
+        reason = e.metadata.get("reason", "Inventory update") if e.metadata else "Inventory update"
         timestamp = e.created_at.strftime("%b %d, %Y; %H:%M") if e.created_at else ""
+
+        # Friendlier, more specific copy for the dashboard feed
+        activity_label = f"{p_name}: {reason}"
+        description = f"{p_name} updated by {change}"
+
+        if e.event_type == "OPENING_STOCK":
+            activity_label = f"Opening stock recorded for {p_name}"
+            description = f"Opening quantity set to {change.replace('+', '').strip()}"
+        elif e.event_type == "USED":
+            activity_label = f"Usage logged for {p_name}"
+        elif e.event_type == "WASTED":
+            activity_label = f"Waste logged for {p_name}"
+        elif e.event_type == "ADJUSTED":
+            activity_label = f"Manual adjustment for {p_name}"
 
         return {
             "id": str(e.id),
             "action": action,
             "change": change,
             "performer": performer,
-            "activity": f"{p_name}: {reason}",
+            "activity": activity_label,
             "title": f"{action}: {p_name}",
-            "description": f"{p_name} updated by {change}",
+            "description": description,
             "time": timestamp,
-            "timestamp": timestamp
+            "timestamp": timestamp,
         }
 
     async def get_recent_activities(self, organization_id: str, offset: int = 0, limit: int = 5):
@@ -588,17 +610,26 @@ class RestaurantService:
         for item in inventory:
             stock = item.get("current_stock", 0)
             min_lvl = item.get("min_level", 0)
+            # Prefer the most recent update timestamp for time-based display on the
+            # frontend; fall back to created_at if needed.
+            ts = item.get("updated_at") or item.get("created_at")
+            if hasattr(ts, "isoformat"):
+                ts_value = ts.isoformat()
+            else:
+                ts_value = str(ts) if ts is not None else None
             if stock <= 0:
                 notifications.append({
                     "id": str(item["id"]),
                     "type": "critical",
                     "message": f"{item['name']} is out of stock",
+                    "timestamp": ts_value,
                 })
             elif stock <= min_lvl:
                 notifications.append({
                     "id": str(item["id"]),
                     "type": "warning",
                     "message": f"{item['name']} is running low ({stock} {item.get('unit', 'units')} left)",
+                    "timestamp": ts_value,
                 })
 
         # Apply simple offset/limit pagination on the in-memory notifications list

@@ -31,6 +31,8 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -162,8 +164,12 @@ export default function TeamManagementPage() {
                 {inviteStep === "form" || inviteStep === "sending" ? (
                   <>
                     <div className="p-10 space-y-2 relative">
-                      <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Invite Team Member</h2>
-                      <p className="text-[15px] text-slate-400 font-medium">Add a new member to your team and define their access level.</p>
+                      <DialogTitle className="text-2xl font-bold text-slate-800 tracking-tight">
+                        Invite Team Member
+                      </DialogTitle>
+                      <DialogDescription className="text-[15px] text-slate-400 font-medium">
+                        Add a new member to your team and define their access level.
+                      </DialogDescription>
                       <Button 
                         variant="ghost" 
                         size="icon" 
