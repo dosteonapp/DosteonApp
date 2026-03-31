@@ -670,6 +670,34 @@ WHERE organization_id = '{org_id_str}'
                 detail=str(e)
             )
 
+    async def change_password(self, user_id: str, user_email: str, current_password: str, new_password: str):
+        try:
+            # Verify current password by re-authenticating
+            try:
+                supabase.auth.sign_in_with_password({
+                    "email": user_email,
+                    "password": current_password
+                })
+            except Exception:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Current password is incorrect."
+                )
+
+            # Update password via admin API
+            supabase.auth.admin.update_user_by_id(
+                user_id,
+                {"password": new_password}
+            )
+            return {"message": "Password updated successfully"}
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+
     async def sign_in_with_magic_link(self, request: MagicLinkRequest):
         try:
             from app.db.prisma import db

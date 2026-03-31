@@ -101,6 +101,24 @@ class TeamRoleUpdate(BaseModel):
     role: Literal["owner_manager", "procurement_officer", "kitchen_staff"]
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one capital letter")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Password must contain at least one number")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+            raise ValueError("Password must contain at least one special character")
+        return v
+
+
 class OnboardRequest(BaseModel):
     organization_name: str
     address: str

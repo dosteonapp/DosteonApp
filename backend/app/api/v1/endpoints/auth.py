@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Header, Body
-from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest, UserBase, OnboardRequest
+from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest, UserBase, OnboardRequest, ChangePasswordRequest
 from app.services.auth_service import auth_service
 from app.api.deps import get_current_user, get_optional_user, get_admin_context, SecurityContext
 from app.core.rate_limit import limiter
@@ -59,6 +59,18 @@ async def refresh_token(request: RefreshTokenRequest):
 @limiter.limit("3/minute")
 async def magic_link(request: Request, body: MagicLinkRequest):
     return await auth_service.sign_in_with_magic_link(body)
+
+@router.post("/change-password")
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    return await auth_service.change_password(
+        current_user["id"],
+        current_user["email"],
+        request.current_password,
+        request.new_password
+    )
 
 @router.post("/forgot-password")
 @limiter.limit("3/minute")

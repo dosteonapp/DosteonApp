@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
+import axiosInstance from "@/lib/axios";
 
 import {
   Dialog,
@@ -46,6 +47,11 @@ export default function PersonalDetailsPage() {
   const [showCurrentPassword, setShowCurrentPassword] = React.useState(false);
   const [showNewPassword, setShowNewPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [currentPassword, setCurrentPassword] = React.useState("");
+  const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [changingPassword, setChangingPassword] = React.useState(false);
+  const [passwordError, setPasswordError] = React.useState<string | null>(null);
 
   const flagPalette: Array<{ prefix: string; colors: [string, string, string] }> = [
     { prefix: "+250", colors: ["#00A1DE", "#FAD201", "#20603D"] }, // Rwanda
@@ -111,6 +117,40 @@ export default function PersonalDetailsPage() {
   const resetModal = () => {
     setPasswordStep("form");
     setShowPasswordModal(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordError(null);
+  };
+
+  const validateNewPassword = (pwd: string): string | null => {
+    if (pwd.length < 8) return "Password must be at least 8 characters long";
+    if (!/[A-Z]/.test(pwd)) return "Must contain at least one capital letter";
+    if (!/[0-9]/.test(pwd)) return "Must contain at least one number";
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) return "Must contain at least one special character";
+    return null;
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+    if (!currentPassword) { setPasswordError("Please enter your current password"); return; }
+    const validationErr = validateNewPassword(newPassword);
+    if (validationErr) { setPasswordError(validationErr); return; }
+    if (newPassword !== confirmPassword) { setPasswordError("New passwords do not match"); return; }
+
+    setChangingPassword(true);
+    try {
+      await axiosInstance.post("auth/change-password", {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+      setPasswordStep("success");
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail || "Failed to change password. Please try again.";
+      setPasswordError(detail);
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   if (isSaved) {
@@ -327,66 +367,65 @@ export default function PersonalDetailsPage() {
                             </Button>
                           </div>
                           
-                          <div className="p-8 border-t border-slate-100 space-y-8">
+                          <div className="p-8 border-t border-slate-100 space-y-6">
                             <div className="space-y-3">
                               <Label className="text-[14px] font-bold text-slate-500">Enter Current Password</Label>
                               <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-hover:text-slate-900 transition-colors" />
-                                <Input 
+                                <Input
                                   type={showCurrentPassword ? "text" : "password"}
                                   placeholder="••••••••••"
+                                  value={currentPassword}
+                                  onChange={(e) => { setCurrentPassword(e.target.value); setPasswordError(null); }}
                                   className="h-14 pl-12 pr-12 rounded-2xl border-slate-200 focus:ring-indigo-500 font-medium"
                                 />
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                                   className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-slate-400 hover:text-slate-900"
                                 >
                                   {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                 </Button>
                               </div>
-                              <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
-                                Password must be at least <span className="font-bold text-slate-600">8 Characters</span> and must contain at least a <br />
-                                <span className="font-bold text-slate-600">Capital Letter</span>, a <span className="font-bold text-slate-600">Number</span> and a <span className="font-bold text-slate-600">Special Character</span>.
-                              </p>
                             </div>
 
                             <div className="space-y-3">
                               <Label className="text-[14px] font-bold text-slate-500">New Password</Label>
                               <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-hover:text-slate-900 transition-colors" />
-                                <Input 
+                                <Input
                                   type={showNewPassword ? "text" : "password"}
-                                  placeholder="Placeholder"
+                                  placeholder="Min 8 chars, uppercase, number, special"
+                                  value={newPassword}
+                                  onChange={(e) => { setNewPassword(e.target.value); setPasswordError(null); }}
                                   className="h-14 pl-12 pr-12 rounded-2xl border-slate-200 focus:ring-indigo-500 font-medium"
                                 />
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() => setShowNewPassword(!showNewPassword)}
                                   className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-slate-400 hover:text-slate-900"
                                 >
                                   {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                 </Button>
                               </div>
-                              <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
-                                Password must be at least <span className="font-bold text-slate-600">8 Characters</span> and must contain at least a <span className="font-bold text-slate-600">Capital Letter</span>, a <span className="font-bold text-slate-600">Number</span> and a <span className="font-bold text-slate-600">Special Character</span>.
-                              </p>
                             </div>
 
                             <div className="space-y-3">
                               <Label className="text-[14px] font-bold text-slate-500">Confirm New Password</Label>
                               <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-hover:text-slate-900 transition-colors" />
-                                <Input 
+                                <Input
                                   type={showConfirmPassword ? "text" : "password"}
-                                  placeholder="Placeholder"
+                                  placeholder="Re-enter new password"
+                                  value={confirmPassword}
+                                  onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(null); }}
                                   className="h-14 pl-12 pr-12 rounded-2xl border-slate-200 focus:ring-indigo-500 font-medium"
                                 />
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                   className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-slate-400 hover:text-slate-900"
                                 >
@@ -394,21 +433,28 @@ export default function PersonalDetailsPage() {
                                 </Button>
                               </div>
                             </div>
+
+                            {passwordError && (
+                              <p className="text-[13px] font-semibold text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                                {passwordError}
+                              </p>
+                            )}
                           </div>
 
                           <div className="p-8 bg-slate-50/80 flex items-center justify-center gap-4">
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               onClick={resetModal}
                               className="h-14 px-12 rounded-2xl border-slate-200 text-slate-700 font-bold bg-white hover:bg-slate-50 transition-all w-1/2"
                             >
                               Cancel
                             </Button>
-                            <Button 
-                              onClick={() => setPasswordStep("success")}
-                              className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2F47AF] text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 transition-all w-1/2"
+                            <Button
+                              onClick={handleChangePassword}
+                              disabled={changingPassword}
+                              className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2F47AF] text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 transition-all w-1/2 active:scale-95"
                             >
-                              Update Password
+                              {changingPassword ? "Updating..." : "Update Password"}
                             </Button>
                           </div>
                         </>
