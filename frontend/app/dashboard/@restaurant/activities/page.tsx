@@ -19,11 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
-import { 
-  AppContainer, 
-  InriaHeading, 
+import {
+  AppContainer,
   FigtreeText,
-  PrimarySurfaceCard 
+  PrimarySurfaceCard
 } from "@/components/ui/dosteon-ui";
 import {
   Table,
@@ -71,11 +70,11 @@ export default function GlobalActivitiesPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-widest mb-2">
+            <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-widest mb-2 font-figtree">
                <History className="h-3 w-3" />
                <span>Audit Trail</span>
             </div>
-            <InriaHeading className="text-[32px] md:text-[38px] font-bold tracking-tight text-[#1E293B]">Stock Activity Logs</InriaHeading>
+            <h1 className="text-[32px] md:text-[38px] font-bold tracking-tight text-[#1E293B] font-figtree">Stock Activity Logs</h1>
             <FigtreeText className="text-slate-400 font-semibold text-[15px]">Full history of inventory movements and kitchen logs</FigtreeText>
           </div>
           

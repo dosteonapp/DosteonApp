@@ -52,12 +52,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-    AppContainer, 
-    InriaHeading, 
-    FigtreeText, 
+import {
+    AppContainer,
+    FigtreeText,
     UnifiedStatCard,
-    PrimarySurfaceCard 
+    PrimarySurfaceCard
 } from "@/components/ui/dosteon-ui";
 import { InventoryUpdateItemModal } from "@/components/inventory/InventoryUpdateItemModal";
 
@@ -255,7 +254,7 @@ export default function InventoryItemDetailsPage({ params }: PageProps) {
         >
             <PrimarySurfaceCard className="p-8 md:p-10 space-y-8">
                 <div className="space-y-6">
-                    <InriaHeading className="text-[28px] font-bold text-[#1E293B] tracking-tight">Stock Activity History</InriaHeading>
+                    <h2 className="text-[28px] font-bold text-[#1E293B] tracking-tight font-figtree">Stock Activity History</h2>
                     
                     <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                         <div className="relative flex-1 max-w-[420px]">
