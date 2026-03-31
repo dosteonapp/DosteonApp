@@ -146,16 +146,23 @@ export default function TeamManagementPage() {
                 <h2 className="text-xl font-bold text-slate-900">Team Management</h2>
                 <p className="text-sm text-slate-400 font-medium">Manage your restaurant staff, their roles, and system access.</p>
             </div>
-            
+
+            {/* Invite button — disabled while team management is paused */}
+            <Button
+              disabled
+              className="h-12 px-8 bg-[#3B59DA] text-white font-bold rounded-xl gap-3 shadow-lg shadow-indigo-100 opacity-40 cursor-not-allowed"
+            >
+              <UserPlus className="h-5 w-5" />
+              Invite member
+            </Button>
+
+            {/* ── ORIGINAL INVITE DIALOG — kept intact, unreachable until overlay is removed ── */}
             <Dialog open={isInviteOpen} onOpenChange={(open) => {
               if (!open) resetInvite();
               setIsInviteOpen(open);
             }}>
               <DialogTrigger asChild>
-                <Button className="h-12 px-8 bg-[#3B59DA] hover:bg-[#2F47AF] text-white font-bold rounded-xl gap-3 shadow-lg shadow-indigo-100 transition-all active:scale-95">
-                    <UserPlus className="h-5 w-5" />
-                    Invite member
-                </Button>
+                <span className="hidden" aria-hidden />
               </DialogTrigger>
               <DialogContent className={cn(
                 "p-0 overflow-hidden border-none rounded-[32px] gap-0 outline-none",
@@ -284,6 +291,22 @@ export default function TeamManagementPage() {
             </Dialog>
           </div>
 
+          {/* ── COMING SOON OVERLAY ── Remove this block when team management is ready ── */}
+          <div className="relative rounded-2xl overflow-hidden">
+            {/* Overlay */}
+            <div className="absolute inset-0 z-10 bg-slate-50/80 backdrop-blur-[3px] rounded-2xl flex flex-col items-center justify-center gap-5 py-16">
+              <div className="h-16 w-16 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center">
+                <UserPlus className="h-7 w-7 text-slate-300" />
+              </div>
+              <div className="text-center space-y-2 max-w-sm px-4">
+                <p className="text-[18px] font-black text-slate-700 tracking-tight">Coming Soon</p>
+                <p className="text-[13px] font-medium text-slate-400 leading-relaxed">
+                  You'll soon be able to invite your staff members to Dosteon to collaborate, assign roles, and manage access efficiently.
+                </p>
+              </div>
+            </div>
+
+            {/* Original table — blurred behind the overlay, fully preserved */}
           <div className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
             <Table>
               <TableHeader className="bg-slate-50/80">
@@ -341,9 +364,12 @@ export default function TeamManagementPage() {
               </TableBody>
             </Table>
           </div>
+          </div>
+          {/* ── END COMING SOON OVERLAY ── */}
+
         </CardContent>
       </Card>
-      
+
       <div className="pb-20"></div>
     </div>
   );

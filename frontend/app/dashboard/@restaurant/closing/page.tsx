@@ -306,8 +306,8 @@ export default function ClosingPage() {
                     </PrimarySurfaceCard>
                 </div>
             ) : (
-                <div className="flex items-start py-20 min-h-[60vh]">
-                     <ClosingLockedCard lifecycle={lifecycle} />
+                <div className="flex items-center justify-center py-6 md:py-10 min-h-[calc(100vh-120px)]">
+                    <ClosingLockedCard lifecycle={lifecycle} />
                 </div>
             )}
         </div>
@@ -456,26 +456,26 @@ function ClosingLockedCard({ lifecycle }: { lifecycle: any }) {
     
     return (
         <PrimarySurfaceCard className={cn(
-            "w-full max-w-[800px] mx-auto p-8 md:p-16 flex flex-col items-center animate-in fade-in zoom-in-95 duration-500 relative overflow-hidden font-figtree rounded-[10px]",
+            "w-full max-w-[760px] mx-auto p-5 md:p-8 flex flex-col items-center animate-in fade-in zoom-in-95 duration-500 relative overflow-hidden font-figtree rounded-[10px]",
             "bg-white text-[#1E293B] shadow-[0_32px_120px_rgba(15,23,42,0.08)]"
         )}>
              {/* Header Lock Icon */}
             <div className={cn(
-                "h-20 w-20 md:h-24 md:w-24 rounded-[8px] md:rounded-[8px] flex items-center justify-center mb-8 md:mb-10 shadow-sm border relative z-10 transition-transform hover:scale-105 duration-300",
+                "h-16 w-16 md:h-20 md:w-20 rounded-[8px] md:rounded-[8px] flex items-center justify-center mb-6 md:mb-8 shadow-sm border relative z-10 transition-transform hover:scale-105 duration-300",
                 "bg-slate-50 border-slate-100"
             )}>
-                <Lock className={cn("h-8 w-8 md:h-10 md:w-10 stroke-[2px]", "text-slate-400")} />
+                <Lock className={cn("h-7 w-7 md:h-9 md:w-9 stroke-[2px]", "text-slate-400")} />
             </div>
             
-            <div className="text-center space-y-4 mb-10 md:mb-14 relative z-10">
+            <div className="text-center space-y-2.5 mb-6 md:mb-8 relative z-10">
                 <h2 className={cn(
-                    "text-[28px] md:text-[34px] font-bold leading-none font-figtree uppercase tracking-tight",
+                    "text-[26px] md:text-[30px] font-bold leading-none font-figtree uppercase tracking-tight",
                     "text-[#1E293B]"
                 )}>
                     {isClosed ? "Day is Closed" : (isClosingTimeReached && isOpen ? "Closing is Ready" : "Closed")}
                 </h2>
                 <FigtreeText className={cn(
-                    "font-medium text-[14px] md:text-[16px] max-w-sm mx-auto leading-relaxed",
+                    "font-medium text-[13px] md:text-[15px] max-w-sm mx-auto leading-relaxed",
                     "text-slate-500"
                 )}>
                     {isClosed 
@@ -488,37 +488,37 @@ function ClosingLockedCard({ lifecycle }: { lifecycle: any }) {
                 </FigtreeText>
             </div>
             
-            <div className="w-full bg-white border border-slate-100 rounded-[8px] p-6 md:p-10 space-y-8 mb-10 md:mb-14 relative z-10 shadow-sm">
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                    <FigtreeText className="text-[12px] md:text-[13px] font-bold uppercase tracking-widest text-slate-400">Requirements</FigtreeText>
+            <div className="w-full bg-white border border-slate-100 rounded-[8px] p-4 md:p-6 space-y-5 mb-6 md:mb-8 relative z-10 shadow-sm">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <FigtreeText className="text-[11px] md:text-[12px] font-bold uppercase tracking-widest text-slate-400">Requirements</FigtreeText>
                 </div>
 
-                <div className="flex items-center justify-between group py-2">
+                <div className="flex items-center justify-between group py-1.5">
                     <div className="flex gap-4 md:gap-6 items-center">
-                        <div className="h-12 w-12 md:h-14 md:w-14 bg-emerald-50 rounded-[8px] flex items-center justify-center border border-emerald-100 transition-transform group-hover:scale-110 duration-300">
-                            <ClipboardCheck className="h-5 w-5 md:h-6 md:w-6 text-emerald-500" />
+                        <div className="h-10 w-10 md:h-12 md:w-12 bg-emerald-50 rounded-[8px] flex items-center justify-center border border-emerald-100 transition-transform group-hover:scale-110 duration-300">
+                            <ClipboardCheck className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
                         </div>
                         <div className="space-y-1">
-                            <h3 className="text-[15px] md:text-[17px] font-bold text-[#1E293B] font-figtree">Complete Daily Stock Count</h3>
-                            <FigtreeText className="text-[13px] md:text-[14px] font-medium text-slate-400">Requirement met at opening</FigtreeText>
+                            <h3 className="text-[14px] md:text-[16px] font-bold text-[#1E293B] font-figtree">Complete Daily Stock Count</h3>
+                            <FigtreeText className="text-[12px] md:text-[13px] font-medium text-slate-400">Requirement met at opening</FigtreeText>
                         </div>
                     </div>
                     <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                        <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                        <CheckCircle2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-white" />
                     </div>
                 </div>
                 
-                <div className="flex items-center justify-between group py-2">
+                <div className="flex items-center justify-between group py-1.5">
                     <div className="flex gap-4 md:gap-6 items-center">
                         <div className={cn(
-                            "h-12 w-12 md:h-14 md:w-14 rounded-[8px] flex items-center justify-center border transition-transform group-hover:scale-110 duration-300",
+                            "h-10 w-10 md:h-12 md:w-12 rounded-[8px] flex items-center justify-center border transition-transform group-hover:scale-110 duration-300",
                             isClosingTimeReached ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"
                         )}>
-                            <Clock className={cn("h-5 w-5 md:h-6 md:w-6", isClosingTimeReached ? "text-emerald-500" : "text-slate-400")} />
+                            <Clock className={cn("h-4 w-4 md:h-5 md:w-5", isClosingTimeReached ? "text-emerald-500" : "text-slate-400")} />
                         </div>
                         <div className="space-y-1">
-                            <h3 className="text-[15px] md:text-[17px] font-bold text-[#1E293B] font-figtree">Wait until {targetClosingTime}</h3>
-                            <FigtreeText className="text-[13px] md:text-[14px] font-medium text-slate-400">Currently {currentTime}</FigtreeText>
+                            <h3 className="text-[14px] md:text-[16px] font-bold text-[#1E293B] font-figtree">Wait until {targetClosingTime}</h3>
+                            <FigtreeText className="text-[12px] md:text-[13px] font-medium text-slate-400">Currently {currentTime}</FigtreeText>
                         </div>
                     </div>
                     {(isClosingTimeReached && isOpen) ? (
@@ -530,13 +530,13 @@ function ClosingLockedCard({ lifecycle }: { lifecycle: any }) {
                     )}
                 </div>
                 
-                <div className="mt-6 p-6 md:p-8 bg-slate-50/50 rounded-[8px] flex gap-4 md:gap-6 items-center border border-slate-100 transition-colors hover:bg-slate-50">
-                    <div className="h-10 w-10 md:h-12 md:w-12 bg-white rounded-[6px] flex items-center justify-center shrink-0 shadow-sm">
-                        <Info className="h-5 w-5 md:h-6 md:w-6 text-slate-400" />
+                <div className="mt-4 p-4 md:p-5 bg-slate-50/50 rounded-[8px] flex gap-3 md:gap-4 items-center border border-slate-100 transition-colors hover:bg-slate-50">
+                    <div className="h-9 w-9 md:h-10 md:w-10 bg-white rounded-[6px] flex items-center justify-center shrink-0 shadow-sm">
+                        <Info className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
                     </div>
                     <div className="space-y-0.5">
-                        <FigtreeText className="text-[14px] md:text-[16px] font-bold text-[#1E293B]">Store Management</FigtreeText>
-                        <FigtreeText className="text-[13px] md:text-[14px] font-medium leading-relaxed text-slate-500">Closing hours and reset times can be adjusted by admins in Settings.</FigtreeText>
+                        <FigtreeText className="text-[13px] md:text-[15px] font-bold text-[#1E293B]">Store Management</FigtreeText>
+                        <FigtreeText className="text-[12px] md:text-[13px] font-medium leading-relaxed text-slate-500">Closing hours and reset times can be adjusted by admins in Settings.</FigtreeText>
                     </div>
                 </div>
             </div>
@@ -545,7 +545,7 @@ function ClosingLockedCard({ lifecycle }: { lifecycle: any }) {
                 onClick={startClosing}
                 disabled={!isClosingTimeReached || isClosed || !isOpen}
                 className={cn(
-                    "w-full h-16 md:h-20 rounded-[8px] font-bold text-[17px] md:text-[19px] transition-all active:scale-95 group relative z-10 font-figtree",
+                    "w-full h-14 md:h-16 rounded-[8px] font-bold text-[16px] md:text-[18px] transition-all active:scale-95 group relative z-10 font-figtree",
                     (isClosingTimeReached && isOpen && !isClosed)
                         ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-[0_20px_40px_-15px_rgba(59,89,218,0.3)] border-none" 
                         : "bg-slate-100 text-slate-400 border-none shadow-none cursor-not-allowed"

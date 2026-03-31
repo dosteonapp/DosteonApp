@@ -113,13 +113,16 @@ export default function AllInventoryItemsPage() {
             <div className="flex items-center gap-4">
                 <Button
                     variant="outline"
-                    className="h-12 px-6 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white hover:bg-slate-50 font-bold gap-3 transition-all shadow-sm active:scale-95 font-figtree"
+                    className={cn(
+                        "h-12 px-6 rounded-[8px] border-slate-200 text-[#3B59DA] bg-white font-bold gap-3 transition-all shadow-sm font-figtree",
+                        isLocked ? "opacity-50 cursor-not-allowed pointer-events-none" : "hover:bg-slate-50 active:scale-95"
+                    )}
                     onClick={() => fetchData({
                       search: search || undefined,
                       category,
                       level,
                     })}
-                    disabled={isLoading}
+                    disabled={isLoading || isLocked}
                 >
                     <RefreshIcon className="h-4 w-4" /> {isLoading ? "Refreshing..." : "Update Inventory"}
                 </Button>

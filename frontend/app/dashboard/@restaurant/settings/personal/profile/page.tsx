@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Camera, 
-  Upload, 
-  Key, 
+import {
+  Camera,
+  Upload,
+  Key,
   ChevronDown,
   Lock,
   Eye,
@@ -461,19 +461,37 @@ export default function PersonalDetailsPage() {
       </div>
 
       <div className="flex justify-center pt-4">
-        <Button 
+        <Button
           onClick={async () => {
             setSaving(true);
             try {
               await updateUser({ first_name: fName, last_name: lName });
 
-              if (orgSettings) {
-                const fullPhone = `${countryCode}${phoneLocal}`.trim();
-                const nextSettings = { ...orgSettings, phone: fullPhone };
-                await restaurantOpsService.updateSettings(nextSettings);
-                setOrgSettings(nextSettings);
+              // Fetch settings fresh if they failed to load on mount
+              let currentSettings = orgSettings;
+              if (!currentSettings) {
+                try {
+                  const fetched = await restaurantOpsService.getSettings();
+                  const { id, ...rest } = fetched as any;
+                  currentSettings = rest;
+                  setOrgSettings(rest);
+                } catch {
+                  currentSettings = {};
+                }
               }
+
+              const fullPhone = `${countryCode}${phoneLocal}`.trim();
+              const nextSettings = { ...currentSettings, phone: fullPhone };
+              await restaurantOpsService.updateSettings(nextSettings);
+              setOrgSettings(nextSettings);
+
               setIsSaved(true);
+            } catch (err: any) {
+              toast({
+                variant: "destructive",
+                title: "Failed to save settings",
+                description: err?.response?.data?.detail || err?.message || "Something went wrong. Please try again.",
+              });
             } finally {
               setSaving(false);
             }
