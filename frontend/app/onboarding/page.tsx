@@ -17,6 +17,7 @@ import {
   Sun,
   Moon,
   Plus,
+  PartyPopper,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -55,6 +56,7 @@ const OnboardingPage = () => {
   const queryClient = useQueryClient();
 
   const [step, setStep] = useState(1);
+  const [completed, setCompleted] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [countryCode, setCountryCode] = useState("+250");
   const [phone, setPhone] = useState("");
@@ -159,9 +161,8 @@ const OnboardingPage = () => {
       return data;
     },
     onSuccess: () => {
-      toast.success("Restaurant Onboarded", { description: "Your setup is complete!" });
       queryClient.invalidateQueries({ queryKey: ["user"] });
-      router.push(POST_ONBOARDING_URL);
+      setCompleted(true);
     },
     onError: (err: any) => {
       const msg = err.response?.data?.detail || "Setup incomplete. You can update this later in Settings.";
@@ -231,6 +232,28 @@ const OnboardingPage = () => {
   const flagColors: [string, string, string] = match
     ? match.colors
     : ["#CBD5F5", "#E5E7EB", "#CBD5F5"]; // Generic fallback
+
+  if (completed) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center font-figtree px-6">
+        <div className="w-full max-w-md bg-white rounded-[24px] shadow-[0_10px_40px_-15px_rgba(15,23,42,0.3)] border border-slate-100 p-10 flex flex-col items-center text-center gap-6">
+          <div className="h-16 w-16 rounded-full bg-emerald-50 flex items-center justify-center">
+            <PartyPopper className="h-8 w-8 text-emerald-500" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-slate-900">Welcome to Dosteon</h1>
+            <p className="text-sm text-slate-500">Your restaurant is set up and ready. Let's start managing your kitchen.</p>
+          </div>
+          <Button
+            className="w-full h-12 bg-[#3B52D4] hover:bg-[#2f44c0] text-white rounded-xl font-semibold"
+            onClick={() => router.push(POST_ONBOARDING_URL)}
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-figtree">
