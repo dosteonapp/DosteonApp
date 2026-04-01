@@ -122,20 +122,54 @@ class AuthService:
                 # This keeps signup working even if SUPABASE_SERVICE_ROLE_KEY
                 # is missing or misconfigured in production.
                 if "user not allowed" in error_str.lower():
-                    fallback_res = supabase.auth.sign_up({
-                        "email": user_data.email,
-                        "password": user_data.password,
-                        "options": {
-                            "email_redirect_to": settings.AUTH_REDIRECT_URL,
-                            "data": {
-                                "first_name": user_data.first_name,
-                                "last_name": user_data.last_name,
-                                "role": user_data.role,
-                                "organization_id": str(org_id),
+                    # Service role key is missing — fall back to public sign_up.
+                    # Supabase may return 500 if its built-in SMTP isn't configured
+                    # (our project relies on Resend via the admin flow). Catch that
+                    # specific error so we can still complete signup and send our
+                    # own verification email via the background task below.
+                    try:
+                        fallback_res = supabase.auth.sign_up({
+                            "email": user_data.email,
+                            "password": user_data.password,
+                            "options": {
+                                "email_redirect_to": settings.AUTH_REDIRECT_URL,
+                                "data": {
+                                    "first_name": user_data.first_name,
+                                    "last_name": user_data.last_name,
+                                    "role": user_data.role,
+                                    "organization_id": str(org_id),
+                                },
                             },
-                        },
-                    })
-                    user_res = fallback_res
+                        })
+                        user_res = fallback_res
+                    except Exception as fallback_e:
+                        fallback_err = str(fallback_e).lower()
+                        # If the only failure was Supabase's own email sending,
+                        # check whether the user was still created and continue.
+                        if "error sending confirmation email" in fallback_err or "confirmation email" in fallback_err:
+                            print(f"Fallback sign_up email error (non-fatal): {fallback_e}")
+                            # Try to recover the created user via admin lookup
+                            try:
+                                recovered = supabase.auth.admin.get_user_by_email(user_data.email)
+                                if recovered and recovered.user:
+                                    # Simulate the shape downstream code expects
+                                    class _FakeRes:
+                                        user = recovered.user
+                                    user_res = _FakeRes()
+                                else:
+                                    raise HTTPException(
+                                        status_code=status.HTTP_400_BAD_REQUEST,
+                                        detail="User creation failed. Please try again."
+                                    )
+                            except HTTPException:
+                                raise
+                            except Exception:
+                                raise HTTPException(
+                                    status_code=status.HTTP_400_BAD_REQUEST,
+                                    detail="User creation failed. Please try again."
+                                )
+                        else:
+                            raise
                 else:
                     # In non-dev environments or for other errors, propagate
                     # so we can surface a proper signup failure.
