@@ -140,11 +140,8 @@ const OnboardingPage = () => {
       const opening_quantities: Record<string, number> = {};
       selectedIds.forEach((id) => {
         const raw = openingQuantities[id];
-        if (raw === undefined || raw === "") return;
-        const value = parseFloat(raw);
-        if (!Number.isNaN(value) && value >= 0) {
-          opening_quantities[id] = value;
-        }
+        const value = raw === undefined || raw === "" ? 0 : parseFloat(raw);
+        opening_quantities[id] = isNaN(value) ? 0 : Math.max(0, value);
       });
 
       const { data } = await axiosInstance.post("auth/onboard", {
@@ -243,7 +240,7 @@ const OnboardingPage = () => {
           </div>
           <Button
             className="w-full h-12 bg-[#3B52D4] hover:bg-[#2f44c0] text-white rounded-xl font-semibold"
-            onClick={() => router.push(POST_ONBOARDING_URL)}
+            onClick={() => { window.location.href = POST_ONBOARDING_URL; }}
           >
             Go to Dashboard
           </Button>
