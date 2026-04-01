@@ -86,7 +86,7 @@ class RestaurantService:
                 "restockPoint": i.get("min_level", 0) * 1.5,
                 "costPerUnit": 0,
                 "status": "Healthy" if i.get("current_stock", 0) > i.get("min_level", 0) else "Low" if i.get("current_stock", 0) > 0 else "Critical",
-                "lastUpdated": "Today",
+                "lastUpdated": i.get("updated_at").isoformat() if i.get("updated_at") else None,
                 "imageUrl": i.get("image_url")
             }
             for i in inventory
@@ -317,16 +317,40 @@ class RestaurantService:
         if not organization_id:
             return []
         inventory = await inventory_repo.get_by_organization(UUID(organization_id))
-        return [
-            {
-                "id": str(i["id"]),
+
+        # Query today's positive inventory events to compute amountAddedToday
+        from app.db.prisma import db
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_events = await db.inventoryevent.find_many(
+            where={
+                "organization_id": str(organization_id),
+                "created_at": {"gte": today_start},
+                "quantity": {"gt": 0},
+            }
+        )
+
+        # Sum positive quantities per product for today
+        added_today: dict[str, float] = {}
+        for event in today_events:
+            pid = event.contextual_product_id
+            added_today[pid] = added_today.get(pid, 0.0) + float(event.quantity)
+
+        result = []
+        for i in inventory:
+            item_id = str(i["id"])
+            today_opening = float(i.get("current_stock", 0))
+            amount_added = round(added_today.get(item_id, 0.0), 3)
+            result.append({
+                "id": item_id,
                 "name": i["name"],
                 "unit": i.get("unit", "units"),
-                "lastCount": i.get("current_stock", 0),
+                "lastCount": today_opening,
                 "category": i.get("category", "General"),
-            }
-            for i in inventory
-        ]
+                "todayOpening": today_opening,
+                "amountAddedToday": amount_added,
+                "totalOpening": round(today_opening + amount_added, 3),
+            })
+        return result
 
     async def save_opening_draft(self, organization_id: str, payload: dict):
         try:

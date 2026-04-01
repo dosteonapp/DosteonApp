@@ -43,6 +43,22 @@ import {
     UnifiedHeroSurface
 } from "@/components/ui/dosteon-ui";
 
+function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return "Never";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return "Yesterday";
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
 export default function AllInventoryItemsPage() {
   const router = useRouter();
   const { isLocked } = useRestaurantDayLifecycle();
@@ -245,7 +261,7 @@ export default function AllInventoryItemsPage() {
                                         {item.status}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="text-slate-500 font-medium text-sm font-figtree">Today, 8:30 AM</TableCell>
+                                <TableCell className="text-slate-500 font-medium text-sm font-figtree">{relativeTime(item.lastUpdated)}</TableCell>
                                 <TableCell className="text-right pr-8">
                                     <Button variant="outline" className="h-11 w-11 p-0 rounded-[8px] hover:bg-[#3B59DA] text-slate-400 hover:text-white transition-all active:scale-95 border-slate-200" asChild>
                                         <Link href={`/dashboard/inventory/${item.id}`}>

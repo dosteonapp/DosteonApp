@@ -406,7 +406,7 @@ function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
                     </div>
                     <div className="space-y-2 md:pl-10 border-l border-slate-200">
                         <FigtreeText className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] leading-none">Amount Added Today</FigtreeText>
-                        <p className="text-[18px] md:text-[20px] font-bold text-[#1E293B] font-figtree leading-none">--</p>
+                        <p className="text-[18px] md:text-[20px] font-bold text-[#1E293B] font-figtree leading-none">{item.amountAddedToday ?? 0} {item.unit}</p>
                     </div>
                     <div className="space-y-2 md:pl-10 border-l border-slate-200 col-span-2 md:col-span-1">
                         <FigtreeText className="text-[11px] font-bold text-slate-600 uppercase tracking-[0.1em] leading-none">Total Opening Stock:</FigtreeText>
