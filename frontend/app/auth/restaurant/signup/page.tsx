@@ -254,8 +254,8 @@ export default function RegisterPage() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button
                       type="button"
-                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                      onClick={() => handleSocialLogin("google")}
+                      disabled
+                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 opacity-50 cursor-not-allowed transition-colors"
                     >
                       <img
                         src="https://www.svgrepo.com/show/475656/google-color.svg"
@@ -266,8 +266,8 @@ export default function RegisterPage() {
                     </Button>
                     <Button
                       type="button"
-                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                      onClick={() => handleSocialLogin("apple")}
+                      disabled
+                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 opacity-50 cursor-not-allowed transition-colors"
                     >
                       <svg
                         className="w-5 h-5"
