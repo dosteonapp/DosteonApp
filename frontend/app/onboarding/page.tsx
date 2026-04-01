@@ -4,7 +4,7 @@ import Link from "next/link";
 import AuthFooter from "@/components/auth/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axios";
 import { toast } from "sonner";
 import {
@@ -53,8 +53,6 @@ function formatTimeDisplay(t: string): string {
 
 const OnboardingPage = () => {
   const router = useRouter();
-  const queryClient = useQueryClient();
-
   const [step, setStep] = useState(1);
   const [completed, setCompleted] = useState(false);
   const [orgName, setOrgName] = useState("");
@@ -161,7 +159,6 @@ const OnboardingPage = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user"] });
       setCompleted(true);
     },
     onError: (err: any) => {

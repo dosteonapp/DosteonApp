@@ -15,13 +15,13 @@ class Settings(BaseSettings):
     
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = Field(
-    default=["http://localhost:3000", "https://dosteon-app.vercel.app", "https://dosteon-app-git-main-dosteonapp.vercel.app", "https://dosteon-app-git-main-dosteonapp-dosteonapp.vercel.app"],
+    default=["http://localhost:3000", "https://app.dosteon.com", "https://dosteon-app.vercel.app", "https://dosteon-app-git-main-dosteonapp.vercel.app"],
     validation_alias="BACKEND_CORS_ORIGINS"
     )
-    
+
     # Auth Redirect (for Email Verification/Callback)
     AUTH_REDIRECT_URL: str = Field(
-    "https://dosteon-app.vercel.app/auth/callback",
+    "https://app.dosteon.com/auth/callback",
     validation_alias="AUTH_REDIRECT_URL"
     )
     
