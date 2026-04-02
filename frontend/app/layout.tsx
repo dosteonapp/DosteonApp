@@ -9,6 +9,7 @@ import { AuthProvider } from "@/context/AuthContext";
 // import { AppGuard } from "@/components/app-guard";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/sonner";
+import { PostHogProvider } from "@/components/PostHogProvider";
 
 
 const inriaSerif = Inria_Serif({
@@ -40,23 +41,24 @@ export default function RootLayout({
         className={`${figtree.className} ${inriaSerif.variable} ${figtree.variable}`}
         suppressHydrationWarning
       >
-        <AppProvider>
-          <ThemeProvider
-            attribute="class"
-            forcedTheme="light"
-            disableTransitionOnChange
-          >
-            <UserProvider>
-              {/* <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}> */}
-              <AuthProvider>
-
-                {children}
-                <Toaster />
-              </AuthProvider>
-              {/* </GoogleOAuthProvider> */}
-            </UserProvider>
-          </ThemeProvider>
-        </AppProvider>
+        <PostHogProvider>
+          <AppProvider>
+            <ThemeProvider
+              attribute="class"
+              forcedTheme="light"
+              disableTransitionOnChange
+            >
+              <UserProvider>
+                {/* <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}> */}
+                <AuthProvider>
+                  {children}
+                  <Toaster />
+                </AuthProvider>
+                {/* </GoogleOAuthProvider> */}
+              </UserProvider>
+            </ThemeProvider>
+          </AppProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

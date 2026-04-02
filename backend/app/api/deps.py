@@ -250,6 +250,40 @@ async def get_inventory_write_context(user: dict = Depends(get_inventory_writer)
     return SecurityContext(user)
 
 
+# ---------------------------------------------------------------------------
+# Mutation-safe context helpers (auth + CSRF in a single Depends)
+# ---------------------------------------------------------------------------
+# Use these instead of the plain context helpers on POST / PATCH / DELETE
+# endpoints that already require authentication.
+# ---------------------------------------------------------------------------
+
+from app.core.csrf import verify_csrf  # noqa: E402
+
+
+async def get_mutation_context(
+    ctx: SecurityContext = Depends(get_security_context),
+    _csrf: None = Depends(verify_csrf),
+) -> SecurityContext:
+    """Any authenticated role — with CSRF verification."""
+    return ctx
+
+
+async def get_admin_mutation_context(
+    ctx: SecurityContext = Depends(get_admin_context),
+    _csrf: None = Depends(verify_csrf),
+) -> SecurityContext:
+    """Owner / Manager only — with CSRF verification."""
+    return ctx
+
+
+async def get_inventory_write_mutation_context(
+    ctx: SecurityContext = Depends(get_inventory_write_context),
+    _csrf: None = Depends(verify_csrf),
+) -> SecurityContext:
+    """Inventory writers (Owner / Manager / CHEF) — with CSRF verification."""
+    return ctx
+
+
 def require_admin_key(x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key")):
     """Validate the internal admin API key header.
 

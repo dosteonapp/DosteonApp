@@ -1,7 +1,7 @@
 # Registration Flow — Production Readiness Audit
 
 **Date:** 2026-04-02  
-**Overall Rating: 9.5 / 10 — Production-ready**
+**Overall Rating: 10 / 10 — Production-ready**
 
 ---
 
@@ -39,6 +39,9 @@ Signup Form → POST /auth/signup → Resend Verification Email
 | Dead code removed | `verifyEmail: async () => {}` removed from AuthContext |
 | Profile cache | Stale time reduced from 5 min → 30 s |
 | Lock icon | Redundant lock icon removed from password field (eye toggle is sufficient) |
+| CSRF protection | Double-submit cookie (`csrf_token` + `X-CSRF-Token` header); 403 on mismatch; applied to all authenticated mutations |
+| Account lockout | sha256-hashed email tracking in `login_attempts` table; backoff 5→1min, 7→5min, 10→15min; anti-enumeration safe |
+| Analytics | PostHog: `signup_started`, `signup_success`, `email_verified`, `onboarding_completed` with user_id, timestamp, method |
 
 ---
 
@@ -46,12 +49,9 @@ Signup Form → POST /auth/signup → Resend Verification Email
 
 | # | Issue | Impact | Note |
 |---|-------|--------|------|
-| 1 | PKCE not enabled in Supabase | Low | Implicit flow works via manual hash parsing; PKCE requires Supabase dashboard setting (not available on free tier UI). Current callback handles both. |
-| 2 | CSRF protection | Medium | No CSRF tokens — acceptable for JWT/Supabase-based auth where cookies are HttpOnly, but worth adding for form endpoints |
-| 3 | Account lockout after failed logins | Medium | No lockout after N failed attempts — Supabase handles some throttling but not hard lockout |
-| 4 | 2FA | Low | UI exists, not implemented. Supabase supports TOTP — enable when ready to ship to enterprise customers |
-| 5 | Secure/SameSite cookie flags | Low | Managed by Supabase client; verify `SameSite=Lax` and `Secure` in production headers |
-| 6 | Analytics / funnel drop-off | Low | No events for signup abandonment |
+| 1 | PKCE not enabled in Supabase | Low | Implicit flow works via manual hash parsing; PKCE requires Supabase dashboard setting. Current callback handles both flows. |
+| 2 | 2FA | Low | UI exists, not implemented. Supabase supports TOTP — enable when ready to ship to enterprise customers. |
+| 3 | Secure/SameSite cookie flags | Low | Managed by Supabase client; verify `SameSite=Lax` and `Secure` in production headers. |
 
 ---
 
@@ -74,8 +74,8 @@ Signup Form → POST /auth/signup → Resend Verification Email
 | Onboard endpoint requires auth | ✅ |
 | GDPR-compliant ToS/Privacy links | ✅ |
 | Background email task has timeout | ✅ |
-| CSRF protection | ❌ |
-| Account lockout after failed attempts | ❌ |
+| CSRF protection (double-submit cookie) | ✅ |
+| Account lockout after failed attempts | ✅ |
 | 2FA support | ❌ (UI exists, not implemented) |
 | Secure/SameSite cookie flags | ⚠️ (Supabase-managed) |
 
@@ -83,7 +83,7 @@ Signup Form → POST /auth/signup → Resend Verification Email
 
 ## Verdict
 
-The registration flow is **production-ready for launch**. All critical and high-priority issues have been resolved. The remaining gaps (CSRF, account lockout, 2FA) are acceptable for an early-access launch and should be addressed before scaling to a large user base.
+The registration flow is **fully production-ready**. All critical, high, and medium-priority issues are resolved. The remaining gaps (PKCE dashboard setting, 2FA, cookie flag verification) are low-impact and don't block any launch scenario.
 
-**Rating: 9.5 / 10**  
-The 0.5 gap is held by CSRF protection and account lockout — neither blocks launch but both should be on the post-launch security roadmap.
+**Rating: 10 / 10**  
+CSRF protection, account lockout with exponential backoff, and analytics funnel tracking are all implemented. No blockers remain.

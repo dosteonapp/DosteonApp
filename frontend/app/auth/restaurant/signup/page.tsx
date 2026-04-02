@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Formik, Form, Field, FormikHelpers } from "formik";
@@ -18,6 +18,7 @@ import { SignupValidationSchema } from "@/schemas/auth";
 import { SignupValues } from "@/types/auth";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 
 import { EmailCheckScreen } from "@/components/auth/EmailCheckScreen";
 import Image from "next/image";
@@ -32,6 +33,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [email, setEmail] = useState("");
+  const signupStartedFired = useRef(false);
 
   const getInitialValues = (role: "restaurant" | "supplier"): SignupValues => ({
     firstname: "",
@@ -46,9 +48,16 @@ export default function RegisterPage() {
     values: SignupValues,
     helpers: FormikHelpers<SignupValues>
   ) => {
+    // Fire signup_started once per session (guards against rapid re-submits)
+    if (!signupStartedFired.current) {
+      signupStartedFired.current = true;
+      trackEvent("signup_started", { method: "email/password" });
+    }
+
     try {
       const response = await signup(values, helpers);
       if (response && response.success) {
+        trackEvent("signup_success", { method: "email/password" });
         setEmail(values.email);
         setIsVerifying(true);
       }

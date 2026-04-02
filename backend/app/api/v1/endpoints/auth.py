@@ -1,11 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, Header, Body
-from app.schemas.auth import UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest, PasswordResetConfirm, UserMe, RefreshTokenRequest, UserBase, OnboardRequest, ChangePasswordRequest
+from fastapi import APIRouter, Depends, Body, Response
+from app.schemas.auth import (
+    UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest,
+    PasswordResetConfirm, UserMe, RefreshTokenRequest, UserBase,
+    OnboardRequest, ChangePasswordRequest,
+)
 from app.services.auth_service import auth_service
-from app.api.deps import get_current_user, get_optional_user, get_admin_context, SecurityContext
+from app.api.deps import get_current_user, get_admin_context, SecurityContext
 from app.core.rate_limit import limiter
+from app.core.csrf import set_csrf_cookie, verify_csrf
 from fastapi import Request
 
 router = APIRouter()
+
+# ---------------------------------------------------------------------------
+# Public endpoints — no CSRF (no session cookie to steal)
+# ---------------------------------------------------------------------------
 
 @router.post("/signup")
 @limiter.limit("5/minute")
@@ -17,27 +26,6 @@ async def signup(request: Request, user_data: UserSignup):
 async def login(request: Request, login_data: UserLogin):
     return await auth_service.login(login_data)
 
-@router.get("/me", response_model=UserMe)
-async def get_me(current_user: dict = Depends(get_current_user)):
-    return await auth_service.get_me(current_user)
-
-@router.patch("/me")
-async def update_me(
-    profile_data: dict = Body(...),
-    current_user: dict = Depends(get_current_user)
-):
-    return await auth_service.update_me(current_user["id"], profile_data)
-
-@router.post("/onboard")
-@limiter.limit("5/minute")
-async def onboard_user(
-    request: Request,
-    org_data: OnboardRequest,
-    current_user: dict = Depends(get_current_user),
-):
-    """Initialize organization and link to user profile. Requires authentication."""
-    return await auth_service.onboard_user(org_data.model_dump(exclude_unset=False), current_user)
-
 @router.post("/refresh", response_model=Token)
 async def refresh_token(request: RefreshTokenRequest):
     return await auth_service.refresh_token(request)
@@ -46,18 +34,6 @@ async def refresh_token(request: RefreshTokenRequest):
 @limiter.limit("3/minute")
 async def magic_link(request: Request, body: MagicLinkRequest):
     return await auth_service.sign_in_with_magic_link(body)
-
-@router.post("/change-password")
-async def change_password(
-    request: ChangePasswordRequest,
-    current_user: dict = Depends(get_current_user)
-):
-    return await auth_service.change_password(
-        current_user["id"],
-        current_user["email"],
-        request.current_password,
-        request.new_password
-    )
 
 @router.post("/forgot-password")
 @limiter.limit("3/minute")
@@ -79,14 +55,60 @@ async def resend_verification(request: Request, body: UserBase):
 async def social_login(provider: str):
     return auth_service.get_social_login_url(provider)
 
+# ---------------------------------------------------------------------------
+# Authenticated GET — issues a fresh CSRF token via cookie
+# ---------------------------------------------------------------------------
+
+@router.get("/me", response_model=UserMe)
+async def get_me(
+    response: Response,
+    current_user: dict = Depends(get_current_user),
+):
+    """Return the current user profile and refresh the CSRF token cookie."""
+    set_csrf_cookie(response)
+    return await auth_service.get_me(current_user)
+
+# ---------------------------------------------------------------------------
+# Authenticated mutations — require CSRF
+# ---------------------------------------------------------------------------
+
+@router.patch("/me")
+async def update_me(
+    profile_data: dict = Body(...),
+    current_user: dict = Depends(get_current_user),
+    _csrf: None = Depends(verify_csrf),
+):
+    return await auth_service.update_me(current_user["id"], profile_data)
+
+@router.post("/onboard")
+@limiter.limit("5/minute")
+async def onboard_user(
+    request: Request,
+    org_data: OnboardRequest,
+    current_user: dict = Depends(get_current_user),
+    _csrf: None = Depends(verify_csrf),
+):
+    """Initialize organization and link to user profile. Requires authentication."""
+    return await auth_service.onboard_user(org_data.model_dump(exclude_unset=False), current_user)
+
+@router.post("/change-password")
+async def change_password(
+    body: ChangePasswordRequest,
+    current_user: dict = Depends(get_current_user),
+    _csrf: None = Depends(verify_csrf),
+):
+    return await auth_service.change_password(
+        current_user["id"],
+        current_user["email"],
+        body.current_password,
+        body.new_password,
+    )
 
 @router.delete("/account", status_code=204)
-async def delete_account(ctx: SecurityContext = Depends(get_admin_context)):
-    """Permanently delete the authenticated owner's account.
-
-    This endpoint is restricted to OWNER/MANAGER roles via get_admin_context.
-    It performs a soft-delete/anonymization of Profile, Organization, and
-    inventory events, and deletes the underlying Supabase auth user.
-    """
+async def delete_account(
+    ctx: SecurityContext = Depends(get_admin_context),
+    _csrf: None = Depends(verify_csrf),
+):
+    """Permanently delete the authenticated owner's account (Owner/Manager only)."""
     await auth_service.delete_account(ctx.user)
     return None

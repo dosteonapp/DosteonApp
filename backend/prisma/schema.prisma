@@ -225,3 +225,12 @@ model UnitConversion {
   @@id([from_unit, to_unit])
   @@map("unit_conversions")
 }
+
+model LoginAttempt {
+  email_hash    String    @id
+  attempts      Int       @default(0)
+  last_failed_at DateTime? @db.Timestamptz(6)
+  updated_at    DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@map("login_attempts")
+}

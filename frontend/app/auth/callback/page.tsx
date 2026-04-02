@@ -1,9 +1,11 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { identifyUser, trackEvent } from "@/lib/analytics";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
+  const emailVerifiedFired = useRef(false);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -67,6 +69,19 @@ export default function AuthCallbackPage() {
         console.error("[auth/callback] No session established");
         router.replace("/auth/restaurant/signin");
         return;
+      }
+
+      // Identify and track email verification once per callback
+      if (!emailVerifiedFired.current) {
+        emailVerifiedFired.current = true;
+        const userId = session.user?.id;
+        if (userId) {
+          identifyUser(userId, { email: session.user?.email });
+        }
+        trackEvent("email_verified", {
+          user_id: userId ?? null,
+          method: "email/password",
+        });
       }
 
       const metadata = session.user?.user_metadata ?? {};

@@ -239,6 +239,11 @@ class AuthService:
             )
 
     async def login(self, login_data: UserLogin):
+        from app.core.login_tracker import check_lockout, record_failure, reset_attempts
+
+        # Reject locked-out accounts before touching Supabase (anti-enumeration safe)
+        await check_lockout(login_data.email)
+
         try:
             auth_response = supabase.auth.sign_in_with_password({
                 "email": login_data.email,
@@ -246,10 +251,14 @@ class AuthService:
             })
 
             if not auth_response.user or not auth_response.session:
+                await record_failure(login_data.email)
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid email or password."
                 )
+
+            # Successful login — clear any accumulated failures
+            await reset_attempts(login_data.email)
 
             return {
                 "access_token": auth_response.session.access_token,
@@ -274,6 +283,7 @@ class AuthService:
                 detail = "Please verify your email before signing in."
             else:
                 detail = "Login failed. Please try again."
+            await record_failure(login_data.email)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=detail

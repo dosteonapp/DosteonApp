@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import Link from "next/link";
 import AuthFooter from "@/components/auth/Footer";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
   PartyPopper,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { trackEvent } from "@/lib/analytics";
 
 // --- Constants & Types ---
 const POST_ONBOARDING_URL = "/dashboard";
@@ -53,6 +54,7 @@ function formatTimeDisplay(t: string): string {
 
 const OnboardingPage = () => {
   const router = useRouter();
+  const onboardingCompletedFired = useRef(false);
   const [step, setStep] = useState(1);
   const [completed, setCompleted] = useState(false);
   const [orgName, setOrgName] = useState("");
@@ -156,7 +158,19 @@ const OnboardingPage = () => {
       });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      if (!onboardingCompletedFired.current) {
+        onboardingCompletedFired.current = true;
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const userId = supabase
+          ? (await supabase.auth.getUser()).data.user?.id ?? null
+          : null;
+        trackEvent("onboarding_completed", {
+          user_id: userId,
+          method: "email/password",
+        });
+      }
       setCompleted(true);
     },
     onError: (err: any) => {

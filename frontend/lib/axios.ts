@@ -56,6 +56,13 @@ const findUiErrorHint = (detail: string): UiErrorHint | undefined => {
   return KNOWN_ERROR_UI_HINTS.find((hint) => lower.includes(hint.match.toLowerCase()));
 };
 
+/** Read a cookie value by name from document.cookie (client-side only). */
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp("(?:^|;\\s*)" + name + "=([^;]*)"));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 const axiosInstance = axios.create({
   baseURL: "/api/v1",
   headers: {
@@ -86,6 +93,17 @@ axiosInstance.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Double-submit cookie CSRF: read the cookie the backend set on /auth/me
+  // and echo it as a header for every state-changing request.
+  const method = (config.method ?? "get").toLowerCase();
+  if (method !== "get" && method !== "head" && method !== "options") {
+    const csrfToken = getCookie("csrf_token");
+    if (csrfToken) {
+      config.headers["X-CSRF-Token"] = csrfToken;
+    }
+  }
+
   return config;
 });
 
@@ -212,9 +230,15 @@ axiosInstance.interceptors.response.use(
         });
         break;
       case 403:
-        toast.error("Permission Denied", {
-          description: "You don't have authorization to perform this action.",
-        });
+        if (detail.toLowerCase().includes("csrf")) {
+          toast.error("Session Security Error", {
+            description: "Security token mismatch. Please reload the page and try again.",
+          });
+        } else {
+          toast.error("Permission Denied", {
+            description: "You don't have authorization to perform this action.",
+          });
+        }
         break;
       default:
         if (typeof errorStatus === "number" && errorStatus >= 400) {
