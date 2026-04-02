@@ -65,6 +65,7 @@ export default function ResetPasswordPage() {
                 alt="Dosteon Logo"
                 width={160}
                 height={40}
+                priority
                 className="h-auto w-auto max-h-8"
               />
             </div>

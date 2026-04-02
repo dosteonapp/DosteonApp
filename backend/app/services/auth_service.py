@@ -204,8 +204,17 @@ class AuthService:
             )
 
             # 5. Kick off verification email in the background so the
-            #    signup response can return quickly.
-            asyncio.create_task(self._send_verification_email_background(user_data, org_id))
+            #    signup response can return quickly. Wrapped with a 30s
+            #    timeout so hung email tasks don't accumulate silently.
+            async def _email_with_timeout():
+                try:
+                    await asyncio.wait_for(
+                        self._send_verification_email_background(user_data, org_id),
+                        timeout=30.0
+                    )
+                except asyncio.TimeoutError:
+                    print(f"[email] Verification email timed out for {user_data.email}")
+            asyncio.create_task(_email_with_timeout())
 
             return {
                 "status": "ok",

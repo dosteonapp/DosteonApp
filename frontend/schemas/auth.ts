@@ -7,7 +7,7 @@ const passwordSchema = Yup.string()
   .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
   .matches(
     /[^A-Za-z0-9]/,
-    "Password must contain at least one special character"
+    'Password must contain at least one special character (!@#$%^&* etc.)'
   )
   .required("Password is required");
 

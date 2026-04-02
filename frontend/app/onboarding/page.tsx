@@ -56,6 +56,7 @@ const OnboardingPage = () => {
   const [step, setStep] = useState(1);
   const [completed, setCompleted] = useState(false);
   const [orgName, setOrgName] = useState("");
+  const [address, setAddress] = useState("");
   const [countryCode, setCountryCode] = useState("+250");
   const [phone, setPhone] = useState("");
   const [openingTime, setOpeningTime] = useState("07:00");
@@ -141,12 +142,12 @@ const OnboardingPage = () => {
       selectedIds.forEach((id) => {
         const raw = openingQuantities[id];
         const value = raw === undefined || raw === "" ? 0 : parseFloat(raw);
-        opening_quantities[id] = isNaN(value) ? 0 : Math.max(0, value);
+        opening_quantities[id] = isNaN(value) ? 0 : Math.min(Math.max(0, value), 99999);
       });
 
       const { data } = await axiosInstance.post("auth/onboard", {
         organization_name: orgName,
-        address: "Default Location", // Placeholder until address step is added
+        address: address.trim() || "Not specified",
         phone: `${countryCode}${phone}`,
         opening_time: openingTime,
         closing_time: closingTime,
@@ -383,6 +384,17 @@ const OnboardingPage = () => {
                         />
                       </div>
                       <p className="text-xs text-slate-400 font-medium">Used for important account alerts via Phone or WhatsApp.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[13px] font-bold text-slate-600 uppercase tracking-wide">Restaurant Address</label>
+                      <Input
+                        className="h-12 border-slate-200 rounded-xl px-4 focus:ring-[#3B52D4]"
+                        placeholder="e.g. 123 Main Street, Kigali"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                      />
+                      <p className="text-xs text-slate-400 font-medium">Your restaurant's physical location.</p>
                     </div>
                   </div>
                 </div>

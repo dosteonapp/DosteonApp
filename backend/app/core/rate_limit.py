@@ -1,10 +1,22 @@
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
-# Initialize the limiter using the client's IP address
-limiter = Limiter(key_func=get_remote_address)
+
+def get_real_ip(request: Request) -> str:
+    """Read the originating IP, honouring X-Forwarded-For / X-Real-IP set by
+    Cloudflare or any other reverse proxy in front of the API."""
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip.strip()
+    return get_remote_address(request)
+
+
+limiter = Limiter(key_func=get_real_ip)
 
 def setup_rate_limiting(app: FastAPI):
     """

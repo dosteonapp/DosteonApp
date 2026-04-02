@@ -1,3 +1,4 @@
+import html as html_lib
 import httpx
 
 from app.core.config import settings
@@ -117,20 +118,22 @@ class EmailService:
     ) -> None:
         subject = "Activate Your Dosteon Account"
 
+        safe_link = html_lib.escape(verification_link, quote=True)
+        safe_name = html_lib.escape(first_name)
         html = f"""
         <html>
           <body style="font-family: sans-serif; color: #333; line-height: 1.6;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-              <h2 style="color: #2563eb;">Welcome to Dosteon, {first_name}!</h2>
+              <h2 style="color: #2563eb;">Welcome to Dosteon, {safe_name}!</h2>
               <p>Thank you for signing up. Please click the button below to verify your email address and activate your restaurant dashboard.</p>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="{verification_link}" 
+                <a href="{safe_link}"
                    style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                    Verify Email Address
                 </a>
               </div>
               <p style="font-size: 12px; color: #666;">If the button doesn't work, copy and paste this link into your browser:</p>
-              <p style="font-size: 12px; color: #2563eb;">{verification_link}</p>
+              <p style="font-size: 12px; color: #2563eb;">{safe_link}</p>
               <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
               <p style="font-size: 12px; color: #999;">If you didn't create an account, you can safely ignore this email.</p>
             </div>

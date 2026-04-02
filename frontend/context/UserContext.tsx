@@ -107,7 +107,7 @@ const UserContent: React.FC<{ children: React.ReactNode; queryClient: QueryClien
     retry: false,
     throwOnError: false, // Prevents secondary logging of caught rejections
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 30, // 30 seconds
   });
 
   const { mutateAsync: updateUser } = useMutation({

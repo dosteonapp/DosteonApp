@@ -195,10 +195,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.access_token && data.refresh_token) {
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
-        await supabase.auth.setSession({
+        const { error: sessionError } = await supabase.auth.setSession({
           access_token: data.access_token,
           refresh_token: data.refresh_token,
         });
+        if (sessionError) {
+          throw sessionError;
+        }
       }
 
       router.push("/dashboard");
@@ -317,7 +320,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authenticateWithOAuth,
     authenticatingWithGoogle,
     authenticateWithGoogle,
-    verifyEmail: async () => {}, // Deprecated in native flow
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

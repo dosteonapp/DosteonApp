@@ -90,6 +90,7 @@ export default function RegisterPage() {
                 alt="Dosteon Logo"
                 width={160}
                 height={40}
+                priority
                 className="h-auto w-auto max-h-8"
               />
             </div>
@@ -111,7 +112,7 @@ export default function RegisterPage() {
                 length: values.password.length >= 8,
                 capital: /[A-Z]/.test(values.password),
                 number: /\d/.test(values.password),
-                special: /[!@#$%^&*(),.?":{}|<>]/.test(values.password),
+                special: /[^A-Za-z0-9]/.test(values.password),
               };
               const allRequirementsMet = Object.values(passwordRequirements).every(Boolean);
 
@@ -151,7 +152,6 @@ export default function RegisterPage() {
                     <FormikFormControl>
                       <div className="relative">
                         <Field as={Input} id="password-supplier" name="password" type={showPassword ? "text" : "password"} placeholder="Create a secure password" className="w-full h-12 border-gray-200 rounded-lg focus:ring-[#00a13e] pl-10 pr-10" />
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" tabIndex={-1}>
                           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
@@ -194,8 +194,8 @@ export default function RegisterPage() {
                   </div>
                   <p className="text-xs text-gray-500 text-center mt-2">
                     By creating an account, you agree to our{' '}
-                    <a href="#" className="text-[#00a13e] hover:text-[#008a35]">Terms of Service</a> and{' '}
-                    <a href="#" className="text-[#00a13e] hover:text-[#008a35]">Privacy Policy</a>.
+                    <a href="/legal/terms" className="text-[#00a13e] hover:text-[#008a35]">Terms of Service</a> and{' '}
+                    <a href="/legal/privacy" className="text-[#00a13e] hover:text-[#008a35]">Privacy Policy</a>.
                   </p>
                 </Form>
               );

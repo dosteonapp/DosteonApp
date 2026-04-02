@@ -33,22 +33,9 @@ async def update_me(
 async def onboard_user(
     request: Request,
     org_data: OnboardRequest,
-    current_user: dict | None = Depends(get_optional_user),
+    current_user: dict = Depends(get_current_user),
 ):
-    """Initialize organization and link to user profile.
-
-    If the user is authenticated, we update their organization name.
-    If unauthenticated (e.g. coming from a stale link), we treat this as a
-    skipped onboarding step and return a harmless success so the UI can
-    continue the flow.
-    """
-    if not current_user:
-        return {
-            "status": "ok",
-            "organization_id": None,
-            "message": "Onboarding skipped (user not authenticated)",
-        }
-
+    """Initialize organization and link to user profile. Requires authentication."""
     return await auth_service.onboard_user(org_data.model_dump(exclude_unset=False), current_user)
 
 @router.post("/refresh", response_model=Token)
@@ -78,8 +65,9 @@ async def forgot_password(request: Request, body: ForgotPasswordRequest):
     return await auth_service.forgot_password(body)
 
 @router.post("/reset-password")
-async def reset_password(request: PasswordResetConfirm):
-    return await auth_service.reset_password(request)
+@limiter.limit("3/minute")
+async def reset_password(request: Request, body: PasswordResetConfirm):
+    return await auth_service.reset_password(body)
 
 @router.post("/resend-verification")
 @limiter.limit("5/minute")

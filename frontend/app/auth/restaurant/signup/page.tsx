@@ -92,6 +92,7 @@ export default function RegisterPage() {
             alt="Dosteon Logo"
             width={160}
             height={40}
+            priority
             className="h-auto w-auto max-h-8"
           />
         </div>
@@ -113,7 +114,7 @@ export default function RegisterPage() {
                 length: values.password.length >= 8,
                 capital: /[A-Z]/.test(values.password),
                 number: /\d/.test(values.password),
-                special: /[!@#$%^&*(),.?":{}|<>]/.test(values.password),
+                special: /[^A-Za-z0-9]/.test(values.password),
               };
               const allRequirementsMet = Object.values(passwordRequirements).every(Boolean);
 
@@ -188,7 +189,6 @@ export default function RegisterPage() {
                           className="w-full pl-10 pr-10"
                         />
 
-                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
@@ -282,14 +282,14 @@ export default function RegisterPage() {
                   <p className="text-xs text-gray-500 text-center mt-2">
                     By creating an account, you agree to our{" "}
                     <a
-                      href="#"
+                      href="/legal/terms"
                       className="text-blue-600 hover:text-blue-800"
                     >
                       Terms of Service
                     </a>{" "}
                     and{" "}
                     <a
-                      href="#"
+                      href="/legal/privacy"
                       className="text-blue-600 hover:text-blue-800"
                     >
                       Privacy Policy
