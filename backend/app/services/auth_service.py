@@ -94,13 +94,9 @@ class AuthService:
 
     async def signup(self, user_data: UserSignup):
         try:
-            # 1. Create a default organization.
-            # If user skips onboarding, this name stays until updated in Settings.
-            default_org_name = f"{user_data.first_name}'s Restaurant"
-            org = await organization_repo._create_async(default_org_name)
-            org_id = org["id"]
-
-            # 2. Create User via Supabase Admin API
+            # 1. Create Supabase user FIRST — before touching the DB.
+            #    This way a rejected email (already registered, invalid, etc.)
+            #    never produces orphaned organization or profile rows.
             try:
                 user_res = supabase.auth.admin.create_user({
                     "email": user_data.email,
@@ -110,7 +106,6 @@ class AuthService:
                         "first_name": user_data.first_name,
                         "last_name": user_data.last_name,
                         "role": user_data.role,
-                        "organization_id": str(org_id)
                     }
                 })
             except Exception as e:
@@ -119,14 +114,7 @@ class AuthService:
 
                 # Fall back to the standard sign_up flow if the service role
                 # key is not allowed (e.g. using anon key in any environment).
-                # This keeps signup working even if SUPABASE_SERVICE_ROLE_KEY
-                # is missing or misconfigured in production.
                 if "user not allowed" in error_str.lower():
-                    # Service role key is missing — fall back to public sign_up.
-                    # Supabase may return 500 if its built-in SMTP isn't configured
-                    # (our project relies on Resend via the admin flow). Catch that
-                    # specific error so we can still complete signup and send our
-                    # own verification email via the background task below.
                     try:
                         fallback_res = supabase.auth.sign_up({
                             "email": user_data.email,
@@ -137,22 +125,17 @@ class AuthService:
                                     "first_name": user_data.first_name,
                                     "last_name": user_data.last_name,
                                     "role": user_data.role,
-                                    "organization_id": str(org_id),
                                 },
                             },
                         })
                         user_res = fallback_res
                     except Exception as fallback_e:
                         fallback_err = str(fallback_e).lower()
-                        # If the only failure was Supabase's own email sending,
-                        # check whether the user was still created and continue.
                         if "error sending confirmation email" in fallback_err or "confirmation email" in fallback_err:
                             print(f"Fallback sign_up email error (non-fatal): {fallback_e}")
-                            # Try to recover the created user via admin lookup
                             try:
                                 recovered = supabase.auth.admin.get_user_by_email(user_data.email)
                                 if recovered and recovered.user:
-                                    # Simulate the shape downstream code expects
                                     class _FakeRes:
                                         user = recovered.user
                                     user_res = _FakeRes()
@@ -171,8 +154,6 @@ class AuthService:
                         else:
                             raise
                 else:
-                    # In non-dev environments or for other errors, propagate
-                    # so we can surface a proper signup failure.
                     raise
 
             if not user_res or not user_res.user:
@@ -181,34 +162,55 @@ class AuthService:
                     detail="User creation failed. Please try again."
                 )
 
-            # 3. Map role to valid Prisma enum value
+            user_id = str(user_res.user.id)
+
+            # 2. Supabase user exists — now safe to create the organization.
+            default_org_name = f"{user_data.first_name}'s Restaurant"
+            org = await organization_repo._create_async(default_org_name)
+            org_id = org["id"]
+
+            # 3. Write org_id back to Supabase user_metadata so the JWT
+            #    carries it for downstream profile resolution.
+            try:
+                supabase.auth.admin.update_user_by_id(
+                    user_id,
+                    {"user_metadata": {
+                        "first_name": user_data.first_name,
+                        "last_name": user_data.last_name,
+                        "role": user_data.role,
+                        "organization_id": str(org_id),
+                    }}
+                )
+            except Exception as meta_err:
+                # Non-fatal — profile creation below carries the org_id directly.
+                print(f"[signup] metadata update warning for {user_data.email}: {meta_err}")
+
+            # 4. Map role to valid Prisma enum value
             prisma_role = map_role(user_data.role)
 
-            # 4. Create Profile row in Prisma DB
+            # 5. Create Profile row in Prisma DB
             from app.db.prisma import db
 
-            # 4a. Soft-delete any existing profile rows for this email that
-            #     belong to different Supabase user IDs. This prevents
-            #     duplicate active profiles when a Supabase user has been
-            #     deleted and re-created or when historical data exists.
+            # 5a. Soft-delete any existing active profiles for this email that
+            #     belong to a different Supabase user ID (stale rows from a
+            #     previous account that was deleted in Supabase).
             try:
                 await db.profile.update_many(
                     where={
                         "email": user_data.email,
-                        "id": {"not": str(user_res.user.id)},
+                        "id": {"not": user_id},
                         "deleted_at": None,
                     },
                     data={"deleted_at": datetime.utcnow()},
                 )
-            except Exception as dedupe_err:  # pragma: no cover - safety net
-                # Never break signup on best-effort deduplication.
+            except Exception as dedupe_err:
                 print(f"Profile dedupe warning for {user_data.email}: {dedupe_err}")
 
             await db.profile.upsert(
-                where={"id": str(user_res.user.id)},
+                where={"id": user_id},
                 data={
                     "create": {
-                        "id": str(user_res.user.id),
+                        "id": user_id,
                         "email": user_data.email,
                         "first_name": user_data.first_name,
                         "last_name": user_data.last_name,
@@ -237,7 +239,7 @@ class AuthService:
             return {
                 "status": "ok",
                 "message": "Signup successful. Check email for confirmation link.",
-                "user_id": str(user_res.user.id),
+                "user_id": user_id,
                 "organization_id": str(org_id)
             }
 
