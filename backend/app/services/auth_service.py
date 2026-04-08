@@ -186,6 +186,24 @@ class AuthService:
 
             # 4. Create Profile row in Prisma DB
             from app.db.prisma import db
+
+            # 4a. Soft-delete any existing profile rows for this email that
+            #     belong to different Supabase user IDs. This prevents
+            #     duplicate active profiles when a Supabase user has been
+            #     deleted and re-created or when historical data exists.
+            try:
+                await db.profile.update_many(
+                    where={
+                        "email": user_data.email,
+                        "id": {"not": str(user_res.user.id)},
+                        "deleted_at": None,
+                    },
+                    data={"deleted_at": datetime.utcnow()},
+                )
+            except Exception as dedupe_err:  # pragma: no cover - safety net
+                # Never break signup on best-effort deduplication.
+                print(f"Profile dedupe warning for {user_data.email}: {dedupe_err}")
+
             await db.profile.upsert(
                 where={"id": str(user_res.user.id)},
                 data={
@@ -303,7 +321,10 @@ class AuthService:
             # Try to get a friendly first_name from the profile table for personalization.
             first_name: str = "there"
             try:
-                profile = await db.profile.find_first(where={"email": user_data.email})
+                profile = await db.profile.find_first(
+                    where={"email": user_data.email, "deleted_at": None},
+                    order={"created_at": "desc"},
+                )
                 if profile and getattr(profile, "first_name", None):
                     first_name = profile.first_name
             except Exception:
@@ -634,7 +655,10 @@ WHERE organization_id = '{org_id_str}'
 
         try:
             try:
-                profile = await db.profile.find_first(where={"email": request.email})
+                profile = await db.profile.find_first(
+                    where={"email": request.email, "deleted_at": None},
+                    order={"created_at": "desc"},
+                )
                 if profile and getattr(profile, "first_name", None):
                     first_name = profile.first_name
             except Exception:
@@ -761,7 +785,10 @@ WHERE organization_id = '{org_id_str}'
 
             first_name: str = "there"
             try:
-                profile = await db.profile.find_first(where={"email": request.email})
+                profile = await db.profile.find_first(
+                    where={"email": request.email, "deleted_at": None},
+                    order={"created_at": "desc"},
+                )
                 if profile and getattr(profile, "first_name", None):
                     first_name = profile.first_name
             except Exception:
