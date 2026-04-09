@@ -75,9 +75,10 @@ export default function NotificationSettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const current = await restaurantOpsService.getSettings();
+      const raw = await restaurantOpsService.getSettings();
+      const { id: _id, ...current } = raw as any;
       await restaurantOpsService.updateSettings({
-        ...(current as any),
+        ...current,
         notification_settings: prefs,
       });
       setSavedPrefs(prefs);

@@ -607,7 +607,7 @@ class RestaurantService:
     async def update_settings(self, organization_id: str, new_settings: dict):
         from app.db.prisma import db
 
-        update_data = {"settings": new_settings}
+        update_data = {"settings": Json(new_settings)}
         if "name" in new_settings:
             update_data["name"] = new_settings["name"]
         if "logo_url" in new_settings:
