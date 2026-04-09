@@ -13,7 +13,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
-      `connect-src 'self' ${backendUrl} https://*.supabase.co wss://*.supabase.co`,
+      `connect-src 'self' ${backendUrl} https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://us.i.posthog.com`,
       "font-src 'self' https://fonts.gstatic.com",
       "frame-src https://*.supabase.co",
       "object-src 'none'",

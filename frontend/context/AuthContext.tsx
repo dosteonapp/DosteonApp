@@ -97,14 +97,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { mutateAsync: resetPasswordMutation } = useMutation({
     mutationFn: async (values: ResetPasswordValues) => {
-      // In a native flow, the user is authenticated via the code in the URL.
-      // We need to pass the access_token from the current session.
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      
+
+      if (!session?.access_token) {
+        throw new Error("Your password reset link has expired. Please request a new one.");
+      }
+
       const { data } = await axiosInstance.post("auth/reset-password", {
-        access_token: session?.access_token,
+        access_token: session.access_token,
         password: values.password,
         confirmPassword: values.confirmPassword,
       });
@@ -190,8 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const data = await loginMutation(values);
 
-      // IMPORTANT: Set the session in the Supabase client.
-      // This is the single source of truth for all future requests.
+      // Set the session in the Supabase client — single source of truth.
       if (data.access_token && data.refresh_token) {
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
@@ -199,25 +200,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           access_token: data.access_token,
           refresh_token: data.refresh_token,
         });
-        if (sessionError) {
-          throw sessionError;
-        }
+        if (sessionError) throw sessionError;
       }
+
+      // Flush stale user/profile cache so the dashboard loads fresh data.
+      await queryClient.invalidateQueries({ queryKey: ["user"] });
 
       router.push("/dashboard");
-
       return true;
     } catch (error) {
+      // Keep the error inline on the form — never route away on a login failure.
+      // Routing to a failure page for a wrong password breaks the mental model.
       helpers.setStatus({ error: handleApiError(error).message });
-      // Route to a dedicated failure status screen for clearer UX
-      if (typeof window !== "undefined") {
-        const isSupplier = window.location.pathname.includes("/supplier/");
-        const failedPath = isSupplier
-          ? "/auth/supplier/status/failed"
-          : "/auth/restaurant/status/failed";
-        router.push(failedPath);
-      }
-
       return false;
     } finally {
       helpers.setSubmitting(false);
@@ -279,7 +273,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       resetFormStatus(helpers);
       await resetPasswordMutation(values);
-      toast.success("Password has been reset successfully");
+
+      // Invalidate all sessions after a password change — force re-authentication.
+      // This ensures any compromised session tokens are revoked immediately.
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      if (supabase) await supabase.auth.signOut({ scope: "global" });
+
+      queryClient.clear();
+      toast.success("Password reset successfully. Please sign in again.");
+      router.replace("/auth/restaurant/signin");
     } catch (error) {
       helpers.setStatus({ error: handleApiError(error).message });
     } finally {

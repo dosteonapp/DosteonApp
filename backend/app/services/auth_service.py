@@ -297,10 +297,12 @@ class AuthService:
             raise
         except Exception as e:
             error_str = str(e).lower()
-            if "invalid" in error_str or "credentials" in error_str or "password" in error_str:
-                detail = "Invalid email or password."
-            elif "email not confirmed" in error_str:
+            if any(k in error_str for k in ("not confirmed", "email not confirmed", "email_not_confirmed", "confirm your email")):
                 detail = "Please verify your email before signing in."
+            elif any(k in error_str for k in ("invalid", "credentials", "password", "user not found")):
+                detail = "Invalid email or password."
+            elif "too many" in error_str or "rate limit" in error_str:
+                detail = "Too many login attempts. Please wait a moment and try again."
             else:
                 detail = "Login failed. Please try again."
             await record_failure(login_data.email)
@@ -399,8 +401,10 @@ class AuthService:
                 user_id,
                 {"user_metadata": profile_data}
             )
-        except:
-            pass
+        except Exception as e:
+            # Non-fatal — profile DB is the source of truth.
+            # Log so we can detect persistent Supabase metadata drift.
+            print(f"[update_me] Supabase metadata sync failed for {user_id}: {e}")
         return updated
 
     async def delete_account(self, current_user: dict) -> None:
@@ -418,31 +422,11 @@ class AuthService:
         user_id = str(current_user.get("id"))
         org_id = current_user.get("organization_id")
 
-        # 1. Delete Supabase auth user (best-effort)
-        if user_id:
-            try:
-                supabase.auth.admin.delete_user(user_id)
-            except Exception as e:  # pragma: no cover - defensive logging
-                logger.error("Failed to delete Supabase user", extra={"extra_context": {"user_id": user_id, "error": str(e)}})
+        # Delete DB data BEFORE removing the Supabase user.
+        # If Supabase deletion fails, the user can retry. If we deleted Supabase
+        # first and DB cleanup failed, the data would be orphaned with no auth user.
 
-        # 2. Soft-delete and anonymize Profile
-        if user_id:
-            try:
-                anonymized_email = f"deleted+{user_id}@example.invalid"
-                await db.profile.update(
-                    where={"id": user_id},
-                    data={
-                        "email": anonymized_email,
-                        "first_name": None,
-                        "last_name": None,
-                        "avatar_url": None,
-                        "deleted_at": datetime.utcnow(),
-                    },
-                )
-            except Exception as e:  # pragma: no cover - defensive logging
-                logger.error("Failed to soft-delete profile", extra={"extra_context": {"user_id": user_id, "error": str(e)}})
-
-        # 3. Soft-delete Organization and anonymize InventoryEvents
+        # 1. Soft-delete Organization and anonymize InventoryEvents
         if org_id:
             org_id_str = str(org_id)
             try:
@@ -463,6 +447,30 @@ class AuthService:
                 )
             except Exception as e:  # pragma: no cover - defensive logging
                 logger.error("Failed to anonymize inventory events", extra={"extra_context": {"organization_id": org_id_str, "error": str(e)}})
+
+        # 2. Soft-delete and anonymize Profile
+        if user_id:
+            try:
+                anonymized_email = f"deleted+{user_id}@example.invalid"
+                await db.profile.update(
+                    where={"id": user_id},
+                    data={
+                        "email": anonymized_email,
+                        "first_name": None,
+                        "last_name": None,
+                        "avatar_url": None,
+                        "deleted_at": datetime.utcnow(),
+                    },
+                )
+            except Exception as e:  # pragma: no cover - defensive logging
+                logger.error("Failed to soft-delete profile", extra={"extra_context": {"user_id": user_id, "error": str(e)}})
+
+        # 3. Delete Supabase auth user last — point of no return.
+        if user_id:
+            try:
+                supabase.auth.admin.delete_user(user_id)
+            except Exception as e:  # pragma: no cover - defensive logging
+                logger.error("Failed to delete Supabase user", extra={"extra_context": {"user_id": user_id, "error": str(e)}})
 
     async def onboard_user(self, org_data: dict, current_user: dict):
         """Required onboarding — all 5 fields must be provided.
@@ -865,6 +873,95 @@ WHERE organization_id = '{org_id_str}'
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=str(e)
             )
+
+
+    async def export_user_data(self, current_user: dict) -> dict:
+        """GDPR Article 20 — return all data held for this user.
+
+        Includes: profile, organization, inventory products, and inventory events.
+        Soft-deleted records are excluded — they are anonymized and not attributed
+        to the user.
+        """
+        from app.db.prisma import db
+
+        user_id = str(current_user["id"])
+        org_id = str(current_user.get("organization_id") or "")
+
+        profile_data = None
+        org_data = None
+        products = []
+        events = []
+
+        try:
+            p = await db.profile.find_unique(where={"id": user_id})
+            if p:
+                profile_data = {
+                    "id": p.id,
+                    "email": p.email,
+                    "first_name": p.first_name,
+                    "last_name": p.last_name,
+                    "role": p.role.value if hasattr(p.role, "value") else str(p.role),
+                    "created_at": p.created_at.isoformat() if p.created_at else None,
+                }
+        except Exception:
+            pass
+
+        if org_id:
+            try:
+                o = await db.organization.find_unique(where={"id": org_id})
+                if o:
+                    org_data = {
+                        "id": o.id,
+                        "name": o.name,
+                        "address": o.address,
+                        "created_at": o.created_at.isoformat() if o.created_at else None,
+                    }
+            except Exception:
+                pass
+
+            try:
+                raw_products = await db.contextualproduct.find_many(
+                    where={"organization_id": org_id, "is_active": True}
+                )
+                products = [
+                    {
+                        "id": cp.id,
+                        "name": cp.name,
+                        "sku": cp.sku,
+                        "current_stock": cp.current_stock,
+                        "created_at": cp.created_at.isoformat() if cp.created_at else None,
+                    }
+                    for cp in raw_products
+                ]
+            except Exception:
+                pass
+
+            try:
+                raw_events = await db.inventoryevent.find_many(
+                    where={"organization_id": org_id},
+                    order={"created_at": "desc"},
+                    take=1000,
+                )
+                events = [
+                    {
+                        "id": e.id,
+                        "event_type": e.event_type.value if hasattr(e.event_type, "value") else str(e.event_type),
+                        "quantity": e.quantity,
+                        "unit": e.unit,
+                        "occurred_at": e.occurred_at.isoformat() if e.occurred_at else None,
+                    }
+                    for e in raw_events
+                ]
+            except Exception:
+                pass
+
+        return {
+            "exported_at": datetime.utcnow().isoformat(),
+            "user": profile_data,
+            "organization": org_data,
+            "inventory_products": products,
+            "inventory_events": events,
+        }
 
 
 auth_service = AuthService()

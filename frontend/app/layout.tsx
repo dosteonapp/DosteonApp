@@ -10,6 +10,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/sonner";
 import { PostHogProvider } from "@/components/PostHogProvider";
+import { CookieConsent } from "@/components/CookieConsent";
 
 
 const inriaSerif = Inria_Serif({
@@ -53,6 +54,7 @@ export default function RootLayout({
                 <AuthProvider>
                   {children}
                   <Toaster />
+                  <CookieConsent />
                 </AuthProvider>
                 {/* </GoogleOAuthProvider> */}
               </UserProvider>

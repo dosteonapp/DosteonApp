@@ -112,3 +112,14 @@ async def delete_account(
     """Permanently delete the authenticated owner's account (Owner/Manager only)."""
     await auth_service.delete_account(ctx.user)
     return None
+
+
+@router.get("/export")
+async def export_my_data(current_user: dict = Depends(get_current_user)):
+    """GDPR Article 20 — data portability export.
+
+    Returns all personal data held for the authenticated user:
+    profile, organization, and inventory records.
+    No CSRF required — this is a read-only GET.
+    """
+    return await auth_service.export_user_data(current_user)

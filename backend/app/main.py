@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -39,6 +40,36 @@ app.add_middleware(MetricsMiddleware, store=metrics_store)
 # Rate Limiting
 setup_rate_limiting(app)
 
+async def _purge_stale_deleted_records():
+    """GDPR data retention — hard-delete anonymized records older than 90 days.
+
+    Profiles deleted via /auth/account are anonymized immediately but kept
+    for 90 days for audit/recovery purposes. This task permanently removes them.
+    Runs once at startup; for production, wire this to a nightly cron instead.
+    """
+    from app.db.prisma import db
+    from app.core.logging import get_logger
+    from datetime import timedelta
+
+    logger = get_logger("retention")
+    cutoff = datetime.utcnow() - timedelta(days=90)
+
+    try:
+        deleted_profiles = await db.profile.delete_many(
+            where={"deleted_at": {"lt": cutoff}}
+        )
+        deleted_orgs = await db.organization.delete_many(
+            where={"deleted_at": {"lt": cutoff}}
+        )
+        if deleted_profiles or deleted_orgs:
+            logger.info(
+                f"Retention purge: removed {deleted_profiles} profiles, "
+                f"{deleted_orgs} organizations older than 90 days."
+            )
+    except Exception as e:
+        logger.warning(f"Retention purge failed (non-fatal): {e}")
+
+
 @app.on_event("startup")
 async def startup_event():
     try:
@@ -47,6 +78,10 @@ async def startup_event():
         from app.core.logging import get_logger
         logger = get_logger("startup")
         logger.error(f"Failed to connect to database on startup: {e}")
+
+    # Run GDPR retention purge in the background — non-blocking, non-fatal
+    import asyncio
+    asyncio.create_task(_purge_stale_deleted_records())
 
     # Attach Prometheus metrics endpoint and instrumentation
     try:
