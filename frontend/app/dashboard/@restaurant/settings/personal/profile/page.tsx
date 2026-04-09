@@ -506,15 +506,22 @@ export default function PersonalDetailsPage() {
               </div>
 
               {/* 2FA Section */}
-              <div className="p-6 rounded-2xl border border-slate-100 bg-white shadow-sm space-y-6">
+              <div className="p-6 rounded-2xl border border-slate-100 bg-white shadow-sm space-y-6 opacity-60">
                 <div className="flex justify-between items-center gap-4">
                   <div className="space-y-1">
                     <h3 className="text-[15px] font-bold text-slate-800">Two-Factor Authentication</h3>
                     <p className="text-xs text-slate-400 font-medium">Add an extra layer of security to your account.</p>
                   </div>
-                  <Button variant="outline" className="h-10 px-8 rounded-xl border-slate-200 text-slate-700 font-bold text-xs bg-white hover:bg-slate-50 shadow-sm transition-all active:scale-95">
-                    Enable 2FA
-                  </Button>
+                  <div className="flex flex-col items-end gap-1">
+                    <Button
+                      variant="outline"
+                      disabled
+                      className="h-10 px-8 rounded-xl border-slate-200 text-slate-400 font-bold text-xs bg-slate-50 cursor-not-allowed shadow-none"
+                    >
+                      Enable 2FA
+                    </Button>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Coming Soon</span>
+                  </div>
                 </div>
               </div>
             </div>

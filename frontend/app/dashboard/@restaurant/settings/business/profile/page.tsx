@@ -25,8 +25,10 @@ import { FigtreeText } from "@/components/ui/dosteon-ui";
 import { Badge } from "@/components/ui/badge";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import { toast } from "@/hooks/use-toast";
+import { useUser } from "@/context/UserContext";
 
 export default function RestaurantProfilePage() {
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -52,7 +54,7 @@ export default function RestaurantProfilePage() {
         const settings = await restaurantOpsService.getSettings();
         setFormData({
           name: settings.name || "",
-          email: settings.email || "",
+          email: settings.email || user?.email || "",
           phone: settings.phone || "",
           location: settings.location || "",
           logo_url: settings.logo_url || "",
