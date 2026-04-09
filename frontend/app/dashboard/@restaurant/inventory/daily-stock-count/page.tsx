@@ -236,47 +236,61 @@ export default function DailyStockCountPage() {
 
                 {/* Removed the yellow 'Day locked' banner to keep the layout clean and aligned with the premium design. */}
 
-        {/* Hero Progress Header */}
-        <UnifiedHeroSurface
-            backgroundColor="bg-[#f5f6ff]"
-            borderColor="border-[#98a6f9]"
-            title=""
-            description=""
-            padding="px-8 py-8 md:px-12 md:py-10"
-            isLocked={false}
-        >
-            <div className="flex flex-col gap-8 w-full">
-                <div className="space-y-3">
-                    <h1 className="text-[28px] md:text-[32px] font-bold text-[#1E293B] tracking-tight leading-none font-figtree">Daily Stock Count</h1>
-                    <p className="text-slate-500 font-medium text-[15px] max-w-lg leading-relaxed font-figtree">
-                        Check each product and confirm the quantity in stock to unlock Kitchen Service dashboard.
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-6 justify-start">
-                    <CircularProgress percentage={progressPercent} />
-                    <div className="space-y-1 text-left">
-                        <h2 className="text-[17px] md:text-[19px] font-bold text-[#1E293B] tracking-tight font-figtree">Progress: {progressCount} of {totalCount} Items Counted</h2>
-                        <FigtreeText className="text-slate-400 font-medium text-[14px]">Finish counts to verify inventory levels.</FigtreeText>
-                    </div>
-                </div>
+        {/* Hero Box */}
+        <div className="bg-[#EEF2FF] rounded-[12px] border border-blue-100 shadow-sm px-8 py-7">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+            {/* Left — badge + title + description */}
+            <div className="space-y-3 flex-1">
+              <div className="inline-flex items-center gap-2 bg-white border border-black/15 rounded-full px-4 py-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                <span className="text-[13px] font-semibold text-[#1E293B] font-figtree">Opening in Progress</span>
+              </div>
+              <h1 className="text-[26px] md:text-[30px] font-semibold text-[#1E293B] tracking-tight leading-tight font-figtree">
+                Count today's opening stock
+              </h1>
+              <p className="text-slate-500 font-medium text-[14px] leading-relaxed font-figtree max-w-lg">
+                Daily stock count for {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}. Prep must be completed before live service.
+              </p>
             </div>
-        </UnifiedHeroSurface>
+
+            {/* Right — three stat cards */}
+            <div className="flex items-stretch gap-3 w-full lg:w-[560px] lg:shrink-0">
+              <HeroStatCard
+                label="Progress"
+                value={`${progressCount} / ${totalCount}`}
+                sub="Products counted so far"
+                color="blue"
+              />
+              <HeroStatCard
+                label="Pending"
+                value={String(totalCount - progressCount)}
+                sub="Products needing counting"
+                color="yellow"
+              />
+              <HeroStatCard
+                label="Counted"
+                value={String(progressCount)}
+                sub="Products counted"
+                color="green"
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Items List Card */}
-        <PrimarySurfaceCard className="border-black/5 shadow-sm p-4 md:p-8 space-y-8">
-            {/* Toolbar inside card */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="relative w-full md:max-w-md">
-                    <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                    <Input 
-                        placeholder="Search items..." 
-                        className="pl-14 h-[60px] border-slate-200 rounded-[8px] bg-white focus:ring-indigo-100 placeholder:text-slate-400 font-medium text-[15px] font-figtree shadow-sm"
+        <PrimarySurfaceCard className="border-black/5 shadow-sm p-4 md:p-8 space-y-6">
+            {/* Toolbar */}
+            <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className="relative w-full md:flex-1">
+                    <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                        placeholder="Search items..."
+                        className="pl-11 h-11 border-slate-200 rounded-[8px] bg-white placeholder:text-slate-400 font-medium text-[14px] font-figtree"
                     />
                 </div>
-                <div className="flex items-center gap-4 w-full md:w-auto">
+                <div className="flex items-center gap-3 w-full md:w-auto">
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-[60px] border-slate-200 rounded-[8px] w-full sm:w-[200px] bg-white font-semibold text-slate-500 text-[15px] px-8 shadow-sm">
+                        <SelectTrigger className="h-11 border-slate-200 rounded-[8px] w-full sm:w-[180px] bg-white text-slate-600 font-medium text-[14px] font-figtree">
                             <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
                         <SelectContent>
@@ -286,19 +300,19 @@ export default function DailyStockCountPage() {
                         </SelectContent>
                     </Select>
                     <Select defaultValue="all">
-                        <SelectTrigger className="h-[60px] border-slate-200 rounded-[8px] w-full sm:w-[200px] bg-white font-semibold text-slate-500 text-[15px] px-8 shadow-sm">
-                            <SelectValue placeholder="All Levels" />
+                        <SelectTrigger className="h-11 border-slate-200 rounded-[8px] w-full sm:w-[180px] bg-white text-slate-600 font-medium text-[14px] font-figtree">
+                            <SelectValue placeholder="All Status" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Levels</SelectItem>
-                            <SelectItem value="healthy">Healthy Stock</SelectItem>
-                            <SelectItem value="low">Low Stock</SelectItem>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="confirmed">Confirmed</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
             </div>
 
-            <div className="grow space-y-4">
+            <div className="space-y-3">
                 {sortedItems.map((item, idx) => (
                     <StockRow
                         key={item.id}
@@ -320,28 +334,46 @@ export default function DailyStockCountPage() {
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="w-full flex items-center justify-end gap-3 sm:gap-4"
+            className="w-full flex items-center justify-between gap-3 sm:gap-4"
           >
-              <Button
-                  variant="outline"
-                  className="h-12 px-6 sm:px-10 rounded-[8px] border-[#3B59DA] text-[#3B59DA] hover:bg-indigo-50 font-semibold transition-all text-[14px] sm:text-[15px] shadow-sm font-figtree active:scale-95"
-                  onClick={handleSaveDraft}
-              >
-                  Save draft
-              </Button>
-              <Button
-                  className={cn(
-                      "h-12 px-8 sm:px-12 rounded-[8px] font-black gap-3 transition-all border-none text-[14px] sm:text-[16px] shadow-xl flex items-center active:scale-95",
-                      confirmedIds.size >= items.length && items.length > 0
-                          ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-indigo-900/20"
-                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                  )}
-                  disabled={confirmedIds.size < items.length || items.length === 0}
-                  onClick={handleComplete}
-              >
-                  Review & Complete
-                  <ArrowRight className="h-5 w-5" />
-              </Button>
+              {/* Left — circular progress + count info */}
+              <div className="flex items-center gap-4 shrink-0">
+                <CircularProgress percentage={progressPercent} />
+                <div className="hidden sm:block space-y-0.5">
+                  <p className="text-[15px] font-bold text-[#1E293B] font-figtree leading-tight">
+                    {progressCount} of {totalCount} Items Counted
+                  </p>
+                  <p className="text-[12px] text-slate-400 font-medium font-figtree leading-tight">
+                    {totalCount - progressCount > 0
+                      ? `${totalCount - progressCount} item${totalCount - progressCount !== 1 ? "s" : ""} still need counting`
+                      : "All items counted — ready to complete!"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Right — save + complete */}
+              <div className="flex items-center gap-3 sm:gap-4">
+                <Button
+                    variant="outline"
+                    className="h-12 px-6 sm:px-10 rounded-[8px] border-[#3B59DA] text-[#3B59DA] hover:bg-indigo-50 font-semibold transition-all text-[14px] sm:text-[15px] shadow-sm font-figtree active:scale-95"
+                    onClick={handleSaveDraft}
+                >
+                    Save draft
+                </Button>
+                <Button
+                    className={cn(
+                        "h-12 px-8 sm:px-12 rounded-[8px] font-black gap-3 transition-all border-none text-[14px] sm:text-[16px] shadow-xl flex items-center active:scale-95",
+                        confirmedIds.size >= items.length && items.length > 0
+                            ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-indigo-900/20"
+                            : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    )}
+                    disabled={confirmedIds.size < items.length || items.length === 0}
+                    onClick={handleComplete}
+                >
+                    Review & Complete Opening
+                    <ArrowRight className="h-5 w-5" />
+                </Button>
+              </div>
           </motion.div>
       </div>
 
@@ -368,6 +400,30 @@ export default function DailyStockCountPage() {
   );
 }
 
+function HeroStatCard({ label, value, sub, color }: {
+  label: string;
+  value: string;
+  sub: string;
+  color: "blue" | "yellow" | "green";
+}) {
+  const colorMap = {
+    blue:   { bg: "bg-white", border: "border-blue-300",   labelBg: "bg-blue-50",   labelText: "text-blue-600",   dot: "bg-blue-500"   },
+    yellow: { bg: "bg-white", border: "border-yellow-300", labelBg: "bg-yellow-50", labelText: "text-yellow-600", dot: "bg-yellow-500" },
+    green:  { bg: "bg-white", border: "border-emerald-300",labelBg: "bg-emerald-50",labelText: "text-emerald-600",dot: "bg-emerald-500" },
+  };
+  const c = colorMap[color];
+  return (
+    <div className={cn("flex flex-col justify-between gap-2 rounded-[10px] border px-4 py-3 flex-1 w-0 min-w-0", c.bg, c.border)}>
+      <div className={cn("inline-flex items-center gap-1.5 self-start rounded-full px-2 py-1", c.labelBg)}>
+        <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", c.dot)} />
+        <span className={cn("text-[10px] font-bold uppercase tracking-widest font-figtree", c.labelText)}>{label}</span>
+      </div>
+      <p className="text-[20px] font-semibold leading-none font-figtree text-[#1E293B]">{value}</p>
+      <p className="text-[11px] text-slate-400 font-medium font-figtree leading-tight">{sub}</p>
+    </div>
+  );
+}
+
 function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
     item: OpeningStockItem,
     isConfirmed: boolean,
@@ -385,7 +441,7 @@ function StockRow({ item, isConfirmed, onConfirm, onEdit, idx }: {
             <div className="flex flex-col lg:flex-row lg:items-center gap-8 justify-between w-full">
                 {/* Product Info */}
                 <div className="flex items-center gap-8 flex-1 min-w-[280px]">
-                    <div className="h-20 w-20 md:h-24 md:w-24 rounded-[8px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden shadow-sm transition-transform group-hover:scale-105">
+                    <div className="h-20 w-20 md:h-24 md:w-24 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden shadow-sm transition-transform group-hover:scale-105">
                         {item.imageUrl ? (
                             <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
                         ) : (
