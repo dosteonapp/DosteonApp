@@ -115,9 +115,30 @@ axiosInstance.interceptors.response.use(
     const fullUrl = error.config?.baseURL ? `${error.config.baseURL}/${url}` : url;
     const errorStatus = error.response?.status || "Network Error";
 
-    // 1. Handle network errors (e.g. Render cold start / ECONNRESET)
+    // 1a. Handle gateway errors (502/503/504) — Render worker busy, retry after short wait
+    const isGatewayError = error.response?.status === 502 || error.response?.status === 503 || error.response?.status === 504;
+    if (isGatewayError) {
+      if (!error.config._retry) {
+        error.config._retry = true;
+        toast.info("Server is busy...", {
+          description: "One moment — retrying your request...",
+        });
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        try {
+          return await axiosInstance(error.config);
+        } catch {
+          // Retry failed — fall through to toast
+        }
+      }
+      toast.error("Server Unavailable", {
+        description: "The server is temporarily unavailable. Please try again in a moment.",
+      });
+      return Promise.reject(error);
+    }
+
+    // 1b. Handle network errors (e.g. Render cold start / ECONNRESET)
     if (!error.response) {
-      // Retry once after 3s to handle cold starts
+      // Retry once after 5s — cold starts on Render free tier take ~10-15s
       if (!error.config._retry) {
         error.config._retry = true;
         toast.info("Waking up server...", {
@@ -136,10 +157,10 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 2. Log unexpected errors (skip 401, 403, 404, 500)
+    // 2. Log unexpected errors (skip 401, 403, 404, 500, 502, 503, 504 — gateway errors are retried above)
     // Note: We skip 500 here because we handle it via toast and want to avoid noisy console logs
     // when the database is disconnected during development.
-    if (typeof errorStatus === "number" && errorStatus >= 400 && ![401, 403, 404, 500].includes(errorStatus)) {
+    if (typeof errorStatus === "number" && errorStatus >= 400 && ![401, 403, 404, 500, 502, 503, 504].includes(errorStatus)) {
       console.error(`[AxiosError] ${errorStatus} - ${fullUrl}`, {
         url: error.config?.url,
         baseURL: error.config?.baseURL,
