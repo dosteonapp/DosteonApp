@@ -70,6 +70,38 @@ async def _purge_stale_deleted_records():
         logger.warning(f"Retention purge failed (non-fatal): {e}")
 
 
+async def _validate_supabase_admin():
+    """Verify the Supabase client is using the service role key.
+
+    Makes a cheap admin API call at startup. If it returns 403 or throws,
+    we log a loud CRITICAL error so Render logs surface the problem
+    immediately — instead of discovering it from user signup complaints.
+    """
+    from app.core.logging import get_logger
+    from app.core.supabase import supabase
+
+    logger = get_logger("startup.supabase")
+    try:
+        # Cheapest admin call: list 1 user — just to verify key permissions
+        supabase.auth.admin.list_users(page=1, per_page=1)
+        logger.info("Supabase admin client: OK (service role key confirmed)")
+    except Exception as e:
+        err = str(e).lower()
+        if "403" in err or "user not allowed" in err or "forbidden" in err:
+            logger.critical(
+                "SUPABASE ADMIN CLIENT IS MISCONFIGURED — "
+                "admin.list_users returned 403. The service role key is missing, "
+                "wrong, or Supabase has disabled admin access. "
+                "Signup and email verification WILL FAIL until this is fixed. "
+                f"Raw error: {e}"
+            )
+        else:
+            logger.error(
+                f"Supabase admin client check failed (non-403): {e}. "
+                "Signup may be degraded."
+            )
+
+
 @app.on_event("startup")
 async def startup_event():
     try:
@@ -79,8 +111,11 @@ async def startup_event():
         logger = get_logger("startup")
         logger.error(f"Failed to connect to database on startup: {e}")
 
-    # Run GDPR retention purge in the background — non-blocking, non-fatal
+    # Validate Supabase admin client — loud failure if service role key is wrong
     import asyncio
+    asyncio.create_task(_validate_supabase_admin())
+
+    # Run GDPR retention purge in the background — non-blocking, non-fatal
     asyncio.create_task(_purge_stale_deleted_records())
 
     # Attach Prometheus metrics endpoint and instrumentation
@@ -128,10 +163,16 @@ async def root():
         "version": "1.0.0"
     }
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
-    """Legacy health check endpoint — kept for backwards compatibility."""
-    return {"status": "ok"}
+    """Health check — accepts GET and HEAD. Includes supabase_admin signal."""
+    from app.core.supabase import supabase
+    try:
+        supabase.auth.admin.list_users(page=1, per_page=1)
+        supabase_admin = "ok"
+    except Exception:
+        supabase_admin = "degraded"
+    return {"status": "ok", "supabase_admin": supabase_admin}
 
 
 @app.get("/health/live")

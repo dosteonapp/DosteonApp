@@ -110,11 +110,26 @@ class AuthService:
                 })
             except Exception as e:
                 error_str = str(e)
-                print(f"Supabase admin.create_user failed: {error_str}")
+                is_config_error = (
+                    "user not allowed" in error_str.lower()
+                    or "403" in error_str
+                    or "forbidden" in error_str.lower()
+                )
+                if is_config_error:
+                    import logging as _logging
+                    _logging.getLogger("dosteon.auth").critical(
+                        "CRITICAL: supabase.auth.admin.create_user returned 403. "
+                        "The backend is running with the wrong Supabase key (anon instead of service role), "
+                        "or Supabase has disabled signups. "
+                        "Set SUPABASE_SERVICE_ROLE_KEY correctly on Render and redeploy. "
+                        f"Raw error: {error_str}"
+                    )
+                else:
+                    print(f"Supabase admin.create_user failed: {error_str}")
 
                 # Fall back to the standard sign_up flow if the service role
                 # key is not allowed (e.g. using anon key in any environment).
-                if "user not allowed" in error_str.lower():
+                if is_config_error:
                     try:
                         fallback_res = supabase.auth.sign_up({
                             "email": user_data.email,
@@ -141,15 +156,15 @@ class AuthService:
                                     user_res = _FakeRes()
                                 else:
                                     raise HTTPException(
-                                        status_code=status.HTTP_400_BAD_REQUEST,
-                                        detail="User creation failed. Please try again."
+                                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                        detail="Signup is temporarily unavailable. Our team has been notified. Please try again shortly."
                                     )
                             except HTTPException:
                                 raise
                             except Exception:
                                 raise HTTPException(
-                                    status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail="User creation failed. Please try again."
+                                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                    detail="Signup is temporarily unavailable. Our team has been notified. Please try again shortly."
                                 )
                         else:
                             raise

@@ -46,3 +46,26 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
+# Guard: service role key must be present and must not equal the anon key.
+# If either condition fails we exit immediately so Render marks the deploy
+# as failed rather than serving broken signups silently.
+import sys as _sys
+if not settings.s_service_role_key:
+    print(
+        "CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not set. "
+        "Admin operations (signup, email verification) will fail. "
+        "Set the env var on Render and redeploy.",
+        file=_sys.stderr,
+        flush=True,
+    )
+    _sys.exit(1)
+if settings.s_service_role_key == settings.s_anon_key:
+    print(
+        "CRITICAL: SUPABASE_SERVICE_ROLE_KEY equals SUPABASE_ANON_KEY. "
+        "The service role key is required — do not use the anon key here. "
+        "Fix the env var on Render and redeploy.",
+        file=_sys.stderr,
+        flush=True,
+    )
+    _sys.exit(1)
