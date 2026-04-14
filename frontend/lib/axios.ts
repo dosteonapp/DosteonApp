@@ -104,6 +104,15 @@ axiosInstance.interceptors.request.use(async (config) => {
     }
   }
 
+  // Brand scoping: attach the active brand from sessionStorage so the backend
+  // can scope inventory / stats queries to the correct brand.
+  if (typeof sessionStorage !== "undefined") {
+    const activeBrandId = sessionStorage.getItem("active_brand_id");
+    if (activeBrandId) {
+      config.headers["X-Brand-ID"] = activeBrandId;
+    }
+  }
+
   return config;
 });
 
@@ -112,7 +121,9 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const url = error.config?.url || "unknown";
-    const fullUrl = error.config?.baseURL ? `${error.config.baseURL}/${url}` : url;
+    const fullUrl = error.config?.baseURL
+      ? `${error.config.baseURL.replace(/\/$/, "")}/${url.replace(/^\//, "")}`
+      : url;
     const errorStatus = error.response?.status || "Network Error";
 
     // 1a. Handle gateway errors (502/503/504) — Render worker busy, retry after short wait

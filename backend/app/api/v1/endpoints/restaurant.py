@@ -3,6 +3,7 @@ from app.services.restaurant_service import restaurant_service
 from app.services.team_service import team_service
 from app.api.deps import (
     get_security_context,
+    get_brand_context,
     get_admin_context,
     get_mutation_context,
     get_admin_mutation_context,
@@ -28,9 +29,9 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 @router.get("/stats")
-async def get_restaurant_stats(ctx: SecurityContext = Depends(get_security_context)):
-    """Get restaurant dashboard statistics (Healthy, Low, Critical)"""
-    return await restaurant_service.get_stats(ctx.organization_id)
+async def get_restaurant_stats(ctx: SecurityContext = Depends(get_brand_context)):
+    """Get restaurant dashboard statistics (Healthy, Low, Critical), scoped to resolved brand."""
+    return await restaurant_service.get_stats(ctx.organization_id, brand_id=ctx.brand_id)
 
 @router.get("/inventory/running-low")
 async def get_running_low(ctx: SecurityContext = Depends(get_security_context)):
@@ -103,10 +104,12 @@ async def get_notifications(
 async def recent_activities(
     offset: int = Query(0, ge=0),
     limit: int = Query(5, ge=1, le=100),
-    ctx: SecurityContext = Depends(get_security_context),
+    ctx: SecurityContext = Depends(get_brand_context),
 ):
-    """Get recent dashboard activities"""
-    return await restaurant_service.get_recent_activities(ctx.organization_id, offset=offset, limit=limit)
+    """Get recent dashboard activities, scoped to resolved brand."""
+    return await restaurant_service.get_recent_activities(
+        ctx.organization_id, offset=offset, limit=limit, brand_id=ctx.brand_id
+    )
 
 @router.get("/closing/status")
 async def get_closing_status(ctx: SecurityContext = Depends(get_security_context)):

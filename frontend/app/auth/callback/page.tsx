@@ -114,13 +114,25 @@ export default function AuthCallbackPage() {
         });
       }
 
-      const metadata = session.user?.user_metadata ?? {};
-      const isNewUser = !metadata.onboarding_completed;
+      // Fetch the backend profile — DB is the source of truth for onboarding_completed
+      // after Phase 1. Fall back to Supabase metadata if the API call fails.
+      let onboardingCompleted = false;
+      try {
+        const { default: axiosInstance } = await import("@/lib/axios");
+        const { data: profile } = await axiosInstance.get("/auth/me");
+        onboardingCompleted = Boolean(profile?.onboarding_completed);
+      } catch {
+        // API unreachable — fall back to the token metadata flag so the user
+        // isn't stuck on the loading screen.
+        const metadata = session.user?.user_metadata ?? {};
+        onboardingCompleted = Boolean(metadata.onboarding_completed);
+      }
 
-      if (!isNewUser && nextParam?.startsWith("/")) {
+      if (onboardingCompleted && nextParam?.startsWith("/")) {
+        // Only honour ?next= for already-onboarded users to prevent skipping
         router.replace(nextParam);
       } else {
-        router.replace(isNewUser ? "/onboarding" : "/dashboard");
+        router.replace(onboardingCompleted ? "/dashboard" : "/onboarding");
       }
     };
 

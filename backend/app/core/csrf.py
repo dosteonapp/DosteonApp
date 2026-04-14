@@ -34,7 +34,7 @@ def set_csrf_cookie(response: Response) -> str:
     - max_age=86400  : 24-hour lifetime; refreshed on every /auth/me call.
     """
     token = generate_csrf_token()
-    is_production = settings.ENV == "production"
+    is_production = settings.is_production
     response.set_cookie(
         key="csrf_token",
         value=token,

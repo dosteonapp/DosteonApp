@@ -27,6 +27,7 @@ logs/
 .env.production.local
 .env*.local
 **/.env*
+!**/.env*.example
 .env.backup
 .env.bak
 

@@ -1,57 +1,74 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Search, Bell, Calendar, ChevronRight, ArrowLeft, Menu } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Bell, Calendar, ChevronRight, ChevronDown, ArrowLeft, Menu } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
+import { useBrand, Brand } from "@/context/BrandContext";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 export function DashboardHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toggleSidebar } = useSidebar();
-  
-  // Real-time Clock State
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const { brands, activeBrand, setActiveBrand } = useBrand();
 
+  // Real-time clock
+  const [currentTime, setCurrentTime] = useState(new Date());
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    }).format(date);
-  };
+  // Brand switcher dropdown
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handle = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [dropdownOpen]);
+
+  const formatDate = (date: Date) =>
+    new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     }).format(date);
-  };
-  
-  const getBreadcrumbs = (path: string) => {
-    if (path === "/dashboard/inventory/daily-stock-count") return ["Inventory", "Daily Stock Count"];
+
+  const formatTime = (date: Date) =>
+    new Intl.DateTimeFormat("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).format(date);
+
+  const getBreadcrumbs = (path: string): string[] => {
+    if (path === "/dashboard/inventory/daily-stock-count")
+      return ["Inventory", "Daily Stock Count"];
     if (path === "/dashboard/inventory/new") {
       const isEdit = searchParams.get("edit");
       return ["Inventory", isEdit ? "Edit Item" : "Add New Item"];
     }
-    if (path === "/dashboard/inventory/items") return ["Inventory", "Master Registry"];
-    if (path.startsWith("/dashboard/inventory/") && path !== "/dashboard/inventory/items") return ["Inventory", "Item Details"];
+    if (
+      path.startsWith("/dashboard/inventory/") &&
+      !path.startsWith("/dashboard/inventory/daily-stock-count") &&
+      !path.startsWith("/dashboard/inventory/new")
+    )
+      return ["Inventory", "Item Details"];
     if (path === "/dashboard") return ["Home"];
-    if (path.startsWith("/dashboard/kitchen-service")) return ["Kitchen Service"];
+    if (path === "/dashboard/sales/history") return ["Sales", "History"];
+    if (path.startsWith("/dashboard/sales")) return ["Sales"];
     if (path.startsWith("/dashboard/inventory")) return ["Inventory"];
     if (path.startsWith("/dashboard/closing")) return ["Closing"];
     if (path.startsWith("/dashboard/notifications")) return ["Notifications"];
@@ -66,12 +83,16 @@ export function DashboardHeader() {
   };
 
   const breadcrumbs = getBreadcrumbs(pathname);
+  const showDropdown = brands.length > 1;
 
   return (
     <div className="bg-white border-b border-slate-100 h-[72px] md:h-[88px] sticky top-0 z-40 transition-all font-figtree w-full">
       <div className="h-full px-4 sm:px-6 md:px-8 flex items-center justify-between gap-4">
-        {/* Left: menu toggle + breadcrumbs */}
-        <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+
+        {/* ── Left: hamburger + brand switcher + breadcrumbs ── */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+
+          {/* Mobile hamburger */}
           <Button
             variant="ghost"
             size="icon"
@@ -81,6 +102,7 @@ export function DashboardHeader() {
             <Menu className="h-5 w-5 stroke-[2.5px]" />
           </Button>
 
+          {/* Back button (nested pages) */}
           {breadcrumbs.length > 1 && (
             <Button
               variant="ghost"
@@ -92,45 +114,112 @@ export function DashboardHeader() {
             </Button>
           )}
 
+          {/* ── Brand switcher ── */}
+          {activeBrand && (
+            <div className="relative shrink-0" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => showDropdown && setDropdownOpen((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold text-slate-700 bg-slate-50 border border-slate-200/60 transition-all",
+                  showDropdown
+                    ? "hover:bg-white hover:border-[#3B59DA]/40 hover:text-[#3B59DA] active:scale-95 cursor-pointer"
+                    : "cursor-default"
+                )}
+                aria-haspopup={showDropdown ? "listbox" : undefined}
+                aria-expanded={showDropdown ? dropdownOpen : undefined}
+              >
+                <span className="max-w-[120px] truncate">{activeBrand.name}</span>
+                {showDropdown && (
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 text-slate-400 transition-transform duration-200",
+                      dropdownOpen && "rotate-180"
+                    )}
+                  />
+                )}
+              </button>
+
+              {/* Dropdown list */}
+              {showDropdown && dropdownOpen && (
+                <div
+                  role="listbox"
+                  className="absolute left-0 top-full mt-1.5 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 overflow-hidden"
+                >
+                  {brands.map((brand: Brand) => (
+                    <button
+                      key={brand.id}
+                      role="option"
+                      aria-selected={brand.id === activeBrand.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveBrand(brand);
+                        setDropdownOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors",
+                        brand.id === activeBrand.id
+                          ? "bg-indigo-50 text-[#3B59DA] font-semibold"
+                          : "text-slate-700 hover:bg-slate-50 font-medium"
+                      )}
+                    >
+                      {/* Coloured initial badge */}
+                      <span className="h-5 w-5 rounded-full bg-indigo-100 text-[#3B59DA] text-[10px] font-bold flex items-center justify-center shrink-0 uppercase">
+                        {brand.name.charAt(0)}
+                      </span>
+                      <span className="truncate">{brand.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Separator between brand and breadcrumbs */}
+          {activeBrand && breadcrumbs.length > 0 && (
+            <ChevronRight className="h-3.5 w-3.5 text-slate-200 stroke-[4px] shrink-0 hidden sm:block" />
+          )}
+
+          {/* Breadcrumbs */}
           <div className="flex items-center gap-2 min-w-0">
             {breadcrumbs.map((crumb, idx) => (
               <React.Fragment key={idx}>
-                {idx > 0 && <ChevronRight className="h-3.5 w-3.5 text-slate-200 stroke-[4px] shrink-0" />}
-                <span className={cn(
-                  "text-[15px] md:text-[16px] font-bold tracking-tight transition-colors font-figtree truncate",
-                  idx === breadcrumbs.length - 1 ? "text-[#1E293B]" : "text-slate-300 hover:text-slate-400 cursor-default hidden sm:block"
-                )}>
+                {idx > 0 && (
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-200 stroke-[4px] shrink-0" />
+                )}
+                <span
+                  className={cn(
+                    "text-[15px] md:text-[16px] font-bold tracking-tight transition-colors font-figtree truncate",
+                    idx === breadcrumbs.length - 1
+                      ? "text-[#1E293B]"
+                      : "text-slate-300 hover:text-slate-400 cursor-default hidden sm:block"
+                  )}
+                >
                   {crumb}
                 </span>
               </React.Fragment>
             ))}
           </div>
-
-          {/* Search — visible md+ */}
-          <div className="flex-1 max-w-sm lg:max-w-md mx-4 hidden md:block">
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-[#3B59DA] transition-all" />
-              <Input
-                placeholder="Search anything..."
-                className="pl-11 h-[44px] bg-slate-50/60 border-slate-200/60 rounded-xl w-full text-[14px] font-semibold text-slate-700 focus-visible:ring-[#3B59DA]/5 focus-visible:bg-white focus-visible:border-[#3B59DA]/30 transition-all placeholder:text-slate-300 shadow-none"
-              />
-            </div>
-          </div>
         </div>
 
-        {/* Right: date/time + notifications */}
+        {/* ── Right: date/time + notification bell ── */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Date/time — visible lg+ */}
+          {/* Date/time pill — lg+ */}
           <div className="hidden lg:flex items-center gap-3 bg-indigo-50/30 px-4 py-2.5 rounded-[16px] border border-indigo-100/30 shadow-sm hover:bg-white hover:border-indigo-100 transition-all group cursor-default">
             <Calendar className="h-4 w-4 text-[#3B59DA] group-hover:scale-110 transition-transform stroke-[2.5px] shrink-0" />
             <div className="flex items-center gap-2 text-[13px] font-bold text-slate-500 font-figtree">
-              <span className="group-hover:text-slate-900 transition-colors uppercase hidden xl:block">{formatDate(currentTime)}</span>
-              <span className="group-hover:text-slate-900 transition-colors uppercase xl:hidden">{formatDate(currentTime).split(",")[0]}</span>
+              <span className="group-hover:text-slate-900 transition-colors uppercase hidden xl:block">
+                {formatDate(currentTime)}
+              </span>
+              <span className="group-hover:text-slate-900 transition-colors uppercase xl:hidden">
+                {formatDate(currentTime).split(",")[0]}
+              </span>
               <div className="h-1 w-1 rounded-full bg-slate-200 group-hover:bg-[#3B59DA] transition-colors" />
               <span className="tabular-nums text-[#3B59DA]">{formatTime(currentTime)}</span>
             </div>
           </div>
 
+          {/* Notification bell */}
           <Button
             variant="ghost"
             size="icon"
@@ -140,6 +229,7 @@ export function DashboardHeader() {
             <span className="absolute top-2.5 right-2.5 h-2.5 w-2.5 bg-[#EF4444] border-2 border-white rounded-full shadow-sm animate-pulse" />
           </Button>
         </div>
+
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ from prisma import Json
 
 
 class RestaurantService:
-    async def get_stats(self, organization_id: str):
+    async def get_stats(self, organization_id: str, brand_id: str | None = None):
         if not organization_id:
             return {"totalItems": 0, "countedItems": 0, "healthy": 0, "low": 0, "critical": 0, "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}}
 
@@ -17,7 +17,7 @@ class RestaurantService:
         except:
             return {"totalItems": 0, "countedItems": 0, "healthy": 0, "low": 0, "critical": 0, "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}}
 
-        inventory = await inventory_repo.get_by_organization(UUID(organization_id))
+        inventory = await inventory_repo.get_by_organization(UUID(organization_id), brand_id=brand_id)
         total = len(inventory)
         low = 0
         critical = 0
@@ -300,13 +300,13 @@ class RestaurantService:
             "timestamp": timestamp,
         }
 
-    async def get_recent_activities(self, organization_id: str, offset: int = 0, limit: int = 5):
+    async def get_recent_activities(self, organization_id: str, offset: int = 0, limit: int = 5, brand_id: str | None = None):
         if not organization_id:
             return []
 
         # Fetch more than requested to account for zero-quantity events that will be filtered out
         fetch_limit = max(limit * 3, limit + 10)
-        events = await inventory_repo.get_recent_events(organization_id, limit=fetch_limit)
+        events = await inventory_repo.get_recent_events(organization_id, limit=fetch_limit, brand_id=brand_id)
 
         # Filter out 0 quantity updates which are non-informative for recent view
         meaningful_events = [e for e in events if e.quantity != 0]

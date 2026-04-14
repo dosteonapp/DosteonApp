@@ -1,14 +1,13 @@
-from fastapi import APIRouter, Depends, Body, Response
+from fastapi import APIRouter, Depends, Body, Response, Request
 from app.schemas.auth import (
     UserSignup, UserLogin, Token, MagicLinkRequest, ForgotPasswordRequest,
     PasswordResetConfirm, UserMe, RefreshTokenRequest, UserBase,
-    OnboardRequest, ChangePasswordRequest,
+    ChangePasswordRequest,
 )
 from app.services.auth_service import auth_service
 from app.api.deps import get_current_user, get_admin_context, SecurityContext
 from app.core.rate_limit import limiter
 from app.core.csrf import set_csrf_cookie, verify_csrf
-from fastapi import Request
 
 router = APIRouter()
 
@@ -79,17 +78,6 @@ async def update_me(
     _csrf: None = Depends(verify_csrf),
 ):
     return await auth_service.update_me(current_user["id"], profile_data)
-
-@router.post("/onboard")
-@limiter.limit("5/minute")
-async def onboard_user(
-    request: Request,
-    org_data: OnboardRequest,
-    current_user: dict = Depends(get_current_user),
-    _csrf: None = Depends(verify_csrf),
-):
-    """Initialize organization and link to user profile. Requires authentication."""
-    return await auth_service.onboard_user(org_data.model_dump(exclude_unset=False), current_user)
 
 @router.post("/change-password")
 async def change_password(

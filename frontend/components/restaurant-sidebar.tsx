@@ -11,7 +11,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Utensils,
+  TrendingUp,
   Moon,
   Users,
   ShoppingCart,
@@ -53,9 +53,9 @@ export function RestaurantSidebar() {
       title: "Home",
     },
     {
-      href: "/dashboard/kitchen-service",
-      icon: Utensils,
-      title: "Kitchen Service",
+      href: "/dashboard/sales",
+      icon: TrendingUp,
+      title: "Sales",
     },
     {
       href: "/dashboard/inventory",

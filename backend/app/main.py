@@ -16,9 +16,15 @@ from app.core.rate_limit import setup_rate_limiting
 # Initialize logging as early as possible
 setup_logging()
 
+import logging as _logging
+_startup_logger = _logging.getLogger("dosteon.startup")
+_startup_logger.info(f"Starting Dosteon API | env={settings.APP_ENV} | debug={settings.DEBUG}")
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    docs_url="/docs" if not settings.is_production else None,
+    redoc_url="/redoc" if not settings.is_production else None,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json" if not settings.is_production else None,
 )
 
 metrics_store = MetricsStore()
@@ -178,7 +184,10 @@ async def health():
 @app.get("/health/live")
 async def health_live():
     """Liveness probe — no DB check, just confirms the process is running."""
-    return {"status": "ok"}
+    response: dict = {"status": "ok"}
+    if not settings.is_production:
+        response["env"] = settings.APP_ENV
+    return response
 
 
 @app.get("/health/ready")

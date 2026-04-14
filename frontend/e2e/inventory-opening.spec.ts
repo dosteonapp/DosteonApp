@@ -125,13 +125,17 @@ test.describe('onboarding gate for newly created Supabase user', () => {
     await page.getByLabel('Password').fill(tempPassword);
     await page.getByRole('button', { name: /log in/i }).click();
 
-    // First login should land on onboarding
+    // First login should land on /onboarding — Step 1 of the new 4-step flow
     await page.waitForURL('**/onboarding');
-    await expect(page.getByRole('heading', { name: /business details/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /tell us about your food business/i })
+    ).toBeVisible();
 
     // Attempt to jump directly to dashboard should still be gated
     await page.goto(`${baseURL}/dashboard`);
     await page.waitForURL('**/onboarding');
-    await expect(page.getByRole('heading', { name: /business details/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /tell us about your food business/i })
+    ).toBeVisible();
   });
 });

@@ -11,6 +11,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/sonner";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { CookieConsent } from "@/components/CookieConsent";
+import { EnvironmentBanner } from "@/components/EnvironmentBanner";
 
 
 const inriaSerif = Inria_Serif({
@@ -42,6 +43,7 @@ export default function RootLayout({
         className={`${figtree.className} ${inriaSerif.variable} ${figtree.variable}`}
         suppressHydrationWarning
       >
+        <EnvironmentBanner />
         <PostHogProvider>
           <AppProvider>
             <ThemeProvider
