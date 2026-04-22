@@ -71,6 +71,7 @@ export interface SalesHistory {
   page: number;
   limit: number;
   pages: number;
+  period_revenue: number;
   orders: SaleOrder[];
 }
 
@@ -98,7 +99,7 @@ export const salesService = {
 
   async updateMenuItem(
     id: string,
-    payload: Partial<{ name: string; price: number; cost: number; category: string }>
+    payload: Partial<{ name: string; price: number; cost: number; category: string; status: string }>
   ): Promise<MenuItem> {
     const { data } = await axiosInstance.patch(`/sales/menu/${id}`, payload);
     return data;
@@ -133,6 +134,8 @@ export const salesService = {
 
   async getHistory(params?: {
     date?: string;
+    start_date?: string;
+    end_date?: string;
     channel?: string;
     page?: number;
     limit?: number;

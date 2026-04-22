@@ -3,28 +3,23 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
-  TrendingUp,
-  TrendingDown,
   ChevronDown,
-  ChevronRight,
   ArrowRight,
   Utensils,
   ShoppingBag,
   Truck,
-  Calendar,
   RefreshCw,
   ReceiptText,
-  Minus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FigtreeText, UnifiedErrorBanner } from "@/components/ui/dosteon-ui";
 import {
   salesService,
-  WeekStats,
   SaleOrder,
   SaleOrderDetail,
 } from "@/lib/services/salesService";
+import { SalesStatsBanner } from "@/components/sales/SalesStatsBanner";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -37,44 +32,59 @@ const todayStr = () => new Date().toISOString().split("T")[0];
 
 function formatTime(iso: string) {
   try {
-    return new Intl.DateTimeFormat("en", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    }).format(new Date(iso));
-  } catch {
-    return "--:--";
-  }
+    return new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit", hour12: true }).format(new Date(iso));
+  } catch { return "--:--"; }
 }
 
-const CHANNEL_META: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  DINE_IN:  { label: "Dine-In",  color: "bg-indigo-50 text-[#3B59DA] border-indigo-100",  icon: Utensils   },
-  TAKEAWAY: { label: "Takeaway", color: "bg-amber-50  text-amber-600  border-amber-100",  icon: ShoppingBag },
-  DELIVERY: { label: "Delivery", color: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: Truck },
+function formatDate(iso: string) {
+  try {
+    return new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short" }).format(new Date(iso));
+  } catch { return ""; }
+}
+
+const CHANNEL_META: Record<string, { label: string; textColor: string; icon: React.ComponentType<{ className?: string }> }> = {
+  DINE_IN:  { label: "Dine-in",  textColor: "text-emerald-600", icon: Utensils   },
+  TAKEAWAY: { label: "Takeaway", textColor: "text-amber-600",   icon: ShoppingBag },
+  DELIVERY: { label: "Delivery", textColor: "text-[#3B59DA]",   icon: Truck       },
 };
+
+const STATUS_META: Record<string, { label: string; color: string }> = {
+  COMPLETED:   { label: "Completed",   color: "bg-emerald-50 text-emerald-600 border-emerald-100" },
+  IN_PROGRESS: { label: "In-Progress", color: "bg-violet-50  text-violet-500  border-violet-100"  },
+  VOIDED:      { label: "Voided",      color: "bg-slate-100  text-slate-400  border-slate-200"    },
+};
+
+// ---------------------------------------------------------------------------
+// Channel filter
+// ---------------------------------------------------------------------------
+
+type ChannelFilter = "ALL" | "DINE_IN" | "TAKEAWAY" | "DELIVERY";
+
+const CHANNEL_FILTERS: { id: ChannelFilter; label: string }[] = [
+  { id: "ALL",      label: "All"      },
+  { id: "DINE_IN",  label: "Dine-in"  },
+  { id: "TAKEAWAY", label: "Takeaway" },
+  { id: "DELIVERY", label: "Delivery" },
+];
 
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
 export function TabSalesHistory() {
-  const [weekStats, setWeekStats]     = useState<WeekStats | null>(null);
   const [orders, setOrders]           = useState<SaleOrder[]>([]);
   const [isLoading, setIsLoading]     = useState(true);
   const [error, setError]             = useState<string | null>(null);
   const [expandedId, setExpandedId]   = useState<string | null>(null);
   const [detailCache, setDetailCache] = useState<Record<string, SaleOrderDetail>>({});
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
+  const [channelFilter, setChannelFilter] = useState<ChannelFilter>("ALL");
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [statsData, histData] = await Promise.all([
-        salesService.getWeekStats(),
-        salesService.getHistory({ date: todayStr(), limit: 50 }),
-      ]);
-      setWeekStats(statsData);
+      const histData = await salesService.getHistory({ date: todayStr(), limit: 50 });
       setOrders(histData.orders);
     } catch {
       setError("Could not load sales history. Please refresh the page.");
@@ -94,7 +104,7 @@ export function TabSalesHistory() {
       const detail = await salesService.getOrderDetail(orderId);
       setDetailCache((prev) => ({ ...prev, [orderId]: detail }));
     } catch {
-      // silently fail — expand will show nothing
+      // silently fail
     } finally {
       setLoadingDetailId(null);
     }
@@ -102,169 +112,96 @@ export function TabSalesHistory() {
 
   if (isLoading) return <TabHistorySkeleton />;
 
+  const filteredOrders = channelFilter === "ALL"
+    ? orders
+    : orders.filter((o) => o.channel === channelFilter);
+
   return (
     <div>
       {/* Week stats banner */}
-      <WeekStatsBanner stats={weekStats} />
+      <SalesStatsBanner />
 
       <div className="p-5 md:p-7 space-y-5">
         {error && <UnifiedErrorBanner message={error} />}
 
-        {/* Today's section header */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <Calendar className="h-4 w-4 text-slate-400 stroke-[2px]" />
-            <span className="text-[14px] font-black text-[#1E293B] font-figtree">
-              Today's Sales
-            </span>
-            {orders.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-bold font-figtree">
-                {orders.length}
-              </span>
-            )}
+        {/* Section header: title + channel pills */}
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="text-[18px] font-black text-[#1E293B] font-figtree leading-snug">
+              Today&apos;s Sales History
+            </h2>
+            <p className="text-[12px] font-semibold text-slate-400 font-figtree mt-0.5">
+              Each row is a sale. Click to see the dishes in that order.
+            </p>
           </div>
-          <Link
-            href="/dashboard/sales/history"
-            className="flex items-center gap-1.5 text-[12px] font-bold text-[#3B59DA] hover:underline font-figtree transition-colors"
-          >
-            See Full History <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
 
-        {/* Orders list */}
-        {orders.length === 0 ? (
-          <EmptyHistoryState />
-        ) : (
-          <div className="space-y-2">
-            {/* Column header (desktop only) */}
-            <div className="hidden md:grid grid-cols-[80px_1fr_100px_100px_100px_36px] gap-3 px-4 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] font-figtree">
-              <span>Time</span>
-              <span>Channel</span>
-              <span className="text-right">Items</span>
-              <span className="text-right">Revenue</span>
-              <span className="text-right">Profit</span>
-              <span />
-            </div>
-
-            {orders.map((order) => (
-              <OrderRow
-                key={order.id}
-                order={order}
-                isExpanded={expandedId === order.id}
-                detail={detailCache[order.id] ?? null}
-                isLoadingDetail={loadingDetailId === order.id}
-                onToggle={() => handleExpand(order.id)}
-              />
+          {/* Channel pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {CHANNEL_FILTERS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setChannelFilter(f.id)}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-full text-[12px] font-bold transition-all font-figtree whitespace-nowrap border",
+                  channelFilter === f.id
+                    ? "bg-[#1E293B] text-white border-[#1E293B] shadow-sm"
+                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700"
+                )}
+              >
+                {f.label}
+              </button>
             ))}
           </div>
-        )}
-
-        {/* Today's revenue summary */}
-        {orders.length > 0 && (
-          <TodaySummaryRow orders={orders} />
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Week stats banner
-// ---------------------------------------------------------------------------
-
-function WeekStatsBanner({ stats }: { stats: WeekStats | null }) {
-  const s = stats ?? {
-    week_revenue: 0, week_revenue_pct: null,
-    avg_daily_revenue: 0, best_day: null,
-    avg_gross_margin: 0, avg_gross_margin_pts: null,
-  };
-
-  return (
-    <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50/80 to-indigo-50/20 px-5 md:px-8 py-5">
-      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] font-figtree mb-4">
-        This Week (Last 7 Days)
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:divide-x md:divide-slate-200/60">
-        {/* Week Revenue */}
-        <WeekStat
-          label="Week Revenue"
-          value={fmt(s.week_revenue)}
-          change={s.week_revenue_pct}
-          changeUnit="%"
-          changeLabel="vs last 7d"
-        />
-        {/* Avg Daily */}
-        <WeekStat
-          label="Avg Daily Revenue"
-          value={fmt(s.avg_daily_revenue)}
-          className="md:pl-6"
-        />
-        {/* Best Day */}
-        <WeekStat
-          label="Best Day"
-          value={s.best_day ?? "—"}
-          className="md:pl-6"
-        />
-        {/* Gross Margin */}
-        <WeekStat
-          label="Avg Gross Margin"
-          value={`${s.avg_gross_margin.toFixed(1)}%`}
-          change={s.avg_gross_margin_pts}
-          changeUnit="pp"
-          changeLabel="vs last 7d"
-          className="md:pl-6"
-        />
-      </div>
-    </div>
-  );
-}
-
-function WeekStat({
-  label,
-  value,
-  change,
-  changeUnit = "%",
-  changeLabel,
-  className,
-}: {
-  label: string;
-  value: string;
-  change?: number | null;
-  changeUnit?: string;
-  changeLabel?: string;
-  className?: string;
-}) {
-  const isPositive = change != null && change > 0;
-  const isNegative = change != null && change < 0;
-
-  return (
-    <div className={cn("space-y-1", className)}>
-      <div className="text-[11px] font-semibold text-slate-400 font-figtree">{label}</div>
-      <div className="text-[22px] font-black text-[#1E293B] tracking-tight font-figtree leading-none">
-        {value}
-      </div>
-      {change != null && (
-        <div className={cn(
-          "flex items-center gap-1 text-[11px] font-bold font-figtree",
-          isPositive ? "text-emerald-600" : isNegative ? "text-rose-500" : "text-slate-400"
-        )}>
-          {isPositive ? (
-            <TrendingUp className="h-3 w-3 shrink-0" />
-          ) : isNegative ? (
-            <TrendingDown className="h-3 w-3 shrink-0" />
-          ) : (
-            <Minus className="h-3 w-3 shrink-0" />
-          )}
-          {isPositive ? "+" : ""}{change.toFixed(1)}{changeUnit}
-          {changeLabel && <span className="text-slate-400 font-normal">&nbsp;{changeLabel}</span>}
         </div>
-      )}
+
+        {/* Orders table */}
+        {filteredOrders.length === 0 ? (
+          <EmptyHistoryState />
+        ) : (
+          <div className="rounded-[12px] border border-slate-100 overflow-hidden">
+            {/* Column headers */}
+            <div className="hidden md:grid grid-cols-[120px_1fr_120px_120px_120px_140px] gap-3 px-5 py-3 bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree">
+              <span>Time Stamp</span>
+              <span>Dishes Sold</span>
+              <span>Channel</span>
+              <span className="text-right">Revenue</span>
+              <span className="text-center">Status</span>
+              <span className="text-right">Action</span>
+            </div>
+
+            {/* Rows */}
+            <div className="divide-y divide-slate-100">
+              {filteredOrders.map((order) => (
+                <OrderRow
+                  key={order.id}
+                  order={order}
+                  isExpanded={expandedId === order.id}
+                  detail={detailCache[order.id] ?? null}
+                  isLoadingDetail={loadingDetailId === order.id}
+                  onToggle={() => handleExpand(order.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* See full history link */}
+        <div className="flex justify-center pt-1">
+          <Link
+            href="/dashboard/sales/history"
+            className="inline-flex items-center gap-2 text-[13px] font-bold text-[#3B59DA] hover:underline font-figtree transition-colors"
+          >
+            See Full Sales History
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Order row with inline expand
+// Order row
 // ---------------------------------------------------------------------------
 
 function OrderRow({
@@ -281,147 +218,144 @@ function OrderRow({
   onToggle: () => void;
 }) {
   const ch = CHANNEL_META[order.channel] ?? CHANNEL_META.DINE_IN;
-  const profit = order.gross_profit;
-  const margin = order.total_revenue > 0
-    ? ((profit / order.total_revenue) * 100).toFixed(0)
-    : "0";
+  const st = STATUS_META[order.status] ?? STATUS_META.COMPLETED;
+
+  // Build dish summary from detail if available, otherwise show count
+  const dishSummary = detail
+    ? detail.items.map((i) => `${i.quantity}x ${i.menu_item_name}`).join(", ")
+    : `${order.items_count} dish${order.items_count !== 1 ? "es" : ""}`;
 
   return (
-    <div className={cn(
-      "rounded-[10px] border transition-all overflow-hidden",
-      isExpanded ? "border-[#3B59DA]/20 shadow-[0_2px_12px_rgba(59,89,218,0.06)]" : "border-slate-100 hover:border-slate-200"
-    )}>
+    <div className={cn("bg-white transition-colors", isExpanded && "bg-indigo-50/20")}>
       {/* Main row */}
-      <button
-        onClick={onToggle}
-        className="w-full text-left bg-white px-4 py-3.5 md:grid md:grid-cols-[80px_1fr_100px_100px_100px_36px] md:gap-3 flex flex-wrap gap-x-4 gap-y-1 items-center transition-colors hover:bg-slate-50/50"
-      >
-        {/* Time */}
-        <span className="text-[13px] font-bold text-slate-500 font-figtree tabular-nums whitespace-nowrap">
-          {formatTime(order.occurred_at)}
-        </span>
-
-        {/* Channel badge */}
+      <div className="hidden md:grid grid-cols-[120px_1fr_120px_120px_120px_140px] gap-3 px-5 py-4 items-center">
+        {/* Time stamp */}
         <div>
+          <div className="text-[13px] font-bold text-[#1E293B] font-figtree tabular-nums">
+            {formatTime(order.occurred_at)}
+          </div>
+          <div className="text-[11px] font-semibold text-slate-400 font-figtree mt-0.5">
+            {formatDate(order.occurred_at)}
+          </div>
+        </div>
+
+        {/* Dishes sold */}
+        <div className="min-w-0">
+          <div className="text-[13px] font-semibold text-[#1E293B] font-figtree truncate">
+            {dishSummary}
+          </div>
+          {!detail && (
+            <div className="text-[11px] font-semibold text-slate-400 font-figtree mt-0.5">
+              Order #{order.id.slice(-6).toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        {/* Channel */}
+        <div className={cn("text-[13px] font-bold font-figtree flex items-center gap-1.5", ch.textColor)}>
+          <ch.icon className="h-3.5 w-3.5 shrink-0" />
+          {ch.label}
+        </div>
+
+        {/* Revenue */}
+        <div className="text-[14px] font-black text-[#1E293B] font-figtree tabular-nums text-right">
+          RWF {fmt(order.total_revenue)}
+        </div>
+
+        {/* Status */}
+        <div className="flex items-center justify-center">
           <span className={cn(
-            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold font-figtree",
-            ch.color
+            "inline-flex items-center px-2.5 py-1 rounded-full border text-[11px] font-bold font-figtree",
+            st.color
           )}>
-            <ch.icon className="h-3 w-3 shrink-0" />
-            {ch.label}
+            {st.label}
           </span>
         </div>
 
-        {/* Items count */}
-        <span className="text-[13px] font-semibold text-slate-500 font-figtree md:text-right">
-          <span className="md:hidden text-slate-400 text-[11px]">Items: </span>
-          {order.items_count}
-        </span>
+        {/* Action */}
+        <button
+          onClick={onToggle}
+          className="flex items-center justify-end gap-1.5 text-[12px] font-bold text-[#3B59DA] font-figtree hover:underline transition-colors"
+        >
+          {isLoadingDetail
+            ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            : <>Sales Details <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-180")} /></>
+          }
+        </button>
+      </div>
 
-        {/* Revenue */}
-        <span className="text-[14px] font-black text-[#1E293B] font-figtree md:text-right tabular-nums">
-          {fmt(order.total_revenue)}
-        </span>
-
-        {/* Profit */}
-        <span className={cn(
-          "text-[13px] font-bold font-figtree md:text-right tabular-nums",
-          profit > 0 ? "text-emerald-600" : profit < 0 ? "text-rose-500" : "text-slate-400"
-        )}>
-          {fmt(profit)}
-          <span className="text-[10px] font-semibold opacity-60 ml-0.5">
-            ({margin}%)
+      {/* Mobile row */}
+      <button
+        onClick={onToggle}
+        className="md:hidden w-full text-left px-4 py-3.5 flex items-center justify-between gap-3"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="min-w-0">
+            <div className="text-[13px] font-bold text-[#1E293B] font-figtree">
+              {formatTime(order.occurred_at)} · RWF {fmt(order.total_revenue)}
+            </div>
+            <div className={cn("text-[11px] font-semibold font-figtree mt-0.5", ch.textColor)}>
+              {ch.label} · {order.items_count} item{order.items_count !== 1 ? "s" : ""}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-bold font-figtree", st.color)}>
+            {st.label}
           </span>
-        </span>
-
-        {/* Expand chevron */}
-        <div className="md:flex hidden items-center justify-center shrink-0">
-          {isLoadingDetail ? (
-            <RefreshCw className="h-3.5 w-3.5 text-slate-300 animate-spin" />
-          ) : (
-            <ChevronDown className={cn(
-              "h-3.5 w-3.5 text-slate-300 transition-transform",
-              isExpanded && "rotate-180"
-            )} />
-          )}
+          <ChevronDown className={cn("h-3.5 w-3.5 text-slate-300 transition-transform", isExpanded && "rotate-180")} />
         </div>
       </button>
 
       {/* Expanded detail */}
       {isExpanded && (
-        <div className="bg-slate-50/60 border-t border-slate-100 px-4 py-4">
+        <div className="bg-slate-50/60 border-t border-slate-100 px-5 py-4">
           {isLoadingDetail || !detail ? (
             <div className="space-y-2">
-              {[...Array(3)].map((_, i) => (
+              {[...Array(2)].map((_, i) => (
                 <Skeleton key={i} className="h-8 w-full rounded-[6px]" />
               ))}
             </div>
           ) : (
-            <div className="space-y-2">
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] font-figtree mb-3">
+            <div className="space-y-1">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree mb-3">
                 Line Items
               </div>
               {detail.items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between gap-4 py-1.5 border-b border-slate-100 last:border-0"
+                  className="flex items-center justify-between gap-4 py-2 border-b border-slate-100 last:border-0"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-[12px] font-bold text-[#1E293B] font-figtree truncate">
+                    <span className="text-[13px] font-bold text-[#1E293B] font-figtree truncate">
                       {item.menu_item_name}
                     </span>
                     <span className="text-[11px] text-slate-400 font-semibold font-figtree shrink-0">
                       ×{item.quantity}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex items-center gap-5 shrink-0">
                     <span className="text-[11px] text-slate-400 font-semibold font-figtree tabular-nums">
-                      {fmt(item.unit_price)} each
+                      RWF {fmt(item.unit_price)} each
                     </span>
-                    <span className="text-[13px] font-black text-[#1E293B] font-figtree tabular-nums w-20 text-right">
-                      {fmt(item.line_total)}
+                    <span className="text-[13px] font-black text-[#1E293B] font-figtree tabular-nums w-24 text-right">
+                      RWF {fmt(item.line_total)}
                     </span>
                   </div>
                 </div>
               ))}
+              <div className="flex items-center justify-between pt-3 mt-1">
+                <span className="text-[11px] font-bold text-slate-400 font-figtree uppercase tracking-[0.1em]">
+                  Total
+                </span>
+                <span className="text-[15px] font-black text-[#1E293B] font-figtree tabular-nums">
+                  RWF {fmt(order.total_revenue)}
+                </span>
+              </div>
             </div>
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Today summary footer row
-// ---------------------------------------------------------------------------
-
-function TodaySummaryRow({ orders }: { orders: SaleOrder[] }) {
-  const totalRev = orders.reduce((s, o) => s + o.total_revenue, 0);
-  const totalProfit = orders.reduce((s, o) => s + o.gross_profit, 0);
-  const margin = totalRev > 0 ? ((totalProfit / totalRev) * 100).toFixed(1) : "0";
-
-  return (
-    <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-[10px] bg-indigo-50/40 border border-indigo-100/40">
-      <span className="text-[12px] font-bold text-slate-500 font-figtree">
-        Today's Total ({orders.length} sale{orders.length !== 1 ? "s" : ""})
-      </span>
-      <div className="flex items-center gap-6">
-        <div className="text-right">
-          <div className="text-[10px] font-semibold text-slate-400 font-figtree uppercase tracking-[0.1em]">Revenue</div>
-          <div className="text-[15px] font-black text-[#1E293B] font-figtree tabular-nums">{fmt(totalRev)}</div>
-        </div>
-        <div className="text-right">
-          <div className="text-[10px] font-semibold text-slate-400 font-figtree uppercase tracking-[0.1em]">Profit</div>
-          <div className={cn(
-            "text-[15px] font-black font-figtree tabular-nums",
-            totalProfit > 0 ? "text-emerald-600" : "text-slate-400"
-          )}>
-            {fmt(totalProfit)}
-            <span className="text-[10px] font-semibold opacity-60 ml-1">({margin}%)</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -432,7 +366,7 @@ function TodaySummaryRow({ orders }: { orders: SaleOrder[] }) {
 
 function EmptyHistoryState() {
   return (
-    <div className="flex flex-col items-center justify-center py-14 gap-3 text-center">
+    <div className="flex flex-col items-center justify-center py-16 gap-3 text-center rounded-[12px] border border-slate-100">
       <div className="h-12 w-12 rounded-[12px] bg-slate-50 border border-slate-100 flex items-center justify-center">
         <ReceiptText className="h-5 w-5 text-slate-300" />
       </div>
@@ -450,22 +384,36 @@ function EmptyHistoryState() {
 function TabHistorySkeleton() {
   return (
     <div>
-      <div className="border-b border-slate-100 bg-slate-50/80 px-8 py-6">
-        <Skeleton className="h-3.5 w-40 rounded-full mb-5" />
-        <div className="grid grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-3 w-24 rounded-full" />
-              <Skeleton className="h-7 w-28 rounded-full" />
-              <Skeleton className="h-3 w-16 rounded-full" />
+      {/* Banner skeleton */}
+      <div className="bg-gradient-to-r from-[#091558] via-[#3851dd] to-[#091558] px-5 md:px-7 py-6 md:py-8 grid grid-cols-4 gap-3 md:gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-white rounded-[12px] p-4 md:p-5 animate-pulse space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-full bg-slate-100" />
+              <div className="h-2 w-3/4 rounded bg-slate-100" />
+            </div>
+            <div className="h-8 w-2/3 rounded bg-slate-100" />
+            <div className="h-2 w-1/2 rounded bg-slate-100" />
+          </div>
+        ))}
+      </div>
+      <div className="p-7 space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-6 w-40 rounded-full" />
+          <div className="flex gap-2">
+            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-7 w-20 rounded-full" />)}
+          </div>
+        </div>
+        <div className="rounded-[12px] border border-slate-100 overflow-hidden">
+          <div className="bg-slate-50 px-5 py-3">
+            <Skeleton className="h-3 w-full rounded-full" />
+          </div>
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="px-5 py-4 border-t border-slate-100">
+              <Skeleton className="h-10 w-full rounded-[6px]" />
             </div>
           ))}
         </div>
-      </div>
-      <div className="p-7 space-y-3">
-        {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-14 w-full rounded-[10px]" />
-        ))}
       </div>
     </div>
   );

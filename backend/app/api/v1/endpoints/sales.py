@@ -104,14 +104,18 @@ async def log_sale(
 @router.get("/history")
 async def get_history(
     filter_date: Optional[date] = Query(None, alias="date"),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
     channel: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     ctx: SecurityContext = Depends(get_brand_context),
 ):
-    """Paginated sale order history. Filters: ?date=YYYY-MM-DD, ?channel=DINE_IN|TAKEAWAY|DELIVERY."""
+    """Paginated sale order history. Filters: ?date=YYYY-MM-DD or ?start_date=&end_date=, ?channel=DINE_IN|TAKEAWAY|DELIVERY."""
     return await sales_service.get_history(
-        ctx.organization_id, ctx.brand_id, filter_date, channel, page, limit
+        ctx.organization_id, ctx.brand_id,
+        filter_date, start_date, end_date,
+        channel, page, limit,
     )
 
 

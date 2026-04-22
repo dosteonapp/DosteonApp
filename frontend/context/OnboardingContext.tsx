@@ -22,10 +22,16 @@ export interface OperatingDay {
   is_open: boolean;
 }
 
+export interface BrandSummary {
+  id: string;
+  name: string;
+}
+
 export interface Dish {
   name: string;
   price: number;
   category: string;
+  brand_id?: string | null;  // set when dish belongs to a specific brand
 }
 
 export interface SelectedInventoryItem {
@@ -52,24 +58,17 @@ export interface Step2State {
 }
 
 export interface Step3State {
+  /** Used in single-brand mode — dishes have no brand_id. */
   dishes: Dish[];
+  /** Used in multi-brand mode — keyed by brand ID. */
+  brandDishes: { [brandId: string]: Dish[] };
+  /** Active brand tab in multi-brand mode. */
+  activeBrandId: string | null;
 }
 
 export interface Step4State {
   selected_items: SelectedInventoryItem[];
   sub_screen: "select" | "set_quantities";
-}
-
-export interface OnboardingState {
-  currentStep: 1 | 2 | 3 | 4;
-  step1: Step1State;
-  step2: Step2State;
-  step3: Step3State;
-  step4: Step4State;
-  isLoading: boolean;       // true while fetching progress on mount
-  isSaving: boolean;        // true while a step API call is in flight
-  isCompleted: boolean;     // true after POST /onboarding/complete succeeds
-  completeSummary: OnboardingCompleteSummary | null;
 }
 
 // Summary returned by POST /onboarding/complete
@@ -82,6 +81,21 @@ export interface OnboardingCompleteSummary {
   operating_days_display: string | null;
   menu_dishes_count: number;
   inventory_items_count: number;
+  brands: BrandSummary[];
+}
+
+export interface OnboardingState {
+  currentStep: 1 | 2 | 3 | 4;
+  step1: Step1State;
+  step2: Step2State;
+  step3: Step3State;
+  step4: Step4State;
+  /** Brands created during Step 1 (with IDs). Populated after submitStep1 or progress restore. */
+  savedBrands: BrandSummary[];
+  isLoading: boolean;       // true while fetching progress on mount
+  isSaving: boolean;        // true while a step API call is in flight
+  isCompleted: boolean;     // true after POST /onboarding/complete succeeds
+  completeSummary: OnboardingCompleteSummary | null;
 }
 
 interface OnboardingContextValue {
@@ -95,17 +109,22 @@ interface OnboardingContextValue {
   // Step 2 updaters
   toggleDay: (day: DayKey) => void;
   setDayTime: (day: DayKey, field: "opening_time" | "closing_time", value: string) => void;
-  // Step 3 updaters
+  // Step 3 updaters — single-brand
   setDish: (index: number, field: keyof Dish, value: string | number) => void;
   addDish: () => void;
   removeDish: (index: number) => void;
+  // Step 3 updaters — multi-brand (operates on the active brand tab)
+  setActiveBrandTab: (brandId: string) => void;
+  setDishForBrand: (brandId: string, index: number, field: keyof Dish, value: string | number) => void;
+  addDishForBrand: (brandId: string) => void;
+  removeDishForBrand: (brandId: string, index: number) => void;
   // Step 4 updaters
   toggleInventoryItem: (item: Omit<SelectedInventoryItem, "opening_quantity">) => void;
   setInventoryQuantity: (canonical_product_id: string, qty: number) => void;
   setInventoryUnit: (canonical_product_id: string, unit: string) => void;
   removeInventoryItem: (canonical_product_id: string) => void;
   setStep4SubScreen: (screen: "select" | "set_quantities") => void;
-  // API submission helpers (called by step Continue buttons)
+  // API submission helpers
   submitStep1: (phoneOverride?: string) => Promise<void>;
   submitStep2: () => Promise<void>;
   submitStep3: () => Promise<void>;
@@ -132,6 +151,12 @@ function buildDefaultDays(): OperatingDay[] {
   }));
 }
 
+const BLANK_DISHES: Dish[] = [
+  { name: "", price: 0, category: "Signature" },
+  { name: "", price: 0, category: "Signature" },
+  { name: "", price: 0, category: "Signature" },
+];
+
 function buildDefaultStep1(): Step1State {
   return {
     name: "",
@@ -149,13 +174,45 @@ function buildDefaultState(): OnboardingState {
     currentStep: 1,
     step1: buildDefaultStep1(),
     step2: { operating_days: buildDefaultDays() },
-    step3: { dishes: [{ name: "", price: 0, category: "Signature" }, { name: "", price: 0, category: "Signature" }, { name: "", price: 0, category: "Signature" }] },
+    step3: {
+      dishes: [...BLANK_DISHES],
+      brandDishes: {},
+      activeBrandId: null,
+    },
     step4: { selected_items: [], sub_screen: "select" },
+    savedBrands: [],
     isLoading: true,
     isSaving: false,
     isCompleted: false,
     completeSummary: null,
   };
+}
+
+/** Build per-brand dish buckets from a flat dish list and brand objects.
+ *  Dishes that carry a brand_id are placed in the matching bucket; any
+ *  brand whose bucket ends up empty gets 3 blank rows added.
+ */
+function buildBrandDishes(
+  brands: BrandSummary[],
+  savedDishes: Dish[],
+  existing?: { [brandId: string]: Dish[] }
+): { [brandId: string]: Dish[] } {
+  return brands.reduce((acc, b) => {
+    if (existing && existing[b.id]?.some((d) => d.name.trim())) {
+      acc[b.id] = existing[b.id];
+    } else {
+      const brandSpecific = savedDishes.filter((d) => d.brand_id === b.id);
+      acc[b.id] =
+        brandSpecific.length > 0
+          ? brandSpecific
+          : [
+              { name: "", price: 0, category: "Signature" },
+              { name: "", price: 0, category: "Signature" },
+              { name: "", price: 0, category: "Signature" },
+            ];
+    }
+    return acc;
+  }, {} as { [brandId: string]: Dish[] });
 }
 
 // ---------------------------------------------------------------------------
@@ -206,6 +263,12 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
             };
           }
 
+          // Restore saved brands (with IDs) for per-brand menu setup
+          const brandObjects: BrandSummary[] = s1.brand_objects ?? [];
+          if (brandObjects.length > 0) {
+            next.savedBrands = brandObjects;
+          }
+
           // --- Step 2 ---
           const savedDays: OperatingDay[] = data.step2?.operating_days ?? [];
           if (savedDays.length === 7) {
@@ -214,13 +277,20 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
           // --- Step 3 ---
           const savedDishes: Dish[] = data.step3?.dishes ?? [];
-          if (savedDishes.length > 0) {
-            // Ensure at least 3 rows are always present
+
+          if (brandObjects.length > 1) {
+            // Multi-brand: distribute saved dishes into per-brand buckets
+            next.step3 = {
+              dishes: savedDishes.length > 0 ? savedDishes : [...BLANK_DISHES],
+              brandDishes: buildBrandDishes(brandObjects, savedDishes),
+              activeBrandId: brandObjects[0]?.id ?? null,
+            };
+          } else if (savedDishes.length > 0) {
             const padded = [...savedDishes];
             while (padded.length < 3) {
               padded.push({ name: "", price: 0, category: "Signature" });
             }
-            next.step3 = { dishes: padded };
+            next.step3 = { dishes: padded, brandDishes: {}, activeBrandId: null };
           }
 
           // --- Resume step ---
@@ -305,29 +375,81 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   }, [update]);
 
   // -------------------------------------------------------------------------
-  // Step 3 updaters
+  // Step 3 updaters — single-brand
   // -------------------------------------------------------------------------
   const setDish = useCallback((index: number, field: keyof Dish, value: string | number) => {
     update((prev) => {
       const dishes = [...prev.step3.dishes];
       dishes[index] = { ...dishes[index], [field]: value };
-      return { ...prev, step3: { dishes } };
+      return { ...prev, step3: { ...prev.step3, dishes } };
     });
   }, [update]);
 
   const addDish = useCallback(() => {
     update((prev) => ({
       ...prev,
-      step3: { dishes: [...prev.step3.dishes, { name: "", price: 0, category: "Signature" }] },
+      step3: { ...prev.step3, dishes: [...prev.step3.dishes, { name: "", price: 0, category: "Signature" }] },
     }));
   }, [update]);
 
   const removeDish = useCallback((index: number) => {
     update((prev) => {
       const dishes = prev.step3.dishes.filter((_, i) => i !== index);
-      // Keep at least 3 rows
       while (dishes.length < 3) dishes.push({ name: "", price: 0, category: "Signature" });
-      return { ...prev, step3: { dishes } };
+      return { ...prev, step3: { ...prev.step3, dishes } };
+    });
+  }, [update]);
+
+  // -------------------------------------------------------------------------
+  // Step 3 updaters — multi-brand
+  // -------------------------------------------------------------------------
+  const setActiveBrandTab = useCallback((brandId: string) => {
+    update((prev) => ({ ...prev, step3: { ...prev.step3, activeBrandId: brandId } }));
+  }, [update]);
+
+  const setDishForBrand = useCallback((brandId: string, index: number, field: keyof Dish, value: string | number) => {
+    update((prev) => {
+      const current = prev.step3.brandDishes[brandId] ?? [];
+      const updated = [...current];
+      updated[index] = { ...updated[index], [field]: value };
+      return {
+        ...prev,
+        step3: {
+          ...prev.step3,
+          brandDishes: { ...prev.step3.brandDishes, [brandId]: updated },
+        },
+      };
+    });
+  }, [update]);
+
+  const addDishForBrand = useCallback((brandId: string) => {
+    update((prev) => {
+      const current = prev.step3.brandDishes[brandId] ?? [];
+      return {
+        ...prev,
+        step3: {
+          ...prev.step3,
+          brandDishes: {
+            ...prev.step3.brandDishes,
+            [brandId]: [...current, { name: "", price: 0, category: "Signature" }],
+          },
+        },
+      };
+    });
+  }, [update]);
+
+  const removeDishForBrand = useCallback((brandId: string, index: number) => {
+    update((prev) => {
+      const current = prev.step3.brandDishes[brandId] ?? [];
+      const updated = current.filter((_, i) => i !== index);
+      while (updated.length < 1) updated.push({ name: "", price: 0, category: "Signature" });
+      return {
+        ...prev,
+        step3: {
+          ...prev.step3,
+          brandDishes: { ...prev.step3.brandDishes, [brandId]: updated },
+        },
+      };
     });
   }, [update]);
 
@@ -403,7 +525,21 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const step2Valid = state.step2.operating_days.some((d) => d.is_open);
 
-  const step3Valid = state.step3.dishes.filter((d) => d.name.trim()).length >= 3;
+  const step3Valid = (() => {
+    const { savedBrands, step3 } = state;
+    if (savedBrands.length > 1) {
+      // Multi-brand: each brand needs at least 1 named dish, and 3 total minimum
+      let total = 0;
+      for (const brand of savedBrands) {
+        const dishes = step3.brandDishes[brand.id] ?? [];
+        const named = dishes.filter((d) => d.name.trim());
+        if (named.length === 0) return false;
+        total += named.length;
+      }
+      return total >= 3;
+    }
+    return step3.dishes.filter((d) => d.name.trim()).length >= 3;
+  })();
 
   // -------------------------------------------------------------------------
   // API submission helpers
@@ -412,7 +548,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     const { step1 } = state;
     setState((prev) => ({ ...prev, isSaving: true }));
     try {
-      await axiosInstance.patch("/onboarding/business", {
+      const { data } = await axiosInstance.patch("/onboarding/business", {
         name: step1.name,
         phone: (phoneOverride !== undefined ? phoneOverride : step1.phone) || null,
         city: step1.city || null,
@@ -421,8 +557,27 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         has_multiple_brands: step1.has_multiple_brands ?? false,
         brands: step1.brands.filter((b) => b.trim()),
       });
-    } finally {
+
+      // Capture returned brands so Step 3 can show per-brand tabs
+      const returnedBrands: BrandSummary[] = data.brands ?? [];
+      setState((prev) => {
+        const isMulti = returnedBrands.length > 1;
+        return {
+          ...prev,
+          isSaving: false,
+          savedBrands: returnedBrands,
+          step3: {
+            ...prev.step3,
+            brandDishes: isMulti
+              ? buildBrandDishes(returnedBrands, prev.step3.dishes, prev.step3.brandDishes)
+              : prev.step3.brandDishes,
+            activeBrandId: isMulti ? (returnedBrands[0]?.id ?? null) : null,
+          },
+        };
+      });
+    } catch (err) {
       setState((prev) => ({ ...prev, isSaving: false }));
+      throw err;
     }
   }, [state]);
 
@@ -440,9 +595,22 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const submitStep3 = useCallback(async () => {
     setState((prev) => ({ ...prev, isSaving: true }));
     try {
-      await axiosInstance.post("/onboarding/menu", {
-        dishes: state.step3.dishes.filter((d) => d.name.trim()),
-      });
+      const { savedBrands, step3 } = state;
+      let dishes: Dish[];
+
+      if (savedBrands.length > 1) {
+        // Multi-brand: collect all dishes across all brands, each tagged with its brand_id
+        dishes = savedBrands.flatMap((brand) =>
+          (step3.brandDishes[brand.id] ?? [])
+            .filter((d) => d.name.trim())
+            .map((d) => ({ ...d, brand_id: brand.id }))
+        );
+      } else {
+        // Single-brand: submit all named dishes without brand_id (org-level)
+        dishes = step3.dishes.filter((d) => d.name.trim()).map((d) => ({ ...d, brand_id: null }));
+      }
+
+      await axiosInstance.post("/onboarding/menu", { dishes });
     } finally {
       setState((prev) => ({ ...prev, isSaving: false }));
     }
@@ -489,6 +657,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setDish,
     addDish,
     removeDish,
+    setActiveBrandTab,
+    setDishForBrand,
+    addDishForBrand,
+    removeDishForBrand,
     toggleInventoryItem,
     setInventoryQuantity,
     setInventoryUnit,

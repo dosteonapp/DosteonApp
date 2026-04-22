@@ -40,3 +40,14 @@ async def ensure_connected():
     if not db.is_connected():
         logger.warning("DB disconnected — attempting reconnect")
         await connect_db()
+        return
+    # Validate the connection is still alive (Supabase drops idle sockets after ~60s)
+    try:
+        await asyncio.wait_for(db.execute_raw("SELECT 1"), timeout=3.0)
+    except Exception as e:
+        logger.warning(f"DB ping failed (stale connection) — reconnecting: {e}")
+        try:
+            await db.disconnect()
+        except Exception:
+            pass
+        await connect_db()

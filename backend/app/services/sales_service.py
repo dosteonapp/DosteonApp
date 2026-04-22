@@ -5,10 +5,13 @@ Brand scoping follows the standard fallback rule:
   - brand_id set → show rows where brand_id = ? OR brand_id IS NULL
   - brand_id None → show all org rows (no brand filter applied)
 """
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, time as time_
 from typing import Optional, List
 from app.db.prisma import db
+from app.core.logging import get_logger
 from fastapi import HTTPException
+
+logger = get_logger("sales")
 
 
 class SalesService:
@@ -16,6 +19,10 @@ class SalesService:
     # -----------------------------------------------------------------------
     # Helpers
     # -----------------------------------------------------------------------
+
+    def _dt(self, d: date) -> datetime:
+        """Convert date → datetime (midnight) for Prisma @db.Date filter queries."""
+        return datetime.combine(d, time_.min)
 
     def _brand_where(self, brand_id: Optional[str]) -> dict:
         """Returns the brand portion of a Prisma where clause."""
@@ -95,12 +102,14 @@ class SalesService:
         item = await db.menuitem.find_unique(where={"id": item_id})
         if not item or str(item.organization_id) != organization_id:
             raise HTTPException(status_code=404, detail="Menu item not found")
-        if item.status == "archived":
-            raise HTTPException(status_code=400, detail="Cannot update an archived item")
+        # Allow status change (e.g. archived → active) but block other edits on archived items
+        if item.status == "archived" and not (len(data) == 1 and "status" in data):
+            raise HTTPException(status_code=400, detail="Cannot update an archived item. Restore it first.")
 
+        update_data = {k: v for k, v in data.items() if v is not None}
         updated = await db.menuitem.update(
             where={"id": item_id},
-            data={k: v for k, v in data.items() if v is not None},
+            data=update_data,
         )
         return self._item_out(updated)
 
@@ -134,7 +143,7 @@ class SalesService:
         orders = await db.saleorder.find_many(
             where={
                 "organization_id": organization_id,
-                "business_date": today,
+                "business_date": self._dt(today),
                 "status": "COMPLETED",
                 **self._brand_where(brand_id),
             }
@@ -181,10 +190,10 @@ class SalesService:
         }
 
         current_orders = await db.saleorder.find_many(
-            where={**base_where, "business_date": {"gte": week_start, "lte": today}}
+            where={**base_where, "business_date": {"gte": self._dt(week_start), "lte": self._dt(today)}}
         )
         prev_orders = await db.saleorder.find_many(
-            where={**base_where, "business_date": {"gte": prev_start, "lte": prev_end}}
+            where={**base_where, "business_date": {"gte": self._dt(prev_start), "lte": self._dt(prev_end)}}
         )
 
         week_revenue = sum(o.total_revenue for o in current_orders)
@@ -267,7 +276,7 @@ class SalesService:
                 where={
                     "organization_id": organization_id,
                     "status": "COMPLETED",
-                    "business_date": {"gte": thirty_days_ago},
+                    "business_date": {"gte": self._dt(thirty_days_ago)},
                     **self._brand_where(brand_id),
                 }
             )
@@ -284,8 +293,8 @@ class SalesService:
                     top_item = await db.menuitem.find_unique(where={"id": top_id})
                     if top_item:
                         top_selling_dish = top_item.name
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"[sales] top_selling_dish lookup failed: {e}")
 
         return {
             "total_dishes": total_dishes,
@@ -356,7 +365,7 @@ class SalesService:
                 "total_cogs": round(total_cogs, 2),
                 "gross_profit": round(gross_profit, 2),
                 "logged_by": user_id,
-                "business_date": date.today(),
+                "business_date": self._dt(date.today()),
             }
         )
 
@@ -372,7 +381,7 @@ class SalesService:
             "total_revenue": order.total_revenue,
             "total_cogs": order.total_cogs,
             "gross_profit": order.gross_profit,
-            "business_date": str(order.business_date),
+            "business_date": order.business_date.isoformat() if order.business_date else None,
             "occurred_at": order.occurred_at.isoformat() if order.occurred_at else None,
             "items_count": len(order_items),
         }
@@ -386,6 +395,8 @@ class SalesService:
         organization_id: str,
         brand_id: Optional[str],
         filter_date: Optional[date],
+        start_date: Optional[date],
+        end_date: Optional[date],
         channel: Optional[str],
         page: int,
         limit: int,
@@ -395,11 +406,21 @@ class SalesService:
             **self._brand_where(brand_id),
         }
         if filter_date:
-            where["business_date"] = filter_date
+            where["business_date"] = self._dt(filter_date)
+        elif start_date and end_date:
+            where["business_date"] = {
+                "gte": self._dt(start_date),
+                "lte": self._dt(end_date),
+            }
         if channel:
             where["channel"] = channel
 
         total = await db.saleorder.count(where=where)
+
+        # Sum revenue across ALL matching orders for the period total
+        all_orders_rev = await db.saleorder.find_many(where=where)
+        period_revenue = sum(o.total_revenue for o in all_orders_rev)
+
         orders = await db.saleorder.find_many(
             where=where,
             order={"occurred_at": "desc"},
@@ -421,6 +442,7 @@ class SalesService:
 
         return {
             "total": total,
+            "period_revenue": period_revenue,
             "page": page,
             "limit": limit,
             "pages": max(1, (total + limit - 1) // limit),
@@ -434,7 +456,7 @@ class SalesService:
                     "gross_profit": o.gross_profit,
                     "items_count": item_qty_by_order.get(o.id, 0),
                     "occurred_at": o.occurred_at.isoformat() if o.occurred_at else None,
-                    "business_date": str(o.business_date),
+                    "business_date": o.business_date.isoformat() if o.business_date else None,
                 }
                 for o in orders
             ],
@@ -466,7 +488,7 @@ class SalesService:
             "total_cogs": order.total_cogs,
             "gross_profit": order.gross_profit,
             "occurred_at": order.occurred_at.isoformat() if order.occurred_at else None,
-            "business_date": str(order.business_date),
+            "business_date": order.business_date.isoformat() if order.business_date else None,
             "items": [
                 {
                     "id": oi.id,

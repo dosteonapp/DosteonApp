@@ -4,19 +4,32 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ChefHat,
   Trash2,
-  ArrowLeft,
   Package,
   Lock,
   RotateCcw,
   Clock,
   Activity,
+  X,
+  Minus,
+  Plus,
+  Droplets,
+  FlameKindling,
+  BadgeAlert,
+  CalendarX,
+  Thermometer,
+  HelpCircle,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { FigtreeText, InriaHeading } from "@/components/ui/dosteon-ui";
+import { FigtreeText } from "@/components/ui/dosteon-ui";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogClose,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   inventoryApi,
   InventoryProduct,
@@ -29,19 +42,13 @@ import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecyc
 // Constants
 // ---------------------------------------------------------------------------
 
-const CONSUMPTION_REASONS = [
-  { value: "CUSTOMER_SERVICE", label: "Customer Service" },
-  { value: "STAFF_MEAL",       label: "Staff Meal"       },
-  { value: "OTHER",            label: "Other"            },
-];
-
 const WASTE_REASONS = [
-  { value: "SPOILED_EXPIRED",   label: "Spoiled / Expired"   },
-  { value: "DAMAGED_PACKAGING", label: "Damaged Packaging"   },
-  { value: "SPILLED_DROPPED",   label: "Spilled / Dropped"   },
-  { value: "OVERCOOKED_BURNED", label: "Overcooked / Burned" },
-  { value: "QUALITY_ISSUE",     label: "Quality Issue"       },
-  { value: "OTHER",             label: "Other"               },
+  { value: "SPOILED_EXPIRED",   label: "Expired",  icon: CalendarX      },
+  { value: "SPILLED_DROPPED",   label: "Spilled",  icon: Droplets       },
+  { value: "QUALITY_ISSUE",     label: "Quality",  icon: BadgeAlert     },
+  { value: "OVERCOOKED_BURNED", label: "Burned",   icon: FlameKindling  },
+  { value: "DAMAGED_PACKAGING", label: "Damaged",  icon: Thermometer    },
+  { value: "OTHER",             label: "Other",    icon: HelpCircle     },
 ];
 
 // ---------------------------------------------------------------------------
@@ -54,8 +61,8 @@ function relativeTime(iso: string): string {
   if (secs < 60)  return "Just now";
   const mins = Math.floor(secs / 60);
   if (mins < 60)  return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24)   return `${hrs}h ago`;
+  const hrs  = Math.floor(mins / 60);
+  if (hrs  < 24)  return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
@@ -63,10 +70,385 @@ function fmt(n: number) {
   return new Intl.NumberFormat("en").format(n);
 }
 
-function reasonLabel(reason: string | null): string {
-  if (!reason) return "";
-  const all = [...CONSUMPTION_REASONS, ...WASTE_REASONS];
-  return all.find((r) => r.value === reason)?.label ?? reason;
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    healthy:  "bg-emerald-100 text-emerald-700 border-emerald-200",
+    low:      "bg-amber-100  text-amber-700  border-amber-200",
+    critical: "bg-rose-100   text-rose-700   border-rose-200",
+  };
+  return (
+    <span className={cn(
+      "inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-bold font-figtree capitalize",
+      map[status] ?? map.healthy
+    )}>
+      {status}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Stepper input
+// ---------------------------------------------------------------------------
+
+function Stepper({
+  value,
+  onChange,
+  unit,
+  color,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  unit: string;
+  color: "blue" | "red";
+}) {
+  const btnClass = cn(
+    "h-10 w-10 rounded-[8px] flex items-center justify-center shrink-0 font-black text-lg transition-all active:scale-95",
+    color === "blue"
+      ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white"
+      : "bg-[#C0392B] hover:bg-[#a93226] text-white"
+  );
+
+  const step = (delta: number) => {
+    const cur = parseFloat(value) || 0;
+    const next = Math.max(0, parseFloat((cur + delta).toFixed(2)));
+    onChange(String(next));
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button type="button" className={btnClass} onClick={() => step(-0.5)}>
+        <Minus className="h-4 w-4 stroke-[3px]" />
+      </button>
+      <div className="flex-1 relative">
+        <input
+          type="number"
+          min="0"
+          step="0.5"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full h-10 rounded-[8px] border border-slate-200 bg-white px-3 pr-10 text-[15px] font-black text-[#1E293B] font-figtree text-center focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-[#3B59DA]/40 transition-all"
+          placeholder="0"
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-slate-400 font-figtree pointer-events-none">
+          {unit}
+        </span>
+      </div>
+      <button type="button" className={btnClass} onClick={() => step(0.5)}>
+        <Plus className="h-4 w-4 stroke-[3px]" />
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Log Usage Modal
+// ---------------------------------------------------------------------------
+
+function LogUsageModal({
+  open,
+  onClose,
+  products,
+  onSubmitted,
+}: {
+  open:        boolean;
+  onClose:     () => void;
+  products:    InventoryProduct[];
+  onSubmitted: () => void;
+}) {
+  const [productId, setProductId] = useState("");
+  const [quantity,  setQuantity]  = useState("1");
+  const [submitting, setSubmitting] = useState(false);
+
+  const selected = products.find((p) => p.id === productId);
+
+  // Reset on open
+  useEffect(() => {
+    if (open) { setProductId(""); setQuantity("1"); }
+  }, [open]);
+
+  const handleConfirm = async () => {
+    const qty = parseFloat(quantity);
+    if (!productId || isNaN(qty) || qty <= 0) return;
+    setSubmitting(true);
+    try {
+      await inventoryApi.logConsumption({
+        product_id: productId,
+        quantity: qty,
+        consumption_reason: "CUSTOMER_SERVICE",
+      });
+      toast.success("Usage logged", {
+        description: `${qty} ${selected?.unit ?? "units"} of ${selected?.name} recorded.`,
+      });
+      onSubmitted();
+      onClose();
+    } catch {
+      // handled by axios interceptor
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent hideCloseButton className="p-0 gap-0 max-w-[400px] rounded-[16px] overflow-hidden border-0 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+        <DialogTitle className="sr-only">Log Usage</DialogTitle>
+        {/* Blue header */}
+        <div className="bg-[#3B59DA] px-5 pt-5 pb-5">
+          <div className="flex items-start justify-between mb-3">
+            <span className="text-white font-black text-[20px] font-figtree leading-tight">
+              Log Usage
+            </span>
+            <DialogClose className="h-7 w-7 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors shrink-0 mt-0.5">
+              <X className="h-4 w-4 text-white stroke-[2.5px]" />
+            </DialogClose>
+          </div>
+
+          {/* Product selector inside header */}
+          <select
+            value={productId}
+            onChange={(e) => setProductId(e.target.value)}
+            className="w-full h-9 rounded-[8px] bg-white/15 border border-white/20 px-3 text-[13px] font-bold text-white placeholder-white/50 font-figtree focus:outline-none focus:bg-white/20 transition-all appearance-none"
+            style={{ colorScheme: "dark" }}
+          >
+            <option value="" className="text-slate-700 bg-white">Select a product…</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id} className="text-slate-700 bg-white">
+                {p.name}
+              </option>
+            ))}
+          </select>
+
+          {selected && (
+            <div className="mt-2.5 flex items-center gap-2">
+              <span className="text-white/80 text-[12px] font-semibold font-figtree">
+                ({fmt(selected.current_stock)} {selected.unit} remaining)
+              </span>
+              <StatusBadge status={selected.status_class} />
+            </div>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="bg-white px-5 py-5 space-y-4">
+          <div className="space-y-2">
+            <label className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.1em] font-figtree">
+              Enter Amount
+            </label>
+            <Stepper
+              value={quantity}
+              onChange={setQuantity}
+              unit={selected?.unit ?? "units"}
+              color="blue"
+            />
+          </div>
+
+          {selected && parseFloat(quantity) > 0 && (
+            <p className="text-[11px] text-slate-400 font-semibold font-figtree">
+              Will deduct{" "}
+              <span className="text-[#3B59DA] font-bold">
+                {quantity} {selected.unit}
+              </span>{" "}
+              from {fmt(selected.current_stock)} remaining.
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="bg-white px-5 pb-5 flex gap-3">
+          <Button
+            variant="outline"
+            className="flex-1 h-11 rounded-[8px] border-slate-200 text-slate-500 font-bold font-figtree"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            className="flex-1 h-11 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black font-figtree shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all border-none"
+            disabled={!productId || !quantity || parseFloat(quantity) <= 0 || submitting}
+            onClick={handleConfirm}
+          >
+            {submitting ? <RotateCcw className="h-4 w-4 animate-spin" /> : "Confirm Usage"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Log Wastage Modal
+// ---------------------------------------------------------------------------
+
+function LogWastageModal({
+  open,
+  onClose,
+  products,
+  onSubmitted,
+}: {
+  open:        boolean;
+  onClose:     () => void;
+  products:    InventoryProduct[];
+  onSubmitted: () => void;
+}) {
+  const [productId, setProductId] = useState("");
+  const [quantity,  setQuantity]  = useState("1");
+  const [reason,    setReason]    = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const selected = products.find((p) => p.id === productId);
+
+  useEffect(() => {
+    if (open) { setProductId(""); setQuantity("1"); setReason(""); }
+  }, [open]);
+
+  const handleConfirm = async () => {
+    const qty = parseFloat(quantity);
+    if (!productId || !reason || isNaN(qty) || qty <= 0) return;
+    setSubmitting(true);
+    try {
+      await inventoryApi.logWaste({
+        product_id:   productId,
+        quantity:     qty,
+        waste_reason: reason,
+      });
+      toast.success("Wastage logged", {
+        description: `${qty} ${selected?.unit ?? "units"} of ${selected?.name} recorded.`,
+      });
+      onSubmitted();
+      onClose();
+    } catch {
+      // handled by axios interceptor
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent hideCloseButton className="p-0 gap-0 max-w-[400px] rounded-[16px] overflow-hidden border-0 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+        <DialogTitle className="sr-only">Log Wastage</DialogTitle>
+        {/* Red header */}
+        <div className="bg-[#C0392B] px-5 pt-5 pb-5">
+          <div className="flex items-start justify-between mb-3">
+            <span className="text-white font-black text-[20px] font-figtree leading-tight">
+              Log Wastage
+            </span>
+            <DialogClose className="h-7 w-7 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors shrink-0 mt-0.5">
+              <X className="h-4 w-4 text-white stroke-[2.5px]" />
+            </DialogClose>
+          </div>
+
+          <select
+            value={productId}
+            onChange={(e) => setProductId(e.target.value)}
+            className="w-full h-9 rounded-[8px] bg-white/15 border border-white/20 px-3 text-[13px] font-bold text-white font-figtree focus:outline-none focus:bg-white/20 transition-all appearance-none"
+            style={{ colorScheme: "dark" }}
+          >
+            <option value="" className="text-slate-700 bg-white">Select a product…</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id} className="text-slate-700 bg-white">
+                {p.name}
+              </option>
+            ))}
+          </select>
+
+          {selected && (
+            <div className="mt-2.5 flex items-center gap-2">
+              <span className="text-white/80 text-[12px] font-semibold font-figtree">
+                ({fmt(selected.current_stock)} {selected.unit} remaining)
+              </span>
+              <StatusBadge status={selected.status_class} />
+            </div>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="bg-white px-5 py-5 space-y-5">
+          {/* Waste reason icons */}
+          <div className="space-y-2">
+            <div>
+              <p className="text-[13px] font-bold text-[#1E293B] font-figtree">Log Waste Reason</p>
+              <p className="text-[11px] text-slate-400 font-semibold font-figtree mt-0.5">
+                Choose why this item is being discarded
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {WASTE_REASONS.map((r) => (
+                <button
+                  key={r.value}
+                  type="button"
+                  onClick={() => setReason(r.value)}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 py-3 px-2 rounded-[10px] border-2 transition-all active:scale-95",
+                    reason === r.value
+                      ? "border-[#C0392B] bg-rose-50"
+                      : "border-slate-100 bg-slate-50 hover:border-rose-200 hover:bg-rose-50/50"
+                  )}
+                >
+                  <div className={cn(
+                    "h-8 w-8 rounded-[8px] flex items-center justify-center",
+                    reason === r.value ? "bg-[#C0392B]" : "bg-white border border-slate-200"
+                  )}>
+                    <r.icon className={cn(
+                      "h-4 w-4 stroke-[2px]",
+                      reason === r.value ? "text-white" : "text-slate-400"
+                    )} />
+                  </div>
+                  <span className={cn(
+                    "text-[11px] font-bold font-figtree",
+                    reason === r.value ? "text-[#C0392B]" : "text-slate-500"
+                  )}>
+                    {r.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Stepper */}
+          <div className="space-y-2">
+            <label className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.1em] font-figtree">
+              Enter Amount
+            </label>
+            <Stepper
+              value={quantity}
+              onChange={setQuantity}
+              unit={selected?.unit ?? "units"}
+              color="red"
+            />
+          </div>
+
+          {selected && parseFloat(quantity) > 0 && (
+            <p className="text-[11px] text-slate-400 font-semibold font-figtree">
+              Will discard{" "}
+              <span className="text-rose-500 font-bold">
+                {quantity} {selected.unit}
+              </span>{" "}
+              from {fmt(selected.current_stock)} remaining.
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="bg-white px-5 pb-5 flex gap-3">
+          <Button
+            variant="outline"
+            className="flex-1 h-11 rounded-[8px] border-slate-200 text-slate-500 font-bold font-figtree"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            className="flex-1 h-11 rounded-[8px] bg-[#C0392B] hover:bg-[#a93226] text-white font-black font-figtree shadow-[0_4px_14px_rgba(192,57,43,0.3)] active:scale-95 transition-all border-none"
+            disabled={!productId || !reason || !quantity || parseFloat(quantity) <= 0 || submitting}
+            onClick={handleConfirm}
+          >
+            {submitting ? <RotateCcw className="h-4 w-4 animate-spin" /> : "Confirm Wastage"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -76,312 +458,109 @@ function reasonLabel(reason: string | null): string {
 function StatsBanner({ stats }: { stats: StockUsageStats | null }) {
   const cards = [
     {
-      label: "Most Used Item",
-      value: stats?.most_used_item ?? "—",
-      icon:  ChefHat,
-      isText: true,
+      label:    "Most Used Item",
+      value:    stats?.most_used_item ?? "—",
+      sub:      "Most used today",
+      icon:     TrendingUp,
+      iconBg:   "bg-emerald-100",
+      iconColor:"text-emerald-600",
+      isText:   true,
     },
     {
-      label: "Consumption Today",
-      value: stats ? fmt(stats.consumption_today) : "—",
-      icon:  Activity,
-      isText: false,
+      label:    "Consumption Today",
+      value:    stats ? fmt(stats.consumption_today) : "—",
+      sub:      "Units used in the kitchen",
+      icon:     Activity,
+      iconBg:   "bg-blue-100",
+      iconColor:"text-blue-600",
+      isText:   false,
     },
     {
-      label: "Waste Today",
-      value: stats ? fmt(stats.waste_today) : "—",
-      icon:  Trash2,
-      isText: false,
+      label:    "Waste Today",
+      value:    stats ? fmt(stats.waste_today) : "—",
+      sub:      "Units wasted",
+      icon:     Trash2,
+      iconBg:   "bg-rose-100",
+      iconColor:"text-rose-600",
+      isText:   false,
     },
     {
-      label: "Most Wasted Item",
-      value: stats?.most_wasted_item ?? "—",
-      icon:  Package,
-      isText: true,
+      label:    "Most Wasted Item",
+      value:    stats?.most_wasted_item ?? "—",
+      sub:      "Most wasted today",
+      icon:     Package,
+      iconBg:   "bg-rose-100",
+      iconColor:"text-rose-600",
+      isText:   true,
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      {cards.map((card) => (
-        <div
-          key={card.label}
-          className="relative overflow-hidden rounded-[10px] bg-gradient-to-br from-[#3B59DA] to-[#2540B8] p-4 md:p-5"
-        >
-          <div className="absolute inset-0 bg-white/5 opacity-0 hover:opacity-100 transition-opacity" />
-          <div className="relative z-10 flex flex-col gap-3">
+    <div className="bg-gradient-to-r from-[#091558] via-[#3851dd] to-[#091558] px-5 md:px-7 py-6 md:py-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {cards.map((card) => (
+          <div
+            key={card.label}
+            className="bg-white rounded-[12px] p-4 md:p-5 flex flex-col gap-3 shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
+          >
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-[6px] bg-white/15 flex items-center justify-center shrink-0">
-                <card.icon className="h-3.5 w-3.5 text-white/80 stroke-[2px]" />
+              <div className={cn("h-7 w-7 rounded-full flex items-center justify-center shrink-0", card.iconBg)}>
+                <card.icon className={cn("h-3.5 w-3.5 stroke-[2px]", card.iconColor)} />
               </div>
-              <span className="text-white/70 text-[11px] font-semibold font-figtree leading-tight">
+              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.08em] font-figtree leading-tight">
                 {card.label}
               </span>
             </div>
-            <div
-              className={cn(
-                "font-black text-white font-figtree leading-tight",
-                card.isText ? "text-[14px] md:text-[15px] line-clamp-2" : "text-[22px] md:text-[26px]"
-              )}
-            >
+            <div className={cn(
+              "font-black text-[#1E293B] font-figtree leading-tight",
+              card.isText ? "text-[15px] md:text-[16px] line-clamp-2" : "text-[24px] md:text-[28px]"
+            )}>
               {card.value}
             </div>
+            <p className="text-[11px] text-slate-400 font-semibold font-figtree -mt-1">{card.sub}</p>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Left panel — default selection state
+// Action cards (left panel)
 // ---------------------------------------------------------------------------
 
-function DefaultActionCards({
-  onSelect,
-}: {
-  onSelect: (mode: "consumption" | "waste") => void;
-}) {
+function ActionCards({ onUsage, onWastage }: { onUsage: () => void; onWastage: () => void }) {
   return (
-    <div className="space-y-3">
-      {/* Log Consumption */}
+    <div className="grid grid-cols-2 gap-4">
       <button
-        onClick={() => onSelect("consumption")}
-        className="w-full text-left rounded-[10px] border-2 border-slate-100 bg-white hover:border-[#3B59DA]/30 hover:bg-indigo-50/30 transition-all active:scale-[0.99] p-5 md:p-6 group"
+        onClick={onUsage}
+        className="flex flex-col items-center justify-center gap-3 rounded-[12px] border border-slate-100 bg-white hover:border-[#3B59DA]/30 hover:bg-indigo-50/20 transition-all active:scale-[0.98] py-10 px-4 group"
       >
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-[10px] bg-indigo-50 border border-indigo-100/60 flex items-center justify-center shrink-0 shadow-sm group-hover:bg-[#3B59DA] group-hover:border-[#3B59DA] transition-colors">
-            <ChefHat className="h-6 w-6 text-[#3B59DA] group-hover:text-white stroke-[2px] transition-colors" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[15px] font-black text-[#1E293B] font-figtree leading-tight group-hover:text-[#3B59DA] transition-colors">
-              Log Consumption
-            </div>
-            <FigtreeText className="text-[12px] text-slate-400 font-medium mt-0.5">
-              Record ingredients used for service
-            </FigtreeText>
-          </div>
+        <div className="h-14 w-14 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-[#3B59DA] transition-colors">
+          <ChefHat className="h-7 w-7 text-[#3B59DA] group-hover:text-white stroke-[2px] transition-colors" />
         </div>
+        <span className="text-[14px] font-black text-[#1E293B] font-figtree group-hover:text-[#3B59DA] transition-colors">
+          Log Consumption
+        </span>
       </button>
 
-      {/* Log Waste */}
       <button
-        onClick={() => onSelect("waste")}
-        className="w-full text-left rounded-[10px] border-2 border-slate-100 bg-white hover:border-rose-200 hover:bg-rose-50/20 transition-all active:scale-[0.99] p-5 md:p-6 group"
+        onClick={onWastage}
+        className="flex flex-col items-center justify-center gap-3 rounded-[12px] border border-slate-100 bg-white hover:border-rose-200 hover:bg-rose-50/20 transition-all active:scale-[0.98] py-10 px-4 group"
       >
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-[10px] bg-rose-50 border border-rose-100/60 flex items-center justify-center shrink-0 shadow-sm group-hover:bg-rose-500 group-hover:border-rose-500 transition-colors">
-            <Trash2 className="h-5 w-5 text-rose-500 group-hover:text-white stroke-[2px] transition-colors" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[15px] font-black text-[#1E293B] font-figtree leading-tight group-hover:text-rose-600 transition-colors">
-              Log Waste
-            </div>
-            <FigtreeText className="text-[12px] text-slate-400 font-medium mt-0.5">
-              Record spoiled, damaged or unusable items
-            </FigtreeText>
-          </div>
+        <div className="h-14 w-14 rounded-full bg-rose-50 flex items-center justify-center group-hover:bg-[#C0392B] transition-colors">
+          <Trash2 className="h-6 w-6 text-rose-500 group-hover:text-white stroke-[2px] transition-colors" />
         </div>
+        <span className="text-[14px] font-black text-[#1E293B] font-figtree group-hover:text-rose-600 transition-colors">
+          Log Waste
+        </span>
       </button>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Left panel — form
-// ---------------------------------------------------------------------------
-
-interface FormState {
-  product_id: string;
-  quantity:   string;
-  reason:     string;
-}
-
-function UsageForm({
-  mode,
-  products,
-  onBack,
-  onSubmitted,
-}: {
-  mode:        "consumption" | "waste";
-  products:    InventoryProduct[];
-  onBack:      () => void;
-  onSubmitted: () => void;
-}) {
-  const isConsumption = mode === "consumption";
-  const reasons       = isConsumption ? CONSUMPTION_REASONS : WASTE_REASONS;
-
-  const [form, setForm]           = useState<FormState>({ product_id: "", quantity: "", reason: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const selectedProduct = products.find((p) => p.id === form.product_id);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.product_id || !form.quantity || !form.reason) return;
-    const qty = parseFloat(form.quantity);
-    if (isNaN(qty) || qty <= 0) {
-      toast.error("Enter a valid quantity greater than 0.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      if (isConsumption) {
-        await inventoryApi.logConsumption({
-          product_id:          form.product_id,
-          quantity:            qty,
-          consumption_reason:  form.reason,
-        });
-        toast.success("Consumption logged", {
-          description: `${qty} ${selectedProduct?.unit ?? "units"} of ${selectedProduct?.name ?? "item"} recorded.`,
-        });
-      } else {
-        await inventoryApi.logWaste({
-          product_id:   form.product_id,
-          quantity:     qty,
-          waste_reason: form.reason,
-        });
-        toast.success("Waste logged", {
-          description: `${qty} ${selectedProduct?.unit ?? "units"} of ${selectedProduct?.name ?? "item"} recorded.`,
-        });
-      }
-      onSubmitted();
-    } catch {
-      // errors handled by axios interceptor
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const selectClass =
-    "w-full h-10 rounded-[8px] border border-slate-200 bg-white px-3 text-[13px] font-medium font-figtree text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#3B59DA]/10 focus:border-[#3B59DA]/30 transition-all appearance-none";
-
-  return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-[12px] font-bold text-slate-400 hover:text-[#3B59DA] font-figtree transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back
-        </button>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            "h-10 w-10 rounded-[8px] flex items-center justify-center shrink-0",
-            isConsumption ? "bg-indigo-50 border border-indigo-100" : "bg-rose-50 border border-rose-100"
-          )}
-        >
-          {isConsumption
-            ? <ChefHat className="h-5 w-5 text-[#3B59DA] stroke-[2px]" />
-            : <Trash2   className="h-5 w-5 text-rose-500 stroke-[2px]" />}
-        </div>
-        <div>
-          <div className="text-[15px] font-black text-[#1E293B] font-figtree">
-            {isConsumption ? "Log Consumption" : "Log Waste"}
-          </div>
-          <FigtreeText className="text-[11px] text-slate-400 font-medium">
-            {isConsumption
-              ? "Record items used during service"
-              : "Record items that were wasted"}
-          </FigtreeText>
-        </div>
-      </div>
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Product */}
-        <div className="space-y-1.5">
-          <label className="text-[12px] font-bold text-slate-600 font-figtree">Product</label>
-          <select
-            className={selectClass}
-            value={form.product_id}
-            onChange={(e) => setForm((f) => ({ ...f, product_id: e.target.value }))}
-            required
-          >
-            <option value="">Select a product…</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} ({p.unit})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Quantity */}
-        <div className="space-y-1.5">
-          <label className="text-[12px] font-bold text-slate-600 font-figtree">
-            Quantity {selectedProduct ? `(${selectedProduct.unit})` : ""}
-          </label>
-          <Input
-            type="number"
-            min="0.01"
-            step="0.01"
-            placeholder="0.00"
-            className="h-10 rounded-[8px] border-slate-200 font-medium text-[13px] font-figtree focus:ring-[#3B59DA]/10 focus:border-[#3B59DA]/30"
-            value={form.quantity}
-            onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
-            required
-          />
-          {selectedProduct && form.quantity && parseFloat(form.quantity) > 0 && (
-            <FigtreeText className="text-[11px] text-slate-400">
-              Will deduct{" "}
-              <span className={cn("font-bold", isConsumption ? "text-[#3B59DA]" : "text-rose-500")}>
-                {form.quantity} {selectedProduct.unit}
-              </span>{" "}
-              from current stock ({fmt(selectedProduct.current_stock)} {selectedProduct.unit} available)
-            </FigtreeText>
-          )}
-        </div>
-
-        {/* Reason */}
-        <div className="space-y-1.5">
-          <label className="text-[12px] font-bold text-slate-600 font-figtree">
-            {isConsumption ? "Reason for use" : "Reason for waste"}
-          </label>
-          <select
-            className={selectClass}
-            value={form.reason}
-            onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
-            required
-          >
-            <option value="">Select reason…</option>
-            {reasons.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Submit */}
-        <Button
-          type="submit"
-          disabled={isSubmitting || !form.product_id || !form.quantity || !form.reason}
-          className={cn(
-            "w-full h-11 rounded-[8px] font-black text-[13px] font-figtree gap-2 transition-all active:scale-95 border-none shadow-sm",
-            isConsumption
-              ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-[0_4px_14px_rgba(59,89,218,0.3)]"
-              : "bg-rose-500 hover:bg-rose-600 text-white shadow-[0_4px_14px_rgba(239,68,68,0.25)]"
-          )}
-        >
-          {isSubmitting ? (
-            <><RotateCcw className="h-3.5 w-3.5 animate-spin" /> Saving…</>
-          ) : (
-            isConsumption ? "Log Consumption" : "Log Waste"
-          )}
-        </Button>
-      </form>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Left panel — locked state
+// Locked panel
 // ---------------------------------------------------------------------------
 
 function LockedPanel() {
@@ -401,86 +580,77 @@ function LockedPanel() {
 }
 
 // ---------------------------------------------------------------------------
-// Right panel — Kitchen Service History feed
+// History feed
 // ---------------------------------------------------------------------------
 
-function HistoryFeed({
-  events,
-  isRefreshing,
-}: {
-  events:       StockUsageEvent[];
-  isRefreshing: boolean;
-}) {
+function HistoryFeed({ events, isRefreshing }: { events: StockUsageEvent[]; isRefreshing: boolean }) {
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-[6px] bg-slate-50 border border-slate-100 flex items-center justify-center">
-            <Clock className="h-3.5 w-3.5 text-slate-400 stroke-[2px]" />
-          </div>
-          <span className="text-[13px] font-bold text-[#1E293B] font-figtree">Kitchen Service History</span>
+      {/* Panel header */}
+      <div className="flex items-start justify-between mb-1">
+        <div>
+          <div className="text-[15px] font-black text-[#1E293B] font-figtree">Kitchen Service History</div>
+          <p className="text-[12px] text-slate-400 font-medium font-figtree mt-0.5">
+            Recent waste and consumption entries captured for this shift.
+          </p>
         </div>
         {isRefreshing && (
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium font-figtree">
-            <RotateCcw className="h-3 w-3 animate-spin" /> refreshing
+          <div className="flex items-center gap-1 text-[11px] text-slate-400 font-medium font-figtree shrink-0 mt-1">
+            <RotateCcw className="h-3 w-3 animate-spin" />
           </div>
         )}
       </div>
 
-      {/* Event list */}
-      <div className="space-y-2 flex-1">
+      <div className="mt-4 flex-1">
         {events.length === 0 && (
-          <div className="py-8 text-center text-slate-400 text-[13px] font-medium font-figtree">
+          <div className="py-10 text-center text-slate-400 text-[13px] font-medium font-figtree">
             No activity yet today.
           </div>
         )}
-        {events.map((event) => {
+        {events.map((event, i) => {
           const isUsed = event.event_type === "USED";
           return (
             <div
               key={event.id}
-              className="flex items-start justify-between gap-3 p-3 rounded-[8px] bg-slate-50/60 border border-slate-100/80 hover:bg-white hover:border-slate-200 transition-all"
+              className={cn(
+                "flex items-center gap-3 py-3",
+                i < events.length - 1 && "border-b border-slate-50"
+              )}
             >
-              <div className="flex items-start gap-2.5 min-w-0">
-                {/* Type badge */}
-                <span
-                  className={cn(
-                    "shrink-0 mt-0.5 text-[10px] font-black px-2 py-0.5 rounded-[4px] uppercase tracking-wide font-figtree",
-                    isUsed
-                      ? "bg-indigo-50 text-[#3B59DA] border border-indigo-100"
-                      : "bg-rose-50 text-rose-600 border border-rose-100"
-                  )}
-                >
-                  {isUsed ? "Used" : "Wasted"}
-                </span>
+              {/* Icon circle */}
+              <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                {isUsed
+                  ? <ChefHat className="h-4 w-4 text-slate-400 stroke-[2px]" />
+                  : <Trash2  className="h-4 w-4 text-slate-400 stroke-[2px]" />
+                }
+              </div>
 
-                {/* Name + reason */}
-                <div className="min-w-0">
-                  <div className="text-[12px] font-bold text-[#1E293B] font-figtree truncate">
-                    {event.product_name}
-                  </div>
-                  {(event.consumption_reason || event.waste_reason) && (
-                    <FigtreeText className="text-[11px] text-slate-400 font-medium">
-                      {reasonLabel(event.consumption_reason ?? event.waste_reason)}
-                    </FigtreeText>
-                  )}
+              {/* Name + time + badge */}
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-bold text-[#1E293B] font-figtree truncate">
+                  {event.product_name}
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[11px] text-slate-400 font-figtree">
+                    {relativeTime(event.occurred_at)}
+                  </span>
+                  <span className={cn(
+                    "text-[10px] font-bold px-2 py-0.5 rounded-full font-figtree",
+                    isUsed
+                      ? "bg-indigo-100 text-indigo-700"
+                      : "bg-rose-500 text-white"
+                  )}>
+                    {isUsed ? "Consumption" : "Marked as Waste"}
+                  </span>
                 </div>
               </div>
 
-              {/* Quantity + time */}
-              <div className="shrink-0 text-right space-y-0.5">
-                <div
-                  className={cn(
-                    "text-[13px] font-black font-figtree",
-                    isUsed ? "text-[#3B59DA]" : "text-rose-500"
-                  )}
-                >
-                  {isUsed ? "+" : "−"}{fmt(event.quantity)} {event.unit}
-                </div>
-                <FigtreeText className="text-[10px] text-slate-400 font-medium">
-                  {relativeTime(event.occurred_at)}
-                </FigtreeText>
+              {/* Quantity */}
+              <div className={cn(
+                "text-[13px] font-black font-figtree shrink-0",
+                isUsed ? "text-[#1E293B]" : "text-rose-500"
+              )}>
+                {!isUsed && "- "}{fmt(event.quantity)} {event.unit}
               </div>
             </div>
           );
@@ -494,20 +664,16 @@ function HistoryFeed({
 // Main tab
 // ---------------------------------------------------------------------------
 
-type PanelMode = "default" | "consumption" | "waste";
-
 export function TabStockUsage() {
   const { isOpen } = useRestaurantDayLifecycle();
 
-  const [stats, setStats]       = useState<StockUsageStats | null>(null);
-  const [history, setHistory]   = useState<StockUsageEvent[]>([]);
-  const [products, setProducts] = useState<InventoryProduct[]>([]);
-  const [panel, setPanel]       = useState<PanelMode>("default");
+  const [stats,   setStats]   = useState<StockUsageStats | null>(null);
+  const [history, setHistory] = useState<StockUsageEvent[]>([]);
+  const [products,setProducts]= useState<InventoryProduct[]>([]);
   const [isHistoryRefreshing, setIsHistoryRefreshing] = useState(false);
 
-  // ---------------------------------------------------------------------------
-  // Data fetching
-  // ---------------------------------------------------------------------------
+  const [usageOpen,   setUsageOpen]   = useState(false);
+  const [wastageOpen, setWastageOpen] = useState(false);
 
   const loadHistory = useCallback(async (silent = false) => {
     if (silent) setIsHistoryRefreshing(true);
@@ -518,14 +684,11 @@ export function TabStockUsage() {
       ]);
       setStats(s);
       setHistory(h);
-    } catch {
-      // handled by axios interceptor
-    } finally {
+    } catch { /* handled by axios interceptor */ } finally {
       setIsHistoryRefreshing(false);
     }
   }, []);
 
-  // Initial load: stats + history + products
   useEffect(() => {
     const init = async () => {
       try {
@@ -534,67 +697,67 @@ export function TabStockUsage() {
           inventoryApi.getStockUsageHistory(10),
           inventoryApi.getProducts(),
         ]);
-        setStats(s);
-        setHistory(h);
-        setProducts(p);
-      } catch {
-        // handled by axios interceptor
-      }
+        setStats(s); setHistory(h); setProducts(p);
+      } catch { /* handled by axios interceptor */ }
     };
     init();
   }, []);
 
-  // Auto-refresh history every 15 seconds
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
-    timerRef.current = setInterval(() => loadHistory(true), 15_000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    timerRef.current = setInterval(() => loadHistory(true), 5_000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [loadHistory]);
 
-  // After a successful submission: reset panel, refresh data
-  const handleSubmitted = useCallback(() => {
-    setPanel("default");
-    loadHistory(true);
-  }, [loadHistory]);
-
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
+  const handleSubmitted = useCallback(() => { loadHistory(true); }, [loadHistory]);
 
   return (
-    <div className="p-5 md:p-7 space-y-5">
+    <div>
 
-      {/* Stats banner */}
+      {/* Dark stats banner — flush to card edges */}
       <StatsBanner stats={stats} />
 
-      {/* Two-panel layout */}
-      <div className="flex flex-col lg:flex-row gap-5">
+      {/* Content area */}
+      <div className="p-5 md:p-6 flex flex-col lg:flex-row gap-5">
 
-        {/* ── Left panel ── */}
-        <div className="flex-1 min-w-0 bg-white border border-slate-100 rounded-[10px] p-5 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-
+        {/* Left panel */}
+        <div className="flex-1 min-w-0 bg-white border border-slate-100 rounded-[12px] p-5 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
           {!isOpen ? (
             <LockedPanel />
-          ) : panel === "default" ? (
-            <DefaultActionCards onSelect={setPanel} />
           ) : (
-            <UsageForm
-              mode={panel}
-              products={products}
-              onBack={() => setPanel("default")}
-              onSubmitted={handleSubmitted}
-            />
+            <>
+              <div className="mb-5">
+                <div className="text-[15px] font-black text-[#1E293B] font-figtree">Log Stock Usage</div>
+                <p className="text-[12px] text-slate-400 font-medium font-figtree mt-0.5">
+                  Select whether to log usage or waste.
+                </p>
+              </div>
+              <ActionCards
+                onUsage={() => setUsageOpen(true)}
+                onWastage={() => setWastageOpen(true)}
+              />
+            </>
           )}
         </div>
 
-        {/* ── Right panel: history feed ── */}
-        <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0 bg-white border border-slate-100 rounded-[10px] p-5 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+        {/* Right panel */}
+        <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0 bg-white border border-slate-100 rounded-[12px] p-5 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
           <HistoryFeed events={history} isRefreshing={isHistoryRefreshing} />
         </div>
-
       </div>
+
+      <LogUsageModal
+        open={usageOpen}
+        onClose={() => setUsageOpen(false)}
+        products={products}
+        onSubmitted={handleSubmitted}
+      />
+      <LogWastageModal
+        open={wastageOpen}
+        onClose={() => setWastageOpen(false)}
+        products={products}
+        onSubmitted={handleSubmitted}
+      />
     </div>
   );
 }

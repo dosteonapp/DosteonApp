@@ -114,114 +114,102 @@ function StatusBadge({ status }: { status: string }) {
 // Opening Prep hero banner (CLOSED state)
 // ---------------------------------------------------------------------------
 
-function OpeningPrepBanner({
-  stats,
-  totalItems,
-}: {
-  stats: InventoryStats | null;
-  totalItems: number;
-}) {
+function InventoryStatsBanner({ stats }: { stats: InventoryStats | null }) {
   const cards = [
     {
       label:   "Items in Stock",
       value:   stats?.items_in_stock.value ?? 0,
       pct:     stats?.items_in_stock.vs_last_week_pct ?? null,
+      sub:     "across all categories",
       icon:    Package,
-      color:   "text-[#3B59DA]",
-      iconBg:  "bg-indigo-100/60",
+      iconBg:  "bg-indigo-100",
+      iconColor: "text-[#3B59DA]",
     },
     {
-      label:   "Healthy",
+      label:   "Healthy Stock",
       value:   stats?.healthy_stock.value ?? 0,
       pct:     stats?.healthy_stock.vs_last_week_pct ?? null,
+      sub:     "in good condition",
       icon:    CheckCircle2,
-      color:   "text-emerald-400",
-      iconBg:  "bg-emerald-100/40",
+      iconBg:  "bg-emerald-100",
+      iconColor: "text-emerald-600",
     },
     {
       label:   "Low Stock",
       value:   stats?.low_stock.value ?? 0,
       pct:     stats?.low_stock.vs_last_week_pct ?? null,
+      sub:     "need restocking",
       icon:    AlertTriangle,
-      color:   "text-amber-300",
-      iconBg:  "bg-amber-100/40",
+      iconBg:  "bg-amber-100",
+      iconColor: "text-amber-500",
     },
     {
       label:   "Critical",
       value:   stats?.critical.value ?? 0,
       pct:     stats?.critical.vs_last_week_pct ?? null,
+      sub:     "need urgent restock",
       icon:    AlertCircle,
-      color:   "text-rose-400",
-      iconBg:  "bg-rose-100/40",
+      iconBg:  "bg-rose-100",
+      iconColor: "text-rose-600",
     },
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-[10px] bg-gradient-to-br from-[#3B59DA] to-[#2540B8] p-6 md:p-8">
-      {/* Decorative background blur */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-
-      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
-
-        {/* Left: text + CTA */}
-        <div className="flex-1 min-w-0 space-y-4">
-          <div className="flex items-center gap-2.5 w-fit px-3 py-1.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm">
-            <ClipboardList className="h-3.5 w-3.5 text-white/80" />
-            <FigtreeText className="text-[12px] font-bold text-white/90 leading-none">
-              {fmt(totalItems)} items need counting
-            </FigtreeText>
-          </div>
-
-          <InriaHeading className="text-[26px] md:text-[32px] font-bold text-white leading-tight">
-            Opening Prep
-          </InriaHeading>
-
-          <FigtreeText className="text-white/70 text-[14px] md:text-[15px] leading-relaxed max-w-sm">
-            Complete your daily opening stock count to track stock levels and unlock full operations.
-          </FigtreeText>
-
-          <Button
-            className="w-fit h-12 px-8 bg-white text-[#3B59DA] hover:bg-slate-100 rounded-[8px] font-black gap-3 transition-all shadow-[0_8px_24px_rgba(0,0,0,0.12)] active:scale-95 group font-figtree text-[14px] border-none"
-            asChild
+    <div className="bg-gradient-to-r from-[#091558] via-[#3851dd] to-[#091558] px-5 md:px-7 py-6 md:py-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {cards.map((card) => (
+          <div
+            key={card.label}
+            className="bg-white rounded-[12px] p-4 md:p-5 flex flex-col gap-3 shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
           >
-            <Link href="/dashboard/inventory/daily-stock-count">
-              Count Daily Stock
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </Button>
-        </div>
-
-        {/* Right: 2×2 stat cards */}
-        <div className="grid grid-cols-2 gap-3 w-full lg:w-auto lg:min-w-[380px]">
-          {cards.map((card) => (
-            <div
-              key={card.label}
-              className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-[10px] p-4 space-y-2"
-            >
-              <div className="flex items-center gap-2">
-                <div className={cn("h-7 w-7 rounded-[6px] flex items-center justify-center", card.iconBg)}>
-                  <card.icon className={cn("h-3.5 w-3.5 stroke-[2.5px]", card.color)} />
-                </div>
-                <span className="text-white/70 text-[11px] font-semibold font-figtree leading-tight">
-                  {card.label}
-                </span>
+            <div className="flex items-center gap-2">
+              <div className={cn("h-7 w-7 rounded-full flex items-center justify-center shrink-0", card.iconBg)}>
+                <card.icon className={cn("h-3.5 w-3.5 stroke-[2.5px]", card.iconColor)} />
               </div>
-              <div className="text-white font-black text-[22px] font-figtree leading-none">
-                {fmt(card.value)}
-              </div>
-              <div className="text-white/50 text-[10px] font-semibold font-figtree">
-                {card.pct === null
-                  ? "— no data"
-                  : card.pct > 0
-                  ? `↑ ${Math.abs(card.pct)}% vs last week`
-                  : card.pct < 0
-                  ? `↓ ${Math.abs(card.pct)}% vs last week`
-                  : "no change"}
-              </div>
+              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.08em] font-figtree leading-tight">
+                {card.label}
+              </span>
             </div>
-          ))}
-        </div>
+            <div className="text-[28px] md:text-[32px] font-black text-[#1E293B] font-figtree leading-none">
+              {fmt(card.value)}
+            </div>
+            <div className="space-y-0.5 -mt-1">
+              {card.pct !== null && card.pct !== 0 ? (
+                <p className={cn(
+                  "text-[11px] font-bold font-figtree flex items-center gap-1",
+                  card.pct > 0 ? "text-emerald-500" : "text-rose-500"
+                )}>
+                  {card.pct > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {card.pct > 0 ? "up" : "down"} by {Math.abs(card.pct)}% from last week
+                </p>
+              ) : null}
+              <p className="text-[11px] text-slate-400 font-semibold font-figtree">{card.sub}</p>
+            </div>
+          </div>
+        ))}
       </div>
+    </div>
+  );
+}
+
+function OpeningPrepCTA({ totalItems }: { totalItems: number }) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center gap-2.5 w-fit px-3 py-1.5 rounded-full border border-slate-200 bg-white">
+        <ClipboardList className="h-3.5 w-3.5 text-[#3B59DA]" />
+        <FigtreeText className="text-[12px] font-bold text-[#1E293B] leading-none">
+          {fmt(totalItems)} items need counting
+        </FigtreeText>
+      </div>
+      <Button
+        className="w-fit h-10 px-6 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[8px] font-black gap-2 transition-all shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 group font-figtree text-[13px] border-none"
+        asChild
+      >
+        <Link href="/dashboard/inventory/daily-stock-count">
+          Count Daily Stock
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </Link>
+      </Button>
     </div>
   );
 }
@@ -230,91 +218,8 @@ function OpeningPrepBanner({
 // Live banner (OPEN state)
 // ---------------------------------------------------------------------------
 
-function LiveBanner({
-  stats,
-  onRefresh,
-  isRefreshing,
-}: {
-  stats: InventoryStats | null;
-  onRefresh: () => void;
-  isRefreshing: boolean;
-}) {
-  const cards = [
-    { label: "Items in Stock", value: stats?.items_in_stock.value ?? 0, pct: stats?.items_in_stock.vs_last_week_pct ?? null, icon: Package,      color: "text-[#3B59DA]",   iconBg: "bg-indigo-100/60" },
-    { label: "Healthy",        value: stats?.healthy_stock.value  ?? 0, pct: stats?.healthy_stock.vs_last_week_pct  ?? null, icon: CheckCircle2, color: "text-emerald-400", iconBg: "bg-emerald-100/40" },
-    { label: "Low Stock",      value: stats?.low_stock.value      ?? 0, pct: stats?.low_stock.vs_last_week_pct      ?? null, icon: AlertTriangle, color: "text-amber-300",  iconBg: "bg-amber-100/40" },
-    { label: "Critical",       value: stats?.critical.value       ?? 0, pct: stats?.critical.vs_last_week_pct       ?? null, icon: AlertCircle,  color: "text-rose-400",    iconBg: "bg-rose-100/40" },
-  ];
-
-  return (
-    <div className="relative overflow-hidden rounded-[10px] bg-gradient-to-br from-[#3B59DA] to-[#2540B8] p-6 md:p-8">
-      <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-
-      <div className="relative z-10 space-y-5">
-        {/* Top row: heading + buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="space-y-1">
-            <InriaHeading className="text-[24px] md:text-[28px] font-bold text-white leading-tight">
-              Inventory
-            </InriaHeading>
-            <FigtreeText className="text-white/70 text-[13px] md:text-[14px]">
-              Complete your closing stock count before end of service.
-            </FigtreeText>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              className="h-9 px-4 rounded-[8px] bg-white/10 border-white/20 text-white font-bold text-[12px] font-figtree hover:bg-white/20 gap-2 transition-all active:scale-95"
-            >
-              <RotateCcw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
-              <span className="hidden sm:block">Update Inventory</span>
-            </Button>
-            <Button
-              className="h-9 px-4 rounded-[8px] bg-white text-[#3B59DA] hover:bg-slate-100 font-bold text-[12px] font-figtree gap-2 transition-all active:scale-95 shadow-sm border-none"
-              asChild
-            >
-              <Link href="/dashboard/inventory/new">
-                <Plus className="h-3.5 w-3.5" />
-                <span className="hidden sm:block">Add New Product</span>
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        {/* 4 stat cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {cards.map((card) => (
-            <div
-              key={card.label}
-              className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-[10px] p-4 space-y-2"
-            >
-              <div className="flex items-center gap-2">
-                <div className={cn("h-7 w-7 rounded-[6px] flex items-center justify-center", card.iconBg)}>
-                  <card.icon className={cn("h-3.5 w-3.5 stroke-[2.5px]", card.color)} />
-                </div>
-                <span className="text-white/70 text-[11px] font-semibold font-figtree">{card.label}</span>
-              </div>
-              <div className="text-white font-black text-[22px] font-figtree leading-none">
-                {fmt(card.value)}
-              </div>
-              <div className="text-white/50 text-[10px] font-semibold font-figtree">
-                {card.pct === null
-                  ? "— no data"
-                  : card.pct > 0
-                  ? `↑ ${Math.abs(card.pct)}% vs last week`
-                  : card.pct < 0
-                  ? `↓ ${Math.abs(card.pct)}% vs last week`
-                  : "no change"}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+function LiveBanner({ stats }: { stats: InventoryStats | null }) {
+  return <InventoryStatsBanner stats={stats} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -508,18 +413,21 @@ export function TabProductCatalog() {
   const totalItems = stats?.items_in_stock.value ?? products.length;
 
   return (
-    <div className="p-5 md:p-7 space-y-5">
+    <div>
 
-      {/* ── Banner (state-dependent) ── */}
+      {/* ── Banner — flush to card edges ── */}
       {!isOpen ? (
-        <OpeningPrepBanner stats={stats} totalItems={totalItems} />
+        <div>
+          <InventoryStatsBanner stats={stats} />
+          <div className="px-5 md:px-7 pt-4">
+            <OpeningPrepCTA totalItems={totalItems} />
+          </div>
+        </div>
       ) : (
-        <LiveBanner
-          stats={stats}
-          onRefresh={() => load(true)}
-          isRefreshing={isRefreshing}
-        />
+        <InventoryStatsBanner stats={stats} />
       )}
+
+      <div className="p-5 md:p-7 space-y-5">
 
       {/* ── What's Running Low (LIVE state only) ── */}
       {isOpen && <RunningLowSection products={products} />}
@@ -537,34 +445,30 @@ export function TabProductCatalog() {
           />
         </div>
 
-        {/* Buttons — only shown in CLOSED state; in LIVE state they live in the banner */}
-        {!isOpen && (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => load(true)}
-              disabled={isRefreshing}
-              className="h-10 px-4 rounded-[8px] border-slate-200 text-[#3B59DA] font-bold text-[13px] font-figtree hover:bg-slate-50 gap-2 transition-all active:scale-95"
-            >
-              <RotateCcw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
-              Update Inventory
-            </Button>
-            <Button
-              className="h-10 px-4 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[13px] font-figtree gap-2 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all border-none"
-              asChild
-            >
-              <Link href="/dashboard/inventory/new">
-                <Plus className="h-3.5 w-3.5" />
-                Add New Product
-              </Link>
-            </Button>
-          </>
-        )}
+        <Button
+          variant="outline"
+          onClick={() => load(true)}
+          disabled={isRefreshing}
+          className="h-10 px-4 rounded-[8px] border-slate-200 text-[#3B59DA] font-bold text-[13px] font-figtree hover:bg-slate-50 gap-2 transition-all active:scale-95"
+        >
+          <RotateCcw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
+          <span className="hidden sm:block">Update Inventory</span>
+        </Button>
+        <Button
+          className="h-10 px-4 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[13px] font-figtree gap-2 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all border-none"
+          asChild
+        >
+          <Link href="/dashboard/inventory/new">
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden sm:block">Add New Product</span>
+          </Link>
+        </Button>
       </div>
 
       {/* ── Product table ── */}
       <ProductTable products={products} isLoading={isLoading} />
 
+      </div>
     </div>
   );
 }

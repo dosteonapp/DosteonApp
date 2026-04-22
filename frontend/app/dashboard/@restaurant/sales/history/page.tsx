@@ -2,35 +2,40 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { format, subDays } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import {
   ArrowLeft,
+  CalendarIcon,
   ChevronDown,
-  TrendingUp,
-  TrendingDown,
+  ChevronLeft,
+  ChevronRight,
   Utensils,
   ShoppingBag,
   Truck,
-  ChevronLeft,
-  ChevronRight,
   ReceiptText,
   RefreshCw,
-  Filter,
-  Minus,
+  Plus,
+  Receipt,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar } from "@/components/ui/calendar";
 import {
-  AppContainer,
-  FigtreeText,
-  PrimarySurfaceCard,
-} from "@/components/ui/dosteon-ui";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { AppContainer } from "@/components/ui/dosteon-ui";
 import {
   salesService,
   SaleOrder,
   SaleOrderDetail,
   SalesHistory,
 } from "@/lib/services/salesService";
+import { BrandSwitcherCard } from "@/components/BrandSwitcherCard";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -55,63 +60,78 @@ function formatDateTime(iso: string) {
 
 const CHANNEL_META: Record<string, {
   label: string;
-  color: string;
+  textColor: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = {
-  DINE_IN:  { label: "Dine-In",  color: "bg-indigo-50 text-[#3B59DA] border-indigo-100",     icon: Utensils    },
-  TAKEAWAY: { label: "Takeaway", color: "bg-amber-50  text-amber-600  border-amber-100",     icon: ShoppingBag },
-  DELIVERY: { label: "Delivery", color: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: Truck       },
+  DINE_IN:  { label: "Dine-In",  textColor: "text-[#3B59DA]",   icon: Utensils    },
+  TAKEAWAY: { label: "Takeaway", textColor: "text-amber-500",   icon: ShoppingBag },
+  DELIVERY: { label: "Delivery", textColor: "text-emerald-600", icon: Truck       },
 };
 
-const CHANNELS = [
-  { id: "",         label: "All Channels" },
-  { id: "DINE_IN",  label: "Dine-In"      },
-  { id: "TAKEAWAY", label: "Takeaway"     },
-  { id: "DELIVERY", label: "Delivery"     },
+const CHANNEL_FILTERS = [
+  { id: "",         label: "All"      },
+  { id: "DINE_IN",  label: "Dine-In"  },
+  { id: "TAKEAWAY", label: "Takeaway" },
+  { id: "DELIVERY", label: "Delivery" },
 ];
 
-const PAGE_SIZE = 20;
+const STATUS_META: Record<string, { label: string; className: string }> = {
+  COMPLETED:   { label: "Completed",   className: "bg-emerald-50 text-emerald-600 border-emerald-200" },
+  IN_PROGRESS: { label: "In Progress", className: "bg-violet-50  text-violet-600  border-violet-200"  },
+  VOID:        { label: "Void",        className: "bg-rose-50    text-rose-500    border-rose-200"    },
+};
+
+const PAGE_SIZE = 10;
 
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
 export default function SalesHistoryPage() {
-  const [date, setDate]       = useState("");
-  const [channel, setChannel] = useState("");
-  const [page, setPage]       = useState(1);
+  const today = new Date();
+  const defaultRange: DateRange = { from: subDays(today, 29), to: today };
 
-  const [data, setData]       = useState<SalesHistory | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultRange);
+  const [calOpen, setCalOpen]     = useState(false);
+  const [channel, setChannel]     = useState("");
+  const [page, setPage]           = useState(1);
+
+  const [data, setData]           = useState<SalesHistory | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
+  const [error, setError]         = useState<string | null>(null);
 
-  const [expandedId, setExpandedId]     = useState<string | null>(null);
-  const [detailCache, setDetailCache]   = useState<Record<string, SaleOrderDetail>>({});
+  const [expandedId, setExpandedId]           = useState<string | null>(null);
+  const [detailCache, setDetailCache]         = useState<Record<string, SaleOrderDetail>>({});
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await salesService.getHistory({
-        ...(date    ? { date }    : {}),
-        ...(channel ? { channel } : {}),
+      const params: Parameters<typeof salesService.getHistory>[0] = {
+        channel: channel || undefined,
         page,
         limit: PAGE_SIZE,
-      });
-      setData(result);
+      };
+      if (dateRange?.from && dateRange?.to) {
+        params.start_date = format(dateRange.from, "yyyy-MM-dd");
+        params.end_date   = format(dateRange.to,   "yyyy-MM-dd");
+      }
+      setData(await salesService.getHistory(params));
     } catch {
       setError("Could not load sales history. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  }, [date, channel, page]);
+  }, [dateRange, channel, page]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Reset to page 1 when filters change
-  const handleDateChange = (v: string) => { setDate(v); setPage(1); };
   const handleChannelChange = (v: string) => { setChannel(v); setPage(1); };
+  const handleRangeSelect   = (range: DateRange | undefined) => {
+    setDateRange(range);
+    if (range?.from && range?.to) { setCalOpen(false); setPage(1); }
+  };
 
   const handleExpand = async (orderId: string) => {
     if (expandedId === orderId) { setExpandedId(null); return; }
@@ -121,94 +141,152 @@ export default function SalesHistoryPage() {
     try {
       const detail = await salesService.getOrderDetail(orderId);
       setDetailCache((prev) => ({ ...prev, [orderId]: detail }));
-    } catch {
-      // silently fail
-    } finally {
+    } catch { /* silently fail */ } finally {
       setLoadingDetailId(null);
     }
   };
 
-  const orders = data?.orders ?? [];
-  const totalPages = data?.pages ?? 1;
+  const orders     = data?.orders ?? [];
+  const totalPages = data?.pages  ?? 1;
+  const totalCount = data?.total  ?? 0;
+  const showFrom   = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const showTo     = Math.min(page * PAGE_SIZE, totalCount);
 
-  // Totals for the current page
-  const pageRevenue = orders.reduce((s, o) => s + o.total_revenue, 0);
-  const pageProfit  = orders.reduce((s, o) => s + o.gross_profit, 0);
-  const pageMargin  = pageRevenue > 0 ? ((pageProfit / pageRevenue) * 100).toFixed(1) : "0";
+  const dateRangeLabel = dateRange?.from && dateRange?.to
+    ? `${format(dateRange.from, "MMM dd, yyyy")} – ${format(dateRange.to, "MMM dd, yyyy")}`
+    : dateRange?.from
+      ? `From ${format(dateRange.from, "MMM dd, yyyy")}`
+      : "Select date range";
 
   return (
     <AppContainer>
 
-      {/* Page header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/dashboard/sales"
-          className="h-9 w-9 rounded-[10px] border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-[#3B59DA] hover:border-[#3B59DA]/30 transition-all active:scale-95 shadow-sm shrink-0"
-        >
-          <ArrowLeft className="h-4 w-4 stroke-[2.5px]" />
-        </Link>
-        <div>
-          <h1 className="text-[20px] md:text-[24px] font-black text-[#1E293B] tracking-tight font-figtree leading-tight">
-            Sales History
-          </h1>
-          <FigtreeText className="text-[12px] font-semibold text-slate-400">
-            {data ? `${data.total} order${data.total !== 1 ? "s" : ""} found` : "Loading…"}
-          </FigtreeText>
+      {/* ── Header — on page background ── */}
+      <div className="flex items-center justify-between gap-4 px-1">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/sales"
+            className="h-9 w-9 rounded-[10px] border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-[#3B59DA] hover:border-[#3B59DA]/30 transition-all active:scale-95 shadow-sm shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4 stroke-[2.5px]" />
+          </Link>
+          <BrandSwitcherCard />
+        </div>
+        <div className="flex items-center gap-2 md:gap-3 shrink-0">
+          <Button
+            variant="outline"
+            className="h-9 md:h-10 rounded-[8px] border-slate-200 text-slate-500 font-bold text-[12px] md:text-[13px] font-figtree hover:bg-slate-50 hover:text-slate-700 gap-1.5 md:gap-2 px-3 md:px-4 transition-all"
+            disabled
+            title="Coming soon"
+          >
+            <Receipt className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
+            <span className="hidden sm:block">Log Expense</span>
+          </Button>
+          <Button
+            className="h-9 md:h-10 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[12px] md:text-[13px] font-figtree gap-1.5 md:gap-2 px-3 md:px-4 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all"
+            asChild
+          >
+            <Link href="/dashboard/sales">
+              <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
+              <span className="hidden sm:block">Log Sales</span>
+              <TrendingUp className="h-3.5 w-3.5 sm:hidden shrink-0" />
+            </Link>
+          </Button>
         </div>
       </div>
 
-      {/* Filter bar */}
-      <PrimarySurfaceCard>
-        <div className="p-4 md:p-5 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-slate-400">
-            <Filter className="h-4 w-4" />
-            <span className="text-[12px] font-bold uppercase tracking-[0.1em] font-figtree">Filters</span>
+      {/* ── Hero — SALES RANGE on bg, TOTAL PERIOD REVENUE in stat card ── */}
+      <div className="flex items-center justify-between gap-6 px-1">
+        <div>
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] font-figtree mb-1.5">
+            Sales Range
           </div>
+          <div className="text-[22px] md:text-[32px] font-black text-[#1E293B] tracking-tight font-figtree leading-tight">
+            {dateRangeLabel}
+          </div>
+        </div>
 
-          {/* Date picker */}
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => handleDateChange(e.target.value)}
-            className="h-9 px-3 rounded-[8px] border border-slate-200 bg-white text-[13px] font-semibold text-slate-600 font-figtree focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-[#3B59DA]/40 transition-all"
-          />
+        {/* Stat card */}
+        <div className="shrink-0 bg-white border border-slate-100 rounded-[12px] px-5 py-4 text-right shadow-[0_4px_16px_rgba(0,0,0,0.04)] min-w-[180px]">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] font-figtree mb-1.5">
+            Total Period Revenue
+          </div>
+          {isLoading ? (
+            <div className="h-8 w-36 rounded-[6px] bg-slate-100 animate-pulse ml-auto" />
+          ) : (
+            <div className="text-[22px] md:text-[26px] font-black text-[#3B59DA] tracking-tight font-figtree leading-tight">
+              RWF {fmt(data?.period_revenue ?? 0)}
+            </div>
+          )}
+        </div>
+      </div>
 
-          {/* Channel filter pills */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {CHANNELS.map((ch) => (
+      {/* ── Single main card: filters + table + pagination ── */}
+      <div className="bg-white border border-slate-100 rounded-[12px] overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+
+        {/* Filter row */}
+        <div className="px-5 py-4 md:px-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          {/* Date range picker */}
+          <Popover open={calOpen} onOpenChange={setCalOpen}>
+            <PopoverTrigger asChild>
+              <button className="flex items-center gap-2 h-9 px-3.5 rounded-[8px] border border-slate-200 bg-slate-50 text-[12px] font-bold text-slate-600 font-figtree hover:border-[#3B59DA]/40 hover:text-[#3B59DA] transition-all">
+                <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
+                <span>{dateRangeLabel}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={handleRangeSelect}
+                numberOfMonths={2}
+                disabled={{ after: today }}
+                initialFocus
+              />
+              {dateRange && (
+                <div className="border-t border-slate-100 px-3 py-2 flex justify-end">
+                  <button
+                    onClick={() => { setDateRange(undefined); setPage(1); setCalOpen(false); }}
+                    className="text-[11px] font-bold text-slate-400 hover:text-rose-500 transition-colors font-figtree"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+
+          {/* Channel pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree mr-0.5">
+              Channel:
+            </span>
+            {CHANNEL_FILTERS.map((ch) => (
               <button
                 key={ch.id}
                 onClick={() => handleChannelChange(ch.id)}
                 className={cn(
-                  "px-3 py-1.5 rounded-full text-[12px] font-bold transition-all font-figtree",
+                  "h-8 px-3.5 rounded-full text-[12px] font-bold border transition-all font-figtree",
                   channel === ch.id
-                    ? "bg-[#3B59DA] text-white shadow-[0_2px_6px_rgba(59,89,218,0.25)]"
-                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    ? "bg-[#1E293B] text-white border-[#1E293B]"
+                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700"
                 )}
               >
                 {ch.label}
               </button>
             ))}
           </div>
-
-          {/* Clear filters */}
-          {(date || channel) && (
-            <button
-              onClick={() => { handleDateChange(""); handleChannelChange(""); }}
-              className="text-[12px] font-bold text-slate-400 hover:text-rose-500 transition-colors font-figtree ml-auto"
-            >
-              Clear filters
-            </button>
-          )}
         </div>
-      </PrimarySurfaceCard>
 
-      {/* Content */}
-      <PrimarySurfaceCard>
+        {/* Table content */}
         {isLoading ? (
-          <HistorySkeleton />
+          <div className="p-5 space-y-3">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-[8px]" />
+            ))}
+          </div>
         ) : error ? (
-          <div className="p-6">
+          <div className="p-6 text-center">
             <p className="text-[13px] font-semibold text-rose-500 font-figtree">{error}</p>
           </div>
         ) : orders.length === 0 ? (
@@ -216,13 +294,13 @@ export default function SalesHistoryPage() {
         ) : (
           <div className="divide-y divide-slate-50">
             {/* Column headers */}
-            <div className="hidden md:grid grid-cols-[1fr_120px_90px_110px_110px_36px] gap-3 px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] font-figtree bg-slate-50/50">
-              <span>Date & Time</span>
+            <div className="hidden md:grid grid-cols-[130px_1fr_130px_110px_130px_140px] gap-3 px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree bg-slate-50/60">
+              <span>Time Stamp</span>
+              <span>Dishes Sold</span>
               <span>Channel</span>
-              <span className="text-right">Items</span>
               <span className="text-right">Revenue</span>
-              <span className="text-right">Profit</span>
-              <span />
+              <span>Status</span>
+              <span>Action</span>
             </div>
 
             {orders.map((order) => (
@@ -235,90 +313,73 @@ export default function SalesHistoryPage() {
                 onToggle={() => handleExpand(order.id)}
               />
             ))}
-
-            {/* Page summary footer */}
-            <div className="px-5 py-3.5 bg-slate-50/40 flex items-center justify-between gap-4">
-              <span className="text-[12px] font-bold text-slate-500 font-figtree">
-                Page {page} of {totalPages} · {data?.total ?? 0} total
-              </span>
-              <div className="flex items-center gap-4">
-                <div className="hidden sm:flex items-center gap-5 text-[12px] font-figtree">
-                  <div>
-                    <span className="text-slate-400 font-semibold">Revenue </span>
-                    <span className="font-black text-[#1E293B] tabular-nums">{fmt(pageRevenue)}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-semibold">Profit </span>
-                    <span className={cn(
-                      "font-black tabular-nums",
-                      pageProfit > 0 ? "text-emerald-600" : "text-slate-400"
-                    )}>
-                      {fmt(pageProfit)}
-                      <span className="text-[10px] font-semibold opacity-60 ml-1">({pageMargin}%)</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
-      </PrimarySurfaceCard>
 
-      {/* Pagination */}
-      {!isLoading && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3">
-          <Button
-            variant="outline"
-            className="h-9 w-9 p-0 rounded-[8px] border-slate-200"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+        {/* Pagination footer — inside the card */}
+        {!isLoading && totalCount > 0 && (
+          <div className="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <span className="text-[12px] font-semibold text-slate-400 font-figtree">
+              Showing {showFrom} to {showTo} of {totalCount} results
+            </span>
 
-          <div className="flex items-center gap-1.5">
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              const p = totalPages <= 5
-                ? i + 1
-                : page <= 3
-                  ? i + 1
-                  : page >= totalPages - 2
-                    ? totalPages - 4 + i
-                    : page - 2 + i;
-              return (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={cn(
-                    "h-9 w-9 rounded-[8px] text-[13px] font-bold font-figtree transition-all",
-                    p === page
-                      ? "bg-[#3B59DA] text-white shadow-[0_2px_8px_rgba(59,89,218,0.25)]"
-                      : "border border-slate-200 text-slate-500 hover:bg-slate-50"
-                  )}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  className="h-9 px-3 rounded-[8px] border-slate-200 text-[12px] font-bold font-figtree"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  {p}
-                </button>
-              );
-            })}
-          </div>
+                  <ChevronLeft className="h-3.5 w-3.5 mr-0.5" />
+                  Prev
+                </Button>
 
-          <Button
-            variant="outline"
-            className="h-9 w-9 p-0 rounded-[8px] border-slate-200"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  const p = totalPages <= 5
+                    ? i + 1
+                    : page <= 3
+                      ? i + 1
+                      : page >= totalPages - 2
+                        ? totalPages - 4 + i
+                        : page - 2 + i;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={cn(
+                        "h-9 w-9 rounded-[8px] text-[13px] font-bold font-figtree transition-all",
+                        p === page
+                          ? "bg-[#3B59DA] text-white shadow-[0_2px_8px_rgba(59,89,218,0.25)]"
+                          : "border border-slate-200 text-slate-500 hover:bg-slate-50"
+                      )}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+
+                <Button
+                  variant="outline"
+                  className="h-9 px-3 rounded-[8px] border-slate-200 text-[12px] font-bold font-figtree"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                  <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
     </AppContainer>
   );
 }
 
 // ---------------------------------------------------------------------------
-// History order row (with inline expand)
+// Order row
 // ---------------------------------------------------------------------------
 
 function HistoryOrderRow({
@@ -334,71 +395,66 @@ function HistoryOrderRow({
   isLoadingDetail: boolean;
   onToggle: () => void;
 }) {
-  const ch = CHANNEL_META[order.channel] ?? CHANNEL_META.DINE_IN;
-  const profit = order.gross_profit;
-  const margin = order.total_revenue > 0
-    ? ((profit / order.total_revenue) * 100).toFixed(0)
-    : "0";
+  const ch     = CHANNEL_META[order.channel] ?? CHANNEL_META.DINE_IN;
+  const status = STATUS_META[order.status]   ?? STATUS_META.COMPLETED;
 
   return (
-    <div className={cn(
-      "transition-colors",
-      isExpanded && "bg-indigo-50/20"
-    )}>
-      <button
-        onClick={onToggle}
-        className="w-full text-left px-5 py-4 md:grid md:grid-cols-[1fr_120px_90px_110px_110px_36px] md:gap-3 flex flex-wrap gap-x-5 gap-y-1.5 items-center hover:bg-slate-50/60 transition-colors"
-      >
-        {/* Date & time */}
-        <span className="text-[13px] font-bold text-[#1E293B] font-figtree">
+    <div className={cn("transition-colors", isExpanded && "bg-indigo-50/20")}>
+      <div className="w-full px-5 py-4 md:grid md:grid-cols-[130px_1fr_130px_110px_130px_140px] md:gap-3 flex flex-wrap gap-x-5 gap-y-1.5 items-center">
+
+        {/* Time stamp */}
+        <span className="text-[12px] font-bold text-[#1E293B] font-figtree">
           {formatDateTime(order.occurred_at)}
         </span>
 
+        {/* Dishes sold */}
+        <span className="text-[13px] font-semibold text-slate-600 font-figtree">
+          {order.items_count} {order.items_count === 1 ? "dish" : "dishes"}
+        </span>
+
         {/* Channel */}
-        <div>
-          <span className={cn(
-            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold font-figtree",
-            ch.color
-          )}>
-            <ch.icon className="h-3 w-3 shrink-0" />
+        <div className="flex items-center gap-1.5">
+          <ch.icon className={cn("h-3.5 w-3.5 shrink-0", ch.textColor)} />
+          <span className={cn("text-[12px] font-bold font-figtree", ch.textColor)}>
             {ch.label}
           </span>
         </div>
 
-        {/* Items */}
-        <span className="text-[13px] font-semibold text-slate-500 font-figtree md:text-right">
-          <span className="md:hidden text-slate-400 text-[11px]">Items: </span>
-          {order.items_count}
-        </span>
-
         {/* Revenue */}
-        <span className="text-[14px] font-black text-[#1E293B] font-figtree md:text-right tabular-nums">
-          {fmt(order.total_revenue)}
+        <span className="text-[13px] font-black text-[#1E293B] font-figtree md:text-right tabular-nums">
+          RWF {fmt(order.total_revenue)}
         </span>
 
-        {/* Profit */}
-        <span className={cn(
-          "text-[13px] font-bold font-figtree md:text-right tabular-nums",
-          profit > 0 ? "text-emerald-600" : profit < 0 ? "text-rose-500" : "text-slate-400"
-        )}>
-          {fmt(profit)}
-          <span className="text-[10px] font-semibold opacity-60 ml-0.5">({margin}%)</span>
-        </span>
-
-        {/* Chevron */}
-        <div className="md:flex hidden items-center justify-center shrink-0">
-          {isLoadingDetail ? (
-            <RefreshCw className="h-3.5 w-3.5 text-slate-300 animate-spin" />
-          ) : (
-            <ChevronDown className={cn(
-              "h-3.5 w-3.5 text-slate-300 transition-transform duration-200",
-              isExpanded && "rotate-180"
-            )} />
-          )}
+        {/* Status */}
+        <div>
+          <span className={cn(
+            "inline-flex items-center px-2.5 py-1 rounded-full border text-[10px] font-bold font-figtree",
+            status.className
+          )}>
+            {status.label}
+          </span>
         </div>
-      </button>
 
-      {/* Expanded items */}
+        {/* Action */}
+        <button
+          onClick={onToggle}
+          className="flex items-center gap-1 text-[12px] font-bold text-[#3B59DA] hover:text-[#2D46B2] transition-colors font-figtree"
+        >
+          {isLoadingDetail ? (
+            <RefreshCw className="h-3 w-3 animate-spin" />
+          ) : (
+            <>
+              Sales Details
+              <ChevronDown className={cn(
+                "h-3.5 w-3.5 transition-transform duration-200",
+                isExpanded && "rotate-180"
+              )} />
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Expanded detail */}
       {isExpanded && (
         <div className="px-5 pb-4 border-t border-slate-100 bg-slate-50/40">
           <div className="pt-4 space-y-2">
@@ -426,8 +482,8 @@ function HistoryOrderRow({
                     <span className="text-[11px] text-slate-400 font-semibold font-figtree tabular-nums hidden sm:block">
                       {fmt(item.unit_price)} each
                     </span>
-                    <span className="text-[13px] font-black text-[#1E293B] font-figtree tabular-nums w-20 text-right">
-                      {fmt(item.line_total)}
+                    <span className="text-[13px] font-black text-[#1E293B] font-figtree tabular-nums w-24 text-right">
+                      RWF {fmt(item.line_total)}
                     </span>
                   </div>
                 </div>
@@ -441,7 +497,7 @@ function HistoryOrderRow({
 }
 
 // ---------------------------------------------------------------------------
-// Empty + skeleton
+// Empty state
 // ---------------------------------------------------------------------------
 
 function EmptyState() {
@@ -450,19 +506,9 @@ function EmptyState() {
       <div className="h-12 w-12 rounded-[12px] bg-slate-50 border border-slate-100 flex items-center justify-center">
         <ReceiptText className="h-5 w-5 text-slate-300" />
       </div>
-      <FigtreeText className="text-[13px] font-semibold text-slate-400 max-w-[220px] leading-relaxed">
-        No sales match your filters. Try adjusting the date or channel.
-      </FigtreeText>
-    </div>
-  );
-}
-
-function HistorySkeleton() {
-  return (
-    <div className="p-5 space-y-3">
-      {[...Array(6)].map((_, i) => (
-        <Skeleton key={i} className="h-14 w-full rounded-[8px]" />
-      ))}
+      <p className="text-[13px] font-semibold text-slate-400 font-figtree max-w-[220px] leading-relaxed">
+        No sales match your filters. Try adjusting the date range or channel.
+      </p>
     </div>
   );
 }

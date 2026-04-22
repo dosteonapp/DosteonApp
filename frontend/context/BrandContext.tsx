@@ -29,8 +29,8 @@ interface BrandContextValue {
   brands: Brand[];
   /** The currently selected brand. null while loading. */
   activeBrand: Brand | null;
-  /** Switch the active brand. Persists to sessionStorage and updates the axios header. */
-  setActiveBrand: (brand: Brand) => void;
+  /** Switch the active brand. Pass null to select all brands (aggregate view). */
+  setActiveBrand: (brand: Brand | null) => void;
   /** True while the initial brand list is being fetched. */
   isLoading: boolean;
 }
@@ -87,7 +87,14 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
             : null;
 
         const restored = savedId ? active.find((b) => b.id === savedId) : null;
-        setActiveBrandState(restored ?? active[0]);
+        // Multi-brand fresh sessions default to "All Brands" (null) so the account
+        // is immediately recognisable as multi-brand. Single-brand always selects the brand.
+        const initial = restored ?? (active.length > 1 ? null : active[0]);
+        setActiveBrandState(initial);
+        if (typeof sessionStorage !== "undefined") {
+          if (initial) sessionStorage.setItem(SESSION_KEY, initial.id);
+          else sessionStorage.removeItem(SESSION_KEY);
+        }
       } catch {
         // Network failure — leave brands empty and show org-level data
       } finally {
@@ -103,14 +110,12 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
 
   // Persist active brand ID in sessionStorage and trigger a full data re-fetch.
   const setActiveBrand = useCallback(
-    (brand: Brand) => {
+    (brand: Brand | null) => {
       setActiveBrandState(brand);
       if (typeof sessionStorage !== "undefined") {
-        sessionStorage.setItem(SESSION_KEY, brand.id);
+        if (brand) sessionStorage.setItem(SESSION_KEY, brand.id);
+        else sessionStorage.removeItem(SESSION_KEY);
       }
-      // Invalidate all queries so brand-scoped data reloads.
-      // The axios interceptor (below) will pick up the new X-Brand-ID on the
-      // next outgoing request automatically.
       queryClient.invalidateQueries();
     },
     [queryClient]

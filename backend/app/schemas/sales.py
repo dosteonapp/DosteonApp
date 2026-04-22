@@ -40,6 +40,7 @@ class MenuItemUpdate(BaseModel):
     price: Optional[float] = None
     cost: Optional[float] = None
     category: Optional[str] = None
+    status: Optional[str] = None
 
     @field_validator("name")
     @classmethod

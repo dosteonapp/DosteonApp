@@ -4,6 +4,15 @@ from enum import Enum
 
 
 # ---------------------------------------------------------------------------
+# Shared
+# ---------------------------------------------------------------------------
+
+class BrandOut(BaseModel):
+    id: str
+    name: str
+
+
+# ---------------------------------------------------------------------------
 # Step 1 — Business
 # ---------------------------------------------------------------------------
 
@@ -69,6 +78,7 @@ class DishItem(BaseModel):
     name: str
     price: float = 0
     category: str = "Signature"
+    brand_id: Optional[str] = None  # null = shared (org-level), set = brand-specific
 
     @field_validator("name")
     @classmethod
@@ -78,14 +88,7 @@ class DishItem(BaseModel):
 
 class MenuRequest(BaseModel):
     dishes: List[DishItem]
-
-    @field_validator("dishes")
-    @classmethod
-    def minimum_dishes(cls, v: List[DishItem]) -> List[DishItem]:
-        named = [d for d in v if d.name]
-        if len(named) < 3:
-            raise ValueError("At least 3 dishes are required to enable sales logging")
-        return v
+    # Minimum dish validation is handled in the service to support per-brand partial submissions
 
 
 # ---------------------------------------------------------------------------
@@ -115,3 +118,4 @@ class OnboardingCompleteResponse(BaseModel):
     operating_days_display: Optional[str] = None  # e.g. "Mon, Tue, Wed"
     menu_dishes_count: int = 0
     inventory_items_count: int = 0
+    brands: List[BrandOut] = []                # all active brands for this org

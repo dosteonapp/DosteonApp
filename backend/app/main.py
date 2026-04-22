@@ -155,7 +155,19 @@ async def db_reconnect_middleware(request: Request, call_next):
         from app.core.logging import get_logger
         logger = get_logger("db_middleware")
         logger.error(f"DB reconnect failed: {e}")
-    return await call_next(request)
+    try:
+        return await call_next(request)
+    except Exception as e:
+        err = str(e).lower()
+        if any(k in err for k in ("connection", "socket", "econnreset", "broken pipe", "engine")):
+            from app.core.logging import get_logger
+            logger = get_logger("db_middleware")
+            logger.warning(f"DB connection lost mid-request, returning 503: {e}")
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "Service temporarily unavailable. Please retry."},
+            )
+        raise
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 

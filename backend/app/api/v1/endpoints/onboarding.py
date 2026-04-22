@@ -135,15 +135,27 @@ async def get_onboarding_progress(
     if org.settings and isinstance(org.settings, dict):
         settings = org.settings
 
-    # Brands
-    brands = await db.brand.find_many(where={"organization_id": org_id})
+    # Brands (sorted oldest-first so order is stable)
+    brands = await db.brand.find_many(
+        where={"organization_id": org_id},
+        order={"created_at": "asc"},
+    )
     brand_names = [b.name for b in brands]
+    brand_objects = [{"id": str(b.id), "name": b.name} for b in brands]
 
-    # Menu items (onboarding source only)
+    # Menu items (onboarding source only) — include brand_id so multi-brand menus restore correctly
     menu_items = await db.menuitem.find_many(
         where={"organization_id": org_id, "source": "onboarding"}
     )
-    dishes = [{"name": m.name, "price": m.price, "category": m.category} for m in menu_items]
+    dishes = [
+        {
+            "name": m.name,
+            "price": m.price,
+            "category": m.category,
+            "brand_id": str(m.brand_id) if m.brand_id else None,
+        }
+        for m in menu_items
+    ]
 
     return {
         "step1": {
@@ -154,6 +166,7 @@ async def get_onboarding_progress(
             "daily_stock_count": org.daily_stock_count if hasattr(org, "daily_stock_count") else False,
             "has_multiple_brands": len(brand_names) > 1,
             "brands": brand_names,
+            "brand_objects": brand_objects,   # [{id, name}] — used by frontend for per-brand menu tabs
         },
         "step2": {
             "operating_days": settings.get("operating_days", []),

@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Clock } from "lucide-react";
 import { useOnboarding, DayKey } from "@/context/OnboardingContext";
 import OnboardingBottomBar from "./OnboardingBottomBar";
 import { toast } from "sonner";
@@ -59,12 +59,19 @@ interface TimeSelectProps {
 function TimeSelect({ value, onChange, disabled }: TimeSelectProps) {
   return (
     <div className="relative w-36">
+      {/* Clock icon */}
+      <Clock
+        className={[
+          "pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5",
+          disabled ? "text-gray-300" : "text-gray-400",
+        ].join(" ")}
+      />
       <select
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         className={[
-          "w-full appearance-none rounded-lg border px-3 py-2.5 pr-8 text-sm transition-colors",
+          "w-full appearance-none rounded-lg border pl-8 pr-8 py-2.5 text-sm transition-colors",
           disabled
             ? "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
             : "border-gray-200 bg-white text-gray-800 hover:border-gray-300 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF]",

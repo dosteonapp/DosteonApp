@@ -4,7 +4,9 @@ Onboarding service — handles the 4-step guided setup for new restaurant accoun
 Each method is scoped to the caller's organization_id so data never crosses tenants.
 All write methods are idempotent (safe to call multiple times from the same session).
 """
-from datetime import datetime, date
+import json
+from datetime import datetime
+from prisma import Json
 from typing import Optional
 from app.db.prisma import db
 from app.core.supabase import supabase
@@ -14,6 +16,7 @@ from app.schemas.onboarding import (
     MenuRequest,
     InventoryRequest,
     OnboardingCompleteResponse,
+    BrandOut,
 )
 from fastapi import HTTPException, status
 from app.core.metrics import ONBOARDING_COMPLETED_COUNTER
@@ -81,7 +84,15 @@ class OnboardingService:
                 }
             )
 
-        return {"status": "ok"}
+        # Return the created brands with IDs so the frontend can scope menus per brand
+        created_brands = await db.brand.find_many(
+            where={"organization_id": organization_id},
+            order={"created_at": "asc"},
+        )
+        return {
+            "status": "ok",
+            "brands": [{"id": str(b.id), "name": b.name} for b in created_brands],
+        }
 
     # -----------------------------------------------------------------------
     # Step 2 — Operating hours
@@ -104,7 +115,13 @@ class OnboardingService:
         org = await db.organization.find_unique(where={"id": organization_id})
         existing_settings: dict = {}
         if org and org.settings:
-            existing_settings = dict(org.settings) if isinstance(org.settings, dict) else {}
+            if isinstance(org.settings, dict):
+                existing_settings = org.settings
+            elif isinstance(org.settings, str):
+                try:
+                    existing_settings = json.loads(org.settings)
+                except (json.JSONDecodeError, ValueError):
+                    existing_settings = {}
 
         # Derive a simple opening/closing time from the first open day for
         # backward-compatibility with parts of the app that use those flat keys.
@@ -120,7 +137,7 @@ class OnboardingService:
 
         await db.organization.update(
             where={"id": organization_id},
-            data={"settings": new_settings},
+            data={"settings": json.dumps(new_settings)},
         )
 
         return {"status": "ok"}
@@ -130,7 +147,12 @@ class OnboardingService:
     # -----------------------------------------------------------------------
 
     async def save_menu(self, data: MenuRequest, organization_id: str) -> dict:
-        """Replace all onboarding menu items with the submitted list."""
+        """Replace all onboarding menu items with the submitted list.
+
+        Each DishItem may carry an optional brand_id:
+        - brand_id = None  → org-level (shared across all brands)
+        - brand_id = <uuid> → scoped to that brand only
+        """
         named_dishes = [d for d in data.dishes if d.name]
         if len(named_dishes) < 3:
             raise HTTPException(
@@ -146,6 +168,7 @@ class OnboardingService:
             await db.menuitem.create(
                 data={
                     "organization_id": organization_id,
+                    "brand_id": dish.brand_id,   # null = shared, set = brand-specific
                     "name": dish.name,
                     "price": dish.price,
                     "category": dish.category,
@@ -160,54 +183,79 @@ class OnboardingService:
     # -----------------------------------------------------------------------
 
     async def save_inventory(self, data: InventoryRequest, organization_id: str, user_id: str) -> dict:
-        """Upsert ContextualProducts and create OPENING_STOCK events."""
+        """Upsert ContextualProducts and create OPENING_STOCK events.
+
+        Uses bulk queries to avoid N+1 round trips over the pooler connection:
+        1 fetch existing → 1 create_many new → 1 fetch new IDs → N updates (existing only) → 1 create_many events
+        """
         if not data.items:
             return {"status": "ok", "items_saved": 0}
 
-        saved = 0
-        for item in data.items:
-            # Upsert the ContextualProduct
-            existing = await db.contextualproduct.find_first(
+        canonical_ids = [item.canonical_product_id for item in data.items]
+        item_map = {item.canonical_product_id: item for item in data.items}
+
+        # 1. Fetch all already-existing contextual products for this org in one query
+        existing_products = await db.contextualproduct.find_many(
+            where={
+                "organization_id": organization_id,
+                "canonical_product_id": {"in": canonical_ids},
+            }
+        )
+        cp_map = {p.canonical_product_id: p for p in existing_products}
+
+        # 2. Bulk-create any that don't exist yet
+        new_canonical_ids = [cid for cid in canonical_ids if cid not in cp_map]
+        if new_canonical_ids:
+            await db.contextualproduct.create_many(
+                data=[
+                    {
+                        "canonical_product_id": cid,
+                        "organization_id": organization_id,
+                        "current_stock": item_map[cid].opening_quantity,
+                        "preferred_unit": item_map[cid].unit,
+                    }
+                    for cid in new_canonical_ids
+                ],
+                skip_duplicates=True,
+            )
+            # Fetch the newly created records to get their IDs
+            new_products = await db.contextualproduct.find_many(
                 where={
                     "organization_id": organization_id,
-                    "canonical_product_id": item.canonical_product_id,
+                    "canonical_product_id": {"in": new_canonical_ids},
                 }
             )
+            for p in new_products:
+                cp_map[p.canonical_product_id] = p
 
-            if existing:
-                cp_id = existing.id
-                # Update the cached current_stock
-                await db.contextualproduct.update(
-                    where={"id": cp_id},
-                    data={"current_stock": item.opening_quantity},
-                )
-            else:
-                created = await db.contextualproduct.create(
-                    data={
-                        "canonical_product_id": item.canonical_product_id,
-                        "organization_id": organization_id,
-                        "current_stock": item.opening_quantity,
-                        "preferred_unit": item.unit,
-                    }
-                )
-                cp_id = created.id
+        # 3. Update stock for any that already existed (idempotent retry support)
+        for cp in existing_products:
+            item = item_map[cp.canonical_product_id]
+            await db.contextualproduct.update(
+                where={"id": cp.id},
+                data={"current_stock": item.opening_quantity},
+            )
 
-            # Create the OPENING_STOCK event
-            await db.inventoryevent.create(
-                data={
-                    "contextual_product_id": cp_id,
+        # 4. Bulk-create all OPENING_STOCK events in one query
+        await db.inventoryevent.create_many(
+            data=[
+                {
+                    "contextual_product_id": cp_map[item.canonical_product_id].id,
                     "organization_id": organization_id,
                     "event_type": "OPENING_STOCK",
                     "quantity": item.opening_quantity,
                     "unit": item.unit,
                     "actor_type": "user",
                     "actor_id": user_id,
-                    "metadata": {"source": "onboarding"},
+                    "metadata": Json({"source": "onboarding"}),
                 }
-            )
-            saved += 1
+                for item in data.items
+                if item.canonical_product_id in cp_map
+            ],
+            skip_duplicates=True,
+        )
 
-        return {"status": "ok", "items_saved": saved}
+        return {"status": "ok", "items_saved": len(data.items)}
 
     # -----------------------------------------------------------------------
     # Complete — finalise onboarding
@@ -236,12 +284,10 @@ class OnboardingService:
         # 3. Create DayStatus CLOSED if none exists yet
         existing_ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
         if not existing_ds:
-            today = date.today()
             await db.daystatus.create(
                 data={
                     "organization_id": organization_id,
                     "state": "CLOSED",
-                    "business_date": today,
                 }
             )
 
@@ -251,8 +297,14 @@ class OnboardingService:
             raise HTTPException(status_code=404, detail="Organization not found")
 
         settings: dict = {}
-        if org.settings and isinstance(org.settings, dict):
-            settings = org.settings
+        if org.settings:
+            if isinstance(org.settings, dict):
+                settings = org.settings
+            elif isinstance(org.settings, str):
+                try:
+                    settings = json.loads(org.settings)
+                except (json.JSONDecodeError, ValueError):
+                    settings = {}
 
         # Build hours display string from the first open day in the schedule
         hours_display: Optional[str] = None
@@ -287,6 +339,12 @@ class OnboardingService:
         # Fetch phone from org (stored during Step 1)
         phone = org.phone if hasattr(org, "phone") else None
 
+        # Fetch all active brands so the frontend can initialize its brand context
+        active_brands = await db.brand.find_many(
+            where={"organization_id": organization_id, "is_active": True, "deleted_at": None},
+            order={"created_at": "asc"},
+        )
+
         return OnboardingCompleteResponse(
             onboarding_completed=True,
             organization_id=organization_id,
@@ -296,6 +354,7 @@ class OnboardingService:
             operating_days_display=operating_days_display,
             menu_dishes_count=menu_count,
             inventory_items_count=inventory_count,
+            brands=[BrandOut(id=str(b.id), name=b.name) for b in active_brands],
         )
 
 

@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     # ── Internal admin API key ─────────────────────────────────────────────
     ADMIN_API_KEY: Optional[str] = Field(None, validation_alias="ADMIN_API_KEY")
 
+    # ── Dev email override ─────────────────────────────────────────────────
+    # If set and APP_ENV=development, all outgoing emails are redirected here.
+    DEV_EMAIL_OVERRIDE: Optional[str] = Field(None, validation_alias="DEV_EMAIL_OVERRIDE")
+
     # ── Derived helpers ────────────────────────────────────────────────────
     @property
     def is_production(self) -> bool:

@@ -167,7 +167,7 @@ class InventoryService:
         product_id = str(data.product_id)
         # Validate product belongs to org (and brand if scoped)
         product = await inventory_repo.get_by_id(UUID(product_id))
-        if not product or product.get("organization_id") != organization_id:
+        if not product or str(product.get("organization_id", "")) != organization_id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
         return await inventory_repo.add_usage_event(
@@ -189,7 +189,7 @@ class InventoryService:
     ):
         product_id = str(data.product_id)
         product = await inventory_repo.get_by_id(UUID(product_id))
-        if not product or product.get("organization_id") != organization_id:
+        if not product or str(product.get("organization_id", "")) != organization_id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
         return await inventory_repo.add_usage_event(

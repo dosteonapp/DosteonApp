@@ -140,7 +140,7 @@ export function RestaurantSidebar() {
         </Button>
       </div>
 
-      <div className="flex-1 flex flex-col justify-between overflow-y-auto no-scrollbar py-10 px-6">
+      <div className="flex-1 flex flex-col justify-between overflow-y-auto no-scrollbar py-6 px-6">
         {/* Tier 1: Operations Section */}
         <div className="space-y-4">
           {!isSidebarCollapsed && (

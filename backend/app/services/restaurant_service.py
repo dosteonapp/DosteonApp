@@ -439,6 +439,8 @@ class RestaurantService:
                         "is_opening_completed": True,
                         "state": "OPEN",
                         "opened_at": datetime.utcnow(),
+                        "closed_at": None,
+                        "business_date": datetime.now().date(),
                         "metadata": Json({})
                     }
                 )
@@ -480,6 +482,17 @@ class RestaurantService:
             ds = await db.daystatus.find_unique(where={"organization_id": str(organization_id)})
 
             if ds and str(ds.state) == "OPEN":
+                # If the OPEN record belongs to a previous calendar day (never closed),
+                # treat it as a new day so the user can run Opening Stock again.
+                today = datetime.now().date()
+                try:
+                    ds_date = ds.business_date.date() if hasattr(ds.business_date, "date") else ds.business_date
+                    if isinstance(ds_date, str):
+                        ds_date = datetime.fromisoformat(ds_date).date()
+                    if ds_date < today:
+                        return {"systemState": "LOCKED", "canStartOpening": True, "openingAvailableAt": None}
+                except Exception:
+                    pass
                 return {"systemState": "UNLOCKED", "canStartOpening": False, "openingAvailableAt": None}
 
             # LOCKED — check 6-hour gap since last close
@@ -668,10 +681,10 @@ class RestaurantService:
         }
 
     async def get_closing_indicators(self, organization_id: str):
-        events = await inventory_repo.get_recent_events(organization_id, limit=100)
-        used = sum(1 for e in events if e.event_type == "USED")
-        wasted = sum(1 for e in events if e.event_type == "WASTED")
-        return {"used": used, "wasted": wasted}
+        events = await inventory_repo.get_recent_events(organization_id, limit=500)
+        used = sum(abs(e.quantity) for e in events if e.event_type == "USED")
+        wasted = sum(abs(e.quantity) for e in events if e.event_type == "WASTED")
+        return {"itemsUsed": round(used, 2), "itemsWasted": round(wasted, 2)}
 
     async def record_kitchen_event(self, organization_id: str, item_id: str, amount: float, event_type: str, reason: str = None):
         await self._require_unlocked(organization_id)

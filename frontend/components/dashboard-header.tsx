@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Bell, Calendar, ChevronRight, ChevronDown, ArrowLeft, Menu } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Bell, Calendar, ChevronRight, ArrowLeft, Menu } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
-import { useBrand, Brand } from "@/context/BrandContext";
+import { useBrand } from "@/context/BrandContext";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ export function DashboardHeader() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toggleSidebar } = useSidebar();
-  const { brands, activeBrand, setActiveBrand } = useBrand();
+  const { activeBrand } = useBrand();
 
   // Real-time clock
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -21,21 +21,6 @@ export function DashboardHeader() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-  // Brand switcher dropdown
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handle = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-    if (dropdownOpen) document.addEventListener("mousedown", handle);
-    return () => document.removeEventListener("mousedown", handle);
-  }, [dropdownOpen]);
 
   const formatDate = (date: Date) =>
     new Intl.DateTimeFormat("en-US", {
@@ -83,7 +68,6 @@ export function DashboardHeader() {
   };
 
   const breadcrumbs = getBreadcrumbs(pathname);
-  const showDropdown = brands.length > 1;
 
   return (
     <div className="bg-white border-b border-slate-100 h-[72px] md:h-[88px] sticky top-0 z-40 transition-all font-figtree w-full">
@@ -114,68 +98,14 @@ export function DashboardHeader() {
             </Button>
           )}
 
-          {/* ── Brand switcher ── */}
+          {/* ── Active brand pill (read-only — switching is in the sidebar) ── */}
           {activeBrand && (
-            <div className="relative shrink-0" ref={dropdownRef}>
-              <button
-                type="button"
-                onClick={() => showDropdown && setDropdownOpen((v) => !v)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold text-slate-700 bg-slate-50 border border-slate-200/60 transition-all",
-                  showDropdown
-                    ? "hover:bg-white hover:border-[#3B59DA]/40 hover:text-[#3B59DA] active:scale-95 cursor-pointer"
-                    : "cursor-default"
-                )}
-                aria-haspopup={showDropdown ? "listbox" : undefined}
-                aria-expanded={showDropdown ? dropdownOpen : undefined}
-              >
-                <span className="max-w-[120px] truncate">{activeBrand.name}</span>
-                {showDropdown && (
-                  <ChevronDown
-                    className={cn(
-                      "h-3.5 w-3.5 text-slate-400 transition-transform duration-200",
-                      dropdownOpen && "rotate-180"
-                    )}
-                  />
-                )}
-              </button>
-
-              {/* Dropdown list */}
-              {showDropdown && dropdownOpen && (
-                <div
-                  role="listbox"
-                  className="absolute left-0 top-full mt-1.5 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 overflow-hidden"
-                >
-                  {brands.map((brand: Brand) => (
-                    <button
-                      key={brand.id}
-                      role="option"
-                      aria-selected={brand.id === activeBrand.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveBrand(brand);
-                        setDropdownOpen(false);
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors",
-                        brand.id === activeBrand.id
-                          ? "bg-indigo-50 text-[#3B59DA] font-semibold"
-                          : "text-slate-700 hover:bg-slate-50 font-medium"
-                      )}
-                    >
-                      {/* Coloured initial badge */}
-                      <span className="h-5 w-5 rounded-full bg-indigo-100 text-[#3B59DA] text-[10px] font-bold flex items-center justify-center shrink-0 uppercase">
-                        {brand.name.charAt(0)}
-                      </span>
-                      <span className="truncate">{brand.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[13px] font-bold text-[#3B59DA] bg-indigo-50 border border-indigo-100/80 shrink-0 max-w-[160px] truncate">
+              {activeBrand.name}
+            </span>
           )}
 
-          {/* Separator between brand and breadcrumbs */}
+          {/* Separator between brand pill and breadcrumbs */}
           {activeBrand && breadcrumbs.length > 0 && (
             <ChevronRight className="h-3.5 w-3.5 text-slate-200 stroke-[4px] shrink-0 hidden sm:block" />
           )}

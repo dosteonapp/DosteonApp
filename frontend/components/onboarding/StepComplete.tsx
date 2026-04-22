@@ -16,10 +16,24 @@ function SummaryRow({ label, value }: { label: string; value: string | number | 
   );
 }
 
+const BRAND_COLORS = ["#F97316", "#EF4444", "#8B5CF6", "#0EA5E9", "#10B981"];
+
 export default function StepComplete() {
   const router = useRouter();
   const { state } = useOnboarding();
   const summary = state.completeSummary;
+
+  const brands = summary?.brands ?? [];
+  const isMultiBrand = brands.length > 1;
+
+  const handleGoToDashboard = () => {
+    // Seed the brand context sessionStorage so the dashboard loads the first brand
+    // immediately without waiting for the /brands fetch.
+    if (brands.length > 0 && typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem("active_brand_id", brands[0].id);
+    }
+    router.push("/dashboard");
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-full py-12 px-8">
@@ -74,13 +88,33 @@ export default function StepComplete() {
                 : "0 items"
             }
           />
+
+          {/* Brands row — shown for both single and multi-brand */}
+          {brands.length > 0 && (
+            <div className="flex items-start justify-between py-3 border-t border-gray-100">
+              <span className="text-sm text-gray-500 shrink-0 mr-4">
+                {isMultiBrand ? "Your Brands" : "Brand"}
+              </span>
+              <div className="flex flex-wrap gap-1.5 justify-end">
+                {brands.map((brand, idx) => (
+                  <span
+                    key={brand.id}
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-white"
+                    style={{ backgroundColor: BRAND_COLORS[idx % BRAND_COLORS.length] }}
+                  >
+                    {brand.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Go to Dashboard */}
       <button
         type="button"
-        onClick={() => router.push("/dashboard")}
+        onClick={handleGoToDashboard}
         className="w-full max-w-md rounded-xl py-3.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
         style={{ backgroundColor: "#3B4EFF" }}
       >

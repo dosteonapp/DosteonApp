@@ -98,7 +98,20 @@ axiosInstance.interceptors.request.use(async (config) => {
   // and echo it as a header for every state-changing request.
   const method = (config.method ?? "get").toLowerCase();
   if (method !== "get" && method !== "head" && method !== "options") {
-    const csrfToken = getCookie("csrf_token");
+    let csrfToken = getCookie("csrf_token");
+    // If cookie is absent (e.g. fresh page load before UserContext fetches /auth/me),
+    // proactively call /auth/me to set it, then read it again.
+    if (!csrfToken && token && !config.url?.includes("auth/me")) {
+      try {
+        await fetch("/api/v1/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
+        });
+        csrfToken = getCookie("csrf_token");
+      } catch {
+        // Non-fatal; request will proceed without CSRF header and backend will 403
+      }
+    }
     if (csrfToken) {
       config.headers["X-CSRF-Token"] = csrfToken;
     }
@@ -168,10 +181,24 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Detect auth endpoints whose errors are handled by the form/caller —
+    // skip global toast + console.error so the UI doesn't double-report.
+    const isAuthLoginRequest = url.endsWith("/auth/login") || url === "auth/login";
+    const isAuthFormRequest = isAuthLoginRequest
+      || url.endsWith("/auth/signup") || url === "auth/signup"
+      || url.endsWith("/auth/forgot-password") || url === "auth/forgot-password"
+      || url.endsWith("/auth/reset-password") || url === "auth/reset-password";
+
     // 2. Log unexpected errors (skip 401, 403, 404, 500, 502, 503, 504 — gateway errors are retried above)
+    // Auth form endpoints (signup, login, etc.) are excluded — callers show their own inline errors.
     // Note: We skip 500 here because we handle it via toast and want to avoid noisy console logs
     // when the database is disconnected during development.
-    if (typeof errorStatus === "number" && errorStatus >= 400 && ![401, 403, 404, 500, 502, 503, 504].includes(errorStatus)) {
+    if (
+      typeof errorStatus === "number" &&
+      errorStatus >= 400 &&
+      ![401, 403, 404, 500, 502, 503, 504].includes(errorStatus) &&
+      !isAuthFormRequest
+    ) {
       console.error(`[AxiosError] ${errorStatus} - ${fullUrl}`, {
         url: error.config?.url,
         baseURL: error.config?.baseURL,
@@ -195,10 +222,6 @@ axiosInstance.interceptors.response.use(
     };
 
     const friendlyDetail = getFriendlyErrorMessage(detail);
-
-    // Detect auth login endpoint to avoid treating credential errors
-    // as session expiry (we want the caller to handle these)
-    const isAuthLoginRequest = url.endsWith("/auth/login") || url === "auth/login";
 
     // 3. Handle 401 — attempt token refresh then retry
     if (errorStatus === 401 && !error.config._retry) {
@@ -263,6 +286,31 @@ axiosInstance.interceptors.response.use(
         break;
       case 403:
         if (detail.toLowerCase().includes("csrf")) {
+          // Auto-retry once after refreshing the CSRF cookie via /auth/me
+          if (!error.config._csrfRetry) {
+            error.config._csrfRetry = true;
+            try {
+              const { createClient: _createClient } = await import("./supabase/client");
+              const _supabase = _createClient();
+              if (_supabase) {
+                const { data: _sd } = await _supabase.auth.getSession();
+                const _token = _sd.session?.access_token;
+                if (_token) {
+                  await fetch("/api/v1/auth/me", {
+                    headers: { Authorization: `Bearer ${_token}` },
+                    credentials: "include",
+                  });
+                  const newCsrf = getCookie("csrf_token");
+                  if (newCsrf) {
+                    error.config.headers["X-CSRF-Token"] = newCsrf;
+                    return axiosInstance(error.config);
+                  }
+                }
+              }
+            } catch {
+              // Fall through to toast
+            }
+          }
           toast.error("Session Security Error", {
             description: "Security token mismatch. Please reload the page and try again.",
           });
@@ -273,7 +321,8 @@ axiosInstance.interceptors.response.use(
         }
         break;
       default:
-        if (typeof errorStatus === "number" && errorStatus >= 400) {
+        // Auth form endpoints handle their own errors inline — skip global toast.
+        if (typeof errorStatus === "number" && errorStatus >= 400 && !isAuthFormRequest) {
           const hint = findUiErrorHint(friendlyDetail);
           if (hint) {
             toast.error(hint.title, { description: hint.description ?? friendlyDetail });

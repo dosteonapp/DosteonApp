@@ -84,13 +84,12 @@ function CheckCard({ checked, onClick, title, subtitle, subHint }: CheckCardProp
           {subtitle && (
             <span className="block text-xs text-gray-500 mt-0.5">{subtitle}</span>
           )}
+          {/* Sub-hint inside the card when selected */}
+          {checked && subHint && (
+            <span className="block text-xs text-gray-500 mt-1">{subHint}</span>
+          )}
         </span>
       </button>
-
-      {/* Sub-hint shown below the card when checked */}
-      {checked && subHint && (
-        <p className="text-xs text-gray-500 pl-1">{subHint}</p>
-      )}
     </div>
   );
 }

@@ -13,13 +13,12 @@ const required = [
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
 ] as const;
 
-// Only validate on the client side (server-side rendering skips this)
-if (typeof window !== "undefined") {
+// Warn during development if required vars are missing (don't throw — crashing the app is worse than the missing var).
+if (typeof window === "undefined" && process.env.NODE_ENV !== "production") {
   for (const key of required) {
     if (!process.env[key]) {
-      throw new Error(
-        `Missing required environment variable: ${key}\n` +
-          `Copy .env.example to .env.local and fill in the values.`
+      console.warn(
+        `[config] Missing environment variable: ${key} — copy .env.example to .env.local and fill in the values.`
       );
     }
   }
