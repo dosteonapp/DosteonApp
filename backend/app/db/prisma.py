@@ -50,4 +50,5 @@ async def ensure_connected():
             await db.disconnect()
         except Exception:
             pass
+        await asyncio.sleep(1.0)
         await connect_db()
