@@ -1,3 +1,73 @@
+# Staging Environment — Variable Reference
+
+**Staging Render:** https://dosteonapp-1.onrender.com  
+**Staging Vercel:** https://dosteon-app-7u3b.vercel.app  
+**Staging Supabase project:** `uthliwmewwlfjlbskilw`
+
+---
+
+## Vercel — Preview environment (dosteon-app-7u3b)
+
+Set these under **Settings → Environment Variables → Preview** in the Vercel project:
+
+| Key | Value |
+|---|---|
+| `NEXT_PUBLIC_ENV` | `staging` |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://uthliwmewwlfjlbskilw.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `<staging anon key — Supabase → uthliwmewwlfjlbskilw → Settings → API>` |
+| `BACKEND_URL` | `https://dosteonapp-1.onrender.com` |
+| `NEXT_PUBLIC_API_URL` | `https://dosteonapp-1.onrender.com` |
+| `NEXT_PUBLIC_POSTHOG_KEY` | *(copy from production — same key)* |
+
+> `NEXT_PUBLIC_ENV=staging` is the critical one. It controls the environment banner,
+> email redirect behaviour, and Prisma client env guards. Without it the frontend
+> acts as development.
+
+---
+
+## Render — dosteonapp-1
+
+Set these under **dosteonapp-1 → Environment** in the Render dashboard.  
+Values marked *same as prod* can be copied directly from the production service.
+
+| Key | Value |
+|---|---|
+| `APP_ENV` | `staging` |
+| `PYTHON_VERSION` | `3.11.9` |
+| `LOG_LEVEL` | `INFO` |
+| `AUTH_REDIRECT_URL` | `https://dosteon-app-7u3b.vercel.app/auth/callback` |
+| `BACKEND_CORS_ORIGINS` | `'["https://dosteon-app-7u3b.vercel.app"]'` |
+| `DATABASE_URL` | `<staging pooler URL — Supabase → uthliwmewwlfjlbskilw → Settings → Database → Connection string → Transaction mode (port 6543)>` |
+| `DIRECT_URL` | `<staging direct URL — same place, Session mode (port 5432)>` |
+| `SUPABASE_URL` | `https://uthliwmewwlfjlbskilw.supabase.co` |
+| `SUPABASE_ANON_KEY` | `<staging anon key — Supabase → uthliwmewwlfjlbskilw → Settings → API>` |
+| `SUPABASE_SERVICE_ROLE_KEY` | `<staging service role key — same place>` |
+| `RESEND_API_KEY` | `re_18teXkHH_CGmKC8gCxwsEfo9PxmCNyipE` *(same as prod)* |
+| `RESEND_FROM_EMAIL` | `no-reply@mail.dosteon.com` *(same as prod)* |
+| `FROM_EMAIL` | `no-reply@mail.dosteon.com` *(same as prod)* |
+| `SMTP_PORT` | `587` *(same as prod)* |
+| `SMTP_USER` | `resend` *(same as prod)* |
+| `DEV_EMAIL_OVERRIDE` | `gatetejules1@gmail.com` |
+
+> **`APP_ENV=staging`** — the production service has `ENV=production` (old key, ignored).
+> Staging must use `APP_ENV` (the new key). This enables email redirect to
+> `DEV_EMAIL_OVERRIDE`, the `[STAGING]` subject prefix, and staging-only guards.
+>
+> **`DATABASE_URL`** — use the **Transaction mode** pooler URL (port 6543, `?pgbouncer=true`).
+> **`DIRECT_URL`** — use the **Session mode** direct URL (port 5432, no pgbouncer).
+> Both come from Supabase → uthliwmewwlfjlbskilw → Settings → Database → Connection string.
+
+---
+
+## What to do after setting variables
+
+1. Render → dosteonapp-1 → **Manual Deploy → Deploy latest commit**
+2. Wait for deploy → hit `https://dosteonapp-1.onrender.com/health/ready`
+3. Should return `{"status":"ok"}` — if still failing, check the `detail` field
+4. Open `https://dosteon-app-7u3b.vercel.app` → sign up → email arrives at `gatetejules1@gmail.com`
+
+---
+
 # Multi-Environment Architecture: Development → Staging → Production
 
 **Stack:** Next.js/React (Vercel) · FastAPI + Prisma (Render) · Supabase (PostgreSQL) · dosteon.com  
