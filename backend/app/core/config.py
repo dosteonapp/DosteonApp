@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from typing import Optional, Literal
 
 
@@ -32,6 +32,22 @@ class Settings(BaseSettings):
         default=["http://localhost:3000", "https://app.dosteon.com", "https://dosteon-app.vercel.app", "https://dosteon-app-git-main-dosteonapp.vercel.app"],
         validation_alias="BACKEND_CORS_ORIGINS"
     )
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            import json as _json
+            try:
+                parsed = _json.loads(v)
+                if isinstance(parsed, list):
+                    return parsed
+            except _json.JSONDecodeError:
+                pass
+            return [o.strip() for o in v.split(",") if o.strip()]
+        return v
 
     # ── Auth Redirect (for Email Verification/Callback) ───────────────────
     AUTH_REDIRECT_URL: str = Field(
