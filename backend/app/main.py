@@ -209,10 +209,13 @@ async def health_ready():
     Returns 200 with {"status": "ok"} on success or 503 with
     {"status": "error", "detail": "..."} on failure.
     """
+    import asyncio as _asyncio
     from app.db.prisma import db
     from app.core.logging import get_logger
     logger = get_logger("health_ready")
     try:
+        if not db.is_connected():
+            await _asyncio.wait_for(db.connect(), timeout=8.0)
         await db.execute_raw("SELECT 1")
         return {"status": "ok"}
     except Exception as e:
