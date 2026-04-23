@@ -45,8 +45,8 @@ services:
     numInstances: 1
     rootDir: backend
     branch: develop
-    buildCommand: pip install -r requirements.txt && python -m prisma generate
-    startCommand: python scripts/ensure_prisma_binary.py && gunicorn app.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    buildCommand: pip install -r requirements.txt && python -m prisma generate && python scripts/ensure_prisma_binary.py
+    startCommand: gunicorn app.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
