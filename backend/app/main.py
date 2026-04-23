@@ -210,12 +210,25 @@ async def health_ready():
     {"status": "error", "detail": "..."} on failure.
     """
     import asyncio as _asyncio
+    import os as _os
     from app.db.prisma import db
     from app.core.logging import get_logger
     logger = get_logger("health_ready")
+
+    if not _os.getenv("DATABASE_URL"):
+        return JSONResponse(
+            status_code=503,
+            content={"status": "error", "detail": "DATABASE_URL is not set", "request_id": get_request_id()},
+        )
+
     try:
-        if not db.is_connected():
-            await _asyncio.wait_for(db.connect(), timeout=8.0)
+        # Force a fresh connect to bypass stale is_connected() from a failed startup.
+        if db.is_connected():
+            try:
+                await db.disconnect()
+            except Exception:
+                pass
+        await _asyncio.wait_for(db.connect(), timeout=8.0)
         await db.execute_raw("SELECT 1")
         return {"status": "ok"}
     except Exception as e:
