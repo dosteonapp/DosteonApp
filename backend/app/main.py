@@ -217,14 +217,12 @@ async def health_ready():
         return {"status": "ok"}
     except Exception as e:
         logger.error("Readiness check failed", exc_info=e)
-        return JSONResponse(
-            status_code=503,
-            content={
-                "status": "error",
-                "detail": "Dependency check failed. See logs with this request_id for details.",
-                "request_id": get_request_id(),
-            },
-        )
+        content: dict = {"status": "error", "request_id": get_request_id()}
+        if not settings.is_production:
+            content["detail"] = str(e)
+        else:
+            content["detail"] = "Dependency check failed. See logs with this request_id for details."
+        return JSONResponse(status_code=503, content=content)
 
 
 @app.exception_handler(HTTPException)
