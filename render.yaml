@@ -19,10 +19,8 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python -m prisma generate
-      python -m prisma py fetch
-      find ~/.cache/prisma-python -name "prisma-query-engine-*" -exec cp {} . \; 2>/dev/null || true
-    # Start command: use gunicorn for production as recommended in DEPLOYMENT.md
-    startCommand: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    # Start command: fetch binary on the runtime machine, then start gunicorn
+    startCommand: python -m prisma py fetch && gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9 # Fixes pydantic-core Rust compilation issues
@@ -53,9 +51,7 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python -m prisma generate
-      python -m prisma py fetch
-      find ~/.cache/prisma-python -name "prisma-query-engine-*" -exec cp {} . \; 2>/dev/null || true
-    startCommand: gunicorn app.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    startCommand: python -m prisma py fetch && gunicorn app.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
