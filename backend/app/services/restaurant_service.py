@@ -13,45 +13,63 @@ class RestaurantService:
             return {"totalItems": 0, "countedItems": 0, "healthy": 0, "low": 0, "critical": 0, "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}}
 
         try:
-            UUID(str(organization_id))
-        except:
+            try:
+                UUID(str(organization_id))
+            except:
+                return {"totalItems": 0, "countedItems": 0, "healthy": 0, "low": 0, "critical": 0, "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}}
+
+            inventory = await inventory_repo.get_by_organization(UUID(organization_id), brand_id=brand_id)
+            total = len(inventory)
+            low = 0
+            critical = 0
+            healthy = 0
+
+            for item in inventory:
+                stock = item.get("current_stock", 0)
+                min_lvl = item.get("min_level", 0)
+                if stock <= 0:
+                    critical += 1
+                elif stock <= min_lvl:
+                    low += 1
+                else:
+                    healthy += 1
+
+            counted = 0
+            try:
+                from app.db.prisma import db
+                ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
+                if ds and ds.metadata:
+                    # Handle metadata as dict or JSON string
+                    metadata_dict = ds.metadata
+                    if isinstance(ds.metadata, str):
+                        import json as _json
+                        try:
+                            metadata_dict = _json.loads(ds.metadata)
+                        except (ValueError, TypeError):
+                            metadata_dict = {}
+                    
+                    if isinstance(metadata_dict, dict) and "draft_confirmed_ids" in metadata_dict:
+                        counted = len(metadata_dict["draft_confirmed_ids"])
+                    elif ds.is_opening_completed:
+                        counted = total
+                elif ds and ds.is_opening_completed:
+                    counted = total
+            except Exception:
+                pass
+
+            return {
+                "totalItems": total,
+                "countedItems": counted,
+                "healthy": healthy,
+                "low": low,
+                "critical": critical,
+                "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}
+            }
+        except Exception as e:
+            # Log but don't crash — stats failures should not block the dashboard
+            import traceback
+            traceback.print_exc()
             return {"totalItems": 0, "countedItems": 0, "healthy": 0, "low": 0, "critical": 0, "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}}
-
-        inventory = await inventory_repo.get_by_organization(UUID(organization_id), brand_id=brand_id)
-        total = len(inventory)
-        low = 0
-        critical = 0
-        healthy = 0
-
-        for item in inventory:
-            stock = item.get("current_stock", 0)
-            min_lvl = item.get("min_level", 0)
-            if stock <= 0:
-                critical += 1
-            elif stock <= min_lvl:
-                low += 1
-            else:
-                healthy += 1
-
-        counted = 0
-        try:
-            from app.db.prisma import db
-            ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
-            if ds and ds.metadata and "draft_confirmed_ids" in ds.metadata:
-                counted = len(ds.metadata["draft_confirmed_ids"])
-            elif ds and ds.is_opening_completed:
-                counted = total
-        except:
-            pass
-
-        return {
-            "totalItems": total,
-            "countedItems": counted,
-            "healthy": healthy,
-            "low": low,
-            "critical": critical,
-            "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}
-        }
 
     async def get_low_stock_items(self, organization_id: str):
         if not organization_id:
@@ -269,10 +287,44 @@ class RestaurantService:
             # Mapping errors must never break the activity feed
             p_name = "Inventory Item"
 
-        q = int(e.quantity) if e.quantity == int(e.quantity) else e.quantity
+        # Handle quantity safely - convert to int if it's a whole number
+        try:
+            q = float(e.quantity) if e.quantity else 0
+            q = int(q) if q == int(q) else q
+        except (ValueError, TypeError):
+            q = 0
+        
         change = f"{'+' if q > 0 else ''}{q} {unit or ''}"
-        reason = e.metadata.get("reason", "Inventory update") if e.metadata else "Inventory update"
-        timestamp = e.created_at.strftime("%b %d, %Y; %H:%M") if e.created_at else ""
+        
+        # Handle metadata safely - it may be dict, JSON string, or None
+        reason = "Inventory update"
+        if e.metadata:
+            try:
+                if isinstance(e.metadata, str):
+                    import json as _json
+                    metadata_dict = _json.loads(e.metadata)
+                    reason = metadata_dict.get("reason", "Inventory update")
+                elif isinstance(e.metadata, dict):
+                    reason = e.metadata.get("reason", "Inventory update")
+            except (ValueError, TypeError, AttributeError):
+                reason = "Inventory update"
+        
+        # Handle timestamp safely
+        timestamp = ""
+        if e.created_at:
+            try:
+                timestamp = e.created_at.strftime("%b %d, %Y; %H:%M")
+            except AttributeError:
+                # If created_at doesn't have strftime, try converting it first
+                if isinstance(e.created_at, str):
+                    try:
+                        from datetime import datetime as _datetime
+                        dt = _datetime.fromisoformat(e.created_at.replace('Z', '+00:00'))
+                        timestamp = dt.strftime("%b %d, %Y; %H:%M")
+                    except (ValueError, AttributeError):
+                        timestamp = ""
+                else:
+                    timestamp = str(e.created_at)
 
         # Friendlier, more specific copy for the dashboard feed
         activity_label = f"{p_name}: {reason}"
@@ -304,14 +356,20 @@ class RestaurantService:
         if not organization_id:
             return []
 
-        # Fetch more than requested to account for zero-quantity events that will be filtered out
-        fetch_limit = max(limit * 3, limit + 10)
-        events = await inventory_repo.get_recent_events(organization_id, limit=fetch_limit, brand_id=brand_id)
+        try:
+            # Fetch more than requested to account for zero-quantity events that will be filtered out
+            fetch_limit = max(limit * 3, limit + 10)
+            events = await inventory_repo.get_recent_events(organization_id, limit=fetch_limit, brand_id=brand_id)
 
-        # Filter out 0 quantity updates which are non-informative for recent view
-        meaningful_events = [e for e in events if e.quantity != 0]
-        window = meaningful_events[offset: offset + limit]
-        return [self._map_inventory_event(e) for e in window]
+            # Filter out 0 quantity updates which are non-informative for recent view
+            meaningful_events = [e for e in events if e.quantity and e.quantity != 0]
+            window = meaningful_events[offset: offset + limit]
+            return [self._map_inventory_event(e) for e in window]
+        except Exception as e:
+            # Log but don't crash — activity feed failures should not block the dashboard
+            import traceback
+            traceback.print_exc()
+            return []
 
     async def get_opening_checklist(self, organization_id: str):
         if not organization_id:
@@ -432,6 +490,9 @@ class RestaurantService:
             org_id_str = str(organization_id)
             ds = await db.daystatus.find_first(where={"organization_id": org_id_str})
 
+            # Use UTC datetime with proper ISO-8601 format (with timezone)
+            now = datetime.utcnow().isoformat() + "Z"
+            
             if ds:
                 await db.daystatus.update(
                     where={"organization_id": org_id_str},
@@ -440,7 +501,7 @@ class RestaurantService:
                         "state": "OPEN",
                         "opened_at": datetime.utcnow(),
                         "closed_at": None,
-                        "business_date": datetime.now().date().isoformat(),
+                        "business_date": now,
                         "metadata": Json({})
                     }
                 )
@@ -452,7 +513,7 @@ class RestaurantService:
                         "state": "OPEN",
                         "opened_at": datetime.utcnow(),
                         "updated_at": datetime.utcnow(),
-                        "business_date": datetime.now().date().isoformat(),
+                        "business_date": now,
                         "metadata": Json({})
                     }
                 )
@@ -583,10 +644,10 @@ class RestaurantService:
 
             return {
                 "state": effective_state,
-                "business_date": ds.business_date.isoformat() if hasattr(ds.business_date, 'isoformat') else str(ds.business_date),
+                "business_date": ds.business_date.isoformat() if ds.business_date else None,
                 "is_opening_completed": bool(ds.is_opening_completed),
-                "opened_at": ds.opened_at.isoformat() if ds.opened_at and hasattr(ds.opened_at, 'isoformat') else (str(ds.opened_at) if ds.opened_at else None),
-                "closed_at": ds.closed_at.isoformat() if ds.closed_at and hasattr(ds.closed_at, 'isoformat') else (str(ds.closed_at) if ds.closed_at else None),
+                "opened_at": ds.opened_at.isoformat() if ds.opened_at else None,
+                "closed_at": ds.closed_at.isoformat() if ds.closed_at else None,
                 "metadata": metadata if isinstance(metadata, dict) else {},
             }
         except Exception as e:
