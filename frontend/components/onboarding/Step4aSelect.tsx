@@ -292,12 +292,14 @@ function ItemCard({ item, isSelected, onToggle }: ItemCardProps) {
   const emoji = CATEGORY_EMOJI[item.category] ?? "📦";
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={onToggle}
       className={[
-        "flex items-center justify-between gap-2 rounded-xl border p-3 transition-all",
+        "flex items-center justify-between gap-2 rounded-xl border p-3 transition-all w-full text-left",
         isSelected
           ? "border-[#3B4EFF] bg-[#EEF0FF]"
-          : "border-gray-200 bg-white hover:border-gray-300",
+          : "border-gray-200 bg-white hover:border-[#3B4EFF] hover:bg-[#F5F7FF]",
       ].join(" ")}
     >
       {/* Icon + text */}
@@ -312,15 +314,13 @@ function ItemCard({ item, isSelected, onToggle }: ItemCardProps) {
         </div>
       </div>
 
-      {/* Toggle button */}
-      <button
-        type="button"
-        onClick={onToggle}
+      {/* Visual indicator (non-interactive — card handles the click) */}
+      <span
         className={[
           "flex-shrink-0 flex h-7 w-7 items-center justify-center rounded-full border-2 transition-all",
           isSelected
             ? "border-[#3B4EFF] bg-[#3B4EFF]"
-            : "border-gray-300 bg-white hover:border-[#3B4EFF]",
+            : "border-gray-300 bg-white group-hover:border-[#3B4EFF]",
         ].join(" ")}
       >
         {isSelected ? (
@@ -328,7 +328,7 @@ function ItemCard({ item, isSelected, onToggle }: ItemCardProps) {
         ) : (
           <Plus className="h-3.5 w-3.5 text-gray-400" strokeWidth={2.5} />
         )}
-      </button>
-    </div>
+      </span>
+    </button>
   );
 }

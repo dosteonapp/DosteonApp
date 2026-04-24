@@ -440,7 +440,7 @@ class RestaurantService:
                         "state": "OPEN",
                         "opened_at": datetime.utcnow(),
                         "closed_at": None,
-                        "business_date": datetime.now().date(),
+                        "business_date": datetime.now().date().isoformat(),
                         "metadata": Json({})
                     }
                 )
@@ -452,7 +452,7 @@ class RestaurantService:
                         "state": "OPEN",
                         "opened_at": datetime.utcnow(),
                         "updated_at": datetime.utcnow(),
-                        "business_date": datetime.now().date(),
+                        "business_date": datetime.now().date().isoformat(),
                         "metadata": Json({})
                     }
                 )
