@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Check, ChevronDown, Plus } from "lucide-react";
+import { Check, ChevronDown, Plus, X } from "lucide-react";
 import { useOnboarding } from "@/context/OnboardingContext";
 import OnboardingBottomBar from "./OnboardingBottomBar";
 import { toast } from "sonner";
@@ -99,7 +99,7 @@ function CheckCard({ checked, onClick, title, subtitle, subHint }: CheckCardProp
 // ---------------------------------------------------------------------------
 
 export default function Step1Business() {
-  const { state, setStep1Field, setBrand, addBrand, goToStep, submitStep1, step1Valid } =
+  const { state, setStep1Field, setBrand, addBrand, removeBrand, goToStep, submitStep1, step1Valid } =
     useOnboarding();
   const { step1 } = state;
 
@@ -332,6 +332,18 @@ export default function Step1Business() {
                       onChange={(e) => setBrand(idx, e.target.value)}
                       className="flex-1 rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF]"
                     />
+
+                    {/* Remove brand — only when more than 2 brands exist */}
+                    {step1.brands.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => removeBrand(idx)}
+                        className="flex-shrink-0 flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Remove brand"
+                      >
+                        <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

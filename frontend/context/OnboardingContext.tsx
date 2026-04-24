@@ -106,6 +106,7 @@ interface OnboardingContextValue {
   setStep1Field: <K extends keyof Step1State>(key: K, value: Step1State[K]) => void;
   setBrand: (index: number, value: string) => void;
   addBrand: () => void;
+  removeBrand: (index: number) => void;
   // Step 2 updaters
   toggleDay: (day: DayKey) => void;
   setDayTime: (day: DayKey, field: "opening_time" | "closing_time", value: string) => void;
@@ -347,6 +348,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       ...prev,
       step1: { ...prev.step1, brands: [...prev.step1.brands, ""] },
     }));
+  }, [update]);
+
+  const removeBrand = useCallback((index: number) => {
+    update((prev) => {
+      const brands = prev.step1.brands.filter((_, i) => i !== index);
+      return { ...prev, step1: { ...prev.step1, brands: brands.length >= 2 ? brands : prev.step1.brands } };
+    });
   }, [update]);
 
   // -------------------------------------------------------------------------
@@ -652,6 +660,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setStep1Field,
     setBrand,
     addBrand,
+    removeBrand,
     toggleDay,
     setDayTime,
     setDish,
