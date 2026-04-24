@@ -16,7 +16,7 @@ export default function OnboardingSidebar() {
 
   return (
     <aside
-      className="flex flex-col h-full"
+      className="hidden md:flex flex-col h-full shrink-0"
       style={{ backgroundColor: "#0D1B4B", width: "300px", minWidth: "280px", maxWidth: "300px" }}
     >
       {/* Logo */}

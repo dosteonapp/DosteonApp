@@ -107,7 +107,7 @@ export default function Step4aSelect() {
   return (
     <div className="flex flex-col min-h-full">
       {/* ── Header ── */}
-      <div className="px-8 pt-8 pb-4 flex items-start justify-between gap-6">
+      <div className="px-4 pt-6 pb-3 sm:px-8 sm:pt-8 sm:pb-4 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6">
         <div className="flex-1">
           <p className="text-xs font-semibold uppercase tracking-widest text-[#3B4EFF] mb-1">
             Step 4: Core Inventory
@@ -123,7 +123,7 @@ export default function Step4aSelect() {
         </div>
 
         {/* Search bar */}
-        <div className="relative mt-1 flex-shrink-0 w-64">
+        <div className="relative sm:mt-1 flex-shrink-0 w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
@@ -136,9 +136,40 @@ export default function Step4aSelect() {
       </div>
 
       {/* ── Two-panel body ── */}
-      <div className="flex flex-1 gap-0 px-8 pb-4 overflow-hidden min-h-0">
-        {/* Left — Categories */}
-        <div className="w-52 flex-shrink-0 pr-4 overflow-y-auto">
+      <div className="flex flex-col sm:flex-row flex-1 gap-0 px-4 sm:px-8 pb-4 overflow-hidden min-h-0">
+        {/* Mobile-only category pills */}
+        <div className="sm:hidden flex gap-2 overflow-x-auto pb-2 flex-shrink-0 mb-2">
+          <button
+            type="button"
+            onClick={() => setActiveCategory("All Items")}
+            className={[
+              "shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors",
+              activeCategory === "All Items"
+                ? "bg-[#3B4EFF] text-white border-[#3B4EFF]"
+                : "bg-white text-gray-600 border-gray-200",
+            ].join(" ")}
+          >
+            All
+          </button>
+          {categoryList.map(([cat]) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setActiveCategory(cat)}
+              className={[
+                "shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors",
+                activeCategory === cat
+                  ? "bg-[#3B4EFF] text-white border-[#3B4EFF]"
+                  : "bg-white text-gray-600 border-gray-200",
+              ].join(" ")}
+            >
+              {CATEGORY_EMOJI[cat] ?? "📦"} {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Left — Categories (hidden on mobile) */}
+        <div className="hidden sm:flex sm:flex-col w-52 flex-shrink-0 pr-4 overflow-y-auto">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
             Categories
           </p>
@@ -204,7 +235,7 @@ export default function Step4aSelect() {
         </div>
 
         {/* Right — Item grid */}
-        <div className="flex-1 overflow-y-auto pl-4 border-l border-gray-100">
+        <div className="flex-1 overflow-y-auto sm:pl-4 sm:border-l border-gray-100">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-gray-800">All Items</p>
             <p className="text-xs text-gray-400">
@@ -219,7 +250,7 @@ export default function Step4aSelect() {
           ) : visibleItems.length === 0 ? (
             <p className="text-sm text-gray-400 mt-8 text-center">No items found.</p>
           ) : (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {visibleItems.map((item) => {
                 const isSelected = selectedIds.has(item.id);
                 return (

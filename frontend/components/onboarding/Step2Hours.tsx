@@ -58,7 +58,7 @@ interface TimeSelectProps {
 
 function TimeSelect({ value, onChange, disabled }: TimeSelectProps) {
   return (
-    <div className="relative w-36">
+    <div className="relative w-full sm:w-36">
       {/* Clock icon */}
       <Clock
         className={[
@@ -123,7 +123,7 @@ export default function Step2Hours() {
   return (
     <div className="flex flex-col min-h-full">
       {/* ── Scrollable body ── */}
-      <div className="flex-1 px-8 py-8 max-w-2xl">
+      <div className="flex-1 px-4 py-6 sm:px-8 sm:py-8 max-w-2xl">
         {/* Header */}
         <p className="text-xs font-semibold uppercase tracking-widest text-[#3B4EFF] mb-1">
           Step 2: Operating Hours
@@ -144,14 +144,14 @@ export default function Step2Hours() {
           {/* Table card */}
           <div className="rounded-2xl border border-gray-200 overflow-hidden">
             {/* Column headers */}
-            <div className="grid grid-cols-[1fr_160px_160px] gap-0 px-4 py-2.5 bg-gray-50 border-b border-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_160px_160px] gap-0 px-4 py-2.5 bg-gray-50 border-b border-gray-200">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Select the days your restaurant is open for business.
               </span>
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-2">
+              <span className="hidden sm:block text-xs font-semibold text-gray-500 uppercase tracking-wide px-2">
                 Opening Time
               </span>
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-2">
+              <span className="hidden sm:block text-xs font-semibold text-gray-500 uppercase tracking-wide px-2">
                 Closing Time
               </span>
             </div>
@@ -171,7 +171,7 @@ export default function Step2Hours() {
                 <div
                   key={dayKey}
                   className={[
-                    "grid grid-cols-[1fr_160px_160px] items-center gap-0 px-4 py-2.5 transition-colors",
+                    "grid grid-cols-1 sm:grid-cols-[1fr_160px_160px] items-start sm:items-center gap-2 sm:gap-0 px-4 py-3 sm:py-2.5 transition-colors",
                     !isLast ? "border-b border-gray-100" : "",
                     isOpen ? "bg-[#3B4EFF]" : "bg-white hover:bg-gray-50",
                   ].join(" ")}
@@ -209,22 +209,25 @@ export default function Step2Hours() {
                     </span>
                   </button>
 
-                  {/* Opening time */}
-                  <div className="px-2">
-                    <TimeSelect
-                      value={dayData.opening_time}
-                      disabled={!isOpen}
-                      onChange={(v) => setDayTime(dayKey, "opening_time", v)}
-                    />
-                  </div>
+                  {/* Time selects — side by side on mobile (below day name), grid cells on sm+ */}
+                  <div className="flex gap-2 sm:contents pl-9 sm:pl-0">
+                    {/* Opening time */}
+                    <div className="flex-1 sm:flex-none px-0 sm:px-2">
+                      <TimeSelect
+                        value={dayData.opening_time}
+                        disabled={!isOpen}
+                        onChange={(v) => setDayTime(dayKey, "opening_time", v)}
+                      />
+                    </div>
 
-                  {/* Closing time */}
-                  <div className="px-2">
-                    <TimeSelect
-                      value={dayData.closing_time}
-                      disabled={!isOpen}
-                      onChange={(v) => setDayTime(dayKey, "closing_time", v)}
-                    />
+                    {/* Closing time */}
+                    <div className="flex-1 sm:flex-none px-0 sm:px-2">
+                      <TimeSelect
+                        value={dayData.closing_time}
+                        disabled={!isOpen}
+                        onChange={(v) => setDayTime(dayKey, "closing_time", v)}
+                      />
+                    </div>
                   </div>
                 </div>
               );

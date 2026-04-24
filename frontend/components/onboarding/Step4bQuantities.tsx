@@ -47,7 +47,7 @@ export default function Step4bQuantities() {
   return (
     <div className="flex flex-col min-h-full">
       {/* ── Header ── */}
-      <div className="px-8 pt-8 pb-6">
+      <div className="px-4 pt-6 pb-4 sm:px-8 sm:pt-8 sm:pb-6">
         <p className="text-xs font-semibold uppercase tracking-widest text-[#3B4EFF] mb-1">
           Step 4: Core Inventory — Almost Done
         </p>
@@ -59,7 +59,7 @@ export default function Step4bQuantities() {
       </div>
 
       {/* ── Table ── */}
-      <div className="flex-1 px-8 pb-4 overflow-y-auto">
+      <div className="flex-1 px-4 pb-4 sm:px-8 overflow-y-auto">
         {selected_items.length === 0 ? (
           <p className="text-sm text-gray-400 mt-4">
             No items selected. Click &ldquo;Complete Setup&rdquo; to finish with an empty inventory —
@@ -68,7 +68,7 @@ export default function Step4bQuantities() {
         ) : (
           <div className="w-full max-w-3xl">
             {/* Column headers */}
-            <div className="grid grid-cols-[1fr_180px_120px_40px] gap-4 px-1 mb-2">
+            <div className="hidden sm:grid grid-cols-[1fr_180px_120px_40px] gap-4 px-1 mb-2">
               <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Item</span>
               <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Opening Quantity</span>
               <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Unit</span>
@@ -82,7 +82,7 @@ export default function Step4bQuantities() {
                 return (
                   <div
                     key={item.canonical_product_id}
-                    className="grid grid-cols-[1fr_180px_120px_40px] gap-4 items-center rounded-xl border border-gray-200 bg-white px-4 py-3"
+                    className="flex flex-col sm:grid sm:grid-cols-[1fr_180px_120px_40px] gap-3 sm:gap-4 sm:items-center rounded-xl border border-gray-200 bg-white px-4 py-3"
                   >
                     {/* Item identity */}
                     <div className="flex items-center gap-3 min-w-0">
@@ -96,38 +96,41 @@ export default function Step4bQuantities() {
                       </div>
                     </div>
 
-                    {/* Opening quantity */}
-                    <input
-                      type="number"
-                      min={0}
-                      value={item.opening_quantity}
-                      onChange={(e) =>
-                        setInventoryQuantity(
-                          item.canonical_product_id,
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    />
+                    {/* Qty, Unit, Remove — row on mobile, grid cells on sm+ */}
+                    <div className="flex gap-2 sm:contents items-center">
+                      {/* Opening quantity */}
+                      <input
+                        type="number"
+                        min={0}
+                        value={item.opening_quantity}
+                        onChange={(e) =>
+                          setInventoryQuantity(
+                            item.canonical_product_id,
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                        className="flex-1 sm:flex-none w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      />
 
-                    {/* Unit */}
-                    <input
-                      type="text"
-                      value={item.unit}
-                      onChange={(e) =>
-                        setInventoryUnit(item.canonical_product_id, e.target.value)
-                      }
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF]"
-                    />
+                      {/* Unit */}
+                      <input
+                        type="text"
+                        value={item.unit}
+                        onChange={(e) =>
+                          setInventoryUnit(item.canonical_product_id, e.target.value)
+                        }
+                        className="flex-1 sm:flex-none w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF]"
+                      />
 
-                    {/* Remove */}
-                    <button
-                      type="button"
-                      onClick={() => removeInventoryItem(item.canonical_product_id)}
-                      className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      {/* Remove */}
+                      <button
+                        type="button"
+                        onClick={() => removeInventoryItem(item.canonical_product_id)}
+                        className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 );
               })}

@@ -111,7 +111,7 @@ function SingleBrandMenuEditor({ dishes, onChangeDish, onAddDish, onRemoveDish }
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-[1fr_160px_180px] gap-3 mb-2 px-1">
+      <div className="hidden sm:grid grid-cols-[1fr_160px_180px] gap-3 mb-2 px-1">
         <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Dish Name</span>
         <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Price (RWF)</span>
         <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Category</span>
@@ -230,7 +230,7 @@ function MultiBrandMenuEditor({
       {/* Active brand dish table */}
       {activeId && (
         <div className="w-full">
-          <div className="grid grid-cols-[1fr_160px_180px] gap-3 mb-2 px-1">
+          <div className="hidden sm:grid grid-cols-[1fr_160px_180px] gap-3 mb-2 px-1">
             <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Dish Name</span>
             <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Price (RWF)</span>
             <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">Category</span>
@@ -279,7 +279,7 @@ function DishRow({ index, dish, onChange, onRemove }: DishRowProps) {
   };
 
   return (
-    <div className="grid grid-cols-[1fr_160px_180px_auto] gap-3 items-center">
+    <div className="flex flex-col sm:grid sm:grid-cols-[1fr_160px_180px_auto] gap-2 sm:gap-3 items-stretch sm:items-center">
       {/* Dish name */}
       <input
         type="text"
@@ -289,61 +289,64 @@ function DishRow({ index, dish, onChange, onRemove }: DishRowProps) {
         className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF]"
       />
 
-      {/* Price with stepper */}
-      <div className="relative flex items-center">
-        <input
-          type="number"
-          min={0}
-          value={dish.price}
-          onChange={(e) => onChange(index, "price", parseFloat(e.target.value) || 0)}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-8 text-sm text-gray-900 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-        />
-        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex flex-col">
-          <button
-            type="button"
-            tabIndex={-1}
-            onClick={() => handlePriceStep(1)}
-            className="flex h-4 w-5 items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100"
-          >
-            <ChevronUp className="h-3 w-3" strokeWidth={2.5} />
-          </button>
-          <button
-            type="button"
-            tabIndex={-1}
-            onClick={() => handlePriceStep(-1)}
-            className="flex h-4 w-5 items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100"
-          >
-            <ChevronDown className="h-3 w-3" strokeWidth={2.5} />
-          </button>
+      {/* Price, Category, Remove — row on mobile, grid cells on sm+ */}
+      <div className="flex gap-2 sm:contents items-center">
+        {/* Price with stepper */}
+        <div className="relative flex items-center flex-1 sm:flex-none">
+          <input
+            type="number"
+            min={0}
+            value={dish.price}
+            onChange={(e) => onChange(index, "price", parseFloat(e.target.value) || 0)}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-8 text-sm text-gray-900 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          />
+          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex flex-col">
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => handlePriceStep(1)}
+              className="flex h-4 w-5 items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+            >
+              <ChevronUp className="h-3 w-3" strokeWidth={2.5} />
+            </button>
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => handlePriceStep(-1)}
+              className="flex h-4 w-5 items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+            >
+              <ChevronDown className="h-3 w-3" strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Category */}
-      <div className="relative">
-        <select
-          value={dish.category}
-          onChange={(e) => onChange(index, "category", e.target.value)}
-          className="w-full appearance-none rounded-lg border border-gray-200 px-3 py-2.5 pr-8 text-sm text-gray-900 bg-white focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF]"
-        >
-          {CATEGORIES.map((cat) => (
-            <option key={cat}>{cat}</option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-      </div>
-
-      {/* Remove button */}
-      <div className="w-6">
-        {onRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            className="flex h-6 w-6 items-center justify-center rounded text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
-            title="Remove dish"
+        {/* Category */}
+        <div className="relative flex-1 sm:flex-none">
+          <select
+            value={dish.category}
+            onChange={(e) => onChange(index, "category", e.target.value)}
+            className="w-full appearance-none rounded-lg border border-gray-200 px-3 py-2.5 pr-8 text-sm text-gray-900 bg-white focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF]"
           >
-            ×
-          </button>
-        )}
+            {CATEGORIES.map((cat) => (
+              <option key={cat}>{cat}</option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        </div>
+
+        {/* Remove button */}
+        <div className="w-6 shrink-0">
+          {onRemove && (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="flex h-6 w-6 items-center justify-center rounded text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+              title="Remove dish"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
