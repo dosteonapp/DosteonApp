@@ -9,7 +9,7 @@ import { config } from "@/lib/config";
  * - Production:  renders nothing
  */
 export function EnvironmentBanner() {
-  if (config.isProduction || config.isStaging) return null;
+  if (config.isProduction || config.isStaging || process.env.NODE_ENV !== 'development') return null;
 
   const background = config.isStaging ? "#f59e0b" : "#3b82f6";
   const label = config.isStaging
