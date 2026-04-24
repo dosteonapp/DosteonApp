@@ -34,9 +34,9 @@ class EmailService:
         """
         # --- Environment guards ---
         dev_override = settings.DEV_EMAIL_OVERRIDE
-        if (settings.is_development or settings.is_staging) and dev_override:
+        if settings.is_development and dev_override:
             logger.warning(
-                f"[DEV/STAGING] Email override active — redirecting to {dev_override} (original: {to_email})",
+                f"[DEV] Email override active — redirecting to {dev_override} (original: {to_email})",
                 extra={"extra_context": {"email_type": email_type, "original_to": to_email}},
             )
             to_email = dev_override
