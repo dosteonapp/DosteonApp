@@ -119,11 +119,11 @@ export default function AuthCallbackPage() {
       let onboardingCompleted = false;
       try {
         const { default: axiosInstance } = await import("@/lib/axios");
-        const { data: profile } = await axiosInstance.get("/auth/me");
+        const { data: profile } = await axiosInstance.get("/auth/me", { timeout: 8000 });
         onboardingCompleted = Boolean(profile?.onboarding_completed);
       } catch {
-        // API unreachable — fall back to the token metadata flag so the user
-        // isn't stuck on the loading screen.
+        // API unreachable or timed out — fall back to the token metadata flag
+        // so the user isn't stuck on the loading screen (e.g. Render cold start).
         const metadata = session.user?.user_metadata ?? {};
         onboardingCompleted = Boolean(metadata.onboarding_completed);
       }
