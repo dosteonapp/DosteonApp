@@ -33,9 +33,9 @@ export default function OnboardingBottomBar({
   const isLoading = state.isSaving;
 
   return (
-    <div className="flex items-center justify-between px-8 py-4 border-t border-gray-100 bg-white">
+    <div className="flex items-center justify-between px-4 py-3 md:px-8 md:py-4 border-t border-gray-100 bg-white gap-3">
       {/* Hint text */}
-      <span className="text-sm text-gray-400 flex-1 pr-4">{hint ?? ""}</span>
+      <span className="hidden sm:block text-sm text-gray-400 flex-1 pr-4 truncate">{hint ?? ""}</span>
 
       {/* Navigation buttons */}
       <div className="flex items-center gap-3">

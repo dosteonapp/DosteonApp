@@ -138,7 +138,7 @@ export default function Step1Business() {
   return (
     <div className="flex flex-col min-h-full">
       {/* ── Scrollable body ── */}
-      <div className="flex-1 px-8 py-8 max-w-2xl">
+      <div className="flex-1 px-4 py-6 sm:px-8 sm:py-8 max-w-2xl">
         {/* Header */}
         <p className="text-xs font-semibold uppercase tracking-widest text-[#3B4EFF] mb-1">
           Step 1: Your Business
@@ -157,7 +157,7 @@ export default function Step1Business() {
           </p>
 
           {/* Row 1: Name + Phone */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             {/* Restaurant Name */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
@@ -229,7 +229,7 @@ export default function Step1Business() {
           </div>
 
           {/* Row 2: City + Business Type */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">City</label>
               <input
@@ -266,7 +266,7 @@ export default function Step1Business() {
           <p className="text-xs text-gray-500 mb-4">
             Do you currently count your opening and closing stock? Select Yes or No
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CheckCard
               checked={step1.daily_stock_count === true}
               onClick={() => setStep1Field("daily_stock_count", true)}
@@ -289,7 +289,7 @@ export default function Step1Business() {
           <p className="text-xs text-gray-500 mb-4">
             Do you operate multiple brands or restaurant concepts?
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CheckCard
               checked={step1.has_multiple_brands === true}
               onClick={() => setStep1Field("has_multiple_brands", true)}

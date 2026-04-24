@@ -12,7 +12,7 @@ export default function OnboardingProgressBar({ isComplete = false }: Props) {
   const { currentStep } = state;
 
   return (
-    <div className="flex items-center px-8 py-4 border-b border-gray-100 gap-6">
+    <div className="flex items-center px-4 py-3 md:px-8 md:py-4 border-b border-gray-100 gap-3 md:gap-6">
       {/* Step label */}
       <span className="shrink-0 text-sm text-gray-500 font-medium">
         {isComplete ? "Step 4 of 4" : `Step ${currentStep} of 4`}
