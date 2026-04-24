@@ -103,6 +103,7 @@ export default function Step4bQuantities() {
                         type="number"
                         min={0}
                         value={item.opening_quantity}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) =>
                           setInventoryQuantity(
                             item.canonical_product_id,

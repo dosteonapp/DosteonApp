@@ -33,7 +33,7 @@ export default function OnboardingBottomBar({
   const isLoading = state.isSaving;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 md:px-8 md:py-4 border-t border-gray-100 bg-white gap-3">
+    <div className="sticky bottom-0 z-10 flex items-center justify-between px-4 py-3 md:px-8 md:py-4 border-t border-gray-100 bg-white gap-3">
       {/* Hint text */}
       <span className="hidden sm:block text-sm text-gray-400 flex-1 pr-4 truncate">{hint ?? ""}</span>
 
