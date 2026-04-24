@@ -149,12 +149,18 @@ if settings.BACKEND_CORS_ORIGINS:
 @app.middleware("http")
 async def db_reconnect_middleware(request: Request, call_next):
     """Ensure DB is connected before every request — handles Supabase free tier drops."""
-    try:
-        await ensure_connected()
-    except Exception as e:
-        from app.core.logging import get_logger
-        logger = get_logger("db_middleware")
-        logger.error(f"DB reconnect failed: {e}")
+    # Health endpoints do their own DB check and must always be reachable.
+    if not request.url.path.startswith("/health"):
+        try:
+            await ensure_connected()
+        except Exception as e:
+            from app.core.logging import get_logger
+            logger = get_logger("db_middleware")
+            logger.error(f"DB reconnect failed: {e}")
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "Service temporarily unavailable. Please retry."},
+            )
     try:
         return await call_next(request)
     except Exception as e:
@@ -168,6 +174,19 @@ async def db_reconnect_middleware(request: Request, call_next):
                 content={"detail": "Service temporarily unavailable. Please retry."},
             )
         raise
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Log unhandled exceptions and return 500 with detail in non-production."""
+    import traceback
+    from app.core.logging import get_logger
+    logger = get_logger("exception_handler")
+    logger.error(
+        f"Unhandled exception on {request.method} {request.url.path}: {exc}",
+        exc_info=exc,
+    )
+    detail = f"{type(exc).__name__}: {exc}" if not settings.is_production else "Internal Server Error"
+    return JSONResponse(status_code=500, content={"detail": detail, "request_id": get_request_id()})
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 

@@ -63,8 +63,23 @@ function getCookie(name: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+// In development, use the backend URL directly to avoid Next.js rewrite issues with browser-side requests.
+// In production, use relative path which proxies through Next.js API routes.
+const getBaseURL = () => {
+  if (typeof window === "undefined") {
+    // Server-side: use relative path (rewrites will handle it)
+    return "/api/v1";
+  }
+  // Client-side in development: use backend URL directly
+  if (process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_BACKEND_URL) {
+    return `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1`;
+  }
+  // Client-side in production: use relative path
+  return "/api/v1";
+};
+
 const axiosInstance = axios.create({
-  baseURL: "/api/v1",
+  baseURL: getBaseURL(),
   headers: {
     "Content-Type": "application/json",
   },
@@ -207,7 +222,8 @@ axiosInstance.interceptors.response.use(
     }
 
     if (errorStatus === 500) {
-      console.warn(`[Backend Connection Issue] 500 - ${fullUrl}: Database might be unreachable.`);
+      const backendDetail = error.response?.data?.detail;
+      console.warn(`[Backend 500] ${fullUrl}: ${backendDetail ?? "Internal Server Error"}`);
     }
 
     const detail = error.response?.data?.detail || "An unexpected error occurred.";
