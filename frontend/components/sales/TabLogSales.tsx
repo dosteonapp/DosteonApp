@@ -428,6 +428,7 @@ function StatCard({
 function DishCard({ item, cartQty, onClick }: { item: MenuItem; cartQty: number; onClick: () => void }) {
   return (
     <div
+      onClick={onClick}
       className={cn(
         "relative flex flex-col justify-between rounded-[10px] border p-4 bg-white transition-all cursor-pointer group",
         cartQty > 0
@@ -458,7 +459,7 @@ function DishCard({ item, cartQty, onClick }: { item: MenuItem; cartQty: number;
 
         {/* Add button */}
         <button
-          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          onClick={onClick}
           className="shrink-0 h-8 w-8 rounded-[6px] border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:border-[#3B59DA] hover:text-[#3B59DA] hover:bg-indigo-50 transition-all active:scale-90"
         >
           <Plus className="h-4 w-4" />
