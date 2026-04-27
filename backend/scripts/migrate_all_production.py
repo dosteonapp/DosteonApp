@@ -14,6 +14,12 @@ import sys
 import asyncpg
 
 STEPS = [
+    # ── 0. profiles / organizations: deleted_at (soft-delete column) ─────────
+    ('profiles.deleted_at column',
+     'ALTER TABLE "profiles" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ'),
+    ('organizations.deleted_at column',
+     'ALTER TABLE "organizations" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ'),
+
     # ── 1. profiles: onboarding_completed column ────────────────────────────
     ('profiles.onboarding_completed column',
      'ALTER TABLE "profiles" ADD COLUMN IF NOT EXISTS "onboarding_completed" BOOLEAN NOT NULL DEFAULT false'),
