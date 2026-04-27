@@ -436,13 +436,6 @@ function DishCard({ item, cartQty, onClick }: { item: MenuItem; cartQty: number;
           : "border-slate-200 hover:border-slate-300 hover:shadow-sm"
       )}
     >
-      {/* Cart badge */}
-      {cartQty > 0 && (
-        <div className="absolute top-2 left-2 h-5 px-1.5 rounded-full bg-[#3B59DA] text-white text-[10px] font-black flex items-center justify-center">
-          {cartQty}
-        </div>
-      )}
-
       {/* Content */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -457,13 +450,14 @@ function DishCard({ item, cartQty, onClick }: { item: MenuItem; cartQty: number;
           </div>
         </div>
 
-        {/* Add button */}
-        <button
-          onClick={onClick}
-          className="shrink-0 h-8 w-8 rounded-[6px] border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:border-[#3B59DA] hover:text-[#3B59DA] hover:bg-indigo-50 transition-all active:scale-90"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+        {/* Cart quantity badge */}
+        <div className="shrink-0 h-8 w-8 rounded-[6px] flex items-center justify-center">
+          {cartQty > 0 ? (
+            <span className="h-8 w-8 rounded-[6px] bg-[#3B59DA] text-white text-[13px] font-black flex items-center justify-center">
+              {cartQty}
+            </span>
+          ) : null}
+        </div>
       </div>
     </div>
   );
