@@ -47,12 +47,13 @@ import {
     UnifiedHeroSurface,
     UnifiedStatCard,
     UnifiedErrorBanner,
-    AppContainer, 
-    InriaHeading, 
+    AppContainer,
+    InriaHeading,
     FigtreeText,
     UnifiedListRow,
     PrimarySurfaceCard
 } from "@/components/ui/dosteon-ui";
+import { BrandSwitcherCard } from "@/components/BrandSwitcherCard";
 
 export default function ClosingPage() {
   const lifecycle = useRestaurantDayLifecycle();
@@ -162,6 +163,9 @@ export default function ClosingPage() {
 
   return (
     <AppContainer className="pb-32">
+        <div className="flex items-center justify-between gap-4 px-1">
+          <BrandSwitcherCard />
+        </div>
         {error && <UnifiedErrorBanner message={error} />}
         <ReviewClosingChecklistModal
             open={isReviewModalOpen}

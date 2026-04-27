@@ -120,13 +120,3 @@ class ChangePasswordRequest(BaseModel):
         return v
 
 
-class OnboardRequest(BaseModel):
-    organization_name: str
-    address: str
-    phone: Optional[str] = None
-    opening_time: str
-    closing_time: str
-    selected_canonical_ids: list[str]
-    # Optional map of canonical product ID -> opening quantity.
-    # Used to seed initial stock counts during onboarding.
-    opening_quantities: Optional[dict[str, float]] = None

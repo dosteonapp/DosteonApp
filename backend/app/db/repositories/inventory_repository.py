@@ -7,15 +7,27 @@ from app.core.metrics import INVENTORY_OPENING_EVENTS_COUNTER
 
 
 class InventoryRepository:
-    async def get_by_organization(self, organization_id: UUID, skip: int = 0, take: Optional[int] = None) -> List[dict]:
+    async def get_by_organization(
+        self,
+        organization_id: UUID,
+        skip: int = 0,
+        take: Optional[int] = None,
+        brand_id: Optional[str] = None,
+    ) -> List[dict]:
+        # Fallback rule: null brand_id rows are visible to all brands in the org
+        # (preserves existing data). Scoped rows match the resolved brand.
+        where: dict = {"organization_id": str(organization_id), "is_active": True}
+        if brand_id:
+            where["OR"] = [{"brand_id": None}, {"brand_id": brand_id}]
+
         products = await db.contextualproduct.find_many(
-            where={"organization_id": str(organization_id), "is_active": True},
+            where=where,
             include={
                 "canonical": True,
                 "location": True
             },
             skip=skip or 0,
-            take=take
+            take=take,
         )
 
         result = []
@@ -375,9 +387,22 @@ WHERE cp.id = v.id;
             }
         )
 
-    async def get_recent_events(self, organization_id: str, limit: int = 5) -> List[InventoryEvent]:
+    async def get_recent_events(
+        self,
+        organization_id: str,
+        limit: int = 5,
+        brand_id: Optional[str] = None,
+    ) -> List[InventoryEvent]:
+        # Fallback rule: events whose product has brand_id=null are visible to
+        # all brands. Events whose product is brand-scoped match the resolved brand.
+        where: dict = {"organization_id": organization_id}
+        if brand_id:
+            where["product"] = {
+                "OR": [{"brand_id": None}, {"brand_id": brand_id}]
+            }
+
         return await db.inventoryevent.find_many(
-            where={"organization_id": organization_id},
+            where=where,
             include={
                 "product": {
                     "include": {
@@ -386,7 +411,7 @@ WHERE cp.id = v.id;
                 }
             },
             order={"created_at": "desc"},
-            take=limit
+            take=limit,
         )
 
     async def create_from_canonical_selection(self, organization_id: str, canonical_ids: List[str]) -> int:
@@ -432,6 +457,247 @@ WHERE cp.id = v.id;
             skip_duplicates=True,
         )
         return len(canonicals)
+
+    # -----------------------------------------------------------------------
+    # Enhanced product catalog (Product Catalog tab)
+    # -----------------------------------------------------------------------
+
+    async def get_products_enhanced(
+        self,
+        organization_id: str,
+        brand_id: Optional[str] = None,
+        search: Optional[str] = None,
+        category: Optional[str] = None,
+    ) -> List:
+        conditions: list = [
+            {"organization_id": organization_id},
+            {"is_active": True},
+        ]
+        if brand_id:
+            conditions.append({"OR": [{"brand_id": None}, {"brand_id": brand_id}]})
+        if category:
+            conditions.append(
+                {"canonical": {"is": {"category": {"equals": category, "mode": "insensitive"}}}}
+            )
+        if search:
+            conditions.append({
+                "OR": [
+                    {"name": {"contains": search, "mode": "insensitive"}},
+                    {"sku":  {"contains": search, "mode": "insensitive"}},
+                    {"canonical": {"is": {"name": {"contains": search, "mode": "insensitive"}}}},
+                ]
+            })
+
+        return await db.contextualproduct.find_many(
+            where={"AND": conditions},
+            include={"canonical": True, "brand": True},
+            order={"updated_at": "desc"},
+        )
+
+    async def get_inventory_counts(
+        self,
+        organization_id: str,
+        brand_id: Optional[str] = None,
+    ) -> dict:
+        """Return current healthy / low / critical counts + last-week comparison."""
+        from datetime import datetime, timedelta, timezone
+
+        conditions: list = [
+            {"organization_id": organization_id},
+            {"is_active": True},
+        ]
+        if brand_id:
+            conditions.append({"OR": [{"brand_id": None}, {"brand_id": brand_id}]})
+
+        products = await db.contextualproduct.find_many(
+            where={"AND": conditions},
+        )
+
+        def classify(p) -> str:
+            crit = float(p.critical_threshold or 0)
+            reorder = float(p.reorder_threshold or 0)
+            if p.current_stock <= crit:
+                return "critical"
+            if p.current_stock <= reorder:
+                return "low"
+            return "healthy"
+
+        current: dict = {"healthy": 0, "low": 0, "critical": 0}
+        for p in products:
+            current[classify(p)] += 1
+        total = len(products)
+
+        # Best-effort last-week comparison via opening stock events from 7 days ago
+        target = datetime.now(timezone.utc) - timedelta(days=7)
+        lw_events = await db.inventoryevent.find_many(
+            where={
+                "AND": [
+                    {"organization_id": organization_id},
+                    {"event_type": "OPENING_STOCK"},
+                    {"occurred_at": {"gte": target - timedelta(hours=12),
+                                     "lt":  target + timedelta(hours=12)}},
+                ]
+            }
+        )
+
+        lw_stock: dict[str, float] = {e.contextual_product_id: e.quantity for e in lw_events}
+        lw: dict = {"total": 0, "healthy": 0, "low": 0, "critical": 0}
+
+        if lw_stock:
+            product_map = {p.id: p for p in products}
+            for pid, qty in lw_stock.items():
+                lw["total"] += 1
+                p = product_map.get(pid)
+                if p:
+                    crit = float(p.critical_threshold or 0)
+                    reorder = float(p.reorder_threshold or 0)
+                    if qty <= crit:
+                        lw["critical"] += 1
+                    elif qty <= reorder:
+                        lw["low"] += 1
+                    else:
+                        lw["healthy"] += 1
+
+        def pct_change(now: int, then: int) -> Optional[float]:
+            if then == 0:
+                return None
+            return round((now - then) / then * 100, 1)
+
+        return {
+            "items_in_stock": {"value": total,             "vs_last_week_pct": pct_change(total,             lw["total"])},
+            "healthy_stock":  {"value": current["healthy"], "vs_last_week_pct": pct_change(current["healthy"], lw["healthy"])},
+            "low_stock":      {"value": current["low"],     "vs_last_week_pct": pct_change(current["low"],     lw["low"])},
+            "critical":       {"value": current["critical"],"vs_last_week_pct": pct_change(current["critical"],lw["critical"])},
+        }
+
+    # -----------------------------------------------------------------------
+    # Stock-usage (Stock Usage tab)
+    # -----------------------------------------------------------------------
+
+    async def get_usage_stats_today(
+        self,
+        organization_id: str,
+        brand_id: Optional[str] = None,
+    ) -> dict:
+        from datetime import datetime, timezone
+        from collections import defaultdict
+
+        today_start = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+
+        product_cond: list = []
+        if brand_id:
+            product_cond.append({"OR": [{"brand_id": None}, {"brand_id": brand_id}]})
+
+        base_where = {
+            "AND": [
+                {"organization_id": organization_id},
+                {"occurred_at": {"gte": today_start}},
+            ]
+        }
+        if product_cond:
+            base_where["AND"].append({"product": {"AND": product_cond}})
+
+        used_events = await db.inventoryevent.find_many(
+            where={**base_where, "AND": base_where["AND"] + [{"event_type": "USED"}]},
+            include={"product": {"include": {"canonical": True}}},
+        )
+        wasted_events = await db.inventoryevent.find_many(
+            where={**base_where, "AND": base_where["AND"] + [{"event_type": "WASTED"}]},
+            include={"product": {"include": {"canonical": True}}},
+        )
+
+        def _name(event) -> str:
+            p = event.product
+            if not p:
+                return "Unknown"
+            return p.name or (p.canonical.name if p.canonical else "Unknown")
+
+        # Aggregate USED
+        usage_by_product: dict = defaultdict(float)
+        usage_names: dict = {}
+        for e in used_events:
+            pid = e.contextual_product_id
+            usage_by_product[pid] += abs(e.quantity)
+            usage_names[pid] = _name(e)
+
+        # Aggregate WASTED
+        waste_by_product: dict = defaultdict(float)
+        waste_names: dict = {}
+        for e in wasted_events:
+            pid = e.contextual_product_id
+            waste_by_product[pid] += abs(e.quantity)
+            waste_names[pid] = _name(e)
+
+        most_used_id    = max(usage_by_product, key=usage_by_product.get) if usage_by_product else None
+        most_wasted_id  = max(waste_by_product, key=waste_by_product.get) if waste_by_product else None
+
+        return {
+            "most_used_item":    usage_names.get(most_used_id)  if most_used_id  else None,
+            "consumption_today": round(sum(usage_by_product.values()), 3),
+            "waste_today":       round(sum(waste_by_product.values()), 3),
+            "most_wasted_item":  waste_names.get(most_wasted_id) if most_wasted_id else None,
+        }
+
+    async def get_usage_history(
+        self,
+        organization_id: str,
+        brand_id: Optional[str] = None,
+        limit: int = 10,
+    ) -> List:
+        conditions: list = [
+            {"organization_id": organization_id},
+            {"event_type": {"in": ["USED", "WASTED"]}},
+        ]
+        if brand_id:
+            conditions.append({"product": {"AND": [
+                {"OR": [{"brand_id": None}, {"brand_id": brand_id}]}
+            ]}})
+
+        return await db.inventoryevent.find_many(
+            where={"AND": conditions},
+            include={"product": {"include": {"canonical": True}}},
+            order={"occurred_at": "desc"},
+            take=limit,
+        )
+
+    async def add_usage_event(
+        self,
+        contextual_product_id: str,
+        organization_id: str,
+        event_type: str,          # "USED" | "WASTED"
+        quantity: float,           # positive; stored as negative delta
+        unit: str,
+        consumption_reason: Optional[str] = None,
+        waste_reason: Optional[str]       = None,
+        actor_id: Optional[str]           = None,
+    ):
+        from prisma import Json
+
+        data: dict = {
+            "contextual_product_id": contextual_product_id,
+            "organization_id": organization_id,
+            "event_type": event_type,
+            "quantity": -abs(quantity),    # delta is always negative for usage
+            "unit": unit,
+        }
+        if consumption_reason:
+            data["consumption_reason"] = consumption_reason
+        if waste_reason:
+            data["waste_reason"] = waste_reason
+        if actor_id:
+            data["actor_id"] = actor_id
+
+        event = await db.inventoryevent.create(data=data)
+
+        # Decrement the cached current_stock
+        await db.contextualproduct.update(
+            where={"id": contextual_product_id},
+            data={"current_stock": {"decrement": abs(quantity)}},
+        )
+
+        return event
 
     async def get_pending_review_products(self) -> List[dict]:
         """Return all ContextualProducts flagged for admin promotion review."""

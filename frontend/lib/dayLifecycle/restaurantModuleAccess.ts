@@ -9,7 +9,7 @@ export interface ModuleAccess {
 
 export const RESTAURANT_MODULE_CONFIG: Record<string, ModuleAccess> = {
   "/dashboard": { path: "/dashboard", allowReadOnly: true, requiresOpen: false, hasCustomLockedUI: true },
-  "/dashboard/kitchen-service": { path: "/dashboard/kitchen-service", allowReadOnly: true, requiresOpen: true, hasCustomLockedUI: true },
+  "/dashboard/sales": { path: "/dashboard/sales", allowReadOnly: true, requiresOpen: true, hasCustomLockedUI: true },
   "/dashboard/inventory": { path: "/dashboard/inventory", allowReadOnly: true, requiresOpen: true, hasCustomLockedUI: true },
   "/dashboard/closing": { path: "/dashboard/closing", allowReadOnly: true, requiresOpen: true, hasCustomLockedUI: true },
 };

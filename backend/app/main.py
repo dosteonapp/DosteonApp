@@ -16,9 +16,15 @@ from app.core.rate_limit import setup_rate_limiting
 # Initialize logging as early as possible
 setup_logging()
 
+import logging as _logging
+_startup_logger = _logging.getLogger("dosteon.startup")
+_startup_logger.info(f"Starting Dosteon API | env={settings.APP_ENV} | debug={settings.DEBUG}")
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    docs_url="/docs" if not settings.is_production else None,
+    redoc_url="/redoc" if not settings.is_production else None,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json" if not settings.is_production else None,
 )
 
 metrics_store = MetricsStore()
@@ -143,13 +149,44 @@ if settings.BACKEND_CORS_ORIGINS:
 @app.middleware("http")
 async def db_reconnect_middleware(request: Request, call_next):
     """Ensure DB is connected before every request — handles Supabase free tier drops."""
+    # Health endpoints do their own DB check and must always be reachable.
+    if not request.url.path.startswith("/health"):
+        try:
+            await ensure_connected()
+        except Exception as e:
+            from app.core.logging import get_logger
+            logger = get_logger("db_middleware")
+            logger.error(f"DB reconnect failed: {e}")
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "Service temporarily unavailable. Please retry."},
+            )
     try:
-        await ensure_connected()
+        return await call_next(request)
     except Exception as e:
-        from app.core.logging import get_logger
-        logger = get_logger("db_middleware")
-        logger.error(f"DB reconnect failed: {e}")
-    return await call_next(request)
+        err = str(e).lower()
+        if any(k in err for k in ("connection", "socket", "econnreset", "broken pipe", "engine")):
+            from app.core.logging import get_logger
+            logger = get_logger("db_middleware")
+            logger.warning(f"DB connection lost mid-request, returning 503: {e}")
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "Service temporarily unavailable. Please retry."},
+            )
+        raise
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Log unhandled exceptions and return 500 with detail in non-production."""
+    import traceback
+    from app.core.logging import get_logger
+    logger = get_logger("exception_handler")
+    logger.error(
+        f"Unhandled exception on {request.method} {request.url.path}: {exc}",
+        exc_info=exc,
+    )
+    detail = f"{type(exc).__name__}: {exc}" if not settings.is_production else "Internal Server Error"
+    return JSONResponse(status_code=500, content={"detail": detail, "request_id": get_request_id()})
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
@@ -178,7 +215,10 @@ async def health():
 @app.get("/health/live")
 async def health_live():
     """Liveness probe — no DB check, just confirms the process is running."""
-    return {"status": "ok"}
+    response: dict = {"status": "ok"}
+    if not settings.is_production:
+        response["env"] = settings.APP_ENV
+    return response
 
 
 @app.get("/health/ready")
@@ -188,22 +228,36 @@ async def health_ready():
     Returns 200 with {"status": "ok"} on success or 503 with
     {"status": "error", "detail": "..."} on failure.
     """
+    import asyncio as _asyncio
+    import os as _os
     from app.db.prisma import db
     from app.core.logging import get_logger
     logger = get_logger("health_ready")
+
+    if not _os.getenv("DATABASE_URL"):
+        return JSONResponse(
+            status_code=503,
+            content={"status": "error", "detail": "DATABASE_URL is not set", "request_id": get_request_id()},
+        )
+
     try:
+        # Force a fresh connect to bypass stale is_connected() from a failed startup.
+        if db.is_connected():
+            try:
+                await db.disconnect()
+            except Exception:
+                pass
+        await _asyncio.wait_for(db.connect(), timeout=8.0)
         await db.execute_raw("SELECT 1")
         return {"status": "ok"}
     except Exception as e:
         logger.error("Readiness check failed", exc_info=e)
-        return JSONResponse(
-            status_code=503,
-            content={
-                "status": "error",
-                "detail": "Dependency check failed. See logs with this request_id for details.",
-                "request_id": get_request_id(),
-            },
-        )
+        content: dict = {"status": "error", "request_id": get_request_id()}
+        if not settings.is_production:
+            content["detail"] = str(e)
+        else:
+            content["detail"] = "Dependency check failed. See logs with this request_id for details."
+        return JSONResponse(status_code=503, content=content)
 
 
 @app.exception_handler(HTTPException)

@@ -27,9 +27,22 @@ class EmailService:
         """Send an email using the Resend HTTP API.
 
         - Uses RESEND_API_KEY and RESEND_FROM_EMAIL (or FROM_EMAIL) from settings.
+        - In development: redirects all emails to DEV_EMAIL_OVERRIDE if set.
+        - In staging: prepends [STAGING] to the subject line.
         - Logs structured success / error messages.
         - Raises RuntimeError if sending fails.
         """
+        # --- Environment guards ---
+        dev_override = settings.DEV_EMAIL_OVERRIDE
+        if settings.is_development and dev_override:
+            logger.warning(
+                f"[DEV] Email override active — redirecting to {dev_override} (original: {to_email})",
+                extra={"extra_context": {"email_type": email_type, "original_to": to_email}},
+            )
+            to_email = dev_override
+
+        if settings.is_staging:
+            subject = f"[STAGING] {subject}"
 
         if not self.resend_api_key:
             logger.error(

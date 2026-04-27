@@ -32,10 +32,7 @@ export function ReviewOpeningChecklist({ items, onBack, onConfirm }: ReviewOpeni
   const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
-      // 1. Instantly transition UI to the unlocked state
-      await finishOpening();
-
-      // 2. Build counts map for backend
+      // 1. Build counts map
       const counts: Record<string, number> = {};
       items.forEach((item: any) => {
         if (item.id) {
@@ -43,8 +40,11 @@ export function ReviewOpeningChecklist({ items, onBack, onConfirm }: ReviewOpeni
         }
       });
 
-      // 3. Submit to backend (now faster due to batch updates)
+      // 2. Submit to backend first — if this fails, the UI stays locked (correct)
       await restaurantOpsService.submitOpeningChecklist({ counts });
+
+      // 3. Only transition UI to OPEN after backend confirms success
+      await finishOpening();
 
       toast({
         title: "Kitchen Opened",
@@ -56,11 +56,14 @@ export function ReviewOpeningChecklist({ items, onBack, onConfirm }: ReviewOpeni
       } else {
         router.push("/dashboard");
       }
-    } catch (err) {
-      console.error("Failed to submit opening checklist:", err);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail || "";
+      const msg = detail.includes("not available yet")
+        ? detail
+        : "Failed to open kitchen. Please try again.";
       toast({
-        title: "Error",
-        description: "Failed to open kitchen. Please try again.",
+        title: "Cannot Open Kitchen",
+        description: msg,
         variant: "destructive",
       });
     } finally {
