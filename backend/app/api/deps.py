@@ -120,6 +120,13 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
 
         if not profile:
             logger.error(f"Auto-create profile failed: {last_error or ''}")
+            _err_str = str(last_error).lower() if last_error else ""
+            _is_db_error = any(k in _err_str for k in ("connection", "engine", "socket", "prisma", "timeout", "econnreset"))
+            if _is_db_error:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Service temporarily unavailable. Please retry.",
+                )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User profile not found and could not be created. Please contact support.",
