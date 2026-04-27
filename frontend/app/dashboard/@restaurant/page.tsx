@@ -27,6 +27,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn, formatUserName } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
+import { BrandSwitcherCard } from "@/components/BrandSwitcherCard";
 
 export default function RestaurantDashboardPage() {
   const { isOpen, isLoading: isStatusLoading, isClosingTimeReached, targetClosingTime } = useRestaurantDayLifecycle();
@@ -61,6 +62,11 @@ export default function RestaurantDashboardPage() {
 
   return (
     <AppContainer className="pb-24">
+        {/* Brand switcher — top-left of content, below the header bar */}
+        <div className="flex items-start pb-4">
+          <BrandSwitcherCard />
+        </div>
+
         {/* Responsive Header Container */}
         <div className="w-full">
             {isOpen ? (
@@ -85,8 +91,8 @@ export default function RestaurantDashboardPage() {
                     }
                     action={
                         <Button className="w-fit h-14 px-10 rounded-[8px] border-2 border-[#3B59DA] bg-white hover:bg-slate-50 text-[#3B59DA] font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]" asChild>
-                            <Link href="/dashboard/kitchen-service">
-                                Proceed to Kitchen Service <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
+                            <Link href="/dashboard/sales">
+                                Proceed to Sales <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                             </Link>
                         </Button>
                     }
@@ -168,16 +174,16 @@ export default function RestaurantDashboardPage() {
                                     <div className="flex items-center gap-3">
                                         <Badge className={cn(
                                             "text-[9px] font-black px-2 py-0.5 rounded-[6px] border-none flex items-center gap-2 w-fit uppercase font-figtree tracking-widest leading-none",
-                                            activity.action === 'Updated' ? "bg-indigo-50 text-indigo-600 font-figtree" :
-                                            activity.action === 'Received' ? "bg-emerald-50 text-emerald-600 font-figtree" :
-                                            "bg-rose-50 text-rose-600 font-figtree"
+                                            activity.action === 'Updated' ? "bg-indigo-50 text-indigo-600" :
+                                            activity.action === 'Received' ? "bg-emerald-50 text-emerald-600" :
+                                            "bg-rose-50 text-rose-600"
                                         )}>
-                                            {activity.action}
+                                            <span className="font-figtree">{activity.action}</span>
                                         </Badge>
-                                        <FigtreeText className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none mb-0 font-figtree">{activity.time}</FigtreeText>
+                                        <span className="font-figtree text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none">{activity.time}</span>
                                     </div>
-                                    <FigtreeText className="font-bold text-[20px] tracking-tight group-hover:text-[#3B59DA] transition-colors leading-tight font-figtree">{activity.activity}</FigtreeText>
-                                    <FigtreeText className="text-[15px] font-bold text-slate-500 line-clamp-1 leading-relaxed opacity-80 italic font-figtree">{activity.description}</FigtreeText>
+                                    <p className="font-figtree font-bold text-[20px] tracking-tight group-hover:text-[#3B59DA] transition-colors leading-tight">{activity.activity}</p>
+                                    <p className="font-figtree text-[15px] font-bold text-slate-500 line-clamp-1 leading-relaxed opacity-80 italic">{activity.description}</p>
                                 </div>
                                 <div className="shrink-0 ml-6 hidden lg:block">
                                     <Button 

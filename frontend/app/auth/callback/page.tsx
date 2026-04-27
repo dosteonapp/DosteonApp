@@ -114,13 +114,39 @@ export default function AuthCallbackPage() {
         });
       }
 
-      const metadata = session.user?.user_metadata ?? {};
-      const isNewUser = !metadata.onboarding_completed;
+      // Fetch the backend profile — DB is the source of truth for onboarding_completed.
+      // Use a direct fetch with AbortController instead of axiosInstance so we bypass
+      // the 5s retry-wait in the network-error interceptor.
+      let onboardingCompleted = false;
+      {
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 3000);
+        try {
+          const res = await fetch("/api/v1/auth/me", {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            credentials: "include",
+            signal: controller.signal,
+          });
+          clearTimeout(tid);
+          if (res.ok) {
+            const profile = await res.json();
+            onboardingCompleted = Boolean(profile?.onboarding_completed);
+          } else {
+            const metadata = session.user?.user_metadata ?? {};
+            onboardingCompleted = Boolean(metadata.onboarding_completed);
+          }
+        } catch {
+          clearTimeout(tid);
+          const metadata = session.user?.user_metadata ?? {};
+          onboardingCompleted = Boolean(metadata.onboarding_completed);
+        }
+      }
 
-      if (!isNewUser && nextParam?.startsWith("/")) {
+      if (onboardingCompleted && nextParam?.startsWith("/")) {
+        // Only honour ?next= for already-onboarded users to prevent skipping
         router.replace(nextParam);
       } else {
-        router.replace(isNewUser ? "/onboarding" : "/dashboard");
+        router.replace(onboardingCompleted ? "/dashboard" : "/onboarding");
       }
     };
 

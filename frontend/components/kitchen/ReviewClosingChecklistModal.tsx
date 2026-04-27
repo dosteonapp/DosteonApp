@@ -46,30 +46,25 @@ export function ReviewClosingChecklistModal({
     const handleConfirm = async () => {
         setIsSubmitting(true);
         try {
-            // 1. Submit to backend
-            const submitTask = restaurantOpsService.submitClosingChecklist({ 
-                summary, 
-                items 
-            });
-            
-            // 2. Transition lifecycle immediately
-            await forceClose();
+            // 1. Submit to backend first — if this fails the day stays OPEN (correct)
+            await restaurantOpsService.submitClosingChecklist({ summary, items });
 
-            // Await backend before showing success
-            await submitTask;
+            // 2. Only transition UI to CLOSED after backend confirms
+            await forceClose();
 
             toast({
                 title: "Kitchen Closed",
                 description: "Closing checklist submitted. Restaurant operations are closed for today.",
             });
-            
+
             onOpenChange(false);
             router.push("/dashboard");
         } catch (error: any) {
             console.error("Failed to close kitchen:", error);
+            const detail = error?.response?.data?.detail || "";
             toast({
-                title: "Submission Failed",
-                description: "Failed to submit closing checklist.",
+                title: "Cannot Close Kitchen",
+                description: detail || "Failed to submit closing checklist. Please try again.",
                 variant: "destructive",
             });
         } finally {

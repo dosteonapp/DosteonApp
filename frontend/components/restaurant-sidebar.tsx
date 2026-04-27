@@ -11,7 +11,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Utensils,
+  TrendingUp,
   Moon,
   Users,
   ShoppingCart,
@@ -53,9 +53,9 @@ export function RestaurantSidebar() {
       title: "Home",
     },
     {
-      href: "/dashboard/kitchen-service",
-      icon: Utensils,
-      title: "Kitchen Service",
+      href: "/dashboard/sales",
+      icon: TrendingUp,
+      title: "Sales",
     },
     {
       href: "/dashboard/inventory",
@@ -140,7 +140,7 @@ export function RestaurantSidebar() {
         </Button>
       </div>
 
-      <div className="flex-1 flex flex-col justify-between overflow-y-auto no-scrollbar py-10 px-6">
+      <div className="flex-1 flex flex-col justify-between overflow-y-auto no-scrollbar py-6 px-6">
         {/* Tier 1: Operations Section */}
         <div className="space-y-4">
           {!isSidebarCollapsed && (

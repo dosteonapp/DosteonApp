@@ -7,6 +7,7 @@ from app.core.logging import get_logger, set_log_user_context
 from app.core.config import settings
 from typing import List, Optional
 from uuid import UUID
+from app.db.prisma import db
 
 logger = get_logger("deps")
 security = HTTPBearer()
@@ -127,17 +128,40 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
     # Attach selected Supabase user_metadata flags to the profile dict so
     # downstream callers (e.g. /auth/me) can expose them without having
     # to re-fetch the Supabase user.
+    #
+    # onboarding_completed: DB profile column is the source of truth (written
+    # by POST /onboarding/complete).  Supabase metadata is used as a fallback
+    # for sessions that predate the new column (existing users who already
+    # finished the old onboarding flow will have it set in metadata).
     metadata = payload.get("user_metadata") or {}
+
+    # Safely convert profile to a mutable dict if it isn't already
     try:
-        profile["onboarding_completed"] = metadata.get("onboarding_completed")
+        _ = profile["id"]          # test mutability
+        profile_dict = profile
+    except TypeError:
+        profile_dict = dict(profile)
+
+    # Resolve onboarding_completed: DB column wins; fall back to metadata flag
+    db_onboarding = profile_dict.get("onboarding_completed")
+    if db_onboarding is None:
+        # Column may not exist yet on older DB rows — treat as False
+        db_onboarding = False
+    meta_onboarding = metadata.get("onboarding_completed")
+
+    # A user is considered onboarded if EITHER the DB flag or the legacy
+    # Supabase metadata flag is True.
+    resolved_onboarding = bool(db_onboarding) or bool(meta_onboarding)
+
+    try:
+        profile["onboarding_completed"] = resolved_onboarding
         profile["onboarding_skipped"] = metadata.get("onboarding_skipped")
         profile["email_verified"] = metadata.get("email_verified")
         profile["password_changed_at"] = metadata.get("password_changed_at")
     except TypeError:
-        # In case profile is not directly mutable, fall back to a plain dict
         profile = {
             **dict(profile),
-            "onboarding_completed": metadata.get("onboarding_completed"),
+            "onboarding_completed": resolved_onboarding,
             "onboarding_skipped": metadata.get("onboarding_skipped"),
             "email_verified": metadata.get("email_verified"),
             "password_changed_at": metadata.get("password_changed_at"),
@@ -171,8 +195,9 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials | None = D
 
 
 class SecurityContext:
-    def __init__(self, user: dict):
+    def __init__(self, user: dict, brand_id: Optional[str] = None):
         self.user = user
+        self._brand_id = brand_id
 
     @property
     def user_id(self) -> str:
@@ -185,6 +210,54 @@ class SecurityContext:
     @property
     def role(self) -> str:
         return self.user.get("role")
+
+    @property
+    def brand_id(self) -> Optional[str]:
+        return self._brand_id
+
+    @brand_id.setter
+    def brand_id(self, value: Optional[str]):
+        self._brand_id = value
+
+
+# ---------------------------------------------------------------------------
+# Brand resolution
+# ---------------------------------------------------------------------------
+
+async def resolve_brand_for_org(
+    organization_id: Optional[str],
+    requested_brand_id: Optional[str],
+) -> Optional[str]:
+    """Resolve the active brand_id for a request.
+
+    Rules:
+    - If X-Brand-ID header is present, validate it belongs to the org and return it.
+    - If absent, return the first active brand for the org (oldest created_at).
+    - If the org has no brands yet, return None (full org-level fallback).
+    """
+    if not organization_id:
+        return None
+
+    if requested_brand_id:
+        brand = await db.brand.find_unique(where={"id": requested_brand_id})
+        if not brand or str(brand.organization_id) != str(organization_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="The requested brand does not belong to your organisation.",
+            )
+        if brand.deleted_at is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The requested brand has been deleted.",
+            )
+        return str(brand.id)
+
+    # Default to the first active brand
+    first_brand = await db.brand.find_first(
+        where={"organization_id": organization_id, "deleted_at": None, "is_active": True},
+        order={"created_at": "asc"},
+    )
+    return str(first_brand.id) if first_brand else None
 
 
 class RoleChecker:
@@ -281,6 +354,36 @@ async def get_inventory_write_mutation_context(
     _csrf: None = Depends(verify_csrf),
 ) -> SecurityContext:
     """Inventory writers (Owner / Manager / CHEF) — with CSRF verification."""
+    return ctx
+
+
+async def get_brand_context(
+    x_brand_id: Optional[str] = Header(None, alias="X-Brand-ID"),
+    ctx: SecurityContext = Depends(get_security_context),
+) -> SecurityContext:
+    """Like get_security_context but also resolves the active brand.
+
+    Reads the optional X-Brand-ID request header:
+    - Present & valid → use that brand (403 if it doesn't belong to the org).
+    - Absent           → default to the first active brand for the org.
+    - No brands yet    → brand_id is None (full org-level query, backwards-compat).
+
+    Downstream endpoints read ctx.brand_id to scope their queries.
+    """
+    ctx.brand_id = await resolve_brand_for_org(ctx.organization_id, x_brand_id)
+    return ctx
+
+
+async def get_brand_mutation_context(
+    x_brand_id: Optional[str] = Header(None, alias="X-Brand-ID"),
+    ctx: SecurityContext = Depends(get_mutation_context),
+) -> SecurityContext:
+    """Like get_mutation_context (auth + CSRF) but also resolves the active brand.
+
+    Use this on POST / PATCH / DELETE endpoints that need both CSRF protection
+    and brand-scoped context.
+    """
+    ctx.brand_id = await resolve_brand_for_org(ctx.organization_id, x_brand_id)
     return ctx
 
 

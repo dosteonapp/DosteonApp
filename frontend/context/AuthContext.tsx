@@ -206,7 +206,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Flush stale user/profile cache so the dashboard loads fresh data.
       await queryClient.invalidateQueries({ queryKey: ["user"] });
 
-      router.push("/dashboard");
+      // Route based on onboarding status — new users who verified email but
+      // abandoned the flow must be funnelled back to /onboarding, not /dashboard.
+      let onboardingCompleted = true; // safe default: don't block existing users on API failure
+      try {
+        const { data: profile } = await axiosInstance.get("/auth/me");
+        onboardingCompleted = Boolean(profile?.onboarding_completed);
+      } catch {
+        // API unreachable — keep safe default (true) so existing users aren't blocked
+      }
+      router.push(onboardingCompleted ? "/dashboard" : "/onboarding");
       return true;
     } catch (error) {
       // Keep the error inline on the form — never route away on a login failure.

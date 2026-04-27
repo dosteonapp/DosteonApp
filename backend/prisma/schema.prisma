@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-py"
-  binaryTargets   = ["native"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -18,19 +18,25 @@ datasource db {
 // ---------------------------------------------------------
 
 model Organization {
-  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String
-  type          String          @default("restaurant")
-  address       String?
-  logo_url      String?
-  settings      Json?           @default("{\"opening_time\": \"08:00\", \"closing_time\": \"22:00\"}")
-  created_at    DateTime        @default(now()) @db.Timestamptz(6)
-  deleted_at    DateTime?       @db.Timestamptz(6)
-  
-  profiles      Profile[]
-  locations     Location[]
-  products      ContextualProduct[]
-  day_status    DayStatus?
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  type              String          @default("restaurant")
+  city              String?
+  phone             String?
+  daily_stock_count Boolean         @default(false)
+  address           String?
+  logo_url          String?
+  settings          Json?           @default("{\"opening_time\": \"08:00\", \"closing_time\": \"22:00\"}")
+  created_at        DateTime        @default(now()) @db.Timestamptz(6)
+  deleted_at        DateTime?       @db.Timestamptz(6)
+
+  profiles          Profile[]
+  locations         Location[]
+  products          ContextualProduct[]
+  day_status        DayStatus?
+  brands            Brand[]
+  menu_items        MenuItem[]
+  sale_orders       SaleOrder[]
 
   @@map("organizations")
 }
@@ -43,17 +49,18 @@ enum UserRole {
 }
 
 model Profile {
-  id              String        @id @db.Uuid
-  email           String
-  role            UserRole      @default(STAFF)
-  first_name      String?
-  last_name       String?
-  avatar_url      String?
-  organization_id String?       @db.Uuid
-  created_at      DateTime      @default(now()) @db.Timestamptz(6)
-  deleted_at      DateTime?     @db.Timestamptz(6)
+  id                   String        @id @db.Uuid
+  email                String
+  role                 UserRole      @default(STAFF)
+  first_name           String?
+  last_name            String?
+  avatar_url           String?
+  organization_id      String?       @db.Uuid
+  onboarding_completed Boolean       @default(false)
+  created_at           DateTime      @default(now()) @db.Timestamptz(6)
+  deleted_at           DateTime?     @db.Timestamptz(6)
 
-  organization    Organization? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  organization         Organization? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 
   @@map("profiles")
   @@index([email])
@@ -91,39 +98,44 @@ model CanonicalProduct {
 model Location {
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organization_id String    @db.Uuid
+  brand_id        String?   @db.Uuid
+  name            String?
   country         String
   region          String?
   city            String?
-  location_type   String    
+  location_type   String
   created_at      DateTime  @default(now()) @db.Timestamptz(6)
 
-  organization    Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  organization    Organization     @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  brand           Brand?           @relation(fields: [brand_id], references: [id])
   products        ContextualProduct[]
   events_source   InventoryEvent[] @relation("SourceLocation")
   events_dest     InventoryEvent[] @relation("DestinationLocation")
 
   @@map("locations")
+  @@index([brand_id])
 }
 
 model ContextualProduct {
   id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   canonical_product_id  String    @db.Uuid
-  organization_id       String    @db.Uuid 
-  owner_type            String    @default("restaurant") 
+  organization_id       String    @db.Uuid
+  brand_id              String?   @db.Uuid
+  owner_type            String    @default("restaurant")
 
   name                  String?   // Denormalized for restaurant-specific naming
-  sku                   String?   
+  sku                   String?
   brand_name            String?
   pack_size             Float?
-  pack_unit             String?   
-  preferred_unit        String?   
+  pack_unit             String?
+  preferred_unit        String?
 
   current_stock         Float     @default(0) // Performance Cache
   reorder_threshold     Float?    @default(0)
   critical_threshold    Float?    @default(0)
-  
+
   location_id           String?   @db.Uuid
-  storage_type          String?   
+  storage_type          String?
 
   status                String    @default("active")
   image_url             String?
@@ -135,11 +147,13 @@ model ContextualProduct {
 
   canonical             CanonicalProduct @relation(fields: [canonical_product_id], references: [id], onDelete: Restrict)
   organization          Organization     @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  brand                 Brand?           @relation(fields: [brand_id], references: [id])
   location              Location?        @relation(fields: [location_id], references: [id])
   inventory_events      InventoryEvent[]
 
   @@map("contextual_products")
   @@index([organization_id])
+  @@index([brand_id])
   @@index([sku])
   @@unique([organization_id, canonical_product_id])
 }
@@ -158,6 +172,21 @@ enum InventoryEventType {
   CLOSING_STOCK
 }
 
+enum ConsumptionReason {
+  CUSTOMER_SERVICE
+  STAFF_MEAL
+  OTHER
+}
+
+enum WasteReason {
+  SPOILED_EXPIRED
+  DAMAGED_PACKAGING
+  SPILLED_DROPPED
+  OVERCOOKED_BURNED
+  QUALITY_ISSUE
+  OTHER
+}
+
 model InventoryEvent {
   id                      String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contextual_product_id   String             @db.Uuid
@@ -172,8 +201,10 @@ model InventoryEvent {
   actor_type              String?   
   actor_id                String?            @db.Uuid
 
-  reference_id            String?   
-  metadata                Json?     
+  reference_id            String?
+  metadata                Json?
+  consumption_reason      ConsumptionReason?
+  waste_reason            WasteReason?
 
   occurred_at             DateTime           @default(now()) @db.Timestamptz(6)
   created_at              DateTime           @default(now()) @db.Timestamptz(6)
@@ -233,4 +264,107 @@ model LoginAttempt {
   updated_at    DateTime  @updatedAt @db.Timestamptz(6)
 
   @@map("login_attempts")
+}
+
+// ---------------------------------------------------------
+// BRAND LAYER  (all Sales / Inventory is scoped by brand_id)
+// ---------------------------------------------------------
+
+model Brand {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organization_id String    @db.Uuid
+  name            String
+  logo_url        String?
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime? @db.Timestamptz(6)
+
+  organization    Organization        @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  locations       Location[]
+  menu_items      MenuItem[]
+  products        ContextualProduct[]
+  sale_orders     SaleOrder[]
+
+  @@unique([organization_id, name])
+  @@map("brands")
+  @@index([organization_id])
+}
+
+model MenuItem {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organization_id String    @db.Uuid
+  brand_id        String?   @db.Uuid
+  name            String
+  price           Float     @default(0)
+  cost            Float?    @default(0)
+  category        String    @default("Signature")
+  status          String    @default("active")
+  // "onboarding" marks items created during setup; allows targeted replace on re-submit
+  source          String    @default("onboarding")
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+
+  organization      Organization     @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  brand             Brand?           @relation(fields: [brand_id], references: [id])
+  sale_order_items  SaleOrderItem[]
+
+  @@map("menu_items")
+  @@index([organization_id])
+  @@index([brand_id])
+}
+
+// ---------------------------------------------------------
+// SALES LAYER
+// ---------------------------------------------------------
+
+enum SaleChannel {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum SaleStatus {
+  IN_PROGRESS
+  COMPLETED
+  VOIDED
+}
+
+model SaleOrder {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organization_id String      @db.Uuid
+  brand_id        String?     @db.Uuid
+  channel         SaleChannel @default(DINE_IN)
+  status          SaleStatus  @default(COMPLETED)
+  total_revenue   Float       @default(0)
+  total_cogs      Float       @default(0)
+  gross_profit    Float       @default(0)
+  logged_by       String?     @db.Uuid
+  business_date   DateTime    @db.Date
+  occurred_at     DateTime    @default(now()) @db.Timestamptz(6)
+  created_at      DateTime    @default(now()) @db.Timestamptz(6)
+
+  organization    Organization    @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  brand           Brand?          @relation(fields: [brand_id], references: [id])
+  items           SaleOrderItem[]
+
+  @@map("sale_orders")
+  @@index([organization_id])
+  @@index([brand_id])
+  @@index([organization_id, business_date])
+}
+
+model SaleOrderItem {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sale_order_id String    @db.Uuid
+  menu_item_id  String    @db.Uuid
+  quantity      Int       @default(1)
+  unit_price    Float     @default(0)
+  unit_cogs     Float     @default(0)
+  line_total    Float     @default(0)
+
+  sale_order    SaleOrder  @relation(fields: [sale_order_id], references: [id], onDelete: Cascade)
+  menu_item     MenuItem   @relation(fields: [menu_item_id], references: [id], onDelete: Restrict)
+
+  @@map("sale_order_items")
+  @@index([sale_order_id])
+  @@index([menu_item_id])
 }

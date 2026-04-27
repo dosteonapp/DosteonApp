@@ -7,6 +7,7 @@ import { RestaurantDayLifecycleOverlay } from "@/components/day/RestaurantDayLif
 import { RestaurantDayRouteGuard } from "@/components/day/RestaurantDayRouteGuard";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { SidebarProvider } from "@/context/SidebarContext";
+import { BrandProvider } from "@/context/BrandContext";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -25,23 +26,25 @@ export default async function RestaurantLayout({
   return (
     <RestaurantDayLifecycleProvider>
       <SidebarProvider>
-        <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
-          <RestaurantSidebar />
-          <main className="flex-1 min-w-0 relative flex flex-col overflow-hidden">
-            <Suspense fallback={<div className="h-[100px] bg-white border-b border-slate-100" />}>
-              <DashboardHeader />
-            </Suspense>
-            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <BrandProvider>
+          <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
+            <RestaurantSidebar />
+            <main className="flex-1 min-w-0 relative flex flex-col overflow-hidden">
+              <Suspense fallback={<div className="h-[100px] bg-white border-b border-slate-100" />}>
+                <DashboardHeader />
+              </Suspense>
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
-                    <RestaurantDayLifecycleOverlay />
-                    <RestaurantDayRouteGuard>
-                        {children}
-                    </RestaurantDayRouteGuard>
+                  <RestaurantDayLifecycleOverlay />
+                  <RestaurantDayRouteGuard>
+                    {children}
+                  </RestaurantDayRouteGuard>
                 </div>
-            </div>
-            <ToastContainer />
-          </main>
-        </div>
+              </div>
+              <ToastContainer />
+            </main>
+          </div>
+        </BrandProvider>
       </SidebarProvider>
     </RestaurantDayLifecycleProvider>
   );

@@ -2,6 +2,100 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime
+from enum import Enum
+
+
+# ---------------------------------------------------------------------------
+# Stock-usage enums
+# ---------------------------------------------------------------------------
+
+class ConsumptionReasonEnum(str, Enum):
+    CUSTOMER_SERVICE = "CUSTOMER_SERVICE"
+    STAFF_MEAL       = "STAFF_MEAL"
+    OTHER            = "OTHER"
+
+
+class WasteReasonEnum(str, Enum):
+    SPOILED_EXPIRED      = "SPOILED_EXPIRED"
+    DAMAGED_PACKAGING    = "DAMAGED_PACKAGING"
+    SPILLED_DROPPED      = "SPILLED_DROPPED"
+    OVERCOOKED_BURNED    = "OVERCOOKED_BURNED"
+    QUALITY_ISSUE        = "QUALITY_ISSUE"
+    OTHER                = "OTHER"
+
+
+# ---------------------------------------------------------------------------
+# Stock-usage request / response
+# ---------------------------------------------------------------------------
+
+class ConsumptionCreate(BaseModel):
+    product_id:          UUID
+    quantity:            float = Field(gt=0)
+    consumption_reason:  ConsumptionReasonEnum
+
+
+class WasteCreate(BaseModel):
+    product_id:   UUID
+    quantity:     float = Field(gt=0)
+    waste_reason: WasteReasonEnum
+
+
+class StockUsageEvent(BaseModel):
+    id:                  UUID
+    product_id:          UUID
+    product_name:        str
+    event_type:          str          # "USED" | "WASTED"
+    quantity:            float        # absolute value; sign conveyed by event_type
+    unit:                str
+    consumption_reason:  Optional[str] = None
+    waste_reason:        Optional[str] = None
+    occurred_at:         datetime
+
+    class Config:
+        from_attributes = True
+
+
+class StockUsageStats(BaseModel):
+    most_used_item:    Optional[str]  = None
+    consumption_today: float          = 0
+    waste_today:       float          = 0
+    most_wasted_item:  Optional[str]  = None
+
+
+# ---------------------------------------------------------------------------
+# Product catalog response
+# ---------------------------------------------------------------------------
+
+class InventoryProductItem(BaseModel):
+    id:            UUID
+    name:          str
+    sku:           Optional[str]  = None
+    category:      str
+    brand_name:    Optional[str]  = None   # Restaurant brand (Brand.name)
+    unit:          str
+    current_stock: float
+    min_level:     float
+    status_class:  str                     # "healthy" | "low" | "critical"
+    updated_at:    datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
+# Inventory stats (banner cards)
+# ---------------------------------------------------------------------------
+
+class StatCard(BaseModel):
+    value:              int
+    vs_last_week_pct:   Optional[float] = None
+
+
+class InventoryStats(BaseModel):
+    items_in_stock: StatCard
+    healthy_stock:  StatCard
+    low_stock:      StatCard
+    critical:       StatCard
 
 class CanonicalCatalogItem(BaseModel):
     id: UUID

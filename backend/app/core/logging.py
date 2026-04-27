@@ -33,24 +33,41 @@ class StructuredFormatter(logging.Formatter):
         return json.dumps(log_data, default=str)
 
 def setup_logging():
+    """Configure logging based on the current environment.
+
+    - production:  JSON structured logs (readable by log aggregators)
+    - staging:     [STAGING]-prefixed plain text (easy to spot in Render logs)
+    - development: human-readable colored output
     """
-    Setup structured logging for production.
-    Standard logs go to stdout in JSON format for cloud observability.
-    """
+    from app.core.config import settings
+
+    level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-    
+    root_logger.setLevel(level)
+
     # Remove existing handlers
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
-        
+
     handler = logging.StreamHandler(sys.stdout)
-    # In development, you might want a human-readable formatter
-    # In production, use StructuredFormatter
-    handler.setFormatter(StructuredFormatter())
-    
+
+    if settings.is_production:
+        handler.setFormatter(StructuredFormatter())
+    elif settings.is_staging:
+        formatter = logging.Formatter(
+            "[STAGING] %(levelname)s %(name)s: %(message)s"
+        )
+        handler.setFormatter(formatter)
+    else:
+        # Development: colored, human-readable
+        formatter = logging.Formatter(
+            "\033[36m%(asctime)s\033[0m %(name)s %(levelname)s: %(message)s",
+            datefmt="%H:%M:%S",
+        )
+        handler.setFormatter(formatter)
+
     root_logger.addHandler(handler)
-    
+
     # Force uvicorn loggers to use our formatter
     for logger_name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
         logging_logger = logging.getLogger(logger_name)

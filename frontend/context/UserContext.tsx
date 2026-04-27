@@ -78,8 +78,12 @@ const UserContent: React.FC<{ children: React.ReactNode; queryClient: QueryClien
         const { data } = await axiosInstance.get("auth/me");
         return {
           ...data,
-          // Map Supabase metadata (snake_case) into frontend booleans
-          onboardingCompleted: Boolean(metadata.onboarding_completed),
+          // Use the backend-resolved value (DB merged with metadata) as the
+          // canonical source of truth. Fall back to metadata only when the DB
+          // field is absent (pre-migration sessions).
+          onboardingCompleted: data.onboarding_completed !== undefined
+            ? Boolean(data.onboarding_completed)
+            : Boolean(metadata.onboarding_completed),
           onboardingSkipped: Boolean(metadata.onboarding_skipped),
           emailVerified: Boolean(metadata.email_verified),
         } as User;

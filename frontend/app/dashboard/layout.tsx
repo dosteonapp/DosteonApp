@@ -14,13 +14,18 @@ const DashboardLayout: React.FC<{
   const { user, fetchingUser } = useUser();
   const router = useRouter();
 
-  // Onboarding is now handled only in the dedicated signup/verification flow.
-  // Signed-in users reaching the dashboard should never be redirected back
-  // into onboarding here.
+  // Defense-in-depth: if an authenticated user somehow reaches /dashboard
+  // without having completed onboarding (e.g. abandoned mid-flow and signed
+  // in again later), redirect them back to /onboarding.
+  // Primary enforcement is in AuthContext.login + auth/callback, but this
+  // catches any edge case where those gates were bypassed.
   useEffect(() => {
     if (bypassAuth) return;
     if (fetchingUser) return;
     if (!user) return; // AuthGuard handles unauthenticated redirects
+    if (user.onboardingCompleted === false) {
+      router.replace("/onboarding");
+    }
   }, [user, fetchingUser, router]);
 
   return (
