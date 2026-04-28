@@ -126,6 +126,7 @@ function Stepper({
           step="0.5"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onFocus={(e) => e.target.select()}
           className="w-full h-10 rounded-[8px] border border-slate-200 bg-white px-3 pr-10 text-[15px] font-black text-[#1E293B] font-figtree text-center focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-[#3B59DA]/40 transition-all"
           placeholder="0"
         />

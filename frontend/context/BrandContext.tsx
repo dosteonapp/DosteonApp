@@ -95,8 +95,8 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
           if (initial) sessionStorage.setItem(SESSION_KEY, initial.id);
           else sessionStorage.removeItem(SESSION_KEY);
         }
-      } catch {
-        // Network failure — leave brands empty and show org-level data
+      } catch (err) {
+        console.error("[BrandContext] Failed to load brands:", err);
       } finally {
         if (!cancelled) setIsLoading(false);
       }

@@ -604,6 +604,7 @@ function DishForm({
             placeholder="0"
             value={form.price}
             onChange={set("price")}
+            onFocus={(e) => e.target.select()}
             className="h-12 text-[15px] font-semibold border-slate-200 rounded-[8px] focus-visible:ring-indigo-400/20 font-figtree"
           />
         </FormField>
@@ -615,6 +616,7 @@ function DishForm({
             placeholder="0"
             value={form.cost}
             onChange={set("cost")}
+            onFocus={(e) => e.target.select()}
             className="h-12 text-[15px] font-semibold border-slate-200 rounded-[8px] focus-visible:ring-indigo-400/20 font-figtree"
           />
         </FormField>

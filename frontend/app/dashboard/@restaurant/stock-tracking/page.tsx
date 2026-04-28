@@ -230,6 +230,7 @@ export default function StockTrackingPage() {
                               type="number"
                               value={item.openingStock}
                               onChange={(e) => handleStockChange(item.id, e.target.value)}
+                              onFocus={(e) => e.target.select()}
                               className="w-20"
                             />
                           ) : (
@@ -242,6 +243,7 @@ export default function StockTrackingPage() {
                               type="number"
                               value={item.closingStock}
                               onChange={(e) => handleStockChange(item.id, e.target.value)}
+                              onFocus={(e) => e.target.select()}
                               className="w-20"
                             />
                           ) : (
