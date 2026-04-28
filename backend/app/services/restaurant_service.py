@@ -668,35 +668,56 @@ class RestaurantService:
         if isinstance(settings, str):
             try:
                 settings = json.loads(settings)
-            except:
+            except Exception:
                 settings = {}
 
+        # Explicit DB columns always win over anything stored in the JSON blob.
         return {
+            **settings,
             "id": str(org.id),
             "name": org.name,
             "logo_url": org.logo_url,
-            **settings
+            "phone": org.phone,
+            "city": org.city,
+            "address": org.address,
+            # map city → location so the frontend field name matches
+            "location": org.city or settings.get("location"),
         }
 
     async def update_settings(self, organization_id: str, new_settings: dict):
         from app.db.prisma import db
 
-        update_data = {"settings": Json(new_settings)}
+        # Build the JSON blob (store everything so we don't lose custom keys)
+        update_data: dict = {"settings": Json(new_settings)}
+
+        # Also write the dedicated columns so Prisma queries can filter by them
         if "name" in new_settings:
             update_data["name"] = new_settings["name"]
         if "logo_url" in new_settings:
-            update_data["logo_url"] = new_settings["logo_url"]
+            update_data["logo_url"] = new_settings["logo_url"] or None
+        if "phone" in new_settings:
+            update_data["phone"] = new_settings["phone"] or None
+        # frontend sends "location" — store it in the city column
+        location = new_settings.get("location") or new_settings.get("city")
+        if location is not None:
+            update_data["city"] = location or None
+        if "address" in new_settings:
+            update_data["address"] = new_settings["address"] or None
 
         org = await db.organization.update(
             where={"id": organization_id},
-            data=update_data
+            data=update_data,
         )
 
         return {
+            **new_settings,
             "id": str(org.id),
             "name": org.name,
             "logo_url": org.logo_url,
-            **new_settings
+            "phone": org.phone,
+            "city": org.city,
+            "location": org.city,
+            "address": org.address,
         }
 
     async def get_notifications(self, organization_id: str, offset: int = 0, limit: int = 50):
