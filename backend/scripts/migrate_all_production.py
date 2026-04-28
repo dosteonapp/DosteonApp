@@ -59,7 +59,20 @@ STEPS = [
           AND "onboarding_completed" = false
           AND "deleted_at" IS NULL'''),
 
-    # ── 3. brands: logo_url, is_active, deleted_at ──────────────────────────
+    # ── 3. brands table + columns ────────────────────────────────────────────
+    ('brands table',
+     """CREATE TABLE IF NOT EXISTS brands (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL,
+  name            TEXT NOT NULL,
+  logo_url        TEXT,
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at      TIMESTAMPTZ,
+  UNIQUE (organization_id, name)
+)"""),
+    ('brands org index',
+     'CREATE INDEX IF NOT EXISTS brands_org_idx ON brands(organization_id)'),
     ('brands.logo_url column',
      'ALTER TABLE brands ADD COLUMN IF NOT EXISTS logo_url TEXT'),
     ('brands.is_active column',
@@ -81,7 +94,22 @@ STEPS = [
     ('contextual_products.brand_id index',
      'CREATE INDEX IF NOT EXISTS contextual_products_brand_id_idx ON contextual_products(brand_id)'),
 
-    # ── 6. menu_items: brand_id, cost, status, source ───────────────────────
+    # ── 6. menu_items table + columns ────────────────────────────────────────
+    ('menu_items table',
+     """CREATE TABLE IF NOT EXISTS menu_items (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL,
+  brand_id        UUID,
+  name            TEXT NOT NULL,
+  price           FLOAT NOT NULL DEFAULT 0,
+  cost            FLOAT DEFAULT 0,
+  category        TEXT NOT NULL DEFAULT 'Signature',
+  status          VARCHAR NOT NULL DEFAULT 'active',
+  source          VARCHAR NOT NULL DEFAULT 'onboarding',
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+)"""),
+    ('menu_items org index',
+     'CREATE INDEX IF NOT EXISTS menu_items_org_idx ON menu_items(organization_id)'),
     ('menu_items.brand_id column',
      'ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS brand_id UUID'),
     ('menu_items.brand_id index',
