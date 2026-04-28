@@ -210,14 +210,11 @@ export default function PersonalDetailsPage() {
             <div className="border-t border-slate-50 p-8 space-y-10">
               <div className="flex items-center gap-8">
                 <div className="relative group cursor-pointer" onClick={() => document.getElementById('avatar-upload')?.click()}>
-                  <Avatar className="h-24 w-24 border-4 border-slate-50 shadow-sm overflow-hidden">
-                    {user?.avatar_url ? (
-                        <AvatarImage src={user.avatar_url} className="object-cover" />
-                    ) : (
-                        <AvatarFallback className="bg-slate-100 text-[#3B59DA] font-black text-xl">
-                            {user?.first_name?.charAt(0) || "U"}
-                        </AvatarFallback>
-                    )}
+                  <Avatar key={user?.avatar_url ?? 'no-avatar'} className="h-24 w-24 border-4 border-slate-50 shadow-sm overflow-hidden">
+                    <AvatarImage src={user?.avatar_url ?? undefined} className="object-cover" />
+                    <AvatarFallback className="bg-slate-100 text-[#3B59DA] font-black text-xl">
+                      {user?.first_name?.charAt(0) || "U"}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="absolute bottom-0 right-0 h-7 w-7 bg-white border border-slate-100 rounded-full flex items-center justify-center shadow-sm text-slate-400 group-hover:text-[#3B59DA] transition-colors">
                     <Camera className="h-4 w-4" />
@@ -236,7 +233,7 @@ export default function PersonalDetailsPage() {
                     id="avatar-upload" 
                     type="file" 
                     className="hidden" 
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg"
                     onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;

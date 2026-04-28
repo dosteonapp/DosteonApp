@@ -76,6 +76,117 @@ async def _purge_stale_deleted_records():
         logger.warning(f"Retention purge failed (non-fatal): {e}")
 
 
+async def _ensure_storage_buckets():
+    """Create required Supabase Storage buckets and RLS policies if missing.
+
+    Uses the service role key (bucket creation) and DIRECT_URL (policy SQL).
+    Idempotent — safe to run on every startup.
+    """
+    import asyncpg
+    import os
+    from app.core.logging import get_logger
+    from app.core.supabase import supabase
+
+    logger = get_logger("startup.storage")
+
+    # 1. Create buckets (service role key bypasses RLS for this call)
+    for bucket_id in ("profiles", "inventory"):
+        try:
+            supabase.storage.create_bucket(bucket_id, options={"public": True})
+            logger.info(f"Storage bucket '{bucket_id}' created.")
+        except Exception as e:
+            msg = str(e).lower()
+            if "already exists" in msg or "duplicate" in msg or "409" in msg:
+                logger.debug(f"Storage bucket '{bucket_id}' already exists — OK.")
+            else:
+                logger.warning(f"Could not create storage bucket '{bucket_id}': {e}")
+
+    # 2. Ensure RLS policies exist so authenticated users can upload/read
+    direct_url = os.getenv("DIRECT_URL") or os.getenv("DATABASE_URL")
+    if not direct_url:
+        logger.warning("DIRECT_URL not set — skipping storage RLS policy setup.")
+        return
+
+    policies_sql = """
+    DO $$ BEGIN
+      -- profiles bucket: authenticated upload
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'storage' AND tablename = 'objects'
+          AND policyname = 'profiles_authenticated_insert'
+      ) THEN
+        EXECUTE $p$
+          CREATE POLICY profiles_authenticated_insert ON storage.objects
+            FOR INSERT TO authenticated
+            WITH CHECK (bucket_id = 'profiles')
+        $p$;
+      END IF;
+
+      -- profiles bucket: public read
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'storage' AND tablename = 'objects'
+          AND policyname = 'profiles_public_select'
+      ) THEN
+        EXECUTE $p$
+          CREATE POLICY profiles_public_select ON storage.objects
+            FOR SELECT TO public
+            USING (bucket_id = 'profiles')
+        $p$;
+      END IF;
+
+      -- profiles bucket: owner can update/delete their own uploads
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'storage' AND tablename = 'objects'
+          AND policyname = 'profiles_authenticated_update'
+      ) THEN
+        EXECUTE $p$
+          CREATE POLICY profiles_authenticated_update ON storage.objects
+            FOR UPDATE TO authenticated
+            USING (bucket_id = 'profiles')
+        $p$;
+      END IF;
+
+      -- inventory bucket: authenticated upload
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'storage' AND tablename = 'objects'
+          AND policyname = 'inventory_authenticated_insert'
+      ) THEN
+        EXECUTE $p$
+          CREATE POLICY inventory_authenticated_insert ON storage.objects
+            FOR INSERT TO authenticated
+            WITH CHECK (bucket_id = 'inventory')
+        $p$;
+      END IF;
+
+      -- inventory bucket: public read
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'storage' AND tablename = 'objects'
+          AND policyname = 'inventory_public_select'
+      ) THEN
+        EXECUTE $p$
+          CREATE POLICY inventory_public_select ON storage.objects
+            FOR SELECT TO public
+            USING (bucket_id = 'inventory')
+        $p$;
+      END IF;
+    END $$;
+    """
+
+    try:
+        conn = await asyncpg.connect(direct_url)
+        try:
+            await conn.execute(policies_sql)
+            logger.info("Storage RLS policies ensured.")
+        finally:
+            await conn.close()
+    except Exception as e:
+        logger.warning(f"Storage RLS policy setup failed (non-fatal): {e}")
+
+
 async def _validate_supabase_admin():
     """Verify the Supabase client is using the service role key.
 
@@ -120,6 +231,7 @@ async def startup_event():
     # Validate Supabase admin client — loud failure if service role key is wrong
     import asyncio
     asyncio.create_task(_validate_supabase_admin())
+    asyncio.create_task(_ensure_storage_buckets())
 
     # Run GDPR retention purge in the background — non-blocking, non-fatal
     asyncio.create_task(_purge_stale_deleted_records())
@@ -165,10 +277,13 @@ async def db_reconnect_middleware(request: Request, call_next):
         return await call_next(request)
     except Exception as e:
         err = str(e).lower()
-        if any(k in err for k in ("connection", "socket", "econnreset", "broken pipe", "engine")):
+        exc_type = type(e).__name__.lower()
+        # Match on message keywords OR exception class name (ReadError has an empty message)
+        if any(k in err for k in ("connection", "socket", "econnreset", "broken pipe", "engine")) \
+                or any(k in exc_type for k in ("readerror", "connectionerror", "connecterror", "engineerror")):
             from app.core.logging import get_logger
             logger = get_logger("db_middleware")
-            logger.warning(f"DB connection lost mid-request, returning 503: {e}")
+            logger.warning(f"DB connection lost mid-request, returning 503: {type(e).__name__}: {e}")
             return JSONResponse(
                 status_code=503,
                 content={"detail": "Service temporarily unavailable. Please retry."},
@@ -276,19 +391,6 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         },
     )
 
-
-@app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception):
-    from app.core.logging import get_logger
-    logger = get_logger("unhandled_exception")
-    logger.error("Unhandled exception", exc_info=exc)
-    return JSONResponse(
-        status_code=500,
-        content={
-            "detail": "Internal server error. Please try again later.",
-            "request_id": get_request_id(),
-        },
-    )
 
 @app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def catch_all(path_name: str, request: Request):

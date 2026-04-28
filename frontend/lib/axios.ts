@@ -154,45 +154,32 @@ axiosInstance.interceptors.response.use(
       : url;
     const errorStatus = error.response?.status || "Network Error";
 
-    // 1a. Handle gateway errors (502/503/504) — Render worker busy, retry after short wait
+    // 1a. Handle gateway errors (502/503/504) — silently retry once, no toast
     const isGatewayError = error.response?.status === 502 || error.response?.status === 503 || error.response?.status === 504;
     if (isGatewayError) {
       if (!error.config._retry) {
         error.config._retry = true;
-        toast.info("Server is busy...", {
-          description: "One moment — retrying your request...",
-        });
         await new Promise((resolve) => setTimeout(resolve, 3000));
         try {
           return await axiosInstance(error.config);
         } catch {
-          // Retry failed — fall through to toast
+          // Retry failed — fall through silently
         }
       }
-      toast.error("Server Unavailable", {
-        description: "The server is temporarily unavailable. Please try again in a moment.",
-      });
       return Promise.reject(error);
     }
 
-    // 1b. Handle network errors (e.g. Render cold start / ECONNRESET)
+    // 1b. Handle network errors (e.g. Render cold start / ECONNRESET) — silently retry once
     if (!error.response) {
-      // Retry once after 5s — cold starts on Render free tier take ~10-15s
       if (!error.config._retry) {
         error.config._retry = true;
-        toast.info("Waking up server...", {
-          description: "Our backend is booting up. This will take about 10-15 seconds...",
-        });
         await new Promise((resolve) => setTimeout(resolve, 5000));
         try {
           return await axiosInstance(error.config);
         } catch {
-          // Retry failed — fall through to toast
+          // Retry failed — fall through silently
         }
       }
-      toast.error("Connection Error", {
-        description: "Unable to reach the server. Please check your internet or try again later.",
-      });
       return Promise.reject(error);
     }
 
