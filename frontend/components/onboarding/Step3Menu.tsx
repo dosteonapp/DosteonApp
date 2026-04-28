@@ -298,6 +298,7 @@ function DishRow({ index, dish, onChange, onRemove }: DishRowProps) {
             min={0}
             value={dish.price}
             onChange={(e) => onChange(index, "price", parseFloat(e.target.value) || 0)}
+            onFocus={(e) => e.target.select()}
             className="w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-8 text-sm text-gray-900 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           <div className="absolute right-1 top-1/2 -translate-y-1/2 flex flex-col">

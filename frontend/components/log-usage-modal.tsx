@@ -90,6 +90,7 @@ export function LogUsageModal({
               type="number"
               value={openingStock}
               onChange={(e) => setOpeningStock(Number(e.target.value))}
+              onFocus={(e) => e.target.select()}
               min={0}
             />
           </div>
@@ -99,6 +100,7 @@ export function LogUsageModal({
               type="number"
               value={usedStock}
               onChange={(e) => handleUsedStockChange(Number(e.target.value))}
+              onFocus={(e) => e.target.select()}
               min={0}
             />
           </div>

@@ -293,6 +293,7 @@ export function AddProductModal({
                   min="0"
                   value={formData.currentStock}
                   onChange={handleChange}
+                  onFocus={(e) => e.target.select()}
                   placeholder="e.g. 100"
                   required
                 />
@@ -330,6 +331,7 @@ export function AddProductModal({
                   min="0"
                   value={formData.minimumLevel}
                   onChange={handleChange}
+                  onFocus={(e) => e.target.select()}
                   placeholder="e.g. 10"
                   required
                 />
