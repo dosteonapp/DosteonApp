@@ -20,6 +20,34 @@ STEPS = [
     ('organizations.deleted_at column',
      'ALTER TABLE "organizations" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ'),
 
+    # ── 0b. organizations: post-launch columns ───────────────────────────────
+    ('organizations.type column',
+     "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS type VARCHAR DEFAULT 'restaurant'"),
+    ('organizations.city column',
+     'ALTER TABLE organizations ADD COLUMN IF NOT EXISTS city TEXT'),
+    ('organizations.phone column',
+     'ALTER TABLE organizations ADD COLUMN IF NOT EXISTS phone TEXT'),
+    ('organizations.daily_stock_count column',
+     'ALTER TABLE organizations ADD COLUMN IF NOT EXISTS daily_stock_count BOOLEAN NOT NULL DEFAULT false'),
+    ('organizations.address column',
+     'ALTER TABLE organizations ADD COLUMN IF NOT EXISTS address TEXT'),
+    ('organizations.logo_url column',
+     'ALTER TABLE organizations ADD COLUMN IF NOT EXISTS logo_url TEXT'),
+    ('organizations.settings column',
+     """ALTER TABLE organizations ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT '{"opening_time": "08:00", "closing_time": "22:00"}'"""),
+
+    # ── 0c. day_status: post-launch columns ─────────────────────────────────
+    ('day_status.opened_by column',
+     'ALTER TABLE day_status ADD COLUMN IF NOT EXISTS opened_by UUID'),
+    ('day_status.closed_by column',
+     'ALTER TABLE day_status ADD COLUMN IF NOT EXISTS closed_by UUID'),
+    ('day_status.is_opening_completed column',
+     'ALTER TABLE day_status ADD COLUMN IF NOT EXISTS is_opening_completed BOOLEAN NOT NULL DEFAULT false'),
+    ('day_status.metadata column',
+     'ALTER TABLE day_status ADD COLUMN IF NOT EXISTS metadata JSONB'),
+    ('day_status.updated_at column',
+     'ALTER TABLE day_status ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()'),
+
     # ── 1. profiles: onboarding_completed column ────────────────────────────
     ('profiles.onboarding_completed column',
      'ALTER TABLE "profiles" ADD COLUMN IF NOT EXISTS "onboarding_completed" BOOLEAN NOT NULL DEFAULT false'),
