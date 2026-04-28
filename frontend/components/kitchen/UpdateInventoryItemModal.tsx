@@ -135,10 +135,11 @@ export function UpdateInventoryItemModal({
                         <div className="space-y-3">
                             <label className="text-[11px] font-black text-primary uppercase tracking-widest">New Quantity</label>
                             <div className="relative">
-                                <Input 
+                                <Input
                                     type="number"
-                                    value={newQuantity} 
+                                    value={newQuantity}
                                     onChange={(e) => setNewQuantity(e.target.value)}
+                                    onFocus={(e) => e.target.select()}
                                     className="h-14 font-black text-[#1E293B] border-[#10B981] rounded-xl px-5 focus-visible:ring-green-100"
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-[#DCFCE7] flex items-center justify-center">

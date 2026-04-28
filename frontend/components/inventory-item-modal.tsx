@@ -274,6 +274,7 @@ export function InventoryItemModal({
                       onChange={(e) =>
                         handleChange("currentStock", e.target.value)
                       }
+                      onFocus={(e) => e.target.select()}
                       required
                     />
                     {warnings.currentStock && (
@@ -318,6 +319,7 @@ export function InventoryItemModal({
                       onChange={(e) =>
                         handleChange("minimumLevel", e.target.value)
                       }
+                      onFocus={(e) => e.target.select()}
                       required
                     />
                     {warnings.minimumLevel && (

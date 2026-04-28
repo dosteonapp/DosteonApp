@@ -582,12 +582,13 @@ function UpdateItemModal({ isOpen, onClose, item, onUpdate }: {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-4">
                         <FigtreeText className="text-[14px] font-bold uppercase tracking-widest ml-1 leading-none">Incoming Quantity</FigtreeText>
-                        <Input 
+                        <Input
                             type="number"
-                            value={incoming} 
+                            value={incoming}
                             onChange={(e) => handleIncomingChange(e.target.value)}
-                            placeholder={`24 kg`} 
-                            className="h-[72px] text-[24px] font-bold border-slate-200 bg-white rounded-[8px] px-8 focus:ring-[#3B59DA]/10 focus:border-[#3B59DA] text-[#1E293B] font-figtree transition-all shadow-sm" 
+                            onFocus={(e) => e.target.select()}
+                            placeholder={`24 kg`}
+                            className="h-[72px] text-[24px] font-bold border-slate-200 bg-white rounded-[8px] px-8 focus:ring-[#3B59DA]/10 focus:border-[#3B59DA] text-[#1E293B] font-figtree transition-all shadow-sm"
                         />
                     </div>
                     <div className="space-y-4">

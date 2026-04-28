@@ -527,6 +527,7 @@ export function DashboardOrderModal({
                       step="0.1"
                       value={formData.quantity}
                       onChange={(e) => handleChange("quantity", e.target.value)}
+                      onFocus={(e) => e.target.select()}
                       required
                     />
                     {warnings.quantity && (

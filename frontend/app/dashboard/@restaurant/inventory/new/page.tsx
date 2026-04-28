@@ -273,12 +273,13 @@ function AddNewItemContent() {
                     </div>
                     <div className="space-y-2.5">
                         <label className="text-[13px] font-bold text-slate-500 font-figtree ml-0.5">Current Stock Amount</label>
-                        <Input 
+                        <Input
                           type="number"
                           value={formData.currentStock}
                           onChange={(e) => setFormData({...formData, currentStock: e.target.value})}
-                          placeholder="Enter amount" 
-                          className="h-16 border-slate-200 rounded-[8px] px-6 text-base font-figtree shadow-sm" 
+                          onFocus={(e) => e.target.select()}
+                          placeholder="Enter amount"
+                          className="h-16 border-slate-200 rounded-[8px] px-6 text-base font-figtree shadow-sm"
                         />
                     </div>
                     <div className="space-y-2.5">
