@@ -49,7 +49,11 @@ class BrandService:
     # ------------------------------------------------------------------
 
     async def list_brands(self, organization_id: str) -> list:
-        """Return all active (non-deleted) brands for the org, oldest first."""
+        """Return all active (non-deleted) brands for the org, oldest first.
+
+        If the org has no brands (pre-migration users), auto-create one from the
+        org name so the BrandSwitcherCard always has something to display.
+        """
         brands = await db.brand.find_many(
             where={
                 "organization_id": organization_id,
@@ -57,6 +61,16 @@ class BrandService:
             },
             order={"created_at": "asc"},
         )
+        if not brands:
+            org = await db.organization.find_unique(where={"id": organization_id})
+            if org:
+                try:
+                    brand = await db.brand.create(
+                        data={"organization_id": organization_id, "name": org.name}
+                    )
+                    brands = [brand]
+                except Exception:
+                    pass
         return brands
 
     # ------------------------------------------------------------------
