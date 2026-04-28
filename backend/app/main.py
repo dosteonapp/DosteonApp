@@ -277,10 +277,13 @@ async def db_reconnect_middleware(request: Request, call_next):
         return await call_next(request)
     except Exception as e:
         err = str(e).lower()
-        if any(k in err for k in ("connection", "socket", "econnreset", "broken pipe", "engine")):
+        exc_type = type(e).__name__.lower()
+        # Match on message keywords OR exception class name (ReadError has an empty message)
+        if any(k in err for k in ("connection", "socket", "econnreset", "broken pipe", "engine")) \
+                or any(k in exc_type for k in ("readerror", "connectionerror", "connecterror", "engineerror")):
             from app.core.logging import get_logger
             logger = get_logger("db_middleware")
-            logger.warning(f"DB connection lost mid-request, returning 503: {e}")
+            logger.warning(f"DB connection lost mid-request, returning 503: {type(e).__name__}: {e}")
             return JSONResponse(
                 status_code=503,
                 content={"detail": "Service temporarily unavailable. Please retry."},
@@ -388,19 +391,6 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         },
     )
 
-
-@app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception):
-    from app.core.logging import get_logger
-    logger = get_logger("unhandled_exception")
-    logger.error("Unhandled exception", exc_info=exc)
-    return JSONResponse(
-        status_code=500,
-        content={
-            "detail": "Internal server error. Please try again later.",
-            "request_id": get_request_id(),
-        },
-    )
 
 @app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def catch_all(path_name: str, request: Request):
