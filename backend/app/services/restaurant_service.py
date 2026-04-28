@@ -189,8 +189,7 @@ class RestaurantService:
         return {"success": True, "item": item}
 
     async def update_inventory_item(self, organization_id: str, item_id: str, payload: dict):
-        await self._require_unlocked(organization_id)
-        # Enforce that the contextual product belongs to the caller's organization
+        # Verify item belongs to this organisation (no day-state dependency for metadata edits)
         existing = await inventory_repo.get_by_id(UUID(item_id))
         if not existing or str(existing.get("organization_id")) != str(organization_id):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
@@ -205,8 +204,9 @@ class RestaurantService:
         if "imageUrl" in payload:
             data["image_url"] = payload["imageUrl"]
 
-        # If stock is being updated, record it as an ADJUSTMENT event instead of direct mutation
+        # Stock level changes require an open day and are recorded as ADJUSTMENT events
         if "currentStock" in payload:
+            await self._require_unlocked(organization_id)
             try:
                 new_quantity = float(payload["currentStock"])
             except (TypeError, ValueError):
