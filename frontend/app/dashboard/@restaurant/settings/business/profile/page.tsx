@@ -174,7 +174,7 @@ export default function RestaurantProfilePage() {
                         id="logo-upload" 
                         type="file" 
                         className="hidden" 
-                        accept="image/*"
+                        accept=".jpg,.jpeg,.png,.webp,.gif,.svg"
                         onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
@@ -183,17 +183,18 @@ export default function RestaurantProfilePage() {
                                 const url = await uploadImage(file, 'profiles', 'logos');
                                 if (url) {
                                     updateField("logo_url", url);
-                              toast({
-                                title: "Logo uploaded",
-                                description: "Your restaurant logo has been updated.",
-                              });
+                                    await restaurantOpsService.updateSettings({ logo_url: url });
+                                    toast({
+                                        title: "Logo uploaded",
+                                        description: "Your restaurant logo has been updated.",
+                                    });
                                 }
                             } catch (err) {
-                            toast({
-                              variant: "destructive",
-                              title: "Logo upload failed",
-                              description: "We couldn't upload your logo. Please try again.",
-                            });
+                                toast({
+                                    variant: "destructive",
+                                    title: "Logo upload failed",
+                                    description: "We couldn't upload your logo. Please try again.",
+                                });
                             }
                         }}
                     />
