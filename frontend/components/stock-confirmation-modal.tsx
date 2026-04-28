@@ -201,6 +201,7 @@ export function StockConfirmationModal({
                                     type="number"
                                     value={editValue}
                                     onChange={(e) => setEditValue(Number(e.target.value))}
+                                    onFocus={(e) => e.target.select()}
                                     className="w-24 h-11 border-blue-200 bg-white rounded-xl font-bold text-[#3B59DA] shadow-sm animate-in zoom-in-95 duration-200"
                                     autoFocus
                                     />

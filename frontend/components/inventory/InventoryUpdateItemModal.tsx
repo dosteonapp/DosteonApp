@@ -132,11 +132,12 @@ export function InventoryUpdateItemModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                         <div className="space-y-3">
                             <label className="text-[13px] font-bold text-slate-400 font-figtree ml-1">Incoming Quantity</label>
-                            <Input 
+                            <Input
                                 type="number"
                                 placeholder={`${item.currentStock} ${item.unit}`}
                                 value={incomingQuantity}
                                 onChange={(e) => setIncomingQuantity(e.target.value)}
+                                onFocus={(e) => e.target.select()}
                                 className="h-16 rounded-[8px] border-slate-100 bg-white px-8 font-bold text-[#1E293B] text-xl focus-visible:ring-indigo-50 placeholder:text-slate-300 shadow-sm font-figtree transition-all"
                             />
                         </div>

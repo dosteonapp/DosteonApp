@@ -415,6 +415,7 @@ function ClosingCountRow({
                                 min={0}
                                 step="any"
                                 value={physicalCount}
+                                onFocus={(e) => e.target.select()}
                                 onChange={(e) => {
                                     const val = parseFloat(e.target.value);
                                     if (!isNaN(val) && val >= 0) onCountChange(item.id, val);
