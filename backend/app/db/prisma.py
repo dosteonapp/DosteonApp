@@ -1,4 +1,5 @@
 import asyncio
+import time
 import traceback
 from prisma import Prisma
 import logging
@@ -7,6 +8,10 @@ logger = logging.getLogger("prisma")
 logger.setLevel(logging.DEBUG)
 
 db = Prisma(auto_register=True)
+
+# Only ping the DB once every 30s — not on every single request.
+_last_ping_success: float = 0.0
+_PING_INTERVAL = 30.0
 
 async def connect_db():
     """Connect to DB with retry logic."""
@@ -36,14 +41,27 @@ async def disconnect_db():
         logger.error(traceback.format_exc()) # Log the full traceback
 
 async def ensure_connected():
-    """Ensure DB is connected, reconnect if needed. Called before every request."""
+    """Ensure DB is connected, reconnect if needed. Called before every request.
+
+    Pings the DB at most once every 30 seconds to detect stale Supabase sockets
+    without adding a round-trip to every single HTTP request.
+    """
+    global _last_ping_success
+
     if not db.is_connected():
         logger.warning("DB disconnected — attempting reconnect")
         await connect_db()
+        _last_ping_success = time.monotonic()
         return
+
+    # Skip ping if we pinged recently — fast path for the common case.
+    if time.monotonic() - _last_ping_success < _PING_INTERVAL:
+        return
+
     # Validate the connection is still alive (Supabase drops idle sockets after ~60s)
     try:
         await asyncio.wait_for(db.execute_raw("SELECT 1"), timeout=3.0)
+        _last_ping_success = time.monotonic()
     except Exception as e:
         logger.warning(f"DB ping failed (stale connection) — reconnecting: {e}")
         try:
@@ -52,3 +70,4 @@ async def ensure_connected():
             pass
         await asyncio.sleep(1.0)
         await connect_db()
+        _last_ping_success = time.monotonic()
