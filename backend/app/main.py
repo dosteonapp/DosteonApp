@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -264,7 +265,14 @@ async def db_reconnect_middleware(request: Request, call_next):
     # Health endpoints do their own DB check and must always be reachable.
     if not request.url.path.startswith("/health"):
         try:
-            await ensure_connected()
+            await asyncio.wait_for(ensure_connected(), timeout=8.0)
+        except asyncio.TimeoutError:
+            from app.core.logging import get_logger
+            get_logger("db_middleware").warning("ensure_connected timed out — returning 503")
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "Service temporarily unavailable. Please retry."},
+            )
         except Exception as e:
             from app.core.logging import get_logger
             logger = get_logger("db_middleware")
