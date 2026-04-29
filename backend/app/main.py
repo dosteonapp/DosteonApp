@@ -265,14 +265,7 @@ async def db_reconnect_middleware(request: Request, call_next):
     # Health endpoints do their own DB check and must always be reachable.
     if not request.url.path.startswith("/health"):
         try:
-            await asyncio.wait_for(ensure_connected(), timeout=8.0)
-        except asyncio.TimeoutError:
-            from app.core.logging import get_logger
-            get_logger("db_middleware").warning("ensure_connected timed out — returning 503")
-            return JSONResponse(
-                status_code=503,
-                content={"detail": "Service temporarily unavailable. Please retry."},
-            )
+            await ensure_connected()
         except Exception as e:
             from app.core.logging import get_logger
             logger = get_logger("db_middleware")
