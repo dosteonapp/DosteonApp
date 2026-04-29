@@ -11,7 +11,7 @@ router = APIRouter()
 # Read — no CSRF (GET)
 # ---------------------------------------------------------------------------
 
-@router.get("/", response_model=List[BrandOut])
+@router.get("", response_model=List[BrandOut])
 async def list_brands(
     response: Response,
     ctx: SecurityContext = Depends(get_security_context),
@@ -25,7 +25,7 @@ async def list_brands(
 # Mutations — require CSRF
 # ---------------------------------------------------------------------------
 
-@router.post("/", response_model=BrandOut, status_code=201)
+@router.post("", response_model=BrandOut, status_code=201)
 async def create_brand(
     data: BrandCreate,
     ctx: SecurityContext = Depends(get_security_context),
