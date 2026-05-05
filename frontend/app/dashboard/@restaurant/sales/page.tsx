@@ -22,7 +22,6 @@ import { TabLogSales } from "@/components/sales/TabLogSales";
 import { TabSalesHistory } from "@/components/sales/TabSalesHistory";
 import { TabMenuManagement } from "@/components/sales/TabMenuManagement";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
-import { BrandSwitcherCard } from "@/components/BrandSwitcherCard";
 
 // ---------------------------------------------------------------------------
 // Tab config
@@ -47,10 +46,8 @@ export default function SalesPage() {
   return (
     <AppContainer>
 
-      {/* ── Module Header: Brand card + action buttons ── */}
-      <div className="flex items-center justify-between gap-4 px-1">
-
-        <BrandSwitcherCard />
+      {/* ── Module Header: action buttons ── */}
+      <div className="flex items-center justify-end gap-4 px-1">
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 md:gap-3 shrink-0">

@@ -6,6 +6,7 @@ import { RestaurantDayLifecycleProvider } from "@/components/day/RestaurantDayLi
 import { RestaurantDayLifecycleOverlay } from "@/components/day/RestaurantDayLifecycleOverlay";
 import { RestaurantDayRouteGuard } from "@/components/day/RestaurantDayRouteGuard";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { BrandSwitchOverlay } from "@/components/BrandSwitchOverlay";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { BrandProvider } from "@/context/BrandContext";
 
@@ -41,6 +42,7 @@ export default async function RestaurantLayout({
                   </RestaurantDayRouteGuard>
                 </div>
               </div>
+              <BrandSwitchOverlay />
               <ToastContainer />
             </main>
           </div>

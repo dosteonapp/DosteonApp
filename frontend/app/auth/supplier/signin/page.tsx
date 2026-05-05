@@ -219,7 +219,7 @@ export default function LoginPage() {
                     disabled
                     className="flex-1 flex items-center justify-center gap-2 h-12 rounded-lg border-gray-200 opacity-50 cursor-not-allowed"
                   >
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                    <img src="/images/google-icon.svg" alt="Google" className="w-5 h-5" />
                     Google
                   </Button>
                   <Button

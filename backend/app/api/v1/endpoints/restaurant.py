@@ -80,11 +80,28 @@ async def list_team(ctx: SecurityContext = Depends(get_admin_context)):
 
 @router.get("/kitchen/summary")
 async def kitchen_summary(ctx: SecurityContext = Depends(get_security_context)):
+    stats = await restaurant_service.get_stats(ctx.organization_id)
+    critical = stats.get("critical", 0)
+    low = stats.get("low", 0)
+
+    if critical > 0:
+        health = "Critical"
+        health_subtext = f"{critical} item{'s' if critical != 1 else ''} critically low"
+        critical_subtext = f"{critical} item{'s' if critical != 1 else ''} need restocking"
+    elif low > 0:
+        health = "Low Stock"
+        health_subtext = f"{low} item{'s' if low != 1 else ''} running low"
+        critical_subtext = "Monitor stock levels closely"
+    else:
+        health = "Healthy"
+        health_subtext = "Ready for service"
+        critical_subtext = "Everything is in stock"
+
     return {
-        "health": "Healthy",
-        "healthSubtext": "Ready for service",
-        "criticalIngredients": 0,
-        "criticalSubtext": "Everything is in stock",
+        "health": health,
+        "healthSubtext": health_subtext,
+        "criticalIngredients": critical,
+        "criticalSubtext": critical_subtext,
     }
 
 @router.get("/kitchen/items")
@@ -224,6 +241,14 @@ async def log_waste(
 ):
     """Log ingredient waste in kitchen"""
     return await restaurant_service.record_kitchen_event(ctx.organization_id, payload.itemId, payload.amount, "waste", payload.reason)
+
+@router.post("/closing/close-kitchen")
+async def close_kitchen(
+    ctx: SecurityContext = Depends(get_mutation_context),
+):
+    """Transition day OPEN → CLOSING. Requires closing checklist complete."""
+    return await restaurant_service.close_kitchen(ctx.organization_id)
+
 
 @router.post("/closing/save-draft")
 async def save_closing_checklist_draft(

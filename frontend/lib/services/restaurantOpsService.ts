@@ -3,6 +3,16 @@ import { useMocks } from "@/lib/flags";
 import { openingStockItems, OpeningStockItem } from "@/mocks/openingStock.mock";
 import { mockDayStatus, DayStatus } from "@/mocks/dayStatus.mock";
 
+export interface DayStatusApiResponse {
+  state: string;
+  business_date: string | null;
+  is_opening_completed: boolean;
+  openingCompleted?: boolean;
+  opened_at: string | null;
+  closed_at: string | null;
+  metadata: Record<string, unknown>;
+}
+
 export interface InventoryItem {
   id: string;
   name: string;
@@ -187,7 +197,7 @@ export const restaurantOpsService = {
     return data;
   },
 
-  getDayStatus: async (): Promise<any> => {
+  getDayStatus: async (): Promise<DayStatusApiResponse> => {
     if (useMocks) {
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('mock_day_status');
@@ -285,6 +295,12 @@ export const restaurantOpsService = {
     return data;
   },
 
+  closeKitchen: async (): Promise<{ success: boolean; message?: string }> => {
+    if (useMocks) return { success: true };
+    const { data } = await axiosInstance.post("restaurant/closing/close-kitchen");
+    return data;
+  },
+
   submitClosingChecklist: async (payload: any): Promise<{ success: boolean }> => {
     if (useMocks) {
       if (typeof window !== 'undefined') {
@@ -350,7 +366,7 @@ export const restaurantOpsService = {
   },
 
   getSettings: async () => {
-    if (useMocks) return { name: "Gatete Restaurant", email: "food@restaurant.com", opening_time: "09:00 AM", closing_time: "11:00 PM" };
+    if (useMocks) return { name: "Gatete Restaurant", email: "food@restaurant.com", opening_time: "09:00 AM", closing_time: "11:00 PM", city: "Kigali", location: "Kigali" };
     const { data } = await axiosInstance.get("restaurant/settings");
     return data;
   },

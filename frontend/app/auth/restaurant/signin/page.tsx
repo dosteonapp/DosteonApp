@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Formik, Form, Field, FormikHelpers } from "formik";
@@ -22,6 +22,14 @@ import Image from "next/image";
 import { useEffect } from "react";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, sendMagicLink, authenticateWithOAuth } = useAuth();
@@ -247,7 +255,7 @@ export default function LoginPage() {
                     disabled
                     className="flex-1 flex items-center justify-center gap-2 h-12 rounded-lg border-gray-200 opacity-50 cursor-not-allowed"
                   >
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                    <img src="/images/google-icon.svg" alt="Google" className="w-5 h-5" />
                     Google
                   </Button>
                   <Button

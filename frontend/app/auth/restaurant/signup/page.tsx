@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Formik, Form, Field, FormikHelpers } from "formik";
@@ -25,6 +25,14 @@ import Image from "next/image";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 
 export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterPageContent />
+    </Suspense>
+  );
+}
+
+function RegisterPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signup, authenticateWithOAuth, resendVerification } = useAuth();
@@ -267,7 +275,7 @@ export default function RegisterPage() {
                       className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 opacity-50 cursor-not-allowed transition-colors"
                     >
                       <img
-                        src="https://www.svgrepo.com/show/475656/google-color.svg"
+                        src="/images/google-icon.svg"
                         alt="Google"
                         className="w-5 h-5"
                       />
