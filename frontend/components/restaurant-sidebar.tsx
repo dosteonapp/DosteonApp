@@ -33,6 +33,10 @@ import { motion } from "framer-motion";
 
 import { useSidebar } from "@/context/SidebarContext";
 import { useUser } from "@/context/UserContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { useBrand } from "@/context/BrandContext";
+import { QK } from "@/lib/queryKeys";
+import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 
 
 export function RestaurantSidebar() {
@@ -40,6 +44,24 @@ export function RestaurantSidebar() {
   const { isSidebarOpen, isSidebarCollapsed, toggleCollapse } = useSidebar();
   const { status, isUserUnlocked } = useRestaurantDayLifecycle();
   const { user } = useUser();
+  const queryClient = useQueryClient();
+  const { activeBrand } = useBrand();
+  const brandId = activeBrand?.id ?? null;
+
+  const prefetchRoute = (href: string) => {
+    if (href === "/dashboard") {
+      queryClient.prefetchQuery({
+        queryKey: QK.dashboardStats(brandId),
+        queryFn: () => restaurantOpsService.getStats(),
+        staleTime: 60_000,
+      });
+      queryClient.prefetchQuery({
+        queryKey: QK.recentActivities(brandId),
+        queryFn: () => restaurantOpsService.getRecentActivities({ offset: 0, limit: 5 }),
+        staleTime: 30_000,
+      });
+    }
+  };
 
 
   useEffect(() => {
@@ -157,6 +179,7 @@ export function RestaurantSidebar() {
                   collapsed={isSidebarCollapsed}
                   isLocked={status ? (isModuleLocked(route.href, status.state) && !isUserUnlocked) : false}
                   shouldBlock={status ? (shouldBlockModuleAccess(route.href, status.state) && !isUserUnlocked) : false}
+                  onPrefetch={() => prefetchRoute(route.href)}
                 />
               ))}
           </div>
@@ -238,7 +261,7 @@ type SidebarRoute = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock }: { route: SidebarRoute, pathname: string, collapsed: boolean, isLocked: boolean, shouldBlock: boolean }) {
+function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock, onPrefetch }: { route: SidebarRoute, pathname: string, collapsed: boolean, isLocked: boolean, shouldBlock: boolean, onPrefetch?: () => void }) {
     const isActive = pathname === route.href || (route.href !== "/dashboard" && pathname.startsWith(route.href));
     
     const handleClick = (e: React.MouseEvent) => {
@@ -256,6 +279,7 @@ function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock }: { ro
         <Link
             href={route.href}
             onClick={handleClick}
+            onMouseEnter={onPrefetch}
             className={cn(
                 "flex items-center gap-4 rounded-2xl px-5 py-4 transition-all text-[15px] group relative font-semibold",
                 isActive 

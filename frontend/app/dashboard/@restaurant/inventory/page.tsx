@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { AppContainer } from "@/components/ui/dosteon-ui";
 import { TabProductCatalog } from "@/components/inventory/TabProductCatalog";
 import { TabStockUsage } from "@/components/inventory/TabStockUsage";
-import { BrandSwitcherCard } from "@/components/BrandSwitcherCard";
 
 // ---------------------------------------------------------------------------
 // Tab config
@@ -35,10 +34,8 @@ export default function InventoryPage() {
   return (
     <AppContainer>
 
-      {/* ── Module Header: Brand card + action buttons ── */}
-      <div className="flex items-center justify-between gap-4 px-1">
-
-        <BrandSwitcherCard />
+      {/* ── Module Header: action buttons ── */}
+      <div className="flex items-center justify-end gap-4 px-1">
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 md:gap-3 shrink-0">

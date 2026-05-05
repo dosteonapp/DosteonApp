@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, Response
 from app.schemas.brand import BrandCreate, BrandUpdate, BrandOut
 from app.services.brand_service import brand_service
-from app.api.deps import get_current_user, get_security_context, SecurityContext
+from app.api.deps import get_current_user, get_security_context, get_brand_context, SecurityContext
 from app.core.csrf import set_csrf_cookie, verify_csrf
-from typing import List
+from app.db.prisma import db
+from typing import List, Optional
 
 router = APIRouter()
 
@@ -19,6 +20,18 @@ async def list_brands(
     """List all active brands for the authenticated user's organisation."""
     set_csrf_cookie(response)
     return await brand_service.list_brands(ctx.organization_id)
+
+
+@router.get("/current", response_model=Optional[BrandOut])
+async def get_current_brand(
+    response: Response,
+    ctx: SecurityContext = Depends(get_brand_context),
+):
+    """Returns the brand resolved from X-Brand-ID header, or the first active brand. Null if no brands."""
+    set_csrf_cookie(response)
+    if not ctx.brand_id:
+        return None
+    return await db.brand.find_unique(where={"id": ctx.brand_id})
 
 
 # ---------------------------------------------------------------------------

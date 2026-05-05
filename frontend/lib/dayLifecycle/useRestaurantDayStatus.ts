@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { DayState, DayStatus, DayStep, SystemState } from "./types";
 import { restaurantDayStorage } from "./storage";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
@@ -104,7 +104,8 @@ export function useRestaurantDayStatus() {
       restaurantDayStorage.saveStatus(orgId!, defaultStatus);
       return defaultStatus;
     },
-    staleTime: 60000, // 1 minute stale time for operational status
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   const updateStatusMutation = useMutation({
@@ -270,7 +271,8 @@ export function useRestaurantDayStatus() {
   const { data: settings } = useQuery({
     queryKey: ["restaurantSettings", orgId],
     queryFn: () => restaurantOpsService.getSettings(),
-    enabled: !!orgId
+    enabled: !!orgId,
+    staleTime: 5 * 60_000,
   });
 
   // Poll system state every 60 s so the 6-hour gap unblocks automatically

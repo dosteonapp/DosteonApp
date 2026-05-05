@@ -35,7 +35,6 @@ import {
   SaleOrderDetail,
   SalesHistory,
 } from "@/lib/services/salesService";
-import { BrandSwitcherCard } from "@/components/BrandSwitcherCard";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -163,15 +162,12 @@ export default function SalesHistoryPage() {
 
       {/* ── Header — on page background ── */}
       <div className="flex items-center justify-between gap-4 px-1">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/sales"
-            className="h-9 w-9 rounded-[10px] border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-[#3B59DA] hover:border-[#3B59DA]/30 transition-all active:scale-95 shadow-sm shrink-0"
-          >
-            <ArrowLeft className="h-4 w-4 stroke-[2.5px]" />
-          </Link>
-          <BrandSwitcherCard />
-        </div>
+        <Link
+          href="/dashboard/sales"
+          className="h-9 w-9 rounded-[10px] border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-[#3B59DA] hover:border-[#3B59DA]/30 transition-all active:scale-95 shadow-sm shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 stroke-[2.5px]" />
+        </Link>
         <div className="flex items-center gap-2 md:gap-3 shrink-0">
           <Button
             variant="outline"
