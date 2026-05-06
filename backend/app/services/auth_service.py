@@ -78,10 +78,11 @@ class AuthService:
 
             verification_link = link_res.properties.action_link
             try:
+                greeting_name = user_data.first_name or user_data.email.split('@')[0]
                 email_service.send_verification_email(
                     user_data.email,
                     verification_link,
-                    user_data.first_name,
+                    greeting_name,
                 )
             except Exception as e:
                 # Log but never break signup if background email sending fails.
@@ -178,7 +179,8 @@ class AuthService:
             user_id = str(user_res.user.id)
 
             # 2. Supabase user exists — now safe to create the organization.
-            default_org_name = f"{user_data.first_name}'s Restaurant"
+            _prefix = (user_data.email.split('@')[0] or "my").replace('.', ' ').replace('_', ' ').title()
+            default_org_name = f"{_prefix}'s Restaurant"
             org = await organization_repo._create_async(default_org_name)
             org_id = org["id"]
 
@@ -236,7 +238,18 @@ class AuthService:
                 }
             )
 
-            # 5. Kick off verification email in the background so the
+            # 6. Auto-create a default Brand so the dashboard is never brand-less on first login
+            try:
+                await db.brand.create(data={
+                    "name": default_org_name,
+                    "organization_id": str(org_id),
+                    "is_active": True,
+                })
+            except Exception as brand_err:
+                # Non-fatal — resolve_brand_for_org() in deps.py will auto-create on first API call
+                print(f"[signup] Brand auto-creation warning for org {org_id}: {brand_err}")
+
+            # 7. Kick off verification email in the background so the
             #    signup response can return quickly. Wrapped with a 30s
             #    timeout so hung email tasks don't accumulate silently.
             async def _email_with_timeout():
@@ -332,6 +345,8 @@ class AuthService:
         verified, we do not leak that information to the caller; we just return a generic
         success message as long as Supabase doesn't hard-fail the request.
         """
+        from app.core.login_tracker import check_resend_cooldown, record_resend_attempt
+        await check_resend_cooldown(user_data.email)
         try:
             from app.db.prisma import db
 
@@ -376,6 +391,7 @@ class AuthService:
                     detail="We couldn't send the verification email. Please try again later.",
                 )
 
+            await record_resend_attempt(user_data.email)
             return {
                 "status": "ok",
                 "message": "If an account exists for this email, a new verification link has been sent.",
@@ -392,6 +408,17 @@ class AuthService:
             )
 
     async def get_me(self, current_user: dict):
+        from app.db.prisma import db
+        org_id = current_user.get("organization_id")
+        workspace_slug = None
+        if org_id:
+            try:
+                org = await db.organization.find_unique(where={"id": str(org_id)})
+                if org:
+                    workspace_slug = org.slug
+            except Exception:
+                pass
+
         return {
             "id": current_user["id"],
             "email": current_user["email"],
@@ -405,6 +432,7 @@ class AuthService:
             "onboarding_skipped": current_user.get("onboarding_skipped"),
             "email_verified": current_user.get("email_verified"),
             "password_changed_at": current_user.get("password_changed_at"),
+            "workspace_slug": workspace_slug,
         }
 
     async def update_me(self, user_id: str, profile_data: dict):

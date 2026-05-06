@@ -22,7 +22,6 @@ import { TabLogSales } from "@/components/sales/TabLogSales";
 import { TabSalesHistory } from "@/components/sales/TabSalesHistory";
 import { TabMenuManagement } from "@/components/sales/TabMenuManagement";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
-import { BrandSwitcherCard } from "@/components/BrandSwitcherCard";
 
 // ---------------------------------------------------------------------------
 // Tab config
@@ -47,21 +46,20 @@ export default function SalesPage() {
   return (
     <AppContainer>
 
-      {/* ── Module Header: Brand card + action buttons ── */}
-      <div className="flex items-center justify-between gap-4 px-1">
-
-        <BrandSwitcherCard />
+      {/* ── Module Header: action buttons ── */}
+      <div className="flex items-center justify-end gap-4 px-1">
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 md:gap-3 shrink-0">
           <Button
             variant="outline"
             className="h-9 md:h-10 rounded-[8px] border-slate-200 text-slate-500 font-bold text-[12px] md:text-[13px] font-figtree hover:bg-slate-50 hover:text-slate-700 gap-1.5 md:gap-2 px-3 md:px-4 transition-all"
-            disabled
-            title="Coming soon"
+            asChild
           >
-            <Receipt className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
-            <span className="hidden sm:block">Log Expense</span>
+            <Link href="/dashboard/expenses">
+              <Receipt className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
+              <span className="hidden sm:block">Log Expense</span>
+            </Link>
           </Button>
           <Button
             className="h-9 md:h-10 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[12px] md:text-[13px] font-figtree gap-1.5 md:gap-2 px-3 md:px-4 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all"

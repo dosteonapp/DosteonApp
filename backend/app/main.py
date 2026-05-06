@@ -8,7 +8,7 @@ from prometheus_fastapi_instrumentator import Instrumentator, metrics as prom_me
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.db.prisma import connect_db, disconnect_db, ensure_connected
+from app.db.prisma import connect_db, disconnect_db, ensure_connected, mark_connection_failed
 from app.middleware.request_id import RequestIDMiddleware, get_request_id
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.middleware.metrics import MetricsMiddleware, MetricsStore
@@ -276,12 +276,25 @@ async def db_reconnect_middleware(request: Request, call_next):
             )
     try:
         return await call_next(request)
+    except asyncio.CancelledError:
+        # Hot-reload or client disconnect cancels in-flight requests.
+        # Return 503 cleanly instead of dropping the TCP connection (ECONNRESET).
+        from app.core.logging import get_logger
+        get_logger("db_middleware").warning("Request cancelled mid-flight — returning 503")
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Service temporarily unavailable. Please retry."},
+        )
     except Exception as e:
         err = str(e).lower()
         exc_type = type(e).__name__.lower()
-        # Match on message keywords OR exception class name (ReadError has an empty message)
-        if any(k in err for k in ("connection", "socket", "econnreset", "broken pipe", "engine")) \
-                or any(k in exc_type for k in ("readerror", "connectionerror", "connecterror", "engineerror")):
+        # "connect" catches: connected, connecting, disconnect, ClientNotConnectedError messages
+        # "prisma" catches generic Prisma errors whose messages don't contain other keywords
+        if any(k in err for k in ("connect", "socket", "econnreset", "broken pipe", "engine", "prisma")) \
+                or any(k in exc_type for k in (
+                    "readerror", "connectionerror", "connecterror", "engineerror",
+                    "prismaerror", "clientnotconnected",
+                )):
             from app.core.logging import get_logger
             logger = get_logger("db_middleware")
             logger.warning(f"DB connection lost mid-request, returning 503: {type(e).__name__}: {e}")
@@ -293,10 +306,32 @@ async def db_reconnect_middleware(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    """Log unhandled exceptions and return 500 with detail in non-production."""
-    import traceback
+    """Log unhandled exceptions and return 500 with detail in non-production.
+
+    Prisma 'not connected' errors are converted to 503 so the frontend retries
+    and the next request re-establishes the DB connection via ensure_connected().
+    """
     from app.core.logging import get_logger
     logger = get_logger("exception_handler")
+
+    err_str = str(exc).lower()
+    exc_type = type(exc).__name__.lower()
+    is_db_connection_error = (
+        any(k in err_str for k in ("is not connected", "call `connect()", "connect()", "engine", "broken pipe", "econnreset"))
+        or any(k in exc_type for k in ("connectionerror", "connecterror", "engineerror", "clientnotconnected", "prismaerror"))
+    )
+
+    if is_db_connection_error:
+        # Reset ping timer so the next ensure_connected() forces a live reconnect.
+        mark_connection_failed()
+        logger.warning(
+            f"DB connection error on {request.method} {request.url.path}: {type(exc).__name__}: {exc}"
+        )
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Service temporarily unavailable. Please retry.", "request_id": get_request_id()},
+        )
+
     logger.error(
         f"Unhandled exception on {request.method} {request.url.path}: {exc}",
         exc_info=exc,
@@ -318,14 +353,8 @@ async def root():
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
-    """Health check — accepts GET and HEAD. Includes supabase_admin signal."""
-    from app.core.supabase import supabase
-    try:
-        supabase.auth.admin.list_users(page=1, per_page=1)
-        supabase_admin = "ok"
-    except Exception:
-        supabase_admin = "degraded"
-    return {"status": "ok", "supabase_admin": supabase_admin}
+    """Health check — accepts GET and HEAD."""
+    return {"status": "ok"}
 
 
 @app.get("/health/live")

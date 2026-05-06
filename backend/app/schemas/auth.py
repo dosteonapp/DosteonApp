@@ -9,10 +9,9 @@ class UserBase(BaseModel):
 
 class UserSignup(UserBase):
     password: str
-    first_name: str
-    last_name: str
-    # 'admin' usually creates the org, 'manager'/'staff' usually join one
-    role: Literal["admin", "manager", "staff", "restaurant", "supplier"] 
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: Literal["admin", "manager", "staff", "restaurant", "supplier"]
     organization_name: Optional[str] = None # Provided if creating a new org
     invite_code: Optional[str] = None # Provided if joining an existing org
 
@@ -88,6 +87,7 @@ class UserMe(Profile):
     onboarding_skipped: Optional[bool] = None
     email_verified: Optional[bool] = None
     password_changed_at: Optional[str] = None
+    workspace_slug: Optional[str] = None
 
 
 class TeamInviteRequest(BaseModel):

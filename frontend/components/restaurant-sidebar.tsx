@@ -20,7 +20,7 @@ import {
   Lock as LockIcon
 } from "lucide-react";
 
-import { cn, formatUserName } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/logout-button";
 
@@ -33,6 +33,10 @@ import { motion } from "framer-motion";
 
 import { useSidebar } from "@/context/SidebarContext";
 import { useUser } from "@/context/UserContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { useBrand } from "@/context/BrandContext";
+import { QK } from "@/lib/queryKeys";
+import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 
 
 export function RestaurantSidebar() {
@@ -40,6 +44,28 @@ export function RestaurantSidebar() {
   const { isSidebarOpen, isSidebarCollapsed, toggleCollapse } = useSidebar();
   const { status, isUserUnlocked } = useRestaurantDayLifecycle();
   const { user } = useUser();
+  const queryClient = useQueryClient();
+  const { activeBrand } = useBrand();
+  const brandId = activeBrand?.id ?? null;
+
+  const workspaceSlug = user?.workspace_slug;
+  const base = workspaceSlug ? `/${workspaceSlug}` : '';
+  const homeHref = `${base}/dashboard`;
+
+  const prefetchRoute = (href: string) => {
+    if (href === homeHref) {
+      queryClient.prefetchQuery({
+        queryKey: QK.dashboardStats(brandId),
+        queryFn: () => restaurantOpsService.getStats(),
+        staleTime: 60_000,
+      });
+      queryClient.prefetchQuery({
+        queryKey: QK.recentActivities(brandId),
+        queryFn: () => restaurantOpsService.getRecentActivities({ offset: 0, limit: 5 }),
+        staleTime: 30_000,
+      });
+    }
+  };
 
 
   useEffect(() => {
@@ -48,22 +74,22 @@ export function RestaurantSidebar() {
 
   const operationsRoutes = [
     {
-      href: "/dashboard",
+      href: homeHref,
       icon: Home,
       title: "Home",
     },
     {
-      href: "/dashboard/sales",
+      href: `${base}/dashboard/sales`,
       icon: TrendingUp,
       title: "Sales",
     },
     {
-      href: "/dashboard/inventory",
+      href: `${base}/dashboard/inventory`,
       icon: Package,
       title: "Inventory",
     },
     {
-      href: "/dashboard/closing",
+      href: `${base}/dashboard/closing`,
       icon: Moon,
       title: "Closing",
     },
@@ -71,7 +97,7 @@ export function RestaurantSidebar() {
 
   const systemsRoutes = [
     {
-      href: "/dashboard/notifications",
+      href: `${base}/dashboard/notifications`,
       icon: Bell,
       title: "Notifications",
     },
@@ -79,7 +105,7 @@ export function RestaurantSidebar() {
     ...(user && isAdminRole(user.role)
       ? [
           {
-            href: "/dashboard/settings",
+            href: `${base}/dashboard/settings`,
             icon: Settings,
             title: "Settings",
           } as const,
@@ -99,18 +125,18 @@ export function RestaurantSidebar() {
       <div className="flex h-[100px] items-center justify-between px-6 border-b border-slate-50 relative shrink-0 transition-all duration-500">
         {!isSidebarCollapsed ? (
           <Link
-            href="/dashboard"
+            href={homeHref}
             className="flex items-center group transition-all duration-500 active:scale-95 px-4"
           >
-            <img 
-              src="/images/logo-full.png" 
-              alt="Dosteon" 
+            <img
+              src="/images/logo-full.png"
+              alt="Dosteon"
               className="h-9 w-auto group-hover:drop-shadow-sm transition-all"
             />
           </Link>
         ) : (
           <div className="flex-1 flex justify-center py-2">
-             <Link href="/dashboard" className="group transition-all duration-500 active:scale-95">
+             <Link href={homeHref} className="group transition-all duration-500 active:scale-95">
                 <div className="w-14 h-14 bg-gradient-to-br from-indigo-50/80 to-white rounded-2xl flex items-center justify-center border border-indigo-100/50 overflow-hidden shadow-sm group-hover:shadow-md transition-all">
                     <div className="w-10 h-10 relative overflow-hidden flex items-center justify-center">
                         <img 
@@ -157,6 +183,7 @@ export function RestaurantSidebar() {
                   collapsed={isSidebarCollapsed}
                   isLocked={status ? (isModuleLocked(route.href, status.state) && !isUserUnlocked) : false}
                   shouldBlock={status ? (shouldBlockModuleAccess(route.href, status.state) && !isUserUnlocked) : false}
+                  onPrefetch={() => prefetchRoute(route.href)}
                 />
               ))}
           </div>
@@ -190,21 +217,21 @@ export function RestaurantSidebar() {
             <div className="flex items-center gap-4 px-2 group cursor-pointer transition-all hover:translate-x-1">
               <div className="h-12 w-12 rounded-2xl bg-[#3B59DA]/10 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0 group-hover:scale-105 transition-transform">
                   {user?.avatar_url || user?.image_url ? (
-                      <img 
+                      <img
                           src={(user.avatar_url || user.image_url) as string}
-                          alt="User" 
+                          alt="User"
                           className="object-cover h-full w-full"
                       />
                   ) : (
                       <span className="text-[#3B59DA] font-bold text-lg uppercase tracking-wider">
-                          {(user?.first_name?.[0] || "") + (user?.last_name?.[0] || "") || "ST"}
+                          {activeBrand?.name?.[0]?.toUpperCase() ?? "B"}
                       </span>
                   )}
               </div>
 
               <div className="flex flex-col min-w-0">
                   <span className="text-[14px] font-bold text-[#1E293B] truncate tracking-tight">
-                    {formatUserName(user?.first_name, user?.last_name)}
+                    {activeBrand?.name ?? "My Restaurant"}
                   </span>
                   <span className="text-[11px] font-bold text-slate-400 capitalize flex items-center gap-1.5">
                       {user?.role || "Staff"}
@@ -238,8 +265,12 @@ type SidebarRoute = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock }: { route: SidebarRoute, pathname: string, collapsed: boolean, isLocked: boolean, shouldBlock: boolean }) {
-    const isActive = pathname === route.href || (route.href !== "/dashboard" && pathname.startsWith(route.href));
+function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock, onPrefetch }: { route: SidebarRoute, pathname: string, collapsed: boolean, isLocked: boolean, shouldBlock: boolean, onPrefetch?: () => void }) {
+    // A route is "home" when there is nothing after "/dashboard" in its href.
+    // Use prefix-match for all other routes (e.g. /dashboard/sales matches /dashboard/sales/*)
+    const dashboardSuffix = route.href.split('/dashboard')[1] ?? '';
+    const isHomeRoute = dashboardSuffix === '';
+    const isActive = pathname === route.href || (!isHomeRoute && pathname.startsWith(route.href));
     
     const handleClick = (e: React.MouseEvent) => {
       if (shouldBlock) {
@@ -256,6 +287,7 @@ function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock }: { ro
         <Link
             href={route.href}
             onClick={handleClick}
+            onMouseEnter={onPrefetch}
             className={cn(
                 "flex items-center gap-4 rounded-2xl px-5 py-4 transition-all text-[15px] group relative font-semibold",
                 isActive 

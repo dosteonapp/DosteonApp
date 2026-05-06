@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Formik, Form, Field, FormikHelpers } from "formik";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Eye, EyeOff, Lock, Check, Mail } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import {
   FormikFormItem,
   FormikFormLabel,
@@ -24,15 +24,20 @@ import Image from "next/image";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 
 export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterPageContent />
+    </Suspense>
+  );
+}
+
+function RegisterPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { signup, authenticateWithOAuth, resendVerification } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [successEmail, setSuccessEmail] = useState<string | null>(null);
 
   const getInitialValues = (): SignupValues => ({
-    firstname: "",
-    lastname: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -124,22 +129,6 @@ export default function RegisterPage() {
                     </div>
                   )}
                   
-                  <div className="flex flex-col md:flex-row gap-3">
-                    <FormikFormItem className="flex-1">
-                      <FormikFormLabel htmlFor="firstName-supplier">First Name</FormikFormLabel>
-                      <FormikFormControl>
-                        <Field as={Input} id="firstName-supplier" name="firstname" placeholder="First Name" className="w-full h-12 border-gray-200 rounded-lg focus:ring-[#00a13e]" />
-                      </FormikFormControl>
-                      <FormikFormMessage name="firstname" />
-                    </FormikFormItem>
-                    <FormikFormItem className="flex-1">
-                      <FormikFormLabel htmlFor="lastName-supplier">Last Name</FormikFormLabel>
-                      <FormikFormControl>
-                        <Field as={Input} id="lastName-supplier" name="lastname" placeholder="Last Name" className="w-full h-12 border-gray-200 rounded-lg focus:ring-[#00a13e]" />
-                      </FormikFormControl>
-                      <FormikFormMessage name="lastname" />
-                    </FormikFormItem>
-                  </div>
                   <FormikFormItem>
                     <FormikFormLabel htmlFor="email-supplier">Email Address</FormikFormLabel>
                     <FormikFormControl>
@@ -182,7 +171,7 @@ export default function RegisterPage() {
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button type="button" variant="outline" disabled className="flex-1 h-12 flex items-center justify-center gap-2 border-gray-300 text-gray-700 opacity-50 cursor-not-allowed">
-                      <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                      <img src="/images/google-icon.svg" alt="Google" className="w-5 h-5" />
                       Google
                     </Button>
                     <Button type="button" variant="outline" disabled className="flex-1 h-12 flex items-center justify-center gap-2 border-gray-300 text-gray-700 opacity-50 cursor-not-allowed">

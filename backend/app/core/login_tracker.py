@@ -106,3 +106,53 @@ async def reset_attempts(email: str) -> None:
         await db.loginattempt.delete_many(where={"email_hash": email_hash})
     except Exception:
         pass  # Non-critical cleanup — ignore errors
+
+
+# ---------------------------------------------------------------------------
+# Resend verification rate limiting — per-email, 60-second cooldown
+# Uses the LoginAttempt table with a "resend_" key prefix so no migration
+# is required and records are naturally separate from login attempts.
+# ---------------------------------------------------------------------------
+
+RESEND_COOLDOWN_SECONDS = 60
+
+
+async def check_resend_cooldown(email: str) -> None:
+    """Raise 429 if this email has requested a resend within the last 60 seconds."""
+    key = "resend_" + _hash_email(email)
+    try:
+        record = await db.loginattempt.find_unique(where={"email_hash": key})
+    except Exception:
+        return  # DB unavailable — fail open
+
+    if not record or not record.last_failed_at:
+        return
+
+    now = datetime.now(timezone.utc)
+    last = record.last_failed_at
+    if last.tzinfo is None:
+        last = last.replace(tzinfo=timezone.utc)
+
+    elapsed = (now - last).total_seconds()
+    if elapsed < RESEND_COOLDOWN_SECONDS:
+        remaining = int(RESEND_COOLDOWN_SECONDS - elapsed)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Please wait {remaining} second{'s' if remaining != 1 else ''} before requesting another verification email.",
+        )
+
+
+async def record_resend_attempt(email: str) -> None:
+    """Record the timestamp of a resend request for this email."""
+    key = "resend_" + _hash_email(email)
+    now = datetime.now(timezone.utc)
+    try:
+        await db.loginattempt.upsert(
+            where={"email_hash": key},
+            data={
+                "create": {"email_hash": key, "attempts": 1, "last_failed_at": now},
+                "update": {"attempts": {"increment": 1}, "last_failed_at": now},
+            },
+        )
+    except Exception:
+        pass  # Non-critical — never break the resend flow
