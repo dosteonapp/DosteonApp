@@ -353,14 +353,8 @@ async def root():
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
-    """Health check — accepts GET and HEAD. Includes supabase_admin signal."""
-    from app.core.supabase import supabase
-    try:
-        supabase.auth.admin.list_users(page=1, per_page=1)
-        supabase_admin = "ok"
-    except Exception:
-        supabase_admin = "degraded"
-    return {"status": "ok", "supabase_admin": supabase_admin}
+    """Health check — accepts GET and HEAD."""
+    return {"status": "ok"}
 
 
 @app.get("/health/live")
