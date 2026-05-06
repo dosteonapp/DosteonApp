@@ -104,6 +104,7 @@ export default function ClosingPage() {
   const [closingIndicators, setClosingIndicators] = useState({ itemsUsed: 0, itemsWasted: 0 });
   const [closingStatus, setClosingStatus] = useState<ClosingStatus | null>(null);
   const [todayStats, setTodayStats] = useState<TodayStats | null>(null);
+  const [expenseStats, setExpenseStats] = useState<{ total_expenses: number; cogs: number; overhead: number } | null>(null);
   const [orgSettings, setOrgSettings] = useState<OrgSettings | null>(null);
   const [isDayClosed, setIsDayClosed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -184,18 +185,20 @@ export default function ClosingPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [inventory, indicators, cs, stats, settings] = await Promise.all([
+        const [inventory, indicators, cs, stats, settings, expenses] = await Promise.all([
           restaurantOpsService.getInventoryItems(),
           restaurantOpsService.getClosingIndicators(),
           restaurantOpsService.getClosingStatus(),
           axiosInstance.get("sales/stats/today").then((r) => r.data).catch(() => null),
           restaurantOpsService.getSettings().catch(() => null),
+          axiosInstance.get("expenses/stats/today").then((r) => r.data).catch(() => null),
         ]);
         setItems(inventory);
         setClosingIndicators(indicators);
         setClosingStatus(cs as ClosingStatus);
         setTodayStats(stats);
         setOrgSettings(settings);
+        setExpenseStats(expenses);
       } catch (err) {
         console.error("Failed to fetch closing data:", err);
         setError("We couldn't load your closing data. Please refresh.");
@@ -246,6 +249,7 @@ export default function ClosingPage() {
 
   const sharedProps = {
     todayStats,
+    expenseStats,
     closingState,
     stockCountDone,
     showStockCount,
@@ -272,6 +276,7 @@ export default function ClosingPage() {
       {(isClosed || isDayClosed) && (
         <ClosedSuccessScreen
           todayStats={todayStats}
+          expenseStats={expenseStats}
           orgSettings={orgSettings}
           activeBrandName={activeBrand?.name}
           router={router}
@@ -363,10 +368,10 @@ function SalesSummaryCard({
 }
 
 function ExpensesSummaryCard({
-  todayStats,
+  expenseStats,
   dark,
 }: {
-  todayStats: TodayStats | null;
+  expenseStats: { total_expenses: number; cogs: number; overhead: number } | null;
   dark?: boolean;
 }) {
   const cardCls = dark
@@ -385,19 +390,27 @@ function ExpensesSummaryCard({
       </div>
       <div>
         <p className="text-[28px] font-black text-rose-500 leading-none font-figtree">
-          RWF {fmt(todayStats?.today_cogs ?? 0)}
+          RWF {fmt(expenseStats?.total_expenses ?? 0)}
         </p>
         <p className="text-[12px] font-medium text-slate-400 mt-1">
-          Cost of goods sold today
+          Total operational expenses today
         </p>
       </div>
-      <div className="pt-2 border-t border-slate-100">
+      <div className="pt-2 border-t border-slate-100 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
-            Operational Cost
+            Ingredients (COGS)
           </span>
-          <span className="text-[11px] font-medium text-slate-300 italic">
-            Coming soon
+          <span className="text-[13px] font-black text-slate-600 font-figtree">
+            RWF {fmt(expenseStats?.cogs ?? 0)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            Overheads
+          </span>
+          <span className="text-[13px] font-black text-slate-600 font-figtree">
+            RWF {fmt(expenseStats?.overhead ?? 0)}
           </span>
         </div>
       </div>
@@ -501,6 +514,7 @@ function ReadyToReviewChecklist({
 // ---------------------------------------------------------------------------
 interface TwoColumnProps {
   todayStats: TodayStats | null;
+  expenseStats: { total_expenses: number; cogs: number; overhead: number } | null;
   closingState: ClosingState;
   stockCountDone: boolean;
   showStockCount: boolean;
@@ -522,6 +536,7 @@ interface TwoColumnProps {
 function TwoColumnLayout({
   children,
   todayStats,
+  expenseStats,
   closingState,
   stockCountDone,
   showStockCount,
@@ -572,12 +587,12 @@ function TwoColumnLayout({
               Net Daily Balance
             </p>
             <p className="text-[40px] md:text-[48px] font-black leading-none font-figtree">
-              RWF {fmt(todayStats?.today_gross_profit ?? 0)}
+              RWF {fmt((todayStats?.today_revenue ?? 0) - (expenseStats?.total_expenses ?? 0))}
             </p>
             <div className="mt-4 flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5 w-fit">
               <TrendingUp className="h-3.5 w-3.5 opacity-80" />
               <span className="text-[12px] font-bold opacity-80">
-                Revenue minus cost of goods
+                Revenue minus total expenses
               </span>
             </div>
           </div>
@@ -585,7 +600,7 @@ function TwoColumnLayout({
           {/* Sales + Expenses */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SalesSummaryCard todayStats={todayStats} />
-            <ExpensesSummaryCard todayStats={todayStats} />
+            <ExpensesSummaryCard expenseStats={expenseStats} />
           </div>
 
           {/* Checklist */}
@@ -721,12 +736,14 @@ function ChecklistCompleteScreen(
 // ---------------------------------------------------------------------------
 function ClosedSuccessScreen({
   todayStats,
+  expenseStats,
   orgSettings,
   activeBrandName,
   router,
   toast,
 }: {
   todayStats: TodayStats | null;
+  expenseStats: { total_expenses: number; cogs: number; overhead: number } | null;
   orgSettings: OrgSettings | null;
   activeBrandName?: string;
   router: ReturnType<typeof useRouter>;
@@ -782,7 +799,7 @@ function ClosedSuccessScreen({
         {/* Right — white cards on blue bg */}
         <div className="flex-1 flex flex-col gap-4">
           <SalesSummaryCard todayStats={todayStats} dark />
-          <ExpensesSummaryCard todayStats={todayStats} dark />
+          <ExpensesSummaryCard expenseStats={expenseStats} dark />
         </div>
       </div>
 

@@ -1,13 +1,12 @@
 "use client";
 
-import { useRef, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { Formik, Form, Field, FormikHelpers } from "formik";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { ArrowLeft, Eye, EyeOff, Lock, Check } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import {
   FormikFormItem,
   FormikFormLabel,
@@ -33,35 +32,23 @@ export default function RegisterPage() {
 }
 
 function RegisterPageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { signup, authenticateWithOAuth, resendVerification } = useAuth();
-  const defaultRole = searchParams.get("role") || "restaurant";
-  const [selectedRole, setSelectedRole] = useState(defaultRole);
   const [showPassword, setShowPassword] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [email, setEmail] = useState("");
-  const signupStartedFired = useRef(false);
 
-  const getInitialValues = (role: "restaurant" | "supplier"): SignupValues => ({
-    firstname: "",
-    lastname: "",
+  const getInitialValues = (): SignupValues => ({
     email: "",
     password: "",
     confirmPassword: "",
-    accountType: role,
+    accountType: "restaurant",
   });
 
   const handleSubmit = async (
     values: SignupValues,
     helpers: FormikHelpers<SignupValues>
   ) => {
-    // Fire signup_started once per session (guards against rapid re-submits)
-    if (!signupStartedFired.current) {
-      signupStartedFired.current = true;
-      trackEvent("signup_started", { method: "email/password" });
-    }
-
+    trackEvent("signup_started", { method: "email/password" });
     try {
       const response = await signup(values, helpers);
       if (response && response.success) {
@@ -71,7 +58,6 @@ function RegisterPageContent() {
       }
     } catch (error) {
       // Errors are already surfaced via Formik status by AuthContext.signup
-      // Optionally, you could add a toast here, but we stay on the form.
     }
   };
 
@@ -122,7 +108,7 @@ function RegisterPageContent() {
       </div>
 
           <Formik
-            initialValues={getInitialValues("restaurant")}
+            initialValues={getInitialValues()}
             validationSchema={SignupValidationSchema}
             onSubmit={handleSubmit}
           >
@@ -142,38 +128,6 @@ function RegisterPageContent() {
                       {status.error}
                     </div>
                   )}
-                  <div className="flex flex-col md:flex-row gap-3">
-                    <FormikFormItem className="flex-1">
-                      <FormikFormLabel htmlFor="firstName-restaurant">
-                        First Name
-                      </FormikFormLabel>
-                      <FormikFormControl>
-                        <Field
-                          as={Input}
-                          id="firstName-restaurant"
-                          name="firstname"
-                          placeholder="First Name"
-                          className="w-full"
-                        />
-                      </FormikFormControl>
-                      <FormikFormMessage name="firstname" />
-                    </FormikFormItem>
-                    <FormikFormItem className="flex-1">
-                      <FormikFormLabel htmlFor="lastName-restaurant">
-                        Last Name
-                      </FormikFormLabel>
-                      <FormikFormControl>
-                        <Field
-                          as={Input}
-                          id="lastName-restaurant"
-                          name="lastname"
-                          placeholder="Last Name"
-                          className="w-full"
-                        />
-                      </FormikFormControl>
-                      <FormikFormMessage name="lastname" />
-                    </FormikFormItem>
-                  </div>
                   <FormikFormItem>
                     <FormikFormLabel htmlFor="email-restaurant">
                       Email

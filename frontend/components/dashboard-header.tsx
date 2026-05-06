@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Bell,
   Calendar,
@@ -10,13 +9,11 @@ import {
   Menu,
   ChevronDown,
   CheckCircle2,
-  MapPin,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
 import { useBrand } from "@/context/BrandContext";
 import { useUser } from "@/context/UserContext";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
-import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -72,16 +69,6 @@ export function DashboardHeader() {
   const { user } = useUser();
   const { isOpen } = useRestaurantDayLifecycle();
 
-  // Share the settings already fetched by the lifecycle hook (same React Query cache key).
-  // This avoids a second network request and uses the already-resolved data.
-  const orgId = user?.organization_id ?? null;
-  const { data: orgSettings } = useQuery({
-    queryKey: ["restaurantSettings", orgId],
-    queryFn: () => restaurantOpsService.getSettings(),
-    enabled: !!orgId,
-    staleTime: 5 * 60 * 1000,
-  });
-  const orgCity: string = (orgSettings as any)?.city || (orgSettings as any)?.location || "";
 
   // Real-time clock
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -175,12 +162,6 @@ export function DashboardHeader() {
           {brandDisplayName}
         </span>
         <div className="flex items-center gap-1.5 mt-[3px]">
-          {orgCity && (
-            <span className="flex items-center gap-0.5 text-[10px] font-medium text-slate-400 flex-1 min-w-0">
-              <MapPin className="h-2.5 w-2.5 shrink-0" />
-              <span className="truncate">{orgCity}</span>
-            </span>
-          )}
           {livePill}
         </div>
       </div>

@@ -36,6 +36,10 @@ export const QK = {
   kitchenLog:       (brandId: string | null) => ["kitchenLog",       brandId ?? "all"] as const,
   stockUsage:       (brandId: string | null) => ["stockUsage",       brandId ?? "all"] as const,
   closingStatus:    (brandId: string | null) => ["closingStatus",    brandId ?? "all"] as const,
+  expenseStats:     (brandId: string | null) => ["expenseStats",     brandId ?? "all"] as const,
+  expenseWeekStats: (brandId: string | null) => ["expenseWeekStats", brandId ?? "all"] as const,
+  expenseHistory:   (brandId: string | null, ...params: unknown[]) =>
+                      ["expenseHistory",   brandId ?? "all", ...params] as const,
 
   // ── Org-scoped ────────────────────────────────────────────────────────────
   // One kitchen, one day — these do not change when switching brands.
@@ -64,4 +68,7 @@ export const BRAND_SCOPED_KEYS: readonly string[] = [
   "kitchenLog",
   "stockUsage",
   "closingStatus",
+  "expenseStats",
+  "expenseWeekStats",
+  "expenseHistory",
 ];

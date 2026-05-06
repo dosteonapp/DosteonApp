@@ -15,6 +15,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import { salesService } from "@/lib/services/salesService";
+import { expenseService } from "@/lib/services/expenseService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
 import {
@@ -25,8 +26,7 @@ import {
     PrimarySurfaceCard
 } from "@/components/ui/dosteon-ui";
 import { Badge } from "@/components/ui/badge";
-import { cn, formatUserName } from "@/lib/utils";
-import { useUser } from "@/context/UserContext";
+import { cn } from "@/lib/utils";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useBrand } from "@/context/BrandContext";
 import { QK } from "@/lib/queryKeys";
@@ -35,9 +35,6 @@ export default function RestaurantDashboardPage() {
   const { isOpen, isLoading: isStatusLoading, isClosingTimeReached, targetClosingTime } = useRestaurantDayLifecycle();
   const { activeBrand } = useBrand();
   const brandId: string | null = activeBrand?.id ?? null;
-
-  const { user } = useUser();
-  const name = formatUserName(user?.first_name, user?.last_name);
 
   const { data: stats = { totalItems: 0, countedItems: 0, healthy: 0, low: 0, critical: 0 } } = useQuery({
     queryKey: QK.dashboardStats(brandId),
@@ -70,6 +67,17 @@ export default function RestaurantDashboardPage() {
     placeholderData: keepPreviousData,
   });
 
+  const { data: expenseStats } = useQuery({
+    queryKey: QK.expenseStats(brandId),
+    queryFn: () => expenseService.getTodayStats(),
+    staleTime: 30_000,
+    gcTime: 10 * 60_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+    enabled: isOpen,
+    placeholderData: keepPreviousData,
+  });
+
   if (isStatusLoading) {
     return <DashboardSkeleton />;
   }
@@ -86,7 +94,7 @@ export default function RestaurantDashboardPage() {
                     minHeight="min-h-[260px]"
                     backgroundColor="bg-[#f5f6ff]"
                     borderColor="border-[#98a6f9]"
-                    title={`Welcome back, ${name}`}
+                    title={`Welcome back, ${activeBrand?.name ?? 'there'}`}
                     description={isClosingTimeReached 
                         ? `Closing Stock Count is now enabled. You can now proceed to finalize your daily operations.`
                         : `Closing Stock Count will be enabled at ${targetClosingTime}. To change this, your admin can adjust it in settings.`
@@ -110,8 +118,12 @@ export default function RestaurantDashboardPage() {
                     <UnifiedStatCard label="Critical Stock Items" value={stats.critical.toString()} icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                     <UnifiedStatCard label="Low Stock Items" value={stats.low.toString()} icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                     <UnifiedStatCard
-                      label="Today's Revenue"
-                      value={todayStats ? `RWF ${todayStats.today_revenue.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "—"}
+                      label="Net Profit"
+                      value={
+                        todayStats
+                          ? `RWF ${((todayStats.today_revenue) - (expenseStats?.total_expenses ?? 0)).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+                          : "—"
+                      }
                       icon={TrendingUp}
                       variant="green"
                       className="flex-1 min-w-[150px] h-[160px] md:h-[190px]"
@@ -123,7 +135,7 @@ export default function RestaurantDashboardPage() {
                     alignItems="start"
                     padding="px-6 py-6 md:px-10 md:py-6"
                     minHeight="min-h-[260px]"
-                    title={`Welcome back, ${name}`}
+                    title={`Welcome back, ${activeBrand?.name ?? 'there'}`}
                     description="Do your opening stock count before starting your restaurant operations."
                     isLocked={true}
                     bgIcon={<ChefHat className="h-64 w-64 text-white" />}

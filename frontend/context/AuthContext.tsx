@@ -77,9 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data } = await axiosInstance.post("auth/signup", {
         email: values.email,
         password: values.password,
-        first_name: values.firstname,
-        last_name: values.lastname,
-        role: values.accountType
+        role: values.accountType,
       });
       return data;
     },
