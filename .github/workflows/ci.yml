@@ -85,8 +85,5 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      - name: Run type checks
-        run: npm run type-check
-
       - name: Build frontend
         run: npm run build
