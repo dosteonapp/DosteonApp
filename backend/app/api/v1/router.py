@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, inventory, restaurant, pos, test_role, supplier, orders, metrics, admin, onboarding, brands, sales
+from app.api.v1.endpoints import auth, inventory, restaurant, pos, test_role, supplier, orders, metrics, admin, onboarding, brands, sales, expenses
 from datetime import datetime
 
 api_router = APIRouter()
@@ -8,6 +8,7 @@ api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])
 api_router.include_router(brands.router, prefix="/brands", tags=["brands"])
 api_router.include_router(sales.router, prefix="/sales", tags=["sales"])
+api_router.include_router(expenses.router, prefix="/expenses", tags=["expenses"])
 api_router.include_router(inventory.router, prefix="/inventory", tags=["inventory"])
 api_router.include_router(restaurant.router, prefix="/restaurant", tags=["restaurant"])
 api_router.include_router(pos.router, prefix="/pos", tags=["pos"])

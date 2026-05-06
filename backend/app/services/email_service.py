@@ -127,7 +127,7 @@ class EmailService:
         self,
         to_email: str,
         verification_link: str,
-        first_name: str,
+        first_name: str = "there",
     ) -> None:
         subject = "Activate Your Dosteon Account"
 
