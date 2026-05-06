@@ -45,7 +45,7 @@ async def reset_password(request: Request, body: PasswordResetConfirm):
     return await auth_service.reset_password(body)
 
 @router.post("/resend-verification")
-@limiter.limit("5/minute")
+@limiter.limit("2/minute")
 async def resend_verification(request: Request, body: UserBase):
     """Resend the signup email verification link for a given email address."""
     return await auth_service.resend_verification(body)
