@@ -6,7 +6,7 @@ We have restored the systematic auth cycle that moves from signup to a real veri
 
 ### Full Lifecycle:
 
-1.  **Signup (Frontend)**: User provides name, email, password, and organization name.
+1.  **Signup (Frontend)**: User provides first name, last name, email, and password. Organization name is auto-generated as `"{first_name}'s Restaurant"` — no org name field is shown on the form. It is editable later in Settings → Business.
 2.  **Auth Request (Backend)**: Backend signals Supabase to register the user + create the organization.
 3.  **Google App SMTP Integration**:
     - **The Key to Success**: To avoid the "Email rate limit hit" error you saw, you must connect your **Google App Password** to Supabase.
@@ -22,7 +22,7 @@ We have restored the systematic auth cycle that moves from signup to a real veri
 
 ### Organization Setup (Admin Only)
 
-- **Initialization**: Every signup with an `organization_name` creates a new row in the `organizations` table.
+- **Initialization**: Every signup automatically creates a new `Organization` row (name auto-generated from first name) and a default `Brand` row in the same transaction. Both are immediately usable — no extra setup required.
 - **Default Settings**: The organization is initialized with your standard hours (e.g., 08:00 - 22:00 for restaurant operations).
 
 ### Secure Access Control (RBAC)
