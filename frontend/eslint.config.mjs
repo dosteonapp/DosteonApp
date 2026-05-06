@@ -1,15 +1,15 @@
-import coreWebVitals from "eslint-config-next/core-web-vitals.js";
-import typescript from "eslint-config-next/typescript.js";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
 
 const config = [
-  ...coreWebVitals,
-  ...typescript,
+  { ignores: [".next/**", "node_modules/**"] },
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
       "react/no-unescaped-entities": "warn",
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/react-compiler": "off", // 👈 add this
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
 ];
