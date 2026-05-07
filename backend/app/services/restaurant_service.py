@@ -452,6 +452,14 @@ class RestaurantService:
             item_id = str(i["id"])
             today_opening = float(i.get("current_stock", 0))
             amount_added = round(added_today.get(item_id, 0.0), 3)
+            crit = float(i.get("critical_level") or 0)
+            reorder = float(i.get("min_level") or 0)
+            if today_opening <= crit:
+                level = "critical"
+            elif today_opening <= reorder:
+                level = "low"
+            else:
+                level = "normal"
             result.append({
                 "id": item_id,
                 "name": i["name"],
@@ -461,6 +469,7 @@ class RestaurantService:
                 "todayOpening": today_opening,
                 "amountAddedToday": amount_added,
                 "totalOpening": round(today_opening + amount_added, 3),
+                "level": level,
             })
         return result
 
