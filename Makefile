@@ -13,23 +13,27 @@ help: ## Show this help message
 
 setup: ## Initial setup - install all dependencies
 	@echo '$(BLUE)Setting up Dosteon...$(NC)'
-	@echo '$(YELLOW)Installing root dependencies...$(NC)'
-	npm install
+	@echo '$(YELLOW)Installing dependencies...$(NC)'
+	npm install --legacy-peer-deps
 	@echo '$(YELLOW)Setting up backend...$(NC)'
 	cd apps/backend && python3 -m venv .venv
 	cd apps/backend && .venv/bin/pip install --upgrade pip
 	cd apps/backend && .venv/bin/pip install -r requirements.txt
-	cd apps/backend && npm install
 	cd apps/backend && PATH="$$PWD/.venv/bin:$$PATH" .venv/bin/python -m prisma generate
-	@echo '$(YELLOW)Setting up frontend...$(NC)'
-	cd apps/frontend && npm install --legacy-peer-deps
 	@echo '$(GREEN)✓ Setup complete!$(NC)'
 
 install: setup ## Alias for setup
 
 dev: ## Start development servers (backend + frontend)
 	@echo '$(BLUE)Starting development servers...$(NC)'
-	npm run dev
+	@echo '$(YELLOW)Backend: http://localhost:8000$(NC)'
+	@echo '$(YELLOW)Frontend: http://localhost:3000$(NC)'
+	@echo ''
+	@echo '$(BLUE)Press Ctrl+C to stop both servers$(NC)'
+	@echo ''
+	@trap 'kill 0' EXIT; \
+	(cd apps/backend && .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000) & \
+	(cd apps/frontend && npm run dev)
 
 dev-backend: ## Start only backend server
 	@echo '$(BLUE)Starting backend server...$(NC)'
@@ -95,6 +99,10 @@ check-db: ## Check database connection and models
 check-profiles: ## Check user profiles
 	@echo '$(BLUE)Checking profiles...$(NC)'
 	cd apps/backend && .venv/bin/python scripts/user/check_profiles.py
+
+verify-supabase: ## Verify Supabase connection and setup
+	@echo '$(BLUE)Verifying Supabase setup...$(NC)'
+	cd apps/backend && .venv/bin/python scripts/maintenance/verify_supabase_setup.py
 
 status: ## Show git status
 	@git status

@@ -8,11 +8,13 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm:dev:*\" --names \"backend,frontend\" --prefix-colors \"blue,magenta\"",
+    "setup": "npm install --legacy-peer-deps && npm run setup:backend",
+    "setup:backend": "cd apps/backend && python3 -m venv .venv && .venv/bin/pip install --upgrade pip && .venv/bin/pip install -r requirements.txt && npm run db:generate",
+    "dev": "concurrently \"npm:dev:*\" --names \"backend,frontend\" --prefix-colors \"blue,magenta\" --kill-others --handle-input",
     "dev:backend": "cd apps/backend && .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
-    "dev:frontend": "cd apps/frontend && npm run dev",
+    "dev:frontend": "cd apps/frontend && NODE_OPTIONS='--max-old-space-size=4096' next dev",
     "build": "npm run build --workspaces --if-present",
-    "build:backend": "cd apps/backend && echo 'Backend build complete'",
+    "build:backend": "echo 'Backend build not required for development'",
     "build:frontend": "cd apps/frontend && npm run build",
     "test": "npm run test --workspaces --if-present",
     "test:backend": "cd apps/backend && .venv/bin/pytest",
@@ -20,14 +22,15 @@
     "lint": "npm run lint --workspaces --if-present",
     "lint:backend": "cd apps/backend && .venv/bin/python -m pylint app/",
     "lint:frontend": "cd apps/frontend && npm run lint",
-    "clean": "rm -rf apps/*/node_modules apps/*/.next apps/*/__pycache__ apps/*/.pytest_cache",
-    "db:migrate": "cd apps/backend && .venv/bin/prisma migrate dev",
+    "clean": "rm -rf node_modules apps/*/.next apps/*/.venv apps/*/__pycache__ apps/*/.pytest_cache apps/*/.venv",
+    "db:migrate": "cd apps/backend && PATH=\"$PWD/.venv/bin:$PATH\" .venv/bin/prisma migrate dev",
     "db:generate": "cd apps/backend && PATH=\"$PWD/.venv/bin:$PATH\" .venv/bin/python -m prisma generate",
     "db:seed": "cd apps/backend && .venv/bin/python scripts/seed/seed_data.py",
-    "db:studio": "cd apps/backend && .venv/bin/prisma studio"
+    "db:studio": "cd apps/backend && PATH=\"$PWD/.venv/bin:$PATH\" .venv/bin/prisma studio"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "prisma": "^7.5.0"
   },
   "engines": {
     "node": ">=18.0.0",
