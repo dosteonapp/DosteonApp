@@ -33,14 +33,24 @@ Dosteon is a comprehensive dashboard platform supporting role-based interaction 
 git clone https://github.com/dosteonapp/DosteonApp.git
 cd DosteonApp
 
-# Install all dependencies and set up the project
+# 1. Install all dependencies and set up the project (includes virtualenv and prisma)
 make setup
 
-# Start development servers (backend + frontend)
+# 2. Configure environment variables
+# Copy .env.example files to their active locations
+cp apps/backend/.env.example apps/backend/.env
+cp apps/frontend/.env.example apps/frontend/.env.local
+
+# 3. Edit the .env files
+# Ensure you use the Staging project credentials (uthliwmewwlfjlbskilw)
+# for development to avoid breaking production schema.
+
+# 4. Verify your setup
+make verify-supabase
+
+# 5. Start development servers (backend + frontend)
 make dev
 ```
-
-That's it! 🎉
 
 - **Backend API**: http://localhost:8000
 - **Frontend**: http://localhost:3000
@@ -112,20 +122,26 @@ dosteon/
 
 ```bash
 make help          # Show all available commands
-make dev           # Start development servers
+make dev           # Start development servers (Next.js + FastAPI)
+make setup         # Initial setup and dependency installation
 make build         # Build all applications
 make test          # Run all tests
 make lint          # Run linters
-make clean         # Clean build artifacts
 
 # Database commands
-make db-migrate    # Run database migrations
+make db-migrate    # Run database migrations (Prisma)
+make db-generate   # Re-generate Prisma client
 make db-seed       # Seed database with sample data
 make db-studio     # Open Prisma Studio
 
+# Maintenance & Verification
+make verify-supabase # Check connection to Supabase and database health
+make check-db      # Verify database connection and models
+make check-profiles # Validate user profiles in the DB
+
 # Individual services
-make dev-backend   # Start backend only
-make dev-frontend  # Start frontend only
+make dev-backend   # Start backend only (Port 8000)
+make dev-frontend  # Start frontend only (Port 3000)
 ```
 
 ### Tech Stack
