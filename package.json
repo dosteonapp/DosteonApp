@@ -1,9 +1,49 @@
 {
-  "name": "dashboard-v0-dev-root",
+  "name": "dosteon-monorepo",
+  "version": "1.0.0",
   "private": true,
+  "description": "Dosteon - Modern supply chain management platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "lint": "cd frontend && npm run lint",
-    "type-check": "cd frontend && npm run type-check",
-    "test:backend": "cd backend && pytest -q"
-  }
+    "dev": "concurrently \"npm:dev:*\" --names \"backend,frontend\" --prefix-colors \"blue,magenta\"",
+    "dev:backend": "cd apps/backend && .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:frontend": "cd apps/frontend && npm run dev",
+    "build": "npm run build --workspaces --if-present",
+    "build:backend": "cd apps/backend && echo 'Backend build complete'",
+    "build:frontend": "cd apps/frontend && npm run build",
+    "test": "npm run test --workspaces --if-present",
+    "test:backend": "cd apps/backend && .venv/bin/pytest",
+    "test:frontend": "cd apps/frontend && npm run test",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:backend": "cd apps/backend && .venv/bin/python -m pylint app/",
+    "lint:frontend": "cd apps/frontend && npm run lint",
+    "clean": "rm -rf apps/*/node_modules apps/*/.next apps/*/__pycache__ apps/*/.pytest_cache",
+    "db:migrate": "cd apps/backend && .venv/bin/prisma migrate dev",
+    "db:generate": "cd apps/backend && PATH=\"$PWD/.venv/bin:$PATH\" .venv/bin/python -m prisma generate",
+    "db:seed": "cd apps/backend && .venv/bin/python scripts/seed/seed_data.py",
+    "db:studio": "cd apps/backend && .venv/bin/prisma studio"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dosteonapp/DosteonApp.git"
+  },
+  "keywords": [
+    "supply-chain",
+    "restaurant",
+    "supplier",
+    "inventory",
+    "management"
+  ],
+  "author": "Dosteon Team",
+  "license": "UNLICENSED"
 }
