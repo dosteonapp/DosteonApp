@@ -116,14 +116,14 @@ function Stepper({
 
   return (
     <div className="flex items-center gap-2">
-      <button type="button" className={btnClass} onClick={() => step(-0.5)}>
+      <button type="button" className={btnClass} onClick={() => step(-1)}>
         <Minus className="h-4 w-4 stroke-[3px]" />
       </button>
       <div className="flex-1 relative">
         <input
           type="number"
           min="0"
-          step="0.5"
+          step="1.0"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={(e) => e.target.select()}
@@ -134,7 +134,7 @@ function Stepper({
           {unit}
         </span>
       </div>
-      <button type="button" className={btnClass} onClick={() => step(0.5)}>
+      <button type="button" className={btnClass} onClick={() => step(1)}>
         <Plus className="h-4 w-4 stroke-[3px]" />
       </button>
     </div>

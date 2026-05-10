@@ -26,5 +26,6 @@ export interface User {
   image_url?: string;
   avatar_url?: string;
   password_changed_at?: string;
+  daily_stock_count?: boolean;
 }
 

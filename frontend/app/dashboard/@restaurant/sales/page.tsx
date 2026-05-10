@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -8,8 +8,6 @@ import {
   BookOpen,
   Lock,
   ArrowRight,
-  Plus,
-  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,37 +38,20 @@ const TABS: { id: SalesTab; label: string; icon: React.ComponentType<{ className
 // ---------------------------------------------------------------------------
 
 export default function SalesPage() {
-  const [activeTab, setActiveTab] = useState<SalesTab>("log");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeTab = (searchParams.get("tab") as SalesTab) ?? "log";
   const { isOpen } = useRestaurantDayLifecycle();
+
+  const setActiveTab = (tab: SalesTab) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <AppContainer>
 
-      {/* ── Module Header: action buttons ── */}
-      <div className="flex items-center justify-end gap-4 px-1">
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 md:gap-3 shrink-0">
-          <Button
-            variant="outline"
-            className="h-9 md:h-10 rounded-[8px] border-slate-200 text-slate-500 font-bold text-[12px] md:text-[13px] font-figtree hover:bg-slate-50 hover:text-slate-700 gap-1.5 md:gap-2 px-3 md:px-4 transition-all"
-            asChild
-          >
-            <Link href="/dashboard/expenses">
-              <Receipt className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
-              <span className="hidden sm:block">Log Expense</span>
-            </Link>
-          </Button>
-          <Button
-            className="h-9 md:h-10 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[12px] md:text-[13px] font-figtree gap-1.5 md:gap-2 px-3 md:px-4 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all"
-            onClick={() => setActiveTab("log")}
-          >
-            <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
-            <span className="hidden sm:block">Log Sales</span>
-            <TrendingUp className="h-3.5 w-3.5 sm:hidden shrink-0" />
-          </Button>
-        </div>
-      </div>
 
       {/* ── Tab bar + content surface ── */}
       <div className="relative">

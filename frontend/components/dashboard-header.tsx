@@ -9,7 +9,12 @@ import {
   Menu,
   ChevronDown,
   CheckCircle2,
+  AlertTriangle,
+  Info,
+  X,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import { useSidebar } from "@/context/SidebarContext";
 import { useBrand } from "@/context/BrandContext";
 import { useUser } from "@/context/UserContext";
@@ -77,6 +82,20 @@ export function DashboardHeader() {
     return () => clearInterval(timer);
   }, []);
 
+  // Notifications
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+  useEffect(() => {
+    if (!notifOpen) return;
+    setNotifLoading(true);
+    restaurantOpsService.getNotifications({ limit: 10 })
+      .then(setNotifications)
+      .catch(() => setNotifications([]))
+      .finally(() => setNotifLoading(false));
+  }, [notifOpen]);
+  const unreadCount = notifications.filter((n) => n.unread).length;
+
   const formatDate = (date: Date) =>
     new Intl.DateTimeFormat("en-US", {
       weekday: "long",
@@ -93,36 +112,71 @@ export function DashboardHeader() {
       hour12: true,
     }).format(date);
 
-  const getBreadcrumbs = (path: string): string[] => {
-    if (path === "/dashboard/inventory/daily-stock-count")
-      return ["Inventory", "Daily Stock Count"];
-    if (path === "/dashboard/inventory/new") {
-      const isEdit = searchParams.get("edit");
-      return ["Inventory", isEdit ? "Edit Item" : "Add New Item"];
+  // Strip workspace-slug prefix so comparisons work for any workspace URL
+  const dashPath = (() => {
+    const idx = pathname.indexOf("/dashboard");
+    return idx >= 0 ? pathname.slice(idx) : pathname;
+  })();
+
+  const getBreadcrumbs = (): string[] => {
+    // Home
+    if (dashPath === "/dashboard") return ["Home"];
+
+    // Sales — tab name from ?tab= search param
+    if (dashPath === "/dashboard/sales") {
+      const tab = searchParams.get("tab") ?? "log";
+      const label: Record<string, string> = {
+        log:     "Log Sales",
+        history: "Today's Sales History",
+        menu:    "Menu Management",
+      };
+      return ["Sales", label[tab] ?? "Log Sales"];
     }
-    if (
-      path.startsWith("/dashboard/inventory/") &&
-      !path.startsWith("/dashboard/inventory/daily-stock-count") &&
-      !path.startsWith("/dashboard/inventory/new")
-    )
+
+    // Expenditure
+    if (dashPath === "/dashboard/expenditure/history")
+      return ["Expenditure", "Expenditure History"];
+    if (dashPath.startsWith("/dashboard/expenditure"))
+      return ["Expenditure"];
+
+    // Inventory
+    if (dashPath === "/dashboard/inventory/daily-stock-count")
+      return ["Inventory", "Daily Stock Count"];
+    if (dashPath === "/dashboard/inventory/new") {
+      return ["Inventory", searchParams.get("edit") ? "Edit Item" : "Add New Item"];
+    }
+    if (dashPath === "/dashboard/inventory") {
+      const tab = searchParams.get("tab") ?? "catalog";
+      const label: Record<string, string> = {
+        catalog: "Product Catalog",
+        usage:   "Stock Usage",
+      };
+      return ["Inventory", label[tab] ?? "Product Catalog"];
+    }
+    if (dashPath.startsWith("/dashboard/inventory/"))
       return ["Inventory", "Item Details"];
-    if (path === "/dashboard") return ["Home"];
-    if (path === "/dashboard/sales/history") return ["Sales", "History"];
-    if (path.startsWith("/dashboard/sales")) return ["Sales"];
-    if (path.startsWith("/dashboard/inventory")) return ["Inventory"];
-    if (path.startsWith("/dashboard/closing")) return ["Closing"];
-    if (path.startsWith("/dashboard/notifications")) return ["Notifications"];
-    if (path.startsWith("/dashboard/settings")) {
+    if (dashPath.startsWith("/dashboard/inventory"))
+      return ["Inventory"];
+
+    // Closing
+    if (dashPath.startsWith("/dashboard/closing")) return ["Closing"];
+
+    // Notifications
+    if (dashPath.startsWith("/dashboard/notifications")) return ["Notifications"];
+
+    // Settings
+    if (dashPath.startsWith("/dashboard/settings")) {
       const parts = ["Settings"];
-      if (path.includes("/personal")) parts.push("Personal Details");
-      if (path.includes("/business")) parts.push("Business Settings");
-      if (path.includes("/notifications")) parts.push("Notification Settings");
+      if (dashPath.includes("/personal"))       parts.push("Personal Details");
+      else if (dashPath.includes("/business"))  parts.push("Business Settings");
+      else if (dashPath.includes("/notifications")) parts.push("Notification Settings");
       return parts;
     }
+
     return [];
   };
 
-  const breadcrumbs = getBreadcrumbs(pathname);
+  const breadcrumbs = getBreadcrumbs();
   const isOwner = user?.role === "OWNER";
   const isMultiBrand = brands.length > 1;
 
@@ -325,14 +379,52 @@ export function DashboardHeader() {
           </div>
 
           {/* Notification bell */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-white border border-slate-100 relative group shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 transition-all active:scale-95 shrink-0"
-          >
-            <Bell className="h-5 w-5 text-slate-400 group-hover:text-[#3B59DA] transition-colors stroke-[2.5px]" />
-            <span className="absolute top-2.5 right-2.5 h-2.5 w-2.5 bg-[#EF4444] border-2 border-white rounded-full shadow-sm animate-pulse" />
-          </Button>
+          <Popover open={notifOpen} onOpenChange={setNotifOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 md:h-11 md:w-11 rounded-[14px] bg-white border border-slate-100 relative group shadow-sm hover:shadow-md hover:border-[#3B59DA]/20 transition-all active:scale-95 shrink-0"
+              >
+                <Bell className="h-5 w-5 text-slate-400 group-hover:text-[#3B59DA] transition-colors stroke-[2.5px]" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2.5 right-2.5 h-2.5 w-2.5 bg-[#EF4444] border-2 border-white rounded-full shadow-sm animate-pulse" />
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" sideOffset={8} className="w-80 p-0 rounded-[14px] border border-slate-100 shadow-xl overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <span className="text-[14px] font-bold text-[#1E293B] font-figtree">Notifications</span>
+                {unreadCount > 0 && (
+                  <span className="text-[11px] font-bold text-white bg-[#EF4444] rounded-full px-2 py-0.5">{unreadCount} new</span>
+                )}
+              </div>
+              <div className="divide-y divide-slate-50 max-h-[360px] overflow-y-auto">
+                {notifLoading ? (
+                  <div className="py-10 text-center text-slate-400 text-[13px] font-figtree">Loading…</div>
+                ) : notifications.length === 0 ? (
+                  <div className="py-10 text-center text-slate-400 text-[13px] font-figtree">No notifications</div>
+                ) : notifications.map((n) => (
+                  <div key={n.id} className="flex gap-3 px-5 py-4 hover:bg-slate-50 transition-colors">
+                    <div className="shrink-0 mt-0.5">
+                      {n.type === "alert" || n.type === "critical" ? (
+                        <AlertTriangle className="h-4 w-4 text-[#EF4444]" />
+                      ) : n.type === "success" ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      ) : (
+                        <Info className="h-4 w-4 text-[#3B59DA]" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-bold text-[#1E293B] font-figtree leading-tight">{n.title}</p>
+                      <p className="text-[12px] text-slate-400 font-figtree mt-0.5 leading-snug line-clamp-2">{n.description}</p>
+                      <p className="text-[11px] text-slate-300 font-figtree mt-1">{n.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
 
         </div>
       </div>
