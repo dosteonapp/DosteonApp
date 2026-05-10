@@ -145,7 +145,6 @@ class RestaurantService:
         return [self._map_inventory_event(e) for e in events]
 
     async def create_inventory_item(self, organization_id: str, payload: dict):
-        await self._require_unlocked(organization_id)
         name = payload.get("name")
         category = payload.get("category", "General")
         stock = float(payload.get("currentStock") or 0)
