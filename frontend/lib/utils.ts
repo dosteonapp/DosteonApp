@@ -9,16 +9,17 @@ export function cn(...inputs: ClassValue[]) {
 
 export function handleApiError(error: unknown): Error {
   if (error instanceof AxiosError) {
-    // Check for API response with message or detail (FastAPI)
-    const apiMessage = error.response?.data?.message || error.response?.data?.detail;
+    // No response at all = device is offline or server unreachable
+    if (!error.response) {
+      return new Error("No internet connection – please check and try again.");
+    }
 
+    const apiMessage = error.response?.data?.message || error.response?.data?.detail;
     if (apiMessage) return new Error(apiMessage);
 
-    // Check for axios error message
     if (error.message) return new Error(error.message);
   }
 
-  // Fallback error message
   return new Error("Something went wrong. Please try again later.");
 }
 

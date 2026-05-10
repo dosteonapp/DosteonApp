@@ -32,7 +32,7 @@ export default function LoginPage() {
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, sendMagicLink, authenticateWithOAuth } = useAuth();
+  const { login, sendMagicLink, authenticateWithOAuth, resendVerification } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'password' | 'magic'>('password');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
@@ -159,6 +159,15 @@ function LoginPageContent() {
               <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
                 {status.error}
               </div>
+            )}
+            {status?.needsVerification && (
+              <button
+                type="button"
+                onClick={() => resendVerification(values.email.trim().toLowerCase())}
+                className="text-sm font-semibold text-[#3B59DA] hover:underline block -mt-1"
+              >
+                Resend verification email →
+              </button>
             )}
 
             <FormikFormItem>
