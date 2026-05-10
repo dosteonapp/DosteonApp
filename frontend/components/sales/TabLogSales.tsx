@@ -57,7 +57,7 @@ export function TabLogSales() {
 
   const [search, setSearch]             = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [channel, setChannel]           = useState<SaleChannel>("DINE_IN");
+  const [channel, setChannel]           = useState<SaleChannel | null>(null);
   const [cart, setCart]                 = useState<CartItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -136,7 +136,7 @@ export function TabLogSales() {
   // ── Submit ─────────────────────────────────────────────────────────────
 
   const handleLogSale = async () => {
-    if (!cart.length) return;
+    if (!cart.length || !channel) return;
 
     const currentCart = [...cart];
     const prevStats   = todayStats;
@@ -157,7 +157,7 @@ export function TabLogSales() {
 
     try {
       const order = await salesService.logSale({
-        channel,
+        channel: channel!,
         items: currentCart.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
       });
       toast.success("Sale logged!", {
@@ -363,11 +363,11 @@ export function TabLogSales() {
             </div>
 
             <button
-              disabled={!cart.length || isSubmitting}
+              disabled={!cart.length || !channel || isSubmitting}
               onClick={handleLogSale}
               className={cn(
                 "w-full h-12 rounded-[10px] font-black text-[15px] font-figtree transition-all flex items-center justify-center gap-2",
-                cart.length > 0
+                cart.length > 0 && channel
                   ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-[0_4px_16px_rgba(59,89,218,0.3)] active:scale-[0.98]"
                   : "bg-slate-100 text-slate-300 cursor-not-allowed"
               )}
