@@ -17,7 +17,8 @@ import {
   ShoppingCart,
   BarChart3,
   Wallet,
-  Lock as LockIcon
+  Lock as LockIcon,
+  ReceiptText,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -82,6 +83,11 @@ export function RestaurantSidebar() {
       href: `${base}/dashboard/sales`,
       icon: TrendingUp,
       title: "Sales",
+    },
+    {
+      href: `${base}/dashboard/expenditure`,
+      icon: ReceiptText,
+      title: "Expenditure",
     },
     {
       href: `${base}/dashboard/inventory`,

@@ -411,11 +411,13 @@ class AuthService:
         from app.db.prisma import db
         org_id = current_user.get("organization_id")
         workspace_slug = None
+        daily_stock_count = None
         if org_id:
             try:
                 org = await db.organization.find_unique(where={"id": str(org_id)})
                 if org:
                     workspace_slug = org.slug
+                    daily_stock_count = org.daily_stock_count
             except Exception:
                 pass
 
@@ -433,6 +435,7 @@ class AuthService:
             "email_verified": current_user.get("email_verified"),
             "password_changed_at": current_user.get("password_changed_at"),
             "workspace_slug": workspace_slug,
+            "daily_stock_count": daily_stock_count,
         }
 
     async def update_me(self, user_id: str, profile_data: dict):

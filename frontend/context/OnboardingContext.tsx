@@ -295,7 +295,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           }
 
           // --- Resume step ---
-          if (!s1.name) {
+          if (s1.daily_stock_count == null) {
             next.currentStep = 1;
           } else if (savedDays.length === 0) {
             next.currentStep = 2;

@@ -29,10 +29,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useBrand } from "@/context/BrandContext";
+import { useUser } from "@/context/UserContext";
 import { QK } from "@/lib/queryKeys";
+import { useState } from "react";
 
 export default function RestaurantDashboardPage() {
-  const { isOpen, isLoading: isStatusLoading, isClosingTimeReached, targetClosingTime } = useRestaurantDayLifecycle();
+  const { isOpen, isLoading: isStatusLoading, isClosingTimeReached, targetClosingTime, canStartOpening, finishOpening } = useRestaurantDayLifecycle();
+  const { user } = useUser();
+  const [isQuickOpening, setIsQuickOpening] = useState(false);
   const { activeBrand } = useBrand();
   const brandId: string | null = activeBrand?.id ?? null;
 
@@ -77,6 +81,21 @@ export default function RestaurantDashboardPage() {
     enabled: isOpen,
     placeholderData: keepPreviousData,
   });
+
+  const skipsStockCount = user?.daily_stock_count === false;
+
+  const handleQuickOpen = async () => {
+    if (!canStartOpening) return;
+    setIsQuickOpening(true);
+    try {
+      await restaurantOpsService.submitOpeningChecklist({ counts: {} });
+      await finishOpening();
+    } catch {
+      // finishOpening updates local state even on network failure
+    } finally {
+      setIsQuickOpening(false);
+    }
+  };
 
   if (isStatusLoading) {
     return <DashboardSkeleton />;
@@ -128,6 +147,37 @@ export default function RestaurantDashboardPage() {
                       variant="green"
                       className="flex-1 min-w-[150px] h-[160px] md:h-[190px]"
                     />
+                </UnifiedHeroSurface>
+            ) : skipsStockCount ? (
+                <UnifiedHeroSurface
+                    variant="inline"
+                    alignItems="start"
+                    padding="px-6 py-6 md:px-10 md:py-6"
+                    minHeight="min-h-[260px]"
+                    title={`Welcome back, ${activeBrand?.name ?? 'there'}`}
+                    description="Ready to start your day? Open the kitchen to begin sales and operations."
+                    isLocked={true}
+                    bgIcon={<ChefHat className="h-64 w-64 text-white" />}
+                    badge={
+                        <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm shadow-sm w-fit">
+                            <Clock className="h-3.5 w-3.5 text-white" />
+                            <FigtreeText className="text-[11px] font-bold text-white uppercase tracking-[0.1em]">Kitchen Closed</FigtreeText>
+                        </div>
+                    }
+                    action={
+                        <Button
+                            className="w-fit h-14 px-10 rounded-[8px] bg-white text-[#3B59DA] hover:bg-slate-50 font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]"
+                            onClick={handleQuickOpen}
+                            disabled={isQuickOpening || !canStartOpening}
+                        >
+                            {isQuickOpening ? "Opening..." : "Open Kitchen"} <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
+                        </Button>
+                    }
+                >
+                    <UnifiedStatCard label="Total Inventory Items" value={stats.totalItems.toString()} icon={Package} variant="indigo" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Critical Stock Items" value={stats.critical.toString()} icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Low Stock Items" value={stats.low.toString()} icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Shift Status" value="Inactive" icon={Clock} variant="neutral" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                 </UnifiedHeroSurface>
             ) : (
                 <UnifiedHeroSurface

@@ -269,7 +269,7 @@ export function InventoryItemModal({
                     <Input
                       id="currentStock"
                       type="number"
-                      step="0.01"
+                      step="1.0"
                       value={formData.currentStock}
                       onChange={(e) =>
                         handleChange("currentStock", e.target.value)
@@ -314,7 +314,7 @@ export function InventoryItemModal({
                     <Input
                       id="minLevel"
                       type="number"
-                      step="0.01"
+                      step="1.0"
                       value={formData.minimumLevel}
                       onChange={(e) =>
                         handleChange("minimumLevel", e.target.value)

@@ -68,6 +68,13 @@ export interface ExpenseHistoryPage {
   items: ExpenseHistoryItem[];
 }
 
+export interface ExpenseHistoryParams {
+  page?: number;
+  limit?: number;
+  days?: number;
+  expense_type?: ExpenseType;
+}
+
 export const expenseService = {
   async createExpense(payload: ExpenseCreatePayload): Promise<ExpenseOut> {
     const { data } = await axiosInstance.post<ExpenseOut>("/expenses", payload);
@@ -84,11 +91,7 @@ export const expenseService = {
     return data;
   },
 
-  async getHistory(params?: {
-    page?: number;
-    limit?: number;
-    days?: number;
-  }): Promise<ExpenseHistoryPage> {
+  async getHistory(params?: ExpenseHistoryParams): Promise<ExpenseHistoryPage> {
     const { data } = await axiosInstance.get<ExpenseHistoryPage>("/expenses/history", { params });
     return data;
   },
