@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -20,6 +21,8 @@ import { TabLogSales } from "@/components/sales/TabLogSales";
 import { TabSalesHistory } from "@/components/sales/TabSalesHistory";
 import { TabMenuManagement } from "@/components/sales/TabMenuManagement";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
+import { useUser } from "@/context/UserContext";
+import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 
 // ---------------------------------------------------------------------------
 // Tab config
@@ -41,7 +44,24 @@ export default function SalesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeTab = (searchParams.get("tab") as SalesTab) ?? "log";
-  const { isOpen } = useRestaurantDayLifecycle();
+  const { isOpen, canStartOpening, finishOpening } = useRestaurantDayLifecycle();
+  const { user } = useUser();
+  const [isQuickOpening, setIsQuickOpening] = useState(false);
+
+  const skipsStockCount = user?.daily_stock_count === false;
+
+  const handleQuickOpen = async () => {
+    if (!canStartOpening) return;
+    setIsQuickOpening(true);
+    try {
+      await restaurantOpsService.submitOpeningChecklist({ counts: {} });
+      await finishOpening();
+    } catch {
+      // finishOpening updates local state even on network failure
+    } finally {
+      setIsQuickOpening(false);
+    }
+  };
 
   const setActiveTab = (tab: SalesTab) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -100,7 +120,14 @@ export default function SalesPage() {
         </div>
 
         {/* Locked overlay */}
-        {!isOpen && <SalesLockedOverlay />}
+        {!isOpen && (
+          <SalesLockedOverlay
+            skipsStockCount={skipsStockCount}
+            canStartOpening={canStartOpening}
+            isQuickOpening={isQuickOpening}
+            onQuickOpen={handleQuickOpen}
+          />
+        )}
       </div>
 
     </AppContainer>
@@ -111,7 +138,17 @@ export default function SalesPage() {
 // Locked overlay
 // ---------------------------------------------------------------------------
 
-function SalesLockedOverlay() {
+function SalesLockedOverlay({
+  skipsStockCount,
+  canStartOpening,
+  isQuickOpening,
+  onQuickOpen,
+}: {
+  skipsStockCount: boolean;
+  canStartOpening: boolean;
+  isQuickOpening: boolean;
+  onQuickOpen: () => void;
+}) {
   return (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-auto rounded-[12px] overflow-hidden">
       <div className="absolute inset-0 bg-white/55 backdrop-blur-[7px]" />
@@ -128,19 +165,32 @@ function SalesLockedOverlay() {
             Sales is Locked
           </InriaHeading>
           <FigtreeText className="text-slate-500 text-[15px] md:text-[17px] leading-relaxed font-bold max-w-[340px] mx-auto opacity-70">
-            Complete your daily opening stock count to unlock Sales and start logging orders.
+            {skipsStockCount
+              ? "Open your kitchen to start sales and operations."
+              : "Complete your daily opening stock count to unlock Sales and start logging orders."}
           </FigtreeText>
         </div>
 
-        <Button
-          className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.25)] transition-all active:scale-95 group font-figtree text-[17px] border-none"
-          asChild
-        >
-          <Link href="/dashboard/inventory/daily-stock-count">
-            Count Daily Stock
+        {skipsStockCount ? (
+          <Button
+            className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.25)] transition-all active:scale-95 group font-figtree text-[17px] border-none"
+            onClick={onQuickOpen}
+            disabled={isQuickOpening || !canStartOpening}
+          >
+            {isQuickOpening ? "Opening..." : "Open Kitchen"}
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
-          </Link>
-        </Button>
+          </Button>
+        ) : (
+          <Button
+            className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.25)] transition-all active:scale-95 group font-figtree text-[17px] border-none"
+            asChild
+          >
+            <Link href="/dashboard/inventory/daily-stock-count">
+              Count Daily Stock
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );

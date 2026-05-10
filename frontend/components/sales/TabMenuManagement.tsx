@@ -26,7 +26,6 @@ import {
   UnifiedModal,
   UnifiedErrorBanner,
 } from "@/components/ui/dosteon-ui";
-import { SalesStatsBanner } from "@/components/sales/SalesStatsBanner";
 import {
   salesService,
   MenuItem,

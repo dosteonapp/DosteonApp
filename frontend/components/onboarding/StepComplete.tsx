@@ -2,6 +2,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useOnboarding } from "@/context/OnboardingContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Summary row — label + right-aligned value
 function SummaryRow({ label, value }: { label: string; value: string | number | null | undefined }) {
@@ -20,6 +21,7 @@ const BRAND_COLORS = ["#F97316", "#EF4444", "#8B5CF6", "#0EA5E9", "#10B981"];
 
 export default function StepComplete() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { state } = useOnboarding();
   const summary = state.completeSummary;
 
@@ -32,6 +34,9 @@ export default function StepComplete() {
     if (brands.length > 0 && typeof sessionStorage !== "undefined") {
       sessionStorage.setItem("active_brand_id", brands[0].id);
     }
+    // Force-refresh the user profile so daily_stock_count and other onboarding
+    // choices are immediately reflected on the dashboard without a 30s stale wait.
+    queryClient.invalidateQueries({ queryKey: ["user"] });
     router.push("/dashboard");
   };
 
