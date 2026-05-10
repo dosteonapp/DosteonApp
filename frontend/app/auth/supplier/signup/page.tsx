@@ -52,13 +52,11 @@ function RegisterPageContent() {
       const response = await signup(values, helpers);
       if (response && response.success) {
         setSuccessEmail(values.email);
-      } else {
-        // On any signup failure, show the Authentication Failed status page
-        router.push("/auth/supplier/status/failed");
       }
-    } catch (error) {
-      // As an extra safety net, redirect to the failed status page
-      router.push("/auth/supplier/status/failed");
+      // On failure, AuthContext already called helpers.setStatus({ error }) —
+      // the inline banner will show it; no redirect needed.
+    } catch {
+      helpers.setStatus({ error: "Something went wrong. Please try again." });
     }
   };
 

@@ -22,7 +22,7 @@ import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, sendMagicLink, authenticateWithOAuth } = useAuth();
+  const { login, sendMagicLink, authenticateWithOAuth, resendVerification } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'password' | 'magic'>('password');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
@@ -115,6 +115,15 @@ export default function LoginPage() {
                   <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
                     {status.error}
                   </div>
+                )}
+                {status?.needsVerification && (
+                  <button
+                    type="button"
+                    onClick={() => resendVerification(values.email.trim().toLowerCase())}
+                    className="text-sm font-semibold text-[#00a13e] hover:underline block -mt-1"
+                  >
+                    Resend verification email →
+                  </button>
                 )}
 
                 {/* Login Method Toggle */}
