@@ -61,6 +61,9 @@ export function TabLogSales() {
   const [cart, setCart]                 = useState<CartItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Reset channel when cart empties so buttons return to unselected state
+  useEffect(() => { if (cart.length === 0) setChannel(null); }, [cart.length]);
+
   // ── Fetch ──────────────────────────────────────────────────────────────
 
   const load = useCallback(async (refresh = false) => {
@@ -301,12 +304,14 @@ export function TabLogSales() {
               {CHANNELS.map((ch) => (
                 <button
                   key={ch.id}
-                  onClick={() => setChannel(ch.id)}
+                  onClick={() => cart.length > 0 && setChannel(ch.id)}
                   className={cn(
                     "flex-1 py-2 rounded-full text-[12px] font-bold transition-all font-figtree border",
-                    channel === ch.id
-                      ? "bg-[#1E293B] text-white border-[#1E293B]"
-                      : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+                    cart.length === 0
+                      ? "bg-white text-slate-400 border-slate-200 hover:border-slate-300 cursor-default"
+                      : channel === ch.id
+                        ? "bg-[#1E293B] text-white border-[#1E293B]"
+                        : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 cursor-pointer"
                   )}
                 >
                   {ch.label}
