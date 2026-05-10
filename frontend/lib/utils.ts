@@ -14,7 +14,9 @@ export function handleApiError(error: unknown): Error {
       return new Error("No internet connection – please check and try again.");
     }
 
-    const apiMessage = error.response?.data?.message || error.response?.data?.detail;
+    const raw = error.response?.data?.message || error.response?.data?.detail;
+    // FastAPI 422 returns detail as an array of {loc, msg} objects
+    const apiMessage = Array.isArray(raw) ? (raw[0]?.msg ?? "Validation error") : raw;
     if (apiMessage) return new Error(apiMessage);
 
     if (error.message) return new Error(error.message);
