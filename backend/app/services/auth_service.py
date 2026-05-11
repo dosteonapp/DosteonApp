@@ -118,56 +118,19 @@ class AuthService:
                     import logging as _logging
                     _logging.getLogger("dosteon.auth").critical(
                         "CRITICAL: supabase.auth.admin.create_user returned 403. "
-                        "The backend is running with the wrong Supabase key (anon instead of service role), "
-                        "or Supabase has disabled signups. "
-                        "Set SUPABASE_SERVICE_ROLE_KEY correctly on Render and redeploy. "
+                        "SUPABASE_SERVICE_ROLE_KEY on Render is set but INVALID "
+                        "(wrong project, malformed, or rotated). "
+                        "Go to Supabase Dashboard → Project Settings → API, "
+                        "copy the 'service_role' key, update SUPABASE_SERVICE_ROLE_KEY "
+                        "on Render, and redeploy. "
                         f"Raw error: {error_str}"
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail="Signup is temporarily unavailable. Our team has been notified. Please try again in a few minutes."
                     )
                 else:
                     print(f"Supabase admin.create_user failed: {error_str}")
-
-                # Fall back to the standard sign_up flow if the service role
-                # key is not allowed (e.g. using anon key in any environment).
-                if is_config_error:
-                    try:
-                        fallback_res = supabase.auth.sign_up({
-                            "email": user_data.email,
-                            "password": user_data.password,
-                            "options": {
-                                "email_redirect_to": settings.AUTH_REDIRECT_URL,
-                                "data": {
-                                    "first_name": user_data.first_name,
-                                    "last_name": user_data.last_name,
-                                    "role": user_data.role,
-                                },
-                            },
-                        })
-                        user_res = fallback_res
-                    except Exception as fallback_e:
-                        fallback_err = str(fallback_e).lower()
-                        if "error sending confirmation email" in fallback_err or "confirmation email" in fallback_err:
-                            print(f"Fallback sign_up email error (non-fatal): {fallback_e}")
-                            try:
-                                recovered = supabase.auth.admin.get_user_by_email(user_data.email)
-                                if recovered and recovered.user:
-                                    class _FakeRes:
-                                        user = recovered.user
-                                    user_res = _FakeRes()
-                                else:
-                                    raise HTTPException(
-                                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                                        detail="Signup is temporarily unavailable. Our team has been notified. Please try again shortly."
-                                    )
-                            except HTTPException:
-                                raise
-                            except Exception:
-                                raise HTTPException(
-                                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                                    detail="Signup is temporarily unavailable. Our team has been notified. Please try again shortly."
-                                )
-                        else:
-                            raise
-                else:
                     raise
 
             if not user_res or not user_res.user:

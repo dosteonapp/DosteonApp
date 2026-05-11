@@ -308,16 +308,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       await resendVerificationMutation(email);
-      toast.success("Verification email resent", {
-        description: `We've sent a new verification link to ${email}.`,
-      });
       return { success: true };
     } catch (error) {
-      const handled = handleApiError(error);
-      toast.error("Could not resend verification email", {
-        description: handled.message,
-      });
-      return { success: false };
+      // Re-throw so callers (EmailCheckScreen) can show inline feedback.
+      // 429 rate-limit and other errors are surfaced there instead of a toast.
+      throw error;
     }
   };
 

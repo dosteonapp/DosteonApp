@@ -37,6 +37,17 @@ function LoginPageContent() {
   const [loginMethod, setLoginMethod] = useState<'password' | 'magic'>('password');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [resendNote, setResendNote] = useState<"sent" | "rate_limited" | null>(null);
+
+  const handleResendFromSignin = async (email: string) => {
+    try {
+      await resendVerification(email);
+      setResendNote("sent");
+    } catch {
+      setResendNote("rate_limited");
+    }
+    setTimeout(() => setResendNote(null), 5000);
+  };
 
   useEffect(() => {
     const maybeShowVerifiedToast = async () => {
@@ -160,14 +171,32 @@ function LoginPageContent() {
                 {status.error}
               </div>
             )}
+            {status?.error && !status?.needsVerification && (
+              <p className="text-sm text-gray-500 -mt-1">
+                Don&apos;t have an account?{" "}
+                <Link href="/auth/restaurant/signup" className="font-semibold text-[#3B59DA] hover:underline">
+                  Sign up →
+                </Link>
+              </p>
+            )}
             {status?.needsVerification && (
               <button
                 type="button"
-                onClick={() => resendVerification(values.email.trim().toLowerCase())}
+                onClick={() => handleResendFromSignin(values.email.trim().toLowerCase())}
                 className="text-sm font-semibold text-[#3B59DA] hover:underline block -mt-1"
               >
                 Resend verification email →
               </button>
+            )}
+            {resendNote === "sent" && (
+              <div className="px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100 text-sm text-emerald-700 font-medium">
+                Email sent — check your inbox and spam folder.
+              </div>
+            )}
+            {resendNote === "rate_limited" && (
+              <div className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 text-sm text-amber-700 font-medium">
+                Please wait a moment before requesting another email.
+              </div>
             )}
 
             <FormikFormItem>
