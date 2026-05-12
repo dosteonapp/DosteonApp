@@ -196,7 +196,7 @@ export function OrderItemModal({
                     <Input
                       id="quantity"
                       type="number"
-                      step="0.1"
+                      step="1.0"
                       value={formData.quantity}
                       onChange={(e) => handleChange("quantity", e.target.value)}
                       required

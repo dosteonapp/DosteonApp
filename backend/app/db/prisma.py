@@ -43,6 +43,16 @@ async def disconnect_db():
         logger.error(f"Error disconnecting from DB: {e}")
         logger.error(traceback.format_exc()) # Log the full traceback
 
+def mark_connection_failed():
+    """Reset the ping timestamp so the next ensure_connected() forces a reconnect.
+
+    Call this from the exception handler when a Prisma 'not connected' error
+    escapes a route handler — ensures the very next inbound request will
+    re-establish the connection rather than skipping the ping interval check.
+    """
+    global _last_ping_success
+    _last_ping_success = 0.0
+
 async def ensure_connected():
     """Ensure DB is connected, reconnect if needed. Called before every request.
 
@@ -72,10 +82,13 @@ async def ensure_connected():
         _last_ping_success = time.monotonic()
     except Exception as e:
         logger.warning(f"DB ping failed (stale connection) — reconnecting: {e}")
-        try:
-            await db.disconnect()
-        except Exception:
-            pass
-        await asyncio.sleep(1.0)
-        await connect_db()
-        _last_ping_success = time.monotonic()
+        async with _connect_lock:
+            # Re-check: a concurrent waiter may have already reconnected.
+            if time.monotonic() - _last_ping_success < _PING_INTERVAL:
+                return
+            try:
+                await db.disconnect()
+            except Exception:
+                pass
+            await connect_db()
+            _last_ping_success = time.monotonic()

@@ -20,6 +20,7 @@ datasource db {
 model Organization {
   id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name              String
+  slug              String?         @unique
   type              String          @default("restaurant")
   city              String?
   phone             String?
@@ -37,6 +38,7 @@ model Organization {
   brands            Brand[]
   menu_items        MenuItem[]
   sale_orders       SaleOrder[]
+  expenses          Expense[]
 
   @@map("organizations")
 }
@@ -150,6 +152,7 @@ model ContextualProduct {
   brand                 Brand?           @relation(fields: [brand_id], references: [id])
   location              Location?        @relation(fields: [location_id], references: [id])
   inventory_events      InventoryEvent[]
+  expenses              Expense[]
 
   @@map("contextual_products")
   @@index([organization_id])
@@ -284,6 +287,7 @@ model Brand {
   menu_items      MenuItem[]
   products        ContextualProduct[]
   sale_orders     SaleOrder[]
+  expenses        Expense[]
 
   @@unique([organization_id, name])
   @@map("brands")
@@ -367,4 +371,40 @@ model SaleOrderItem {
   @@map("sale_order_items")
   @@index([sale_order_id])
   @@index([menu_item_id])
+}
+
+// ---------------------------------------------------------
+// EXPENSE LAYER
+// ---------------------------------------------------------
+
+enum ExpenseType {
+  INGREDIENT
+  OVERHEAD
+}
+
+model Expense {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organization_id       String      @db.Uuid
+  brand_id              String?     @db.Uuid
+  item_name             String
+  expense_type          ExpenseType
+  source                String?
+  amount                Float
+  quantity              Float?
+  unit                  String?
+  contextual_product_id String?     @db.Uuid
+  business_date         DateTime    @db.Date
+  occurred_at           DateTime    @default(now()) @db.Timestamptz(6)
+  logged_by             String?     @db.Uuid
+  idempotency_key       String?
+  created_at            DateTime    @default(now()) @db.Timestamptz(6)
+
+  organization          Organization       @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  brand                 Brand?             @relation(fields: [brand_id], references: [id])
+  contextual_product    ContextualProduct? @relation(fields: [contextual_product_id], references: [id])
+
+  @@map("expenses")
+  @@unique([organization_id, idempotency_key])
+  @@index([organization_id, business_date])
+  @@index([brand_id, business_date])
 }

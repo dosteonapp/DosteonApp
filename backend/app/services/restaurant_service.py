@@ -1,10 +1,12 @@
 from app.db.repositories.inventory_repository import inventory_repo
+from app.core.logging import get_logger
 from fastapi import HTTPException, status
 from uuid import UUID
 from datetime import datetime
 import json
-import traceback
 from prisma import Json
+
+logger = get_logger("restaurant")
 
 
 class RestaurantService:
@@ -66,9 +68,7 @@ class RestaurantService:
                 "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}
             }
         except Exception as e:
-            # Log but don't crash — stats failures should not block the dashboard
-            import traceback
-            traceback.print_exc()
+            logger.exception("Failed to compute inventory stats")
             return {"totalItems": 0, "countedItems": 0, "healthy": 0, "low": 0, "critical": 0, "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}}
 
     async def get_low_stock_items(self, organization_id: str):
@@ -145,7 +145,6 @@ class RestaurantService:
         return [self._map_inventory_event(e) for e in events]
 
     async def create_inventory_item(self, organization_id: str, payload: dict):
-        await self._require_unlocked(organization_id)
         name = payload.get("name")
         category = payload.get("category", "General")
         stock = float(payload.get("currentStock") or 0)
@@ -255,6 +254,37 @@ class RestaurantService:
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
+    def _map_sale_order(self, order) -> dict:
+        """Map a SaleOrder record to an activity dict."""
+        timestamp = ""
+        if order.created_at:
+            try:
+                timestamp = order.created_at.strftime("%b %d, %Y; %H:%M")
+            except AttributeError:
+                if isinstance(order.created_at, str):
+                    try:
+                        dt = datetime.fromisoformat(order.created_at.replace("Z", "+00:00"))
+                        timestamp = dt.strftime("%b %d, %Y; %H:%M")
+                    except (ValueError, AttributeError):
+                        timestamp = ""
+                else:
+                    timestamp = str(order.created_at)
+
+        revenue = float(order.total_revenue or 0)
+        channel = (order.channel or "Dine-in").replace("_", "-").title()
+
+        return {
+            "id": f"sale-{order.id}",
+            "action": "Received",
+            "change": f"+RWF {revenue:,.0f}",
+            "performer": "Sales Team",
+            "activity": f"Sale logged via {channel}",
+            "title": f"Sale: {channel}",
+            "description": f"Revenue: RWF {revenue:,.0f}",
+            "time": timestamp,
+            "timestamp": timestamp,
+        }
+
     def _map_inventory_event(self, e):
         action = "Updated"
         if e.event_type == "OPENING_STOCK": action = "Received"
@@ -357,18 +387,41 @@ class RestaurantService:
             return []
 
         try:
-            # Fetch more than requested to account for zero-quantity events that will be filtered out
-            fetch_limit = max(limit * 3, limit + 10)
-            events = await inventory_repo.get_recent_events(organization_id, limit=fetch_limit, brand_id=brand_id)
+            from app.db.prisma import db
+            # Fetch extra to absorb zero-quantity inventory events that get filtered out
+            fetch_limit = max(limit * 4, 30)
 
-            # Filter out 0 quantity updates which are non-informative for recent view
-            meaningful_events = [e for e in events if e.quantity and e.quantity != 0]
-            window = meaningful_events[offset: offset + limit]
-            return [self._map_inventory_event(e) for e in window]
+            # Inventory events (stock movements, usage, waste, opening)
+            inv_events = await inventory_repo.get_recent_events(organization_id, limit=fetch_limit, brand_id=brand_id)
+
+            # Recent completed sale orders (the user's primary daily operation)
+            sale_where: dict = {"organization_id": organization_id, "status": "COMPLETED"}
+            if brand_id:
+                sale_where["brand_id"] = brand_id
+            sale_orders = await db.saleorder.find_many(
+                where=sale_where,
+                order={"created_at": "desc"},
+                take=fetch_limit,
+            )
+
+            # Build a unified list as (created_at, tag, object) for sorting
+            all_raw: list = []
+            for e in inv_events:
+                if e.quantity and e.quantity != 0:
+                    all_raw.append((e.created_at or datetime.min, "inv", e))
+            for o in sale_orders:
+                all_raw.append((o.created_at or datetime.min, "sale", o))
+
+            # Sort most-recent-first, then slice the requested window
+            all_raw.sort(key=lambda x: x[0], reverse=True)
+            window = all_raw[offset: offset + limit]
+
+            return [
+                self._map_inventory_event(obj) if tag == "inv" else self._map_sale_order(obj)
+                for _, tag, obj in window
+            ]
         except Exception as e:
-            # Log but don't crash — activity feed failures should not block the dashboard
-            import traceback
-            traceback.print_exc()
+            logger.exception("Failed to fetch recent activities")
             return []
 
     async def get_opening_checklist(self, organization_id: str):
@@ -398,6 +451,14 @@ class RestaurantService:
             item_id = str(i["id"])
             today_opening = float(i.get("current_stock", 0))
             amount_added = round(added_today.get(item_id, 0.0), 3)
+            crit = float(i.get("critical_level") or 0)
+            reorder = float(i.get("min_level") or 0)
+            if today_opening <= crit:
+                level = "critical"
+            elif today_opening <= reorder:
+                level = "low"
+            else:
+                level = "normal"
             result.append({
                 "id": item_id,
                 "name": i["name"],
@@ -407,6 +468,7 @@ class RestaurantService:
                 "todayOpening": today_opening,
                 "amountAddedToday": amount_added,
                 "totalOpening": round(today_opening + amount_added, 3),
+                "level": level,
             })
         return result
 
@@ -445,8 +507,8 @@ class RestaurantService:
             )
             return {"success": True}
         except Exception as e:
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail=str(e))
+            logger.exception("Failed to save opening draft")
+            raise HTTPException(status_code=500, detail="Internal server error")
 
     async def save_closing_draft(self, organization_id: str, payload: dict):
         try:
@@ -469,8 +531,8 @@ class RestaurantService:
                 )
             return {"success": True}
         except Exception as e:
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail=str(e))
+            logger.exception("Failed to save closing draft")
+            raise HTTPException(status_code=500, detail="Internal server error")
 
     async def submit_opening_checklist(self, organization_id: str, payload: dict):
         # Enforce 6-hour gap between closing and next Opening Stock submission
@@ -519,8 +581,8 @@ class RestaurantService:
                 )
             return {"success": True}
         except Exception as e:
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail=str(e))
+            logger.exception("Failed to save closing draft")
+            raise HTTPException(status_code=500, detail="Internal server error")
 
     OPENING_GAP_HOURS = 6  # Minimum hours between closing and next Opening Stock
 
@@ -542,8 +604,8 @@ class RestaurantService:
         try:
             ds = await db.daystatus.find_unique(where={"organization_id": str(organization_id)})
 
-            if ds and str(ds.state) == "OPEN":
-                # If the OPEN record belongs to a previous calendar day (never closed),
+            if ds and str(ds.state) in ("OPEN", "CLOSING"):
+                # If the record belongs to a previous calendar day (never closed),
                 # treat it as a new day so the user can run Opening Stock again.
                 today = datetime.now().date()
                 try:
@@ -651,8 +713,8 @@ class RestaurantService:
                 "metadata": metadata if isinstance(metadata, dict) else {},
             }
         except Exception as e:
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail=f"Restaurant Service Error: {str(e)}")
+            logger.exception("Failed to fetch day status")
+            raise HTTPException(status_code=500, detail="Internal server error")
 
     async def get_settings(self, organization_id: str):
         from app.db.prisma import db
@@ -757,10 +819,62 @@ class RestaurantService:
     async def get_closing_status(self, organization_id: str):
         from app.db.prisma import db
         ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
+
+        total = await db.contextualproduct.count(
+            where={"organization_id": organization_id, "is_active": True}
+        )
+        verified = 0
+        if ds and ds.metadata:
+            meta = ds.metadata if isinstance(ds.metadata, dict) else {}
+            verified = len(meta.get("closing_draft_confirmed_ids", []))
+
+        day_state = str(ds.state) if ds and ds.state else "CLOSED"
+
+        if day_state == "CLOSING":
+            closing_state = "READY_TO_CLOSE"
+        elif total > 0 and verified >= total:
+            closing_state = "CHECKLIST_COMPLETE_KITCHEN_OPEN"
+        else:
+            closing_state = "INCOMPLETE"
+
         return {
-            "can_close": ds.is_opening_completed if ds else False,
-            "state": str(ds.state) if ds and ds.state else "CLOSED",
+            "can_close": closing_state == "READY_TO_CLOSE",
+            "state": day_state,
+            "closing_state": closing_state,
+            "verified_count": verified,
+            "total_count": total,
         }
+
+    async def close_kitchen(self, organization_id: str) -> dict:
+        """Transition day from OPEN → CLOSING. Requires checklist complete."""
+        from app.db.prisma import db
+        from prisma.enums import DayState  # type: ignore
+
+        await self._require_unlocked(organization_id)
+
+        ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
+        if not ds:
+            raise HTTPException(status_code=404, detail="No active day found")
+        if str(ds.state) == "CLOSING":
+            return {"success": True, "message": "Kitchen already closed"}
+
+        # Validate all items have been verified
+        total = await db.contextualproduct.count(
+            where={"organization_id": organization_id, "is_active": True}
+        )
+        meta = ds.metadata if isinstance(ds.metadata, dict) else {}
+        verified = len(meta.get("closing_draft_confirmed_ids", []))
+        if total > 0 and verified < total:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Complete the closing checklist before closing the kitchen ({verified}/{total} items verified)",
+            )
+
+        await db.daystatus.update(
+            where={"organization_id": organization_id},
+            data={"state": DayState.CLOSING, "updated_at": datetime.utcnow()},
+        )
+        return {"success": True}
 
     async def get_closing_indicators(self, organization_id: str):
         events = await inventory_repo.get_recent_events(organization_id, limit=500)
@@ -788,13 +902,15 @@ class RestaurantService:
 
     async def submit_closing_checklist(self, organization_id: str, payload: dict):
         """Persist a lightweight record of the closing checklist and mark the day as closed.
-        Only allowed when UNLOCKED (day is OPEN).
-
-        This mirrors the opening checklist submission by updating DayStatus on the
-        backend so future sessions (and other services) can see that the day was
-        properly closed, while still keeping the detailed UI state local-first.
+        Requires kitchen to be closed first (state = CLOSING).
         """
-        await self._require_unlocked(organization_id)
+        from app.db.prisma import db as _db
+        _ds = await _db.daystatus.find_unique(where={"organization_id": str(organization_id)})
+        if not _ds or str(_ds.state) != "CLOSING":
+            raise HTTPException(
+                status_code=400,
+                detail="Kitchen must be closed before finalizing. Use POST /closing/close-kitchen first.",
+            )
         try:
             from app.db.prisma import db
 
@@ -858,8 +974,8 @@ class RestaurantService:
 
             return {"success": True}
         except Exception as e:
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail=str(e))
+            logger.exception("Failed to submit closing checklist")
+            raise HTTPException(status_code=500, detail="Internal server error")
 
 
 restaurant_service = RestaurantService()

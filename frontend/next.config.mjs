@@ -53,6 +53,16 @@ const nextConfig = {
 
   async rewrites() {
     return [
+      // Workspace-slug-prefixed dashboard URLs: serve /dashboard/* file tree
+      // while keeping the slug visible in the browser URL.
+      {
+        source: '/:workspace/dashboard',
+        destination: '/dashboard',
+      },
+      {
+        source: '/:workspace/dashboard/:path*',
+        destination: '/dashboard/:path*',
+      },
       {
         source: '/api/:path*',
         // All frontend API calls go through this internal /api proxy.

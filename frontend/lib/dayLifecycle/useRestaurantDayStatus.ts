@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { DayState, DayStatus, DayStep, SystemState } from "./types";
 import { restaurantDayStorage } from "./storage";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
@@ -104,7 +104,8 @@ export function useRestaurantDayStatus() {
       restaurantDayStorage.saveStatus(orgId!, defaultStatus);
       return defaultStatus;
     },
-    staleTime: 60000, // 1 minute stale time for operational status
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   const updateStatusMutation = useMutation({
@@ -270,7 +271,8 @@ export function useRestaurantDayStatus() {
   const { data: settings } = useQuery({
     queryKey: ["restaurantSettings", orgId],
     queryFn: () => restaurantOpsService.getSettings(),
-    enabled: !!orgId
+    enabled: !!orgId,
+    staleTime: 5 * 60_000,
   });
 
   // Poll system state every 60 s so the 6-hour gap unblocks automatically
@@ -310,21 +312,43 @@ export function useRestaurantDayStatus() {
     canStartOpening: systemStateData?.canStartOpening ?? true,
     openingAvailableAt: systemStateData?.openingAvailableAt ?? null,
     isClosingTimeReached: (() => {
-        const closingStart = settings?.closing_start || "08:00 PM";
-        const [time, period] = closingStart.split(" ");
-        const [hours, minutes] = time.split(":").map(Number);
-        
-        let hour24 = hours;
-        if (period === "PM" && hours !== 12) hour24 += 12;
-        if (period === "AM" && hours === 12) hour24 = 0;
-        
-        const now = new Date();
-        const currentHour = now.getHours();
-        const currentMin = now.getMinutes();
+        const raw = settings?.closing_start || settings?.closing_time || "20:00";
+        const DEFAULT_H = 20, DEFAULT_M = 0;
 
-        return (currentHour > hour24) || (currentHour === hour24 && currentMin >= (minutes || 0));
+        let hour24: number, mins: number;
+        try {
+            if (raw.includes("AM") || raw.includes("PM")) {
+                const parts = raw.split(" ");
+                const [h, m] = (parts[0] ?? "").split(":").map(Number);
+                if (isNaN(h) || isNaN(m)) { hour24 = DEFAULT_H; mins = DEFAULT_M; }
+                else {
+                    const period = parts[1] ?? "";
+                    hour24 = h; mins = m;
+                    if (period === "PM" && h !== 12) hour24 += 12;
+                    if (period === "AM" && h === 12) hour24 = 0;
+                }
+            } else {
+                const [h, m] = raw.split(":").map(Number);
+                hour24 = isNaN(h) ? DEFAULT_H : h;
+                mins   = isNaN(m) ? DEFAULT_M : m;
+            }
+        } catch {
+            hour24 = DEFAULT_H; mins = DEFAULT_M;
+        }
+
+        const now = new Date();
+        return (now.getHours() > hour24) || (now.getHours() === hour24 && now.getMinutes() >= mins);
     })(),
     currentTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    targetClosingTime: settings?.closing_start || "08:00 PM"
+    targetClosingTime: (() => {
+        const raw = settings?.closing_start || settings?.closing_time;
+        if (!raw) return "08:00 PM";
+        if (raw.includes("AM") || raw.includes("PM")) return raw;
+        const [h, m] = raw.split(":").map(Number);
+        if (isNaN(h) || isNaN(m)) return "08:00 PM";
+        const period = h >= 12 ? "PM" : "AM";
+        const h12 = h % 12 || 12;
+        return `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${period}`;
+    })()
   };
 }

@@ -19,41 +19,46 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LogoutButton } from "@/components/logout-button";
+import { useUser } from "@/context/UserContext";
 
 
 export function SupplierSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { user } = useUser();
+
+  const base = user?.workspace_slug ? `/${user.workspace_slug}` : '';
+  const homeHref = `${base}/dashboard`;
 
   const routes = [
     {
-      href: "/dashboard",
+      href: homeHref,
       icon: Home,
       title: "Dashboard",
     },
     {
-      href: "/dashboard/products",
+      href: `${base}/dashboard/products`,
       icon: Package,
       title: "Products",
     },
     {
-      href: "/dashboard/customers",
+      href: `${base}/dashboard/customers`,
       icon: Users,
       title: "Customers",
       badge: "New",
     },
     {
-      href: "/dashboard/restaurants",
+      href: `${base}/dashboard/restaurants`,
       icon: Users,
       title: "Restaurants",
     },
     {
-      href: "/dashboard/notifications",
+      href: `${base}/dashboard/notifications`,
       icon: Bell,
       title: "Notifications",
     },
     {
-      href: "/dashboard/settings",
+      href: `${base}/dashboard/settings`,
       icon: Settings,
       title: "Settings",
     },
@@ -69,18 +74,18 @@ export function SupplierSidebar() {
       <div className="flex h-24 items-center justify-between px-8 border-b border-slate-50 relative">
         {!collapsed && (
           <Link
-            href="/dashboard"
+            href={homeHref}
             className="flex items-center group transition-transform active:scale-95"
           >
-            <img 
-              src="/images/logo-full.png" 
-              alt="Dosteon" 
+            <img
+              src="/images/logo-full.png"
+              alt="Dosteon"
               className="h-10 w-auto group-hover:drop-shadow-sm transition-all"
             />
           </Link>
         )}
         {collapsed && (
-          <Link href="/dashboard" className="mx-auto group transition-transform active:scale-95">
+          <Link href={homeHref} className="mx-auto group transition-transform active:scale-95">
             <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center border border-indigo-100/50 overflow-hidden">
                 <img 
                     src="/images/logo-full.png" 
@@ -154,7 +159,9 @@ export function SupplierSidebar() {
 }
 
 function SidebarLink({ route, pathname, collapsed }: { route: any, pathname: string, collapsed: boolean }) {
-    const isActive = pathname === route.href || (route.href !== "/dashboard" && pathname.startsWith(route.href));
+    const dashboardSuffix = route.href.split('/dashboard')[1] ?? '';
+    const isHomeRoute = dashboardSuffix === '';
+    const isActive = pathname === route.href || (!isHomeRoute && pathname.startsWith(route.href));
     
     return (
         <Link

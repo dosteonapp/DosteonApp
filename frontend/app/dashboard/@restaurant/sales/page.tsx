@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -8,8 +9,10 @@ import {
   BookOpen,
   Lock,
   ArrowRight,
+  ShoppingCart,
   Plus,
-  Receipt,
+  Minus,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,7 +25,29 @@ import { TabLogSales } from "@/components/sales/TabLogSales";
 import { TabSalesHistory } from "@/components/sales/TabSalesHistory";
 import { TabMenuManagement } from "@/components/sales/TabMenuManagement";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
-import { BrandSwitcherCard } from "@/components/BrandSwitcherCard";
+import { useUser } from "@/context/UserContext";
+import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
+import { salesService, MenuItem } from "@/lib/services/salesService";
+import { toast } from "sonner";
+
+// ---------------------------------------------------------------------------
+// Types + constants
+// ---------------------------------------------------------------------------
+
+type SaleChannel = "DINE_IN" | "TAKEAWAY" | "DELIVERY";
+export interface CartItem extends MenuItem { quantity: number; }
+
+const CHANNELS: { id: SaleChannel; label: string }[] = [
+  { id: "DINE_IN",  label: "Dine-in"  },
+  { id: "TAKEAWAY", label: "Takeaway" },
+  { id: "DELIVERY", label: "Delivery" },
+];
+
+const fmt = (n: number) =>
+  new Intl.NumberFormat("en", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+
+const todayLabel = () =>
+  new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric" }).format(new Date());
 
 // ---------------------------------------------------------------------------
 // Tab config
@@ -31,9 +56,9 @@ import { BrandSwitcherCard } from "@/components/BrandSwitcherCard";
 type SalesTab = "log" | "history" | "menu";
 
 const TABS: { id: SalesTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: "log",     label: "Log Sales",              icon: TrendingUp },
-  { id: "history", label: "Today's Sales History",  icon: History    },
-  { id: "menu",    label: "Menu Management",         icon: BookOpen   },
+  { id: "log",     label: "Log Sales",             icon: TrendingUp },
+  { id: "history", label: "Today's Sales History", icon: History    },
+  { id: "menu",    label: "Menu Management",        icon: BookOpen   },
 ];
 
 // ---------------------------------------------------------------------------
@@ -41,90 +66,307 @@ const TABS: { id: SalesTab; label: string; icon: React.ComponentType<{ className
 // ---------------------------------------------------------------------------
 
 export default function SalesPage() {
-  const [activeTab, setActiveTab] = useState<SalesTab>("log");
-  const { isOpen } = useRestaurantDayLifecycle();
+  const router      = useRouter();
+  const searchParams = useSearchParams();
+  const activeTab   = (searchParams.get("tab") as SalesTab) ?? "log";
+  const { isOpen, canStartOpening, finishOpening } = useRestaurantDayLifecycle();
+  const { user } = useUser();
+  const [isQuickOpening, setIsQuickOpening] = useState(false);
+  const skipsStockCount = user?.daily_stock_count === false;
+
+  // ── Cart state (lifted so Sales Log panel persists across tabs) ──────────
+  const [cart, setCart]           = useState<CartItem[]>([]);
+  const [channel, setChannel]     = useState<SaleChannel | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [salesRefreshKey, setSalesRefreshKey] = useState(0);
+
+  // Reset channel selection when cart is cleared
+  useEffect(() => { if (cart.length === 0) setChannel(null); }, [cart.length]);
+
+  const cartMap     = useMemo(() => new Map(cart.map((ci) => [ci.id, ci.quantity])), [cart]);
+  const cartRevenue = cart.reduce((s, ci) => s + ci.price * ci.quantity, 0);
+  const cartCogs    = cart.reduce((s, ci) => s + (ci.cost || 0) * ci.quantity, 0);
+  const cartProfit  = cartRevenue - cartCogs;
+
+  const addToCart = (item: MenuItem) =>
+    setCart((prev) => {
+      const ex = prev.find((ci) => ci.id === item.id);
+      if (ex) return prev.map((ci) => ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci);
+      return [...prev, { ...item, quantity: 1 }];
+    });
+
+  const setQty = (itemId: string, qty: number) => {
+    if (qty < 1) { setCart((prev) => prev.filter((ci) => ci.id !== itemId)); return; }
+    setCart((prev) => prev.map((ci) => ci.id === itemId ? { ...ci, quantity: qty } : ci));
+  };
+
+  const removeFromCart = (itemId: string) => setCart((prev) => prev.filter((ci) => ci.id !== itemId));
+  const clearCart = () => setCart([]);
+
+  const handleLogSale = async () => {
+    if (!cart.length || !channel) return;
+    const currentCart = [...cart];
+    clearCart();
+    setIsSubmitting(true);
+    try {
+      const order = await salesService.logSale({
+        channel,
+        items: currentCart.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
+      });
+      toast.success("Sale logged!", {
+        description: `Revenue: RWF ${fmt(order.total_revenue)} · Profit: RWF ${fmt(order.gross_profit)}`,
+      });
+      setSalesRefreshKey((k) => k + 1);
+    } catch {
+      setCart(currentCart);
+      toast.error("Could not log sale. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ── Navigation ───────────────────────────────────────────────────────────
+  const handleQuickOpen = async () => {
+    if (!canStartOpening) return;
+    setIsQuickOpening(true);
+    try {
+      await restaurantOpsService.submitOpeningChecklist({ counts: {} });
+      await finishOpening();
+    } catch {
+      // finishOpening updates local state even on network failure
+    } finally {
+      setIsQuickOpening(false);
+    }
+  };
+
+  const setActiveTab = (tab: SalesTab) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <AppContainer>
+      <div className="flex flex-col lg:flex-row gap-4 items-start">
 
-      {/* ── Module Header: Brand card + action buttons ── */}
-      <div className="flex items-center justify-between gap-4 px-1">
+        {/* ── LEFT: tab card ─────────────────────────────────────────────── */}
+        <div className="flex-1 min-w-0 relative">
+          <div className="bg-white border border-slate-100 rounded-[12px] overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
 
-        <BrandSwitcherCard />
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 md:gap-3 shrink-0">
-          <Button
-            variant="outline"
-            className="h-9 md:h-10 rounded-[8px] border-slate-200 text-slate-500 font-bold text-[12px] md:text-[13px] font-figtree hover:bg-slate-50 hover:text-slate-700 gap-1.5 md:gap-2 px-3 md:px-4 transition-all"
-            disabled
-            title="Coming soon"
-          >
-            <Receipt className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
-            <span className="hidden sm:block">Log Expense</span>
-          </Button>
-          <Button
-            className="h-9 md:h-10 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[12px] md:text-[13px] font-figtree gap-1.5 md:gap-2 px-3 md:px-4 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all"
-            onClick={() => setActiveTab("log")}
-          >
-            <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
-            <span className="hidden sm:block">Log Sales</span>
-            <TrendingUp className="h-3.5 w-3.5 sm:hidden shrink-0" />
-          </Button>
-        </div>
-      </div>
-
-      {/* ── Tab bar + content surface ── */}
-      <div className="relative">
-        <div className="bg-white border border-slate-100 rounded-[12px] overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
-
-          {/* Tab navigation — segmented control */}
-          <div className="px-4 md:px-6 py-3 border-b border-slate-100">
-            <div className="flex bg-slate-100/80 rounded-[10px] p-1 gap-1 overflow-x-auto no-scrollbar">
-              {TABS.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-[12px] md:text-[13px] font-bold transition-all rounded-[8px] font-figtree whitespace-nowrap min-w-0",
-                      isActive
-                        ? "bg-white text-[#3B59DA] shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
-                        : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
-                    )}
-                  >
-                    <tab.icon
+            {/* Tab navigation */}
+            <div className="px-4 md:px-6 py-3 border-b border-slate-100">
+              <div className="flex bg-slate-100/80 rounded-[10px] p-1 gap-1 overflow-x-auto no-scrollbar">
+                {TABS.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
                       className={cn(
-                        "h-3.5 w-3.5 shrink-0 transition-colors",
-                        isActive ? "stroke-[2.5px] text-[#3B59DA]" : "stroke-[2px]"
+                        "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-[12px] md:text-[13px] font-bold transition-all rounded-[8px] font-figtree whitespace-nowrap min-w-0",
+                        isActive
+                          ? "bg-white text-[#3B59DA] shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
+                          : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
                       )}
-                    />
-                    <span className="truncate">{tab.label}</span>
-                  </button>
-                );
-              })}
+                    >
+                      <tab.icon className={cn("h-3.5 w-3.5 shrink-0 transition-colors", isActive ? "stroke-[2.5px] text-[#3B59DA]" : "stroke-[2px]")} />
+                      <span className="truncate">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Tab content */}
+            <div className={cn("transition-all duration-700", !isOpen && "blur-[5px] grayscale-[0.15] opacity-75 pointer-events-none select-none")}>
+              {activeTab === "log"     && <TabLogSales cartMap={cartMap} onAddToCart={addToCart} refreshKey={salesRefreshKey} />}
+              {activeTab === "history" && <TabSalesHistory />}
+              {activeTab === "menu"    && <TabMenuManagement />}
             </div>
           </div>
 
-          {/* Tab content — blurred when day is closed */}
-          <div
-            className={cn(
-              "transition-all duration-700",
-              !isOpen && "blur-[5px] grayscale-[0.15] opacity-75 pointer-events-none select-none"
-            )}
-          >
-            {activeTab === "log"     && <TabLogSales />}
-            {activeTab === "history" && <TabSalesHistory />}
-            {activeTab === "menu"    && <TabMenuManagement />}
+          {!isOpen && (
+            <SalesLockedOverlay
+              skipsStockCount={skipsStockCount}
+              canStartOpening={canStartOpening}
+              isQuickOpening={isQuickOpening}
+              onQuickOpen={handleQuickOpen}
+            />
+          )}
+        </div>
+
+        {/* ── RIGHT: Sales Log panel (persists across all tabs) ──────────── */}
+        <div className={cn(
+          "w-full lg:w-[340px] xl:w-[380px] shrink-0",
+          !isOpen && "blur-[5px] grayscale-[0.15] opacity-75 pointer-events-none select-none"
+        )}>
+          <div className="bg-white border border-slate-100 rounded-[12px] overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex flex-col">
+            <SalesLogPanel
+              cart={cart}
+              channel={channel}
+              cartRevenue={cartRevenue}
+              cartCogs={cartCogs}
+              cartProfit={cartProfit}
+              isSubmitting={isSubmitting}
+              onChannelChange={setChannel}
+              onQtyChange={setQty}
+              onRemove={removeFromCart}
+              onClear={clearCart}
+              onLogSale={handleLogSale}
+            />
           </div>
         </div>
 
-        {/* Locked overlay */}
-        {!isOpen && <SalesLockedOverlay />}
+      </div>
+    </AppContainer>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sales Log panel
+// ---------------------------------------------------------------------------
+
+function SalesLogPanel({
+  cart, channel, cartRevenue, cartCogs, cartProfit, isSubmitting,
+  onChannelChange, onQtyChange, onRemove, onClear, onLogSale,
+}: {
+  cart: CartItem[];
+  channel: SaleChannel | null;
+  cartRevenue: number;
+  cartCogs: number;
+  cartProfit: number;
+  isSubmitting: boolean;
+  onChannelChange: (ch: SaleChannel) => void;
+  onQtyChange: (id: string, qty: number) => void;
+  onRemove: (id: string) => void;
+  onClear: () => void;
+  onLogSale: () => void;
+}) {
+  return (
+    <>
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <span className="text-[16px] font-black text-[#1E293B] font-figtree">Sales Log</span>
+        <div className="flex items-center gap-3">
+          <span className="text-[12px] font-semibold text-slate-400 font-figtree">{todayLabel()}</span>
+          {cart.length > 0 && (
+            <button onClick={onClear} className="text-[11px] font-bold text-slate-300 hover:text-rose-400 transition-colors font-figtree">
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
-    </AppContainer>
+      {/* Channel selector */}
+      <div className="px-5 py-3 border-b border-slate-100 shrink-0">
+        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] font-figtree mb-2">
+          Select sales category
+        </div>
+        <div className="flex gap-2">
+          {CHANNELS.map((ch) => (
+            <button
+              key={ch.id}
+              onClick={() => cart.length > 0 && onChannelChange(ch.id)}
+              className={cn(
+                "flex-1 py-2 rounded-full text-[12px] font-bold transition-all font-figtree border",
+                cart.length === 0
+                  ? "bg-white text-slate-400 border-slate-200 hover:border-slate-300 cursor-default"
+                  : channel === ch.id
+                    ? "bg-[#1E293B] text-white border-[#1E293B]"
+                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 cursor-pointer"
+              )}
+            >
+              {ch.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Cart items */}
+      <div className="flex-1 overflow-y-auto px-5 py-3 min-h-[160px]">
+        {cart.length === 0 ? (
+          <div className="h-full min-h-[120px] flex flex-col items-center justify-center gap-2 py-8 text-center">
+            <div className="h-10 w-10 rounded-[10px] bg-slate-50 border border-slate-100 flex items-center justify-center">
+              <ShoppingCart className="h-4 w-4 text-slate-300" />
+            </div>
+            <FigtreeText className="text-[12px] text-slate-400 font-semibold max-w-[160px] leading-relaxed">
+              Select dishes from the menu to start a sale
+            </FigtreeText>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {cart.map((ci) => (
+              <CartRow
+                key={ci.id}
+                item={ci}
+                onQtyChange={(q) => onQtyChange(ci.id, q)}
+                onRemove={() => onRemove(ci.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Totals + CTA */}
+      <div className="px-5 py-4 border-t border-slate-100 space-y-3 shrink-0">
+        <div className="space-y-2">
+          {[
+            { label: "Revenue",      value: cartRevenue, color: "text-[#1E293B]" },
+            { label: "Est. COGS",    value: cartCogs,    color: "text-[#1E293B]" },
+            { label: "Gross Profit", value: cartProfit,  color: cartProfit > 0 ? "text-emerald-600" : cartProfit < 0 ? "text-rose-500" : "text-[#1E293B]" },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="flex items-center justify-between text-[13px] font-figtree">
+              <span className="text-slate-500 font-semibold">{label}</span>
+              <span className={cn("font-bold", color)}>RWF {fmt(value)}</span>
+            </div>
+          ))}
+        </div>
+
+        <button
+          disabled={!cart.length || !channel || isSubmitting}
+          onClick={onLogSale}
+          className={cn(
+            "w-full h-12 rounded-[10px] font-black text-[15px] font-figtree transition-all flex items-center justify-center gap-2",
+            cart.length > 0 && channel
+              ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-[0_4px_16px_rgba(59,89,218,0.3)] active:scale-[0.98]"
+              : "bg-slate-100 text-slate-300 cursor-not-allowed"
+          )}
+        >
+          {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Logging…</> : "Log Sales"}
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Cart row
+// ---------------------------------------------------------------------------
+
+function CartRow({ item, onQtyChange, onRemove }: {
+  item: CartItem; onQtyChange: (qty: number) => void; onRemove: () => void;
+}) {
+  return (
+    <div className="py-3 flex items-start justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] font-bold text-[#1E293B] font-figtree leading-tight truncate">{item.name}</div>
+        <div className="text-[11px] text-slate-400 font-semibold font-figtree mt-0.5">RWF {fmt(item.price)} each</div>
+      </div>
+      <div className="flex flex-col items-end gap-1 shrink-0">
+        <div className="flex items-center gap-1">
+          <button onClick={() => onQtyChange(item.quantity - 1)} className="h-6 w-6 rounded-[5px] border border-slate-200 bg-white text-slate-500 flex items-center justify-center hover:bg-slate-50 transition-all active:scale-90">
+            <Minus className="h-3 w-3" />
+          </button>
+          <span className="w-6 text-center text-[13px] font-black text-[#1E293B] font-figtree tabular-nums">{item.quantity}</span>
+          <button onClick={() => onQtyChange(item.quantity + 1)} className="h-6 w-6 rounded-[5px] border border-slate-200 bg-white text-slate-500 flex items-center justify-center hover:bg-slate-50 transition-all active:scale-90">
+            <Plus className="h-3 w-3" />
+          </button>
+        </div>
+        <button onClick={onRemove} className="text-[12px] font-black text-[#1E293B] font-figtree tabular-nums hover:text-rose-500 transition-colors">
+          RWF {fmt(item.price * item.quantity)}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -132,36 +374,38 @@ export default function SalesPage() {
 // Locked overlay
 // ---------------------------------------------------------------------------
 
-function SalesLockedOverlay() {
+function SalesLockedOverlay({
+  skipsStockCount, canStartOpening, isQuickOpening, onQuickOpen,
+}: {
+  skipsStockCount: boolean; canStartOpening: boolean; isQuickOpening: boolean; onQuickOpen: () => void;
+}) {
   return (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-auto rounded-[12px] overflow-hidden">
       <div className="absolute inset-0 bg-white/55 backdrop-blur-[7px]" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-400/5 rounded-full blur-[120px]" />
-
       <div className="relative z-10 flex flex-col items-center justify-center max-w-xl mx-auto px-6 text-center animate-in fade-in zoom-in-95 duration-700">
-        {/* Lock icon card */}
         <div className="w-20 h-20 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.06)] rounded-[20px] flex items-center justify-center mb-10 border border-slate-100/50">
           <Lock className="h-9 w-9 text-slate-800/80 stroke-[2.5px] drop-shadow-sm" />
         </div>
-
         <div className="space-y-4 max-w-[440px] mb-12">
-          <InriaHeading className="text-[30px] md:text-[38px] font-bold tracking-tight leading-tight">
-            Sales is Locked
-          </InriaHeading>
+          <InriaHeading className="text-[30px] md:text-[38px] font-bold tracking-tight leading-tight">Sales is Locked</InriaHeading>
           <FigtreeText className="text-slate-500 text-[15px] md:text-[17px] leading-relaxed font-bold max-w-[340px] mx-auto opacity-70">
-            Complete your daily opening stock count to unlock Sales and start logging orders.
+            {skipsStockCount ? "Open your kitchen to start sales and operations." : "Complete your daily opening stock count to unlock Sales and start logging orders."}
           </FigtreeText>
         </div>
-
-        <Button
-          className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.25)] transition-all active:scale-95 group font-figtree text-[17px] border-none"
-          asChild
-        >
-          <Link href="/dashboard/inventory/daily-stock-count">
-            Count Daily Stock
+        {skipsStockCount ? (
+          <Button className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.25)] transition-all active:scale-95 group font-figtree text-[17px] border-none" onClick={onQuickOpen} disabled={isQuickOpening || !canStartOpening}>
+            {isQuickOpening ? "Opening..." : "Open Kitchen"}
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
-          </Link>
-        </Button>
+          </Button>
+        ) : (
+          <Button className="h-14 px-12 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.25)] transition-all active:scale-95 group font-figtree text-[17px] border-none" asChild>
+            <Link href="/dashboard/inventory/daily-stock-count">
+              Count Daily Stock
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );

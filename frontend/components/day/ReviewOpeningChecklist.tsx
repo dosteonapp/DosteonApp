@@ -99,7 +99,7 @@ export function ReviewOpeningChecklist({ items, onBack, onConfirm }: ReviewOpeni
           <FigtreeText className="text-[14px] font-bold text-slate-400 uppercase tracking-widest ml-1">Summary Stats</FigtreeText>
           <div className="grid grid-cols-2 gap-4">
             <SummaryBox label="Items Counted" value={`${items.filter(i => i.isConfirmed).length} / ${items.length}`} />
-            <SummaryBox label="Healthy Stock" value={items.filter(i => i.status === 'Healthy').length.toString()} />
+            <SummaryBox label="Healthy Stock" value={items.filter(i => i.level === 'normal').length.toString()} />
             <SummaryBox label="Opening Time" value={currentTime} />
             <SummaryBox label="Current Day" value={new Date().toLocaleDateString('en-US', { weekday: 'short' })} />
           </div>

@@ -1,72 +1,108 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { 
-  ArrowRight, 
-  Package, 
-  AlertTriangle, 
-  AlertCircle, 
-  Lock, 
-  Clock, 
+import {
+  ArrowRight,
+  Package,
+  AlertTriangle,
+  AlertCircle,
+  Lock,
+  Clock,
   ChefHat,
-  ClipboardList
+  ClipboardList,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { restaurantOpsService, Activity as ActivityType } from "@/lib/services/restaurantOpsService";
+import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
+import { salesService } from "@/lib/services/salesService";
+import { expenseService } from "@/lib/services/expenseService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
-import { 
-    UnifiedHeroSurface, 
-    UnifiedStatCard, 
-    AppContainer, 
-    InriaHeading, 
+import {
+    UnifiedHeroSurface,
+    UnifiedStatCard,
+    AppContainer,
     FigtreeText,
     PrimarySurfaceCard
 } from "@/components/ui/dosteon-ui";
 import { Badge } from "@/components/ui/badge";
-import { cn, formatUserName } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useBrand } from "@/context/BrandContext";
 import { useUser } from "@/context/UserContext";
-import { BrandSwitcherCard } from "@/components/BrandSwitcherCard";
+import { QK } from "@/lib/queryKeys";
+import { useState } from "react";
 
 export default function RestaurantDashboardPage() {
-  const { isOpen, isLoading: isStatusLoading, isClosingTimeReached, targetClosingTime } = useRestaurantDayLifecycle();
-  const [activities, setActivities] = useState<ActivityType[]>([]);
-  const [stats, setStats] = useState({ totalItems: 0, countedItems: 0, healthy: 0, low: 0, critical: 0 });
-  const [isActivitiesLoading, setIsActivitiesLoading] = useState(true);
-
+  const { isOpen, isLoading: isStatusLoading, isClosingTimeReached, targetClosingTime, canStartOpening, finishOpening } = useRestaurantDayLifecycle();
   const { user } = useUser();
-  const name = formatUserName(user?.first_name, user?.last_name);
+  const [isQuickOpening, setIsQuickOpening] = useState(false);
+  const { activeBrand } = useBrand();
+  const brandId: string | null = activeBrand?.id ?? null;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-                const [acts, dashboardStats] = await Promise.all([
-                    restaurantOpsService.getRecentActivities({ offset: 0, limit: 5 }),
-          restaurantOpsService.getStats()
-        ]);
-        setActivities(acts);
-        setStats(dashboardStats);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setIsActivitiesLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: stats = { totalItems: 0, countedItems: 0, healthy: 0, low: 0, critical: 0 } } = useQuery({
+    queryKey: QK.dashboardStats(brandId),
+    queryFn: () => restaurantOpsService.getStats(),
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+    placeholderData: keepPreviousData,
+  });
 
-  if (isStatusLoading || isActivitiesLoading) {
+  const { data: activities = [] } = useQuery({
+    queryKey: QK.recentActivities(brandId),
+    queryFn: () => restaurantOpsService.getRecentActivities({ offset: 0, limit: 5 }),
+    staleTime: 30_000,
+    gcTime: 10 * 60_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+    placeholderData: keepPreviousData,
+  });
+
+  const { data: todayStats } = useQuery({
+    queryKey: QK.todayStats(brandId),
+    queryFn: () => salesService.getTodayStats(),
+    staleTime: 30_000,
+    gcTime: 10 * 60_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+    enabled: isOpen,
+    placeholderData: keepPreviousData,
+  });
+
+  const { data: expenseStats } = useQuery({
+    queryKey: QK.expenseStats(brandId),
+    queryFn: () => expenseService.getTodayStats(),
+    staleTime: 30_000,
+    gcTime: 10 * 60_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+    enabled: isOpen,
+    placeholderData: keepPreviousData,
+  });
+
+  const skipsStockCount = user?.daily_stock_count === false;
+
+  const handleQuickOpen = async () => {
+    if (!canStartOpening) return;
+    setIsQuickOpening(true);
+    try {
+      await restaurantOpsService.submitOpeningChecklist({ counts: {} });
+      await finishOpening();
+    } catch {
+      // finishOpening updates local state even on network failure
+    } finally {
+      setIsQuickOpening(false);
+    }
+  };
+
+  if (isStatusLoading) {
     return <DashboardSkeleton />;
   }
 
   return (
     <AppContainer className="pb-24">
-        {/* Brand switcher — top-left of content, below the header bar */}
-        <div className="flex items-start pb-4">
-          <BrandSwitcherCard />
-        </div>
-
         {/* Responsive Header Container */}
         <div className="w-full">
             {isOpen ? (
@@ -77,7 +113,7 @@ export default function RestaurantDashboardPage() {
                     minHeight="min-h-[260px]"
                     backgroundColor="bg-[#f5f6ff]"
                     borderColor="border-[#98a6f9]"
-                    title={`Welcome back, ${name}`}
+                    title={`Welcome back, ${activeBrand?.name ?? 'there'}`}
                     description={isClosingTimeReached 
                         ? `Closing Stock Count is now enabled. You can now proceed to finalize your daily operations.`
                         : `Closing Stock Count will be enabled at ${targetClosingTime}. To change this, your admin can adjust it in settings.`
@@ -100,7 +136,48 @@ export default function RestaurantDashboardPage() {
                     <UnifiedStatCard label="Total Inventory Items" value={stats.totalItems.toString()} icon={Package} variant="indigo" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                     <UnifiedStatCard label="Critical Stock Items" value={stats.critical.toString()} icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                     <UnifiedStatCard label="Low Stock Items" value={stats.low.toString()} icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
-                    <UnifiedStatCard label="Shift Status" value="Active" icon={Clock} variant="green" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard
+                      label="Net Profit"
+                      value={
+                        todayStats
+                          ? `RWF ${((todayStats.today_revenue) - (expenseStats?.total_expenses ?? 0)).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+                          : "—"
+                      }
+                      icon={TrendingUp}
+                      variant="green"
+                      className="flex-1 min-w-[150px] h-[160px] md:h-[190px]"
+                    />
+                </UnifiedHeroSurface>
+            ) : skipsStockCount ? (
+                <UnifiedHeroSurface
+                    variant="inline"
+                    alignItems="start"
+                    padding="px-6 py-6 md:px-10 md:py-6"
+                    minHeight="min-h-[260px]"
+                    title={`Welcome back, ${activeBrand?.name ?? 'there'}`}
+                    description="Ready to start your day? Open the kitchen to begin sales and operations."
+                    isLocked={true}
+                    bgIcon={<ChefHat className="h-64 w-64 text-white" />}
+                    badge={
+                        <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm shadow-sm w-fit">
+                            <Clock className="h-3.5 w-3.5 text-white" />
+                            <FigtreeText className="text-[11px] font-bold text-white uppercase tracking-[0.1em]">Kitchen Closed</FigtreeText>
+                        </div>
+                    }
+                    action={
+                        <Button
+                            className="w-fit h-14 px-10 rounded-[8px] bg-white text-[#3B59DA] hover:bg-slate-50 font-semibold gap-4 transition-all shadow-xl shadow-indigo-900/5 font-figtree active:scale-95 group text-[18px] md:text-[20px]"
+                            onClick={handleQuickOpen}
+                            disabled={isQuickOpening || !canStartOpening}
+                        >
+                            {isQuickOpening ? "Opening..." : "Open Kitchen"} <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
+                        </Button>
+                    }
+                >
+                    <UnifiedStatCard label="Total Inventory Items" value={stats.totalItems.toString()} icon={Package} variant="indigo" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Critical Stock Items" value={stats.critical.toString()} icon={AlertCircle} variant="red" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Low Stock Items" value={stats.low.toString()} icon={AlertTriangle} variant="amber" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
+                    <UnifiedStatCard label="Shift Status" value="Inactive" icon={Clock} variant="neutral" className="flex-1 min-w-[150px] h-[160px] md:h-[190px]" />
                 </UnifiedHeroSurface>
             ) : (
                 <UnifiedHeroSurface
@@ -108,7 +185,7 @@ export default function RestaurantDashboardPage() {
                     alignItems="start"
                     padding="px-6 py-6 md:px-10 md:py-6"
                     minHeight="min-h-[260px]"
-                    title={`Welcome back, ${name}`}
+                    title={`Welcome back, ${activeBrand?.name ?? 'there'}`}
                     description="Do your opening stock count before starting your restaurant operations."
                     isLocked={true}
                     bgIcon={<ChefHat className="h-64 w-64 text-white" />}
@@ -143,8 +220,8 @@ export default function RestaurantDashboardPage() {
                     <div className="space-y-10">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-50 pb-8">
                             <div className="space-y-1.5">
-                                <FigtreeText className="text-[26px] md:text-[28px] font-bold tracking-tight text-[#1E293B]">Recent Stock Activities</FigtreeText>
-                                <FigtreeText className="text-[15px] font-semibold text-slate-400">Recent stock movements across your inventory</FigtreeText>
+                                <FigtreeText className="text-[26px] md:text-[28px] font-bold tracking-tight text-[#1E293B]">Recent Activity</FigtreeText>
+                                <FigtreeText className="text-[15px] font-semibold text-slate-400">Latest sales and stock movements</FigtreeText>
                             </div>
                             <Button variant="link" className="text-[#3B59DA] font-black hover:underline transition-all text-[15px] font-figtree p-0 h-fit w-fit" asChild>
                                 <Link href="/dashboard/activities">View All</Link>
@@ -155,10 +232,10 @@ export default function RestaurantDashboardPage() {
                         {activities.length === 0 ? (
                             <div className="w-full py-16 px-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
                                 <FigtreeText className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 font-figtree">
-                                    No recent stock activity yet
+                                    No recent activity yet
                                 </FigtreeText>
                                 <FigtreeText className="text-[14px] font-medium text-slate-500 max-w-md leading-relaxed font-figtree">
-                                    Once you start updating inventory, receiving deliveries, or logging usage, your recent stock activity will appear here.
+                                    Once you start logging sales or updating inventory, your recent activity will appear here.
                                 </FigtreeText>
                             </div>
                         ) : (

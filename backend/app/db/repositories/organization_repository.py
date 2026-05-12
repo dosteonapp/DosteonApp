@@ -3,6 +3,15 @@ from uuid import UUID
 from app.db.prisma import db
 import json
 import asyncio
+import re
+
+
+def _slugify(name: str) -> str:
+    s = name.lower().strip()
+    s = re.sub(r"[^\w\s-]", "", s)
+    s = re.sub(r"[\s_]+", "-", s)
+    s = re.sub(r"-+", "-", s).strip("-")
+    return s or "workspace"
 
 
 class OrganizationRepository:
@@ -10,9 +19,20 @@ class OrganizationRepository:
         return asyncio.run(self._create_async(name, org_type))
 
     async def _create_async(self, name: str, org_type: str = "restaurant") -> dict:
+        base_slug = _slugify(name)
+        slug = base_slug
+        counter = 1
+        while True:
+            existing = await db.organization.find_unique(where={"slug": slug})
+            if not existing:
+                break
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+
         org = await db.organization.create(
             data={
                 "name": name,
+                "slug": slug,
                 "type": org_type,
                 "settings": json.dumps({
                     "opening_time": "08:00",
@@ -20,7 +40,7 @@ class OrganizationRepository:
                 })
             }
         )
-        return {"id": org.id, "name": org.name, "type": org.type, "settings": org.settings}
+        return {"id": org.id, "name": org.name, "slug": org.slug, "type": org.type, "settings": org.settings}
 
     def get_by_id(self, org_id: UUID) -> Optional[dict]:
         return asyncio.run(self._get_by_id_async(org_id))
