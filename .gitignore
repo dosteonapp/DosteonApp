@@ -109,7 +109,7 @@ backend/check_item.py
 # Claude Code
 CLAUDE.md
 .mcp.json
-.claude/settings.local.json
+.claude/
 
 # Local planning/notes files (not part of the product repo)
 improvement.md
