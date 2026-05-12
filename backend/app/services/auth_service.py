@@ -60,20 +60,20 @@ class AuthService:
         """
         try:
             # Generate Verification Link via Supabase Admin API
-            link_res = supabase.auth.admin.generate_link({
+            link_res = await asyncio.to_thread(lambda: supabase.auth.admin.generate_link({
                 "type": "signup",
                 "email": user_data.email,
                 "options": {"redirect_to": settings.AUTH_REDIRECT_URL}
-            })
+            }))
 
             if not link_res or not link_res.properties or not link_res.properties.action_link:
                 print("Link generation failed, falling back to standard signup email flow")
                 # Fall back to Supabase's built-in email flow
-                supabase.auth.sign_up({
+                await asyncio.to_thread(lambda: supabase.auth.sign_up({
                     "email": user_data.email,
                     "password": user_data.password,
                     "options": {"email_redirect_to": settings.AUTH_REDIRECT_URL}
-                })
+                }))
                 return
 
             verification_link = link_res.properties.action_link
@@ -97,7 +97,7 @@ class AuthService:
             #    This way a rejected email (already registered, invalid, etc.)
             #    never produces orphaned organization or profile rows.
             try:
-                user_res = supabase.auth.admin.create_user({
+                user_res = await asyncio.to_thread(lambda: supabase.auth.admin.create_user({
                     "email": user_data.email,
                     "password": user_data.password,
                     "email_confirm": False,
@@ -106,7 +106,7 @@ class AuthService:
                         "last_name": user_data.last_name,
                         "role": user_data.role,
                     }
-                })
+                }))
             except Exception as e:
                 error_str = str(e)
                 is_config_error = (
@@ -150,7 +150,7 @@ class AuthService:
             # 3. Write org_id back to Supabase user_metadata so the JWT
             #    carries it for downstream profile resolution.
             try:
-                supabase.auth.admin.update_user_by_id(
+                await asyncio.to_thread(lambda: supabase.auth.admin.update_user_by_id(
                     user_id,
                     {"user_metadata": {
                         "first_name": user_data.first_name,
@@ -158,7 +158,7 @@ class AuthService:
                         "role": user_data.role,
                         "organization_id": str(org_id),
                     }}
-                )
+                ))
             except Exception as meta_err:
                 # Non-fatal — profile creation below carries the org_id directly.
                 print(f"[signup] metadata update warning for {user_data.email}: {meta_err}")
@@ -254,10 +254,10 @@ class AuthService:
         await check_lockout(login_data.email)
 
         try:
-            auth_response = supabase.auth.sign_in_with_password({
+            auth_response = await asyncio.to_thread(lambda: supabase.auth.sign_in_with_password({
                 "email": login_data.email,
                 "password": login_data.password
-            })
+            }))
 
             if not auth_response.user or not auth_response.session:
                 await record_failure(login_data.email)
@@ -327,11 +327,11 @@ class AuthService:
                 pass
 
             # Generate a fresh email verification link via Supabase Admin API.
-            link_res = supabase.auth.admin.generate_link({
+            link_res = await asyncio.to_thread(lambda: supabase.auth.admin.generate_link({
                 "type": "signup",
                 "email": user_data.email,
                 "options": {"redirect_to": settings.AUTH_REDIRECT_URL},
-            })
+            }))
 
             if not link_res or not link_res.properties or not link_res.properties.action_link:
                 # If link generation fails entirely, surface a friendly error.
@@ -404,10 +404,10 @@ class AuthService:
     async def update_me(self, user_id: str, profile_data: dict):
         updated = await profile_repo.update(user_id, profile_data)
         try:
-            supabase.auth.admin.update_user_by_id(
+            await asyncio.to_thread(lambda: supabase.auth.admin.update_user_by_id(
                 user_id,
                 {"user_metadata": profile_data}
-            )
+            ))
         except Exception as e:
             # Non-fatal — profile DB is the source of truth.
             # Log so we can detect persistent Supabase metadata drift.
@@ -475,7 +475,7 @@ class AuthService:
         # 3. Delete Supabase auth user last — point of no return.
         if user_id:
             try:
-                supabase.auth.admin.delete_user(user_id)
+                await asyncio.to_thread(lambda: supabase.auth.admin.delete_user(user_id))
             except Exception as e:  # pragma: no cover - defensive logging
                 logger.error("Failed to delete Supabase user", extra={"extra_context": {"user_id": user_id, "error": str(e)}})
 
@@ -515,11 +515,11 @@ class AuthService:
                 redirect_url = base_redirect
 
             try:
-                link_res = supabase.auth.admin.generate_link({
+                link_res = await asyncio.to_thread(lambda: supabase.auth.admin.generate_link({
                     "type": "recovery",
                     "email": request.email,
                     "options": {"redirect_to": redirect_url}
-                })
+                }))
             except Exception as e:
                 # Log Supabase issues but don't surface raw details to the client.
                 print(f"Forgot password link generation error for {request.email}: {e}")
@@ -570,16 +570,16 @@ class AuthService:
 
     async def reset_password(self, request: PasswordResetConfirm):
         try:
-            user_res = supabase.auth.get_user(request.access_token)
+            user_res = await asyncio.to_thread(lambda: supabase.auth.get_user(request.access_token))
             if not user_res or not user_res.user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid or expired reset token."
                 )
-            supabase.auth.admin.update_user_by_id(
+            await asyncio.to_thread(lambda: supabase.auth.admin.update_user_by_id(
                 user_res.user.id,
                 {"password": request.new_password}
-            )
+            ))
             return {"message": "Password updated successfully"}
         except HTTPException:
             raise
@@ -593,10 +593,10 @@ class AuthService:
         try:
             # Verify current password by re-authenticating
             try:
-                supabase.auth.sign_in_with_password({
+                await asyncio.to_thread(lambda: supabase.auth.sign_in_with_password({
                     "email": user_email,
                     "password": current_password
-                })
+                }))
             except Exception:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -604,13 +604,13 @@ class AuthService:
                 )
 
             # Update password via admin API, recording the change timestamp
-            supabase.auth.admin.update_user_by_id(
+            await asyncio.to_thread(lambda: supabase.auth.admin.update_user_by_id(
                 user_id,
                 {
                     "password": new_password,
                     "user_metadata": {"password_changed_at": datetime.utcnow().isoformat()},
                 }
-            )
+            ))
             return {"message": "Password updated successfully"}
         except HTTPException:
             raise
@@ -635,11 +635,11 @@ class AuthService:
             except Exception:
                 pass
 
-            link_res = supabase.auth.admin.generate_link({
+            link_res = await asyncio.to_thread(lambda: supabase.auth.admin.generate_link({
                 "type": "magiclink",
                 "email": request.email,
                 "options": {"redirect_to": settings.AUTH_REDIRECT_URL},
-            })
+            }))
 
             if not link_res or not link_res.properties or not link_res.properties.action_link:
                 raise HTTPException(
@@ -671,7 +671,7 @@ class AuthService:
 
     async def refresh_token(self, request: RefreshTokenRequest):
         try:
-            res = supabase.auth.refresh_session(request.refresh_token)
+            res = await asyncio.to_thread(lambda: supabase.auth.refresh_session(request.refresh_token))
             if not res.session:
                 raise HTTPException(status_code=401, detail="Invalid refresh token")
             return {

@@ -93,7 +93,7 @@ async def _ensure_storage_buckets():
     # 1. Create buckets (service role key bypasses RLS for this call)
     for bucket_id in ("profiles", "inventory"):
         try:
-            supabase.storage.create_bucket(bucket_id, options={"public": True})
+            await asyncio.to_thread(lambda: supabase.storage.create_bucket(bucket_id, options={"public": True}))
             logger.info(f"Storage bucket '{bucket_id}' created.")
         except Exception as e:
             msg = str(e).lower()
@@ -201,7 +201,7 @@ async def _validate_supabase_admin():
     logger = get_logger("startup.supabase")
     try:
         # Cheapest admin call: list 1 user — just to verify key permissions
-        supabase.auth.admin.list_users(page=1, per_page=1)
+        await asyncio.to_thread(lambda: supabase.auth.admin.list_users(page=1, per_page=1))
         logger.info("Supabase admin client: OK (service role key confirmed)")
     except Exception as e:
         err = str(e).lower()
@@ -236,6 +236,10 @@ async def startup_event():
 
     # Run GDPR retention purge in the background — non-blocking, non-fatal
     asyncio.create_task(_purge_stale_deleted_records())
+
+    # Prune stale login attempt records so lockout queries stay fast
+    from app.core.login_tracker import cleanup_old_login_attempts
+    asyncio.create_task(cleanup_old_login_attempts())
 
     # Attach Prometheus metrics endpoint and instrumentation
     try:

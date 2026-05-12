@@ -142,6 +142,29 @@ async def check_resend_cooldown(email: str) -> None:
         )
 
 
+async def cleanup_old_login_attempts() -> None:
+    """Delete LoginAttempt records older than 24 hours.
+
+    Records outside any active lockout window serve no purpose and accumulate
+    indefinitely. Run at startup (and ideally on a nightly schedule) to keep
+    the table small so lockout queries stay fast.
+    """
+    from datetime import timedelta
+    import logging as _logging
+
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    try:
+        deleted = await db.loginattempt.delete_many(
+            where={"last_failed_at": {"lt": cutoff}}
+        )
+        if deleted:
+            _logging.getLogger("dosteon.auth").info(
+                f"Login attempt cleanup: removed {deleted} stale records."
+            )
+    except Exception:
+        pass  # Non-critical — never break startup if this fails
+
+
 async def record_resend_attempt(email: str) -> None:
     """Record the timestamp of a resend request for this email."""
     key = "resend_" + _hash_email(email)
