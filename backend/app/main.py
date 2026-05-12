@@ -345,7 +345,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     from app.core.logging import get_logger
     logger = get_logger("root")
