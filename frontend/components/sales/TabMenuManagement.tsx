@@ -98,6 +98,7 @@ export function TabMenuManagement() {
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [addRecipe, setAddRecipe]               = useState<RecipeIngredient[]>([]);
   const [editRecipe, setEditRecipe]             = useState<RecipeIngredient[]>([]);
   const [editRecipeLoading, setEditRecipeLoading] = useState(false);
   const [editRecipeDirty, setEditRecipeDirty]   = useState(false);
@@ -148,7 +149,7 @@ export function TabMenuManagement() {
 
   // ── Add dish ──────────────────────────────────────────────────────────
 
-  const openAdd = () => { setAddForm(EMPTY_FORM); setAddImageFile(null); setAddModalOpen(true); };
+  const openAdd = () => { setAddForm(EMPTY_FORM); setAddImageFile(null); setAddRecipe([]); setAddModalOpen(true); };
 
   const handleAdd = async () => {
     if (!addForm.name.trim()) return;
@@ -163,8 +164,23 @@ export function TabMenuManagement() {
           // Image upload failure is non-fatal; dish is already created
         }
       }
+      if (addRecipe.length > 0) {
+        try {
+          await salesService.setRecipe(
+            item.id,
+            addRecipe.map((r) => ({
+              contextual_product_id: r.contextual_product_id,
+              quantity_per_unit: r.quantity_per_unit,
+              unit: r.unit,
+            }))
+          );
+        } catch {
+          // non-fatal — dish is created, recipe can be added later via edit
+        }
+      }
       setAddModalOpen(false);
       setAddImageFile(null);
+      setAddRecipe([]);
       toast.success("Dish added!", { description: addForm.name });
       load(true);
     } catch {
@@ -400,6 +416,18 @@ export function TabMenuManagement() {
           imageFile={addImageFile}
           onImageChange={setAddImageFile}
         />
+        {/* Recipe section */}
+        <div className="border-t border-slate-100 pt-6 space-y-3 mt-2">
+          <div className="flex items-center gap-2">
+            <UtensilsCrossed className="h-4 w-4 text-slate-400" />
+            <span className="text-[13px] font-bold text-[#1E293B] font-figtree">Recipe</span>
+            <span className="text-[11px] font-semibold text-slate-400 font-figtree">— links to inventory for auto-depletion on sale</span>
+          </div>
+          <RecipeSection
+            recipe={addRecipe}
+            onChange={setAddRecipe}
+          />
+        </div>
       </UnifiedModal>
 
       {/* Edit Dish modal */}
