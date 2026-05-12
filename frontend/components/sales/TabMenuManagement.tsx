@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Plus,
   Pencil,
@@ -13,9 +13,12 @@ import {
   Award,
   Tag,
   Percent,
-  TrendingUp,
-  TrendingDown,
+  ImagePlus,
+  X,
+  Search,
+  UtensilsCrossed,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +34,9 @@ import {
   MenuItem,
   MenuCategory,
   MenuStats,
+  RecipeIngredient,
 } from "@/lib/services/salesService";
+import { inventoryApi, InventoryProduct } from "@/lib/services/inventoryService";
 import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
@@ -89,7 +94,13 @@ export function TabMenuManagement() {
 
   const [addForm, setAddForm]   = useState<DishForm>(EMPTY_FORM);
   const [editForm, setEditForm] = useState<DishForm>(EMPTY_FORM);
+  const [addImageFile, setAddImageFile]   = useState<File | null>(null);
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [editRecipe, setEditRecipe]             = useState<RecipeIngredient[]>([]);
+  const [editRecipeLoading, setEditRecipeLoading] = useState(false);
+  const [editRecipeDirty, setEditRecipeDirty]   = useState(false);
 
   // ── Load ──────────────────────────────────────────────────────────────
 
@@ -112,6 +123,15 @@ export function TabMenuManagement() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (!editingItem) { setEditRecipe([]); setEditRecipeDirty(false); return; }
+    setEditRecipeLoading(true);
+    salesService.getRecipe(editingItem.id)
+      .then((r) => setEditRecipe(r))
+      .catch(() => {})
+      .finally(() => setEditRecipeLoading(false));
+  }, [editingItem]);
+
   // ── Filtered items ─────────────────────────────────────────────────────
 
   const allItems = useMemo(() => categories.flatMap((c) => c.items), [categories]);
@@ -128,16 +148,25 @@ export function TabMenuManagement() {
 
   // ── Add dish ──────────────────────────────────────────────────────────
 
-  const openAdd = () => { setAddForm(EMPTY_FORM); setAddModalOpen(true); };
+  const openAdd = () => { setAddForm(EMPTY_FORM); setAddImageFile(null); setAddModalOpen(true); };
 
   const handleAdd = async () => {
     if (!addForm.name.trim()) return;
     setIsSubmitting(true);
     try {
-      await salesService.createMenuItem(formToPayload(addForm));
+      const item = await salesService.createMenuItem(formToPayload(addForm));
+      if (addImageFile) {
+        try {
+          const url = await salesService.uploadMenuItemImage(item.id, addImageFile);
+          await salesService.updateMenuItem(item.id, { image_url: url });
+        } catch {
+          // Image upload failure is non-fatal; dish is already created
+        }
+      }
       setAddModalOpen(false);
+      setAddImageFile(null);
       toast.success("Dish added!", { description: addForm.name });
-      load(true); // fire-and-forget
+      load(true);
     } catch {
       toast.error("Could not add dish. Please try again.");
     } finally {
@@ -149,6 +178,8 @@ export function TabMenuManagement() {
 
   const openEdit = (item: MenuItem) => {
     setEditingItem(item);
+    setEditImageFile(null);
+    setEditRecipeDirty(false);
     setEditForm({
       name: item.name,
       price: item.price > 0 ? String(item.price) : "",
@@ -161,25 +192,58 @@ export function TabMenuManagement() {
   const handleEdit = async () => {
     if (!editingItem || !editForm.name.trim()) return;
     setIsSubmitting(true);
+    let uploadedImageUrl: string | undefined;
+    if (editImageFile) {
+      try {
+        uploadedImageUrl = await salesService.uploadMenuItemImage(editingItem.id, editImageFile);
+      } catch {
+        // non-fatal — proceed without image
+      }
+    }
     try {
-      await salesService.updateMenuItem(editingItem.id, formToPayload(editForm));
-      // Optimistic inline update — dish reflects new values immediately
+      const payload = {
+        ...formToPayload(editForm),
+        ...(uploadedImageUrl !== undefined ? { image_url: uploadedImageUrl } : {}),
+      };
+      await salesService.updateMenuItem(editingItem.id, payload);
       const { name, price: priceStr, cost: costStr } = editForm;
       setCategories((prev) =>
         prev.map((cat) => ({
           ...cat,
           items: cat.items.map((it) =>
             it.id === editingItem.id
-              ? { ...it, name, price: parseFloat(priceStr) || it.price, cost: parseFloat(costStr) || it.cost }
+              ? {
+                  ...it,
+                  name,
+                  price: parseFloat(priceStr) || it.price,
+                  cost: parseFloat(costStr) || it.cost,
+                  ...(uploadedImageUrl ? { image_url: uploadedImageUrl } : {}),
+                }
               : it
           ),
         }))
       );
+      if (editRecipeDirty) {
+        try {
+          await salesService.setRecipe(
+            editingItem.id,
+            editRecipe.map((r) => ({
+              contextual_product_id: r.contextual_product_id,
+              quantity_per_unit: r.quantity_per_unit,
+              unit: r.unit,
+            }))
+          );
+        } catch {
+          toast.error("Recipe could not be saved. Please try again.");
+        }
+      }
       setEditingItem(null);
+      setEditImageFile(null);
+      setEditRecipeDirty(false);
       toast.success("Dish updated!", { description: editForm.name });
-      load(true); // fire-and-forget
+      load(true);
     } catch {
-      load(true); // restore correct state on error
+      load(true);
       toast.error("Could not update dish. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -333,6 +397,8 @@ export function TabMenuManagement() {
           form={addForm}
           onChange={setAddForm}
           existingCategories={existingCategories}
+          imageFile={addImageFile}
+          onImageChange={setAddImageFile}
         />
       </UnifiedModal>
 
@@ -368,7 +434,26 @@ export function TabMenuManagement() {
           onChange={setEditForm}
           existingCategories={existingCategories}
           isEdit
+          imageFile={editImageFile}
+          currentImageUrl={editingItem?.image_url ?? null}
+          onImageChange={setEditImageFile}
         />
+        {/* Recipe section */}
+        <div className="border-t border-slate-100 pt-6 space-y-3 mt-2">
+          <div className="flex items-center gap-2">
+            <UtensilsCrossed className="h-4 w-4 text-slate-400" />
+            <span className="text-[13px] font-bold text-[#1E293B] font-figtree">Recipe</span>
+            <span className="text-[11px] font-semibold text-slate-400 font-figtree">— links to inventory for auto-depletion on sale</span>
+          </div>
+          {editRecipeLoading ? (
+            <p className="text-[12px] text-slate-400 font-figtree">Loading…</p>
+          ) : (
+            <RecipeSection
+              recipe={editRecipe}
+              onChange={(r) => { setEditRecipe(r); setEditRecipeDirty(true); }}
+            />
+          )}
+        </div>
       </UnifiedModal>
     </div>
   );
@@ -445,6 +530,16 @@ function DishCard({
         ? "border-rose-200 shadow-[0_2px_12px_rgba(244,63,94,0.08)]"
         : "border-slate-200 hover:border-slate-300 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
     )}>
+      {/* Dish photo */}
+      {item.image_url ? (
+        <div className="relative h-36 w-full shrink-0">
+          <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+        </div>
+      ) : (
+        <div className="h-36 w-full shrink-0 bg-slate-50 flex items-center justify-center border-b border-slate-100">
+          <ImagePlus className="h-8 w-8 text-slate-200" />
+        </div>
+      )}
       {/* Card body */}
       <div className="p-5 flex flex-col gap-1 flex-1">
         {/* Name */}
@@ -548,11 +643,17 @@ function DishForm({
   onChange,
   existingCategories,
   isEdit,
+  imageFile,
+  currentImageUrl,
+  onImageChange,
 }: {
   form: DishForm;
   onChange: (f: DishForm) => void;
   existingCategories: string[];
   isEdit?: boolean;
+  imageFile?: File | null;
+  currentImageUrl?: string | null;
+  onImageChange?: (file: File | null) => void;
 }) {
   const price  = parseFloat(form.price)  || 0;
   const cost   = parseFloat(form.cost)   || 0;
@@ -568,6 +669,14 @@ function DishForm({
 
   return (
     <div className="space-y-8">
+      {/* Dish photo */}
+      {onImageChange !== undefined && (
+        <ImageUploadZone
+          imageFile={imageFile ?? null}
+          currentImageUrl={currentImageUrl ?? null}
+          onImageChange={onImageChange}
+        />
+      )}
       {/* Name */}
       <FormField label="Dish Name" required>
         <Input
@@ -687,6 +796,198 @@ function FormField({
       </div>
       {children}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Recipe section (inside Edit modal)
+// ---------------------------------------------------------------------------
+
+function RecipeSection({
+  recipe,
+  onChange,
+}: {
+  recipe: RecipeIngredient[];
+  onChange: (r: RecipeIngredient[]) => void;
+}) {
+  const [search, setSearch]   = useState("");
+  const [results, setResults] = useState<InventoryProduct[]>([]);
+
+  const doSearch = useCallback(async (q: string) => {
+    if (!q.trim()) { setResults([]); return; }
+    try {
+      const products = await inventoryApi.getProducts({ search: q });
+      setResults(products.filter((p) => !recipe.some((r) => r.contextual_product_id === p.id)));
+    } catch {
+      setResults([]);
+    }
+  }, [recipe]);
+
+  useEffect(() => {
+    const t = setTimeout(() => doSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search, doSearch]);
+
+  const add = (p: InventoryProduct) => {
+    onChange([...recipe, {
+      id: `new-${p.id}`,
+      contextual_product_id: p.id,
+      product_name: p.name,
+      quantity_per_unit: 1,
+      unit: p.unit || null,
+    }]);
+    setSearch("");
+    setResults([]);
+  };
+
+  const remove = (idx: number) => onChange(recipe.filter((_, i) => i !== idx));
+  const setQty  = (idx: number, v: number) =>
+    onChange(recipe.map((r, i) => i === idx ? { ...r, quantity_per_unit: v } : r));
+  const setUnit = (idx: number, v: string) =>
+    onChange(recipe.map((r, i) => i === idx ? { ...r, unit: v || null } : r));
+
+  return (
+    <div className="space-y-3">
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 pointer-events-none" />
+        <Input
+          placeholder="Search inventory items to add…"
+          className="pl-10 h-10 text-[13px] border-slate-200 rounded-[8px] font-figtree"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {results.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-slate-200 rounded-[8px] shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+            {results.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => add(p)}
+                className="w-full px-4 py-2.5 text-left hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
+              >
+                <div className="text-[13px] font-semibold text-[#1E293B] font-figtree">{p.name}</div>
+                <div className="text-[11px] text-slate-400 font-figtree">{p.unit} · Stock: {p.current_stock}</div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Ingredient rows */}
+      {recipe.length === 0 ? (
+        <p className="text-[12px] text-slate-400 font-figtree text-center py-2">
+          No ingredients yet. Search above to link inventory items.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {recipe.map((ing, idx) => (
+            <div key={ing.id} className="flex items-center gap-2 bg-slate-50 rounded-[8px] px-3 py-2">
+              <span className="flex-1 text-[13px] font-semibold text-[#1E293B] font-figtree truncate">
+                {ing.product_name ?? "Unknown"}
+              </span>
+              <Input
+                type="number"
+                min="0"
+                step="any"
+                value={ing.quantity_per_unit}
+                onChange={(e) => setQty(idx, parseFloat(e.target.value) || 0)}
+                onFocus={(e) => e.target.select()}
+                className="w-20 h-8 text-[13px] font-semibold border-slate-200 rounded-[6px] font-figtree text-center"
+              />
+              <Input
+                placeholder="unit"
+                value={ing.unit ?? ""}
+                onChange={(e) => setUnit(idx, e.target.value)}
+                className="w-16 h-8 text-[12px] border-slate-200 rounded-[6px] font-figtree"
+              />
+              <button
+                type="button"
+                onClick={() => remove(idx)}
+                className="h-8 w-8 flex items-center justify-center text-slate-300 hover:text-rose-400 transition-colors shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Image upload zone
+// ---------------------------------------------------------------------------
+
+function ImageUploadZone({
+  imageFile,
+  currentImageUrl,
+  onImageChange,
+}: {
+  imageFile: File | null;
+  currentImageUrl: string | null;
+  onImageChange: (file: File | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!imageFile) { setPreviewUrl(null); return; }
+    const url = URL.createObjectURL(imageFile);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [imageFile]);
+
+  const displayUrl = previewUrl ?? currentImageUrl;
+
+  return (
+    <FormField label="Dish Photo" hint="optional">
+      <div className="relative">
+        {displayUrl ? (
+          <div className="relative h-40 rounded-[8px] overflow-hidden border border-slate-200">
+            <Image src={displayUrl} alt="Dish preview" fill className="object-cover" unoptimized />
+            <button
+              type="button"
+              onClick={() => onImageChange(null)}
+              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors"
+            >
+              <X className="h-3.5 w-3.5 text-white" />
+            </button>
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="absolute bottom-2 right-2 px-2.5 py-1 rounded-[6px] bg-black/50 text-white text-[11px] font-bold font-figtree hover:bg-black/70 transition-colors flex items-center gap-1.5"
+            >
+              <ImagePlus className="h-3 w-3" />
+              Change
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="w-full h-32 rounded-[8px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all group"
+          >
+            <ImagePlus className="h-6 w-6 text-slate-300 group-hover:text-indigo-400 transition-colors" />
+            <span className="text-[12px] font-semibold text-slate-400 font-figtree group-hover:text-indigo-500 transition-colors">
+              Click to add a photo
+            </span>
+          </button>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0] ?? null;
+            if (f) onImageChange(f);
+            e.target.value = "";
+          }}
+        />
+      </div>
+    </FormField>
   );
 }
 

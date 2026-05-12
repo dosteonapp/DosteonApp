@@ -39,6 +39,7 @@ class SalesService:
             "category": item.category,
             "status": item.status,
             "source": item.source,
+            "image_url": getattr(item, "image_url", None),
         }
 
     # -----------------------------------------------------------------------
@@ -80,17 +81,18 @@ class SalesService:
         brand_id: Optional[str],
         data: dict,
     ) -> dict:
-        item = await db.menuitem.create(
-            data={
-                "organization_id": organization_id,
-                "brand_id": brand_id,
-                "name": data["name"],
-                "price": data.get("price", 0),
-                "cost": data.get("cost", 0),
-                "category": data.get("category", "Signature"),
-                "source": "manual",
-            }
-        )
+        create_data: dict = {
+            "organization_id": organization_id,
+            "brand_id": brand_id,
+            "name": data["name"],
+            "price": data.get("price", 0),
+            "cost": data.get("cost", 0),
+            "category": data.get("category", "Signature"),
+            "source": "manual",
+        }
+        if data.get("image_url"):
+            create_data["image_url"] = data["image_url"]
+        item = await db.menuitem.create(data=create_data)
         return self._item_out(item)
 
     async def update_menu_item(
@@ -112,6 +114,55 @@ class SalesService:
             data=update_data,
         )
         return self._item_out(updated)
+
+    # -----------------------------------------------------------------------
+    # Recipe management
+    # -----------------------------------------------------------------------
+
+    async def get_recipe(self, organization_id: str, item_id: str) -> list:
+        item = await db.menuitem.find_unique(where={"id": item_id})
+        if not item or str(item.organization_id) != organization_id:
+            raise HTTPException(status_code=404, detail="Menu item not found")
+        ingredients = await db.menuitemingredient.find_many(
+            where={"menu_item_id": item_id},
+            include={"contextual_product": True},
+        )
+        return [
+            {
+                "id": ing.id,
+                "contextual_product_id": ing.contextual_product_id,
+                "product_name": ing.contextual_product.name if ing.contextual_product else None,
+                "quantity_per_unit": ing.quantity_per_unit,
+                "unit": ing.unit,
+            }
+            for ing in ingredients
+        ]
+
+    async def set_recipe(self, organization_id: str, item_id: str, ingredients: list) -> list:
+        item = await db.menuitem.find_unique(where={"id": item_id})
+        if not item or str(item.organization_id) != organization_id:
+            raise HTTPException(status_code=404, detail="Menu item not found")
+
+        for ing in ingredients:
+            product = await db.contextualproduct.find_unique(
+                where={"id": ing["contextual_product_id"]}
+            )
+            if not product or str(product.organization_id) != organization_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Ingredient not found: {ing['contextual_product_id']}",
+                )
+
+        await db.menuitemingredient.delete_many(where={"menu_item_id": item_id})
+        for ing in ingredients:
+            await db.menuitemingredient.create(data={
+                "menu_item_id": item_id,
+                "contextual_product_id": ing["contextual_product_id"],
+                "quantity_per_unit": ing["quantity_per_unit"],
+                "unit": ing.get("unit"),
+            })
+
+        return await self.get_recipe(organization_id, item_id)
 
     async def archive_menu_item(
         self,
@@ -373,6 +424,31 @@ class SalesService:
             await db.saleorderitem.create(
                 data={"sale_order_id": order.id, **oi}
             )
+
+        # Auto-deplete inventory from recipes (non-fatal — sale succeeds regardless)
+        try:
+            for i in items:
+                ingredients = await db.menuitemingredient.find_many(
+                    where={"menu_item_id": i["menu_item_id"]}
+                )
+                for ing in ingredients:
+                    depletion_qty = ing.quantity_per_unit * i["quantity"]
+                    await db.inventoryevent.create(data={
+                        "contextual_product_id": ing.contextual_product_id,
+                        "organization_id": organization_id,
+                        "event_type": "USED",
+                        "quantity": -depletion_qty,
+                        "unit": ing.unit,
+                        "actor_type": "sale",
+                        "reference_id": order.id,
+                        "consumption_reason": "CUSTOMER_SERVICE",
+                    })
+                    await db.contextualproduct.update(
+                        where={"id": ing.contextual_product_id},
+                        data={"current_stock": {"decrement": depletion_qty}},
+                    )
+        except Exception as e:
+            logger.warning(f"[sales] inventory depletion failed for order {order.id}: {e}")
 
         return {
             "id": order.id,

@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, Query
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 from app.api.deps import (
     get_brand_context,
     get_brand_mutation_context,
     SecurityContext,
 )
-from app.schemas.sales import MenuItemCreate, MenuItemUpdate, SaleLogRequest
+from app.schemas.sales import MenuItemCreate, MenuItemUpdate, SaleLogRequest, RecipeIngredientIn
 from app.services.sales_service import sales_service
 
 router = APIRouter()
@@ -48,6 +48,28 @@ async def update_menu_item(
     """Update a menu item's name, price, cost, or category."""
     return await sales_service.update_menu_item(
         ctx.organization_id, item_id, payload.model_dump(exclude_none=True)
+    )
+
+
+@router.get("/menu/{item_id}/recipe")
+async def get_recipe(
+    item_id: str,
+    ctx: SecurityContext = Depends(get_brand_context),
+):
+    """Return the ingredient list (recipe) for a menu item."""
+    return await sales_service.get_recipe(ctx.organization_id, item_id)
+
+
+@router.put("/menu/{item_id}/recipe")
+async def set_recipe(
+    item_id: str,
+    payload: List[RecipeIngredientIn],
+    ctx: SecurityContext = Depends(get_brand_mutation_context),
+):
+    """Replace the full recipe for a menu item (send empty list to clear)."""
+    return await sales_service.set_recipe(
+        ctx.organization_id, item_id,
+        [ing.model_dump() for ing in payload],
     )
 
 

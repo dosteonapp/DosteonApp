@@ -181,6 +181,13 @@ export function DashboardHeader() {
   const isMultiBrand = brands.length > 1;
 
   const brandDisplayName = activeBrand?.name ?? "My Restaurant";
+  const [orgLogoUrl, setOrgLogoUrl] = useState<string | null>(null);
+  useEffect(() => {
+    restaurantOpsService.getSettings().then((s: any) => {
+      if (s?.logo_url) setOrgLogoUrl(s.logo_url);
+    }).catch(() => {});
+  }, []);
+  const brandLogoUrl = activeBrand?.logo_url ?? orgLogoUrl ?? null;
 
   // Shared LIVE/CLOSED pill
   const livePill = (
@@ -207,7 +214,7 @@ export function DashboardHeader() {
     <>
       {/* Avatar: small square with its own border, not spanning full card height */}
       <div className="h-8 w-8 rounded-[8px] overflow-hidden shrink-0 border border-slate-100 shadow-sm">
-        <BrandAvatar logoUrl={activeBrand?.logo_url} name={brandDisplayName} />
+        <BrandAvatar logoUrl={brandLogoUrl} name={brandDisplayName} />
       </div>
 
       {/* Stacked text */}
@@ -301,7 +308,7 @@ export function DashboardHeader() {
                     {/* Mobile: avatar + name + small chevron */}
                     <div className="flex sm:hidden items-center gap-2">
                       <div className="h-7 w-7 rounded-[6px] overflow-hidden shrink-0 border border-slate-100">
-                        <BrandAvatar logoUrl={activeBrand?.logo_url} name={brandDisplayName} />
+                        <BrandAvatar logoUrl={brandLogoUrl} name={brandDisplayName} />
                       </div>
                       <span className="text-[13px] font-bold text-[#1E293B] max-w-[90px] truncate">
                         {brandDisplayName}
@@ -349,7 +356,7 @@ export function DashboardHeader() {
                 {/* Mobile */}
                 <div className="flex sm:hidden items-center gap-2">
                   <div className="h-7 w-7 rounded-[6px] overflow-hidden shrink-0 border border-slate-100">
-                    <BrandAvatar logoUrl={activeBrand?.logo_url} name={brandDisplayName} />
+                    <BrandAvatar logoUrl={brandLogoUrl} name={brandDisplayName} />
                   </div>
                   <span className="text-[13px] font-bold text-[#1E293B] max-w-[90px] truncate">
                     {brandDisplayName}

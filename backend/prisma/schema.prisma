@@ -153,6 +153,7 @@ model ContextualProduct {
   location              Location?        @relation(fields: [location_id], references: [id])
   inventory_events      InventoryEvent[]
   expenses              Expense[]
+  menu_item_ingredients MenuItemIngredient[]
 
   @@map("contextual_products")
   @@index([organization_id])
@@ -305,15 +306,34 @@ model MenuItem {
   status          String    @default("active")
   // "onboarding" marks items created during setup; allows targeted replace on re-submit
   source          String    @default("onboarding")
+  image_url       String?   @db.Text
   created_at      DateTime  @default(now()) @db.Timestamptz(6)
 
-  organization      Organization     @relation(fields: [organization_id], references: [id], onDelete: Cascade)
-  brand             Brand?           @relation(fields: [brand_id], references: [id])
+  organization      Organization       @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  brand             Brand?             @relation(fields: [brand_id], references: [id])
   sale_order_items  SaleOrderItem[]
+  ingredients       MenuItemIngredient[]
 
   @@map("menu_items")
   @@index([organization_id])
   @@index([brand_id])
+}
+
+model MenuItemIngredient {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  menu_item_id          String   @db.Uuid
+  contextual_product_id String   @db.Uuid
+  quantity_per_unit     Float
+  unit                  String?
+  created_at            DateTime @default(now()) @db.Timestamptz(6)
+
+  menu_item          MenuItem          @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
+  contextual_product ContextualProduct @relation(fields: [contextual_product_id], references: [id], onDelete: Restrict)
+
+  @@map("menu_item_ingredients")
+  @@unique([menu_item_id, contextual_product_id])
+  @@index([menu_item_id])
+  @@index([contextual_product_id])
 }
 
 // ---------------------------------------------------------

@@ -9,7 +9,9 @@ import {
   RefreshCw,
   TrendingUp,
   Percent,
+  ImagePlus,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -242,13 +244,22 @@ function DishCard({ item, cartQty, onClick }: { item: MenuItem; cartQty: number;
     <div
       onClick={onClick}
       className={cn(
-        "relative flex flex-col justify-between rounded-[10px] border p-4 bg-white transition-all cursor-pointer group",
+        "relative flex flex-col justify-between rounded-[10px] border bg-white transition-all cursor-pointer group overflow-hidden",
         cartQty > 0
           ? "border-[#3B59DA]/30 shadow-[0_2px_8px_rgba(59,89,218,0.08)]"
           : "border-slate-200 hover:border-slate-300 hover:shadow-sm"
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      {item.image_url ? (
+        <div className="relative h-24 w-full shrink-0">
+          <Image src={item.image_url} alt={item.name} fill className="object-cover" unoptimized />
+        </div>
+      ) : (
+        <div className="h-24 w-full shrink-0 bg-slate-50 flex items-center justify-center border-b border-slate-100">
+          <ImagePlus className="h-6 w-6 text-slate-200" />
+        </div>
+      )}
+      <div className="p-4 flex items-start justify-between gap-2 flex-1">
         <div className="flex-1 min-w-0">
           <div className="text-[15px] font-black text-[#1E293B] font-figtree leading-tight line-clamp-2">
             {item.name}
