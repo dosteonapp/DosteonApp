@@ -1,40 +1,21 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
-  Plus,
-  Pencil,
-  Archive,
-  Package,
-  ChevronDown,
-  AlertTriangle,
-  RefreshCw,
-  BookOpen,
-  Award,
-  Tag,
-  Percent,
-  ImagePlus,
-  X,
-  Search,
-  UtensilsCrossed,
+  useState, useEffect, useCallback, useRef, useMemo,
+} from "react";
+import {
+  ArrowLeft, Plus, Pencil, Archive, Search, X, Check,
+  ChevronDown, ImagePlus, UtensilsCrossed, RefreshCw,
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { UnifiedModal, UnifiedErrorBanner } from "@/components/ui/dosteon-ui";
 import {
-  FigtreeText,
-  InriaHeading,
-  UnifiedModal,
-  UnifiedErrorBanner,
-} from "@/components/ui/dosteon-ui";
-import {
-  salesService,
-  MenuItem,
-  MenuCategory,
-  MenuStats,
-  RecipeIngredient,
+  salesService, MenuItem, MenuCategory, MenuStats, RecipeIngredient,
 } from "@/lib/services/salesService";
 import { inventoryApi, InventoryProduct } from "@/lib/services/inventoryService";
 import { toast } from "sonner";
@@ -46,33 +27,38 @@ import { toast } from "sonner";
 const fmt = (n: number) =>
   new Intl.NumberFormat("en", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
 
-function calcMargin(price: number, cost: number): number | null {
-  if (price <= 0) return null;
-  return ((price - cost) / price) * 100;
+const fmtMoney = (n: number) =>
+  new Intl.NumberFormat("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+function marginColor(margin: number): string {
+  if (margin >= 60) return "text-emerald-600";
+  if (margin >= 30) return "text-amber-600";
+  return "text-red-600";
 }
 
 // ---------------------------------------------------------------------------
-// Form state type
+// Types
 // ---------------------------------------------------------------------------
+
+type View = "grid" | "editor";
 
 interface DishForm {
   name: string;
   price: string;
-  cost: string;
   category: string;
   status: string;
+  image_url: string;
 }
 
-const EMPTY_FORM: DishForm = { name: "", price: "", cost: "", category: "Signature", status: "active" };
+const EMPTY_FORM: DishForm = {
+  name: "", price: "", category: "Signature", status: "active", image_url: "",
+};
 
-function formToPayload(f: DishForm) {
-  return {
-    name: f.name.trim(),
-    price: parseFloat(f.price) || 0,
-    cost: parseFloat(f.cost) || 0,
-    category: f.category.trim() || "Signature",
-    status: f.status,
-  };
+const CATEGORIES = ["Signature", "Main", "Starter", "Dessert", "Beverage", "Side", "Special"];
+
+// Flatten all items from categories
+function flatItems(categories: MenuCategory[]): MenuItem[] {
+  return categories.flatMap((c) => c.items);
 }
 
 // ---------------------------------------------------------------------------
@@ -80,407 +66,982 @@ function formToPayload(f: DishForm) {
 // ---------------------------------------------------------------------------
 
 export function TabMenuManagement() {
+  const [view, setView] = useState<View>("grid");
   const [categories, setCategories] = useState<MenuCategory[]>([]);
-  const [menuStats, setMenuStats]   = useState<MenuStats | null>(null);
-  const [isLoading, setIsLoading]   = useState(true);
-  const [error, setError]           = useState<string | null>(null);
+  const [menuStats, setMenuStats] = useState<MenuStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [search, setSearch]           = useState("");
-  const [activeCategory, setActiveCategory] = useState("all");
+  // Editor state
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [isNewDish, setIsNewDish] = useState(false);
+  const [form, setForm] = useState<DishForm>(EMPTY_FORM);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [recipe, setRecipe] = useState<RecipeIngredient[]>([]);
+  const [recipeLoading, setRecipeLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [addModalOpen, setAddModalOpen]   = useState(false);
-  const [editingItem, setEditingItem]     = useState<MenuItem | null>(null);
+  // Grid state
+  const [gridSearch, setGridSearch] = useState("");
+  const [gridCategory, setGridCategory] = useState("all");
+  const [activeChannel, setActiveChannel] = useState("All");
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
 
-  const [addForm, setAddForm]   = useState<DishForm>(EMPTY_FORM);
-  const [editForm, setEditForm] = useState<DishForm>(EMPTY_FORM);
-  const [addImageFile, setAddImageFile]   = useState<File | null>(null);
-  const [editImageFile, setEditImageFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Editor sidebar state
+  const [sidebarSearch, setSidebarSearch] = useState("");
 
-  const [addRecipe, setAddRecipe]               = useState<RecipeIngredient[]>([]);
-  const [editRecipe, setEditRecipe]             = useState<RecipeIngredient[]>([]);
-  const [editRecipeLoading, setEditRecipeLoading] = useState(false);
-  const [editRecipeDirty, setEditRecipeDirty]   = useState(false);
+  // Ingredient picker state
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerSearch, setPickerSearch] = useState("");
+  const [pickerProducts, setPickerProducts] = useState<InventoryProduct[]>([]);
+  const [pickerSelected, setPickerSelected] = useState<InventoryProduct[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
 
-  // ── Load ──────────────────────────────────────────────────────────────
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
-  const load = useCallback(async (silent = false) => {
-    if (!silent) setIsLoading(true);
-    setError(null);
+  // -------------------------------------------------------------------------
+  // Data loading
+  // -------------------------------------------------------------------------
+
+  const loadMenu = useCallback(async () => {
     try {
-      const [menuData, stats] = await Promise.all([
+      setIsLoading(true);
+      setError(null);
+      const [menuData, statsData] = await Promise.all([
         salesService.getMenu(),
-        salesService.getMenuStats(),
+        salesService.getMenuStats().catch(() => null),
       ]);
       setCategories(menuData.categories);
-      setMenuStats(stats);
+      if (statsData) setMenuStats(statsData);
     } catch {
-      setError("Could not load menu items. Please refresh the page.");
+      setError("Failed to load menu. Please try again.");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadMenu(); }, [loadMenu]);
 
-  useEffect(() => {
-    if (!editingItem) { setEditRecipe([]); setEditRecipeDirty(false); return; }
-    setEditRecipeLoading(true);
-    salesService.getRecipe(editingItem.id)
-      .then((r) => setEditRecipe(r))
-      .catch(() => {})
-      .finally(() => setEditRecipeLoading(false));
-  }, [editingItem]);
+  // -------------------------------------------------------------------------
+  // Recipe loading
+  // -------------------------------------------------------------------------
 
-  // ── Filtered items ─────────────────────────────────────────────────────
-
-  const allItems = useMemo(() => categories.flatMap((c) => c.items), [categories]);
-  const existingCategories = useMemo(() => categories.map((c) => c.category), [categories]);
-
-  const visibleItems = useMemo(() => {
-    const pool = activeCategory === "all"
-      ? allItems
-      : (categories.find((c) => c.category === activeCategory)?.items ?? []);
-    if (!search.trim()) return pool;
-    const q = search.toLowerCase();
-    return pool.filter((i) => i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
-  }, [allItems, categories, activeCategory, search]);
-
-  // ── Add dish ──────────────────────────────────────────────────────────
-
-  const openAdd = () => { setAddForm(EMPTY_FORM); setAddImageFile(null); setAddRecipe([]); setAddModalOpen(true); };
-
-  const handleAdd = async () => {
-    if (!addForm.name.trim()) return;
-    setIsSubmitting(true);
+  const loadRecipe = useCallback(async (itemId: string) => {
+    setRecipeLoading(true);
     try {
-      const item = await salesService.createMenuItem(formToPayload(addForm));
-      if (addImageFile) {
-        try {
-          const url = await salesService.uploadMenuItemImage(item.id, addImageFile);
-          await salesService.updateMenuItem(item.id, { image_url: url });
-        } catch {
-          // Image upload failure is non-fatal; dish is already created
-        }
-      }
-      if (addRecipe.length > 0) {
-        try {
-          await salesService.setRecipe(
-            item.id,
-            addRecipe.map((r) => ({
-              contextual_product_id: r.contextual_product_id,
-              quantity_per_unit: r.quantity_per_unit,
-              unit: r.unit,
-            }))
-          );
-        } catch {
-          // non-fatal — dish is created, recipe can be added later via edit
-        }
-      }
-      setAddModalOpen(false);
-      setAddImageFile(null);
-      setAddRecipe([]);
-      toast.success("Dish added!", { description: addForm.name });
-      load(true);
+      const ing = await salesService.getRecipe(itemId);
+      setRecipe(ing);
     } catch {
-      toast.error("Could not add dish. Please try again.");
+      setRecipe([]);
     } finally {
-      setIsSubmitting(false);
+      setRecipeLoading(false);
     }
-  };
+  }, []);
 
-  // ── Edit dish ─────────────────────────────────────────────────────────
+  // -------------------------------------------------------------------------
+  // Navigation helpers
+  // -------------------------------------------------------------------------
 
-  const openEdit = (item: MenuItem) => {
-    setEditingItem(item);
-    setEditImageFile(null);
-    setEditRecipeDirty(false);
-    setEditForm({
+  function openEditor(item: MenuItem | null) {
+    if (item) {
+      setSelectedItemId(item.id);
+      setIsNewDish(false);
+      setForm({
+        name: item.name,
+        price: item.price.toString(),
+        category: item.category,
+        status: item.status,
+        image_url: item.image_url ?? "",
+      });
+      setImagePreview(item.image_url ?? null);
+      setImageFile(null);
+      loadRecipe(item.id);
+    } else {
+      setSelectedItemId(null);
+      setIsNewDish(true);
+      setForm(EMPTY_FORM);
+      setImagePreview(null);
+      setImageFile(null);
+      setRecipe([]);
+    }
+    setSidebarSearch("");
+    setView("editor");
+  }
+
+  function backToGrid() {
+    setView("grid");
+    setSelectedItemId(null);
+    setIsNewDish(false);
+  }
+
+  // -------------------------------------------------------------------------
+  // Sidebar dish click
+  // -------------------------------------------------------------------------
+
+  function selectSidebarItem(item: MenuItem) {
+    if (isSaving) return;
+    if (item.id === selectedItemId) return;
+    setSelectedItemId(item.id);
+    setIsNewDish(false);
+    setForm({
       name: item.name,
-      price: item.price > 0 ? String(item.price) : "",
-      cost: item.cost > 0 ? String(item.cost) : "",
+      price: item.price.toString(),
       category: item.category,
       status: item.status,
+      image_url: item.image_url ?? "",
     });
-  };
+    setImagePreview(item.image_url ?? null);
+    setImageFile(null);
+    loadRecipe(item.id);
+  }
 
-  const handleEdit = async () => {
-    if (!editingItem || !editForm.name.trim()) return;
-    setIsSubmitting(true);
-    let uploadedImageUrl: string | undefined;
-    if (editImageFile) {
-      try {
-        uploadedImageUrl = await salesService.uploadMenuItemImage(editingItem.id, editImageFile);
-      } catch {
-        // non-fatal — proceed without image
-      }
-    }
+  // -------------------------------------------------------------------------
+  // Image handling
+  // -------------------------------------------------------------------------
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    const url = URL.createObjectURL(file);
+    setImagePreview(url);
+  }
+
+  // -------------------------------------------------------------------------
+  // Save (create or update)
+  // -------------------------------------------------------------------------
+
+  async function handleSave() {
+    if (!form.name.trim()) { toast.error("Dish name is required"); return; }
+    const price = parseFloat(form.price) || 0;
+    if (price < 0) { toast.error("Price must be non-negative"); return; }
+
+    setIsSaving(true);
     try {
-      const payload = {
-        ...formToPayload(editForm),
-        ...(uploadedImageUrl !== undefined ? { image_url: uploadedImageUrl } : {}),
-      };
-      await salesService.updateMenuItem(editingItem.id, payload);
-      const { name, price: priceStr, cost: costStr } = editForm;
-      setCategories((prev) =>
-        prev.map((cat) => ({
-          ...cat,
-          items: cat.items.map((it) =>
-            it.id === editingItem.id
-              ? {
-                  ...it,
-                  name,
-                  price: parseFloat(priceStr) || it.price,
-                  cost: parseFloat(costStr) || it.cost,
-                  ...(uploadedImageUrl ? { image_url: uploadedImageUrl } : {}),
-                }
-              : it
-          ),
-        }))
+      // Upload image if changed
+      let finalImageUrl: string | undefined = form.image_url || undefined;
+      if (imageFile) {
+        if (isNewDish || !selectedItemId) {
+          // Create first, then upload
+        } else {
+          finalImageUrl = await salesService.uploadMenuItemImage(selectedItemId, imageFile);
+        }
+      }
+
+      const totalFoodCost = recipe.reduce(
+        (sum, ing) => sum + ing.quantity_per_unit * (ing.unit_cost ?? 0), 0
       );
-      if (editRecipeDirty) {
+
+      const payload = {
+        name: form.name.trim(),
+        price,
+        cost: totalFoodCost,
+        category: form.category || "Signature",
+        status: form.status,
+        ...(finalImageUrl ? { image_url: finalImageUrl } : {}),
+      };
+
+      let savedItem: MenuItem;
+      if (isNewDish) {
+        savedItem = await salesService.createMenuItem(payload) as unknown as MenuItem;
+        // Upload image for newly created item
+        if (imageFile) {
+          try {
+            const imgUrl = await salesService.uploadMenuItemImage(savedItem.id, imageFile);
+            await salesService.updateMenuItem(savedItem.id, { image_url: imgUrl });
+            savedItem = { ...savedItem, image_url: imgUrl };
+          } catch { /* non-fatal */ }
+        }
+        setSelectedItemId(savedItem.id);
+        setIsNewDish(false);
+      } else {
+        savedItem = await salesService.updateMenuItem(selectedItemId!, payload) as unknown as MenuItem;
+      }
+
+      // Save recipe
+      if (recipe.length > 0 || !isNewDish) {
         try {
           await salesService.setRecipe(
-            editingItem.id,
-            editRecipe.map((r) => ({
+            savedItem.id,
+            recipe.map((r) => ({
               contextual_product_id: r.contextual_product_id,
               quantity_per_unit: r.quantity_per_unit,
               unit: r.unit,
+              unit_cost: r.unit_cost,
             }))
           );
-        } catch {
-          toast.error("Recipe could not be saved. Please try again.");
-        }
+        } catch { /* non-fatal */ }
       }
-      setEditingItem(null);
-      setEditImageFile(null);
-      setEditRecipeDirty(false);
-      toast.success("Dish updated!", { description: editForm.name });
-      load(true);
-    } catch {
-      load(true);
-      toast.error("Could not update dish. Please try again.");
+
+      toast.success(isNewDish ? "Dish created!" : "Changes saved!");
+      await loadMenu();
+      // Refresh form with saved data
+      setForm({
+        name: savedItem.name,
+        price: savedItem.price.toString(),
+        category: savedItem.category,
+        status: savedItem.status,
+        image_url: savedItem.image_url ?? "",
+      });
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } };
+      toast.error(err?.response?.data?.detail ?? "Failed to save");
     } finally {
-      setIsSubmitting(false);
+      setIsSaving(false);
     }
-  };
+  }
 
-  // ── Archive dish ──────────────────────────────────────────────────────
+  // -------------------------------------------------------------------------
+  // Archive
+  // -------------------------------------------------------------------------
 
-  const handleArchive = async (item: MenuItem) => {
-    setIsSubmitting(true);
+  async function handleArchive(itemId: string) {
     try {
-      await salesService.archiveMenuItem(item.id);
-      // Optimistic removal — dish disappears instantly
-      setCategories((prev) =>
-        prev
-          .map((cat) => ({ ...cat, items: cat.items.filter((it) => it.id !== item.id) }))
-          .filter((cat) => cat.items.length > 0)
-      );
+      await salesService.archiveMenuItem(itemId);
+      toast.success("Dish archived");
       setConfirmArchiveId(null);
-      toast.success("Dish archived.", { description: `"${item.name}" has been removed from the menu.` });
-      load(true); // fire-and-forget
+      await loadMenu();
+      if (selectedItemId === itemId) backToGrid();
     } catch {
-      load(true); // restore correct state on error
-      toast.error("Could not archive dish. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+      toast.error("Failed to archive");
     }
-  };
+  }
 
-  // ── Render ─────────────────────────────────────────────────────────────
+  // -------------------------------------------------------------------------
+  // Ingredient picker
+  // -------------------------------------------------------------------------
 
-  if (isLoading) return <MenuManagementSkeleton />;
+  const existingProductIds = useMemo(
+    () => new Set(recipe.map((r) => r.contextual_product_id)),
+    [recipe]
+  );
 
-  const s = menuStats ?? { total_dishes: 0, top_selling_dish: null, avg_selling_price: 0, avg_gross_margin: 0 };
+  useEffect(() => {
+    if (!pickerOpen) return;
+    let cancelled = false;
+    setPickerLoading(true);
+    inventoryApi.getProducts({ search: pickerSearch }).then((products) => {
+      if (!cancelled) {
+        setPickerProducts(products.filter((p) => !existingProductIds.has(p.id)));
+        setPickerLoading(false);
+      }
+    }).catch(() => { if (!cancelled) setPickerLoading(false); });
+    return () => { cancelled = true; };
+  }, [pickerOpen, pickerSearch, existingProductIds]);
 
-  return (
-    <div>
-      {/* ── Menu stats banner (dark gradient, 4 white cards) ── */}
-      <div className="bg-gradient-to-r from-[#091558] via-[#3851dd] to-[#091558] px-5 md:px-7 py-6 md:py-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          <MenuStatCard
-            label="Total Dishes"
-            value={String(s.total_dishes)}
-            caption={s.total_dishes > 0 ? `Across ${categories.length} ${categories.length === 1 ? "category" : "categories"}` : "No dishes yet"}
-            icon={BookOpen} iconBg="bg-indigo-100" iconColor="text-[#3B59DA]"
-          />
-          <MenuStatCard
-            label="Top Selling Dish"
-            value={s.top_selling_dish ?? "—"}
-            caption={s.top_selling_dish ? "most ordered dish" : "No sales data yet"}
-            icon={Award} iconBg="bg-amber-100" iconColor="text-amber-500"
-          />
-          <MenuStatCard
-            label="Avg Selling Price"
-            value={s.avg_selling_price > 0 ? `RWF ${fmt(s.avg_selling_price)}` : "—"}
-            caption="RWF per plate"
-            icon={Tag} iconBg="bg-blue-100" iconColor="text-blue-600"
-          />
-          <MenuStatCard
-            label="Avg Gross Margin"
-            value={s.avg_gross_margin > 0 ? `${s.avg_gross_margin.toFixed(1)}%` : "—"}
-            caption={categories.length > 0 ? `Across ${categories.length} ${categories.length === 1 ? "category" : "categories"}` : undefined}
-            positive={s.avg_gross_margin >= 50 ? true : s.avg_gross_margin >= 20 ? undefined : s.avg_gross_margin > 0 ? false : undefined}
-            icon={Percent} iconBg="bg-emerald-100" iconColor="text-emerald-600"
-          />
-        </div>
+  function togglePickerProduct(product: InventoryProduct) {
+    setPickerSelected((prev) =>
+      prev.find((p) => p.id === product.id)
+        ? prev.filter((p) => p.id !== product.id)
+        : [...prev, product]
+    );
+  }
+
+  function confirmPickerSelection() {
+    const newIngredients: RecipeIngredient[] = pickerSelected.map((p) => ({
+      id: "",
+      contextual_product_id: p.id,
+      product_name: p.name,
+      quantity_per_unit: 1,
+      unit: p.unit,
+      unit_cost: 0,
+    }));
+    setRecipe((prev) => [...prev, ...newIngredients]);
+    setPickerSelected([]);
+    setPickerSearch("");
+    setPickerOpen(false);
+  }
+
+  // -------------------------------------------------------------------------
+  // Recipe row updates
+  // -------------------------------------------------------------------------
+
+  function updateRecipeRow(idx: number, field: keyof RecipeIngredient, value: string | number) {
+    setRecipe((prev) =>
+      prev.map((r, i) => i === idx ? { ...r, [field]: value } : r)
+    );
+  }
+
+  function removeRecipeRow(idx: number) {
+    setRecipe((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  // -------------------------------------------------------------------------
+  // Derived values for editor
+  // -------------------------------------------------------------------------
+
+  const sellingPrice = parseFloat(form.price) || 0;
+  const totalFoodCost = recipe.reduce(
+    (sum, ing) => sum + ing.quantity_per_unit * (ing.unit_cost ?? 0), 0
+  );
+  const grossProfit = sellingPrice - totalFoodCost;
+  const grossMargin = sellingPrice > 0 ? (grossProfit / sellingPrice) * 100 : 0;
+
+  // -------------------------------------------------------------------------
+  // Grid filters
+  // -------------------------------------------------------------------------
+
+  const CHANNELS = ["All", "Dine-in", "Takeaway", "Delivery"];
+
+  const filteredCategories = useMemo(() => {
+    if (!gridSearch && gridCategory === "all") return categories;
+    return categories
+      .map((c) => ({
+        ...c,
+        items: c.items.filter((item) => {
+          const matchSearch = !gridSearch || item.name.toLowerCase().includes(gridSearch.toLowerCase());
+          const matchCat = gridCategory === "all" || c.category === gridCategory;
+          return matchSearch && matchCat;
+        }),
+      }))
+      .filter((c) => c.items.length > 0);
+  }, [categories, gridSearch, gridCategory]);
+
+  const allItems = flatItems(categories);
+  const totalDishes = allItems.length;
+  const availableDishes = allItems.filter((i) => i.status === "active").length;
+
+  // Sidebar filtered items
+  const sidebarItems = useMemo(() => {
+    const q = sidebarSearch.toLowerCase();
+    return categories
+      .map((c) => ({
+        ...c,
+        items: c.items.filter((i) => !q || i.name.toLowerCase().includes(q)),
+      }))
+      .filter((c) => c.items.length > 0);
+  }, [categories, sidebarSearch]);
+
+  // -------------------------------------------------------------------------
+  // Render: loading
+  // -------------------------------------------------------------------------
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 p-4">
+        {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
       </div>
+    );
+  }
 
-      <div className="p-5 md:p-7 space-y-5">
+  // -------------------------------------------------------------------------
+  // Render: grid view
+  // -------------------------------------------------------------------------
+
+  if (view === "grid") {
+    return (
+      <div className="space-y-5">
         {error && <UnifiedErrorBanner message={error} />}
 
-        {/* Section header: "All Dishes" + dropdown + Add button */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h2 className="text-[20px] font-black text-[#1E293B] font-figtree">All Dishes</h2>
-
-          <div className="flex items-center gap-3 shrink-0">
-            {/* Category dropdown */}
-            <div className="relative">
-              <select
-                value={activeCategory}
-                onChange={(e) => setActiveCategory(e.target.value)}
-                className="appearance-none h-10 pl-4 pr-9 text-[13px] font-semibold border border-slate-200 rounded-[8px] bg-white text-[#1E293B] focus:outline-none focus:ring-2 focus:ring-indigo-400/20 font-figtree cursor-pointer"
-              >
-                <option value="all">All Categories</option>
-                {categories.map((c) => (
-                  <option key={c.category} value={c.category}>{c.category}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-            </div>
-            {/* Add button */}
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-[17px] font-bold text-[#1E293B] font-figtree">Menu</h2>
+            {menuStats && (
+              <p className="text-[12px] text-slate-500 font-figtree mt-0.5">
+                {menuStats.total_dishes} dishes · Avg {fmt(menuStats.avg_selling_price)} Ksh · {menuStats.avg_gross_margin}% margin
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
             <Button
-              className="h-10 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[13px] font-figtree gap-2 px-5 shadow-[0_2px_10px_rgba(59,89,218,0.25)] active:scale-95 transition-all"
-              onClick={openAdd}
+              variant="outline"
+              size="sm"
+              className="text-[13px] font-figtree h-8 border-slate-200"
+              onClick={() => {
+                const first = allItems[0];
+                openEditor(first ?? null);
+              }}
+              disabled={allItems.length === 0}
             >
-              <Plus className="h-4 w-4" />
+              <UtensilsCrossed className="h-3.5 w-3.5 mr-1.5" />
+              Edit Recipes
+            </Button>
+            <Button
+              size="sm"
+              className="text-[13px] font-figtree h-8 bg-[#1E293B] hover:bg-slate-700"
+              onClick={() => openEditor(null)}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
               Add New Dish
             </Button>
           </div>
         </div>
 
-        {/* Dish grid */}
-        {visibleItems.length === 0 ? (
-          <EmptyMenuState onAdd={openAdd} hasMenu={allItems.length > 0} />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {visibleItems.map((item) => (
-              <DishCard
-                key={item.id}
-                item={item}
-                isConfirmingArchive={confirmArchiveId === item.id}
-                isSubmitting={isSubmitting}
-                onEdit={() => openEdit(item)}
-                onRequestArchive={() => setConfirmArchiveId(item.id)}
-                onCancelArchive={() => setConfirmArchiveId(null)}
-                onConfirmArchive={() => handleArchive(item)}
+        {/* Channel pills */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {CHANNELS.map((ch) => (
+            <button
+              key={ch}
+              onClick={() => setActiveChannel(ch)}
+              className={cn(
+                "px-3 py-1 rounded-full text-[12px] font-semibold font-figtree border transition-colors",
+                activeChannel === ch
+                  ? "bg-[#1E293B] text-white border-[#1E293B]"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+              )}
+            >
+              {ch}
+            </button>
+          ))}
+          <div className="ml-auto flex items-center gap-2">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                value={gridSearch}
+                onChange={(e) => setGridSearch(e.target.value)}
+                placeholder="Search dishes…"
+                className="pl-8 pr-3 h-8 text-[13px] font-figtree border border-slate-200 rounded-lg w-48 focus:outline-none focus:ring-1 focus:ring-slate-300"
               />
+            </div>
+            {/* Category filter */}
+            <div className="relative">
+              <select
+                value={gridCategory}
+                onChange={(e) => setGridCategory(e.target.value)}
+                className="h-8 pl-2 pr-7 text-[12px] font-figtree border border-slate-200 rounded-lg appearance-none focus:outline-none focus:ring-1 focus:ring-slate-300 bg-white"
+              >
+                <option value="all">All categories</option>
+                {categories.map((c) => (
+                  <option key={c.category} value={c.category}>{c.category}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        {/* Dish grid */}
+        {filteredCategories.length === 0 ? (
+          <div className="text-center py-16 text-slate-400 font-figtree">
+            {totalDishes === 0
+              ? "No dishes yet — add your first one!"
+              : "No dishes match your filters."}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {filteredCategories.map((cat) => (
+              <div key={cat.category}>
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 font-figtree mb-3">
+                  {cat.category}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {cat.items.map((item) => (
+                    <GridCard
+                      key={item.id}
+                      item={item}
+                      onEdit={() => openEditor(item)}
+                      onArchive={() => setConfirmArchiveId(item.id)}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
+
+        {/* Archive confirm */}
+        <UnifiedModal
+          isOpen={!!confirmArchiveId}
+          onClose={() => setConfirmArchiveId(null)}
+          title="Archive Dish?"
+          footer={
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setConfirmArchiveId(null)}>Cancel</Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => confirmArchiveId && handleArchive(confirmArchiveId)}
+              >
+                Archive
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-[13px] text-slate-600 font-figtree">
+            This dish will be hidden from the menu. You can restore it later.
+          </p>
+        </UnifiedModal>
       </div>
+    );
+  }
 
-      {/* Add Dish modal */}
-      <UnifiedModal
-        isOpen={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
-        title="Add New Dish"
-        subtitle="Add a dish to your menu. Set a cost to track profit margins."
-        footer={
-          <>
-            <Button
-              variant="outline"
-              className="h-12 px-8 rounded-[10px] border-slate-200 font-bold text-[14px] font-figtree"
-              onClick={() => setAddModalOpen(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="h-12 px-10 rounded-[10px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black text-[14px] font-figtree gap-2 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all disabled:opacity-50"
-              disabled={!addForm.name.trim() || isSubmitting}
-              onClick={handleAdd}
-            >
-              {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Add Dish
-            </Button>
-          </>
-        }
+  // -------------------------------------------------------------------------
+  // Render: editor view
+  // -------------------------------------------------------------------------
+
+  return (
+    <div className="flex flex-col gap-4 h-full">
+      {/* Back nav */}
+      <button
+        onClick={backToGrid}
+        className="flex items-center gap-1.5 text-[13px] text-slate-500 hover:text-slate-800 font-figtree transition-colors w-fit"
       >
-        <DishForm
-          form={addForm}
-          onChange={setAddForm}
-          existingCategories={existingCategories}
-          imageFile={addImageFile}
-          onImageChange={setAddImageFile}
-        />
-        {/* Recipe section */}
-        <div className="border-t border-slate-100 pt-6 space-y-3 mt-2">
-          <div className="flex items-center gap-2">
-            <UtensilsCrossed className="h-4 w-4 text-slate-400" />
-            <span className="text-[13px] font-bold text-[#1E293B] font-figtree">Recipe</span>
-            <span className="text-[11px] font-semibold text-slate-400 font-figtree">— links to inventory for auto-depletion on sale</span>
-          </div>
-          <RecipeSection
-            recipe={addRecipe}
-            onChange={setAddRecipe}
-          />
-        </div>
-      </UnifiedModal>
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back to Menu
+      </button>
 
-      {/* Edit Dish modal */}
-      <UnifiedModal
-        isOpen={!!editingItem}
-        onClose={() => setEditingItem(null)}
-        title="Edit Dish"
-        subtitle={editingItem?.name}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              className="h-12 px-8 rounded-[10px] border-slate-200 font-bold text-[14px] font-figtree"
-              onClick={() => setEditingItem(null)}
-              disabled={isSubmitting}
-            >
+      <div className="flex gap-4 min-h-0 flex-1">
+        {/* ---------------------------------------------------------------- */}
+        {/* LEFT SIDEBAR                                                      */}
+        {/* ---------------------------------------------------------------- */}
+        <div className="w-56 shrink-0 flex flex-col gap-3">
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[12px] font-bold text-slate-700 font-figtree uppercase tracking-wide">
+                Menu Items
+              </span>
+              <span className="text-[11px] text-slate-400 font-figtree">
+                {availableDishes}/{totalDishes}
+              </span>
+            </div>
+            {/* Progress bar */}
+            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all"
+                style={{ width: totalDishes > 0 ? `${(availableDishes / totalDishes) * 100}%` : "0%" }}
+              />
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <input
+              value={sidebarSearch}
+              onChange={(e) => setSidebarSearch(e.target.value)}
+              placeholder="Search…"
+              className="w-full pl-8 pr-3 h-8 text-[12px] font-figtree border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 bg-white"
+            />
+          </div>
+
+          {/* New dish button */}
+          <button
+            onClick={() => openEditor(null)}
+            className="flex items-center gap-1.5 w-full px-3 py-2 rounded-lg border-2 border-dashed border-slate-200 text-[12px] text-slate-400 hover:border-slate-400 hover:text-slate-600 font-figtree transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New Dish
+          </button>
+
+          {/* Dish list */}
+          <div className="flex-1 overflow-y-auto space-y-4 max-h-[calc(100vh-320px)] pr-1">
+            {isNewDish && (
+              <div className="px-2 py-2 rounded-lg bg-indigo-50 border border-indigo-200">
+                <span className="text-[12px] font-semibold text-indigo-700 font-figtree">New Dish</span>
+              </div>
+            )}
+            {sidebarItems.map((cat) => (
+              <div key={cat.category}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-figtree px-1 mb-1">
+                  {cat.category}
+                </p>
+                <div className="space-y-0.5">
+                  {cat.items.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => selectSidebarItem(item)}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left transition-colors",
+                        selectedItemId === item.id
+                          ? "bg-[#1E293B] text-white"
+                          : "hover:bg-slate-50 text-slate-700"
+                      )}
+                    >
+                      <span className={cn(
+                        "h-2 w-2 rounded-full shrink-0",
+                        item.status === "active" ? "bg-emerald-400" : "bg-slate-300"
+                      )} />
+                      <span className="text-[12px] font-figtree flex-1 truncate">{item.name}</span>
+                      <span className={cn(
+                        "text-[11px] font-figtree shrink-0",
+                        selectedItemId === item.id ? "text-slate-300" : "text-slate-400"
+                      )}>
+                        {fmt(item.price)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {sidebarItems.length === 0 && !isNewDish && (
+              <p className="text-[11px] text-slate-400 font-figtree text-center py-4">No dishes found</p>
+            )}
+          </div>
+        </div>
+
+        {/* ---------------------------------------------------------------- */}
+        {/* CENTER PANEL                                                      */}
+        {/* ---------------------------------------------------------------- */}
+        <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-180px)] pr-1">
+          {/* Dish Details Card */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+            <h3 className="text-[14px] font-bold text-[#1E293B] font-figtree mb-4">Dish Details</h3>
+            <div className="flex gap-4">
+              {/* Image upload */}
+              <div
+                onClick={() => imageInputRef.current?.click()}
+                className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer hover:border-slate-400 transition-colors overflow-hidden shrink-0 bg-slate-50"
+              >
+                {imagePreview ? (
+                  <Image src={imagePreview} alt="" width={96} height={96} className="object-cover w-full h-full" />
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-slate-400">
+                    <ImagePlus className="h-5 w-5" />
+                    <span className="text-[10px] font-figtree">Photo</span>
+                  </div>
+                )}
+              </div>
+              <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+
+              <div className="flex-1 space-y-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 font-figtree mb-1 uppercase tracking-wide">Dish Name</label>
+                  <Input
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="e.g. Grilled Chicken"
+                    className="h-8 text-[13px] font-figtree"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="block text-[11px] font-semibold text-slate-500 font-figtree mb-1 uppercase tracking-wide">Selling Price (Ksh)</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={form.price}
+                      onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                      placeholder="0"
+                      className="h-8 text-[13px] font-figtree"
+                      onFocus={(e) => { if (e.target.value === "0") e.target.select(); }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-[11px] font-semibold text-slate-500 font-figtree mb-1 uppercase tracking-wide">Category</label>
+                    <div className="relative">
+                      <select
+                        value={form.category}
+                        onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                        className="h-8 w-full pl-2 pr-7 text-[13px] font-figtree border border-input rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-ring bg-background"
+                      >
+                        {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={form.status === "active"}
+                    onCheckedChange={(checked) => setForm((f) => ({ ...f, status: checked ? "active" : "inactive" }))}
+                    id="available-toggle"
+                  />
+                  <label htmlFor="available-toggle" className="text-[13px] text-slate-600 font-figtree cursor-pointer">
+                    {form.status === "active" ? "Available on menu" : "Hidden from menu"}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bill of Materials */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <UtensilsCrossed className="h-4 w-4 text-slate-400" />
+              <h3 className="text-[14px] font-bold text-[#1E293B] font-figtree">Bill of Materials</h3>
+              <span className="text-[11px] text-slate-400 font-figtree">— ingredient cost breakdown</span>
+            </div>
+
+            {recipeLoading ? (
+              <div className="space-y-2">
+                {[1, 2].map((i) => <Skeleton key={i} className="h-10 w-full rounded" />)}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-[12px] font-figtree">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="text-left py-2 pr-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ingredient</th>
+                      <th className="text-left py-2 pr-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-20">Qty</th>
+                      <th className="text-left py-2 pr-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-24">Unit</th>
+                      <th className="text-left py-2 pr-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-28">Unit Cost</th>
+                      <th className="text-left py-2 pr-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-24">Line Cost</th>
+                      <th className="w-8" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recipe.map((ing, idx) => {
+                      const lineCost = ing.quantity_per_unit * (ing.unit_cost ?? 0);
+                      return (
+                        <tr key={idx} className="border-b border-slate-50">
+                          <td className="py-2 pr-3 font-medium text-slate-700">{ing.product_name}</td>
+                          <td className="py-2 pr-3">
+                            <input
+                              type="number"
+                              min={0}
+                              step={0.01}
+                              value={ing.quantity_per_unit}
+                              onChange={(e) => updateRecipeRow(idx, "quantity_per_unit", parseFloat(e.target.value) || 0)}
+                              className="w-full border border-slate-200 rounded px-2 h-7 text-[12px] focus:outline-none focus:ring-1 focus:ring-slate-300"
+                            />
+                          </td>
+                          <td className="py-2 pr-3">
+                            <input
+                              type="text"
+                              value={ing.unit ?? ""}
+                              onChange={(e) => updateRecipeRow(idx, "unit", e.target.value)}
+                              placeholder="kg"
+                              className="w-full border border-slate-200 rounded px-2 h-7 text-[12px] focus:outline-none focus:ring-1 focus:ring-slate-300"
+                            />
+                          </td>
+                          <td className="py-2 pr-3">
+                            <div className="flex items-center gap-1">
+                              <span className="text-slate-400 text-[11px] shrink-0">Ksh</span>
+                              <input
+                                type="number"
+                                min={0}
+                                step={0.01}
+                                value={ing.unit_cost ?? 0}
+                                onChange={(e) => updateRecipeRow(idx, "unit_cost", parseFloat(e.target.value) || 0)}
+                                className="w-full border border-slate-200 rounded px-2 h-7 text-[12px] focus:outline-none focus:ring-1 focus:ring-slate-300"
+                              />
+                            </div>
+                          </td>
+                          <td className="py-2 pr-3 text-slate-600 font-medium">
+                            Ksh {fmtMoney(lineCost)}
+                          </td>
+                          <td className="py-2">
+                            <button
+                              onClick={() => removeRecipeRow(idx)}
+                              className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {/* Add ingredient row */}
+                    <tr>
+                      <td colSpan={6} className="py-2">
+                        <button
+                          onClick={() => { setPickerSelected([]); setPickerSearch(""); setPickerOpen(true); }}
+                          className="flex items-center gap-1.5 text-[12px] text-indigo-600 hover:text-indigo-800 font-figtree font-semibold transition-colors"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Add Ingredient
+                        </button>
+                      </td>
+                    </tr>
+                    {/* Total row */}
+                    {recipe.length > 0 && (
+                      <tr className="border-t-2 border-slate-200">
+                        <td colSpan={4} className="py-2.5 text-[12px] font-bold text-slate-700 font-figtree">
+                          Est. Total Food Cost
+                        </td>
+                        <td className="py-2.5 text-[13px] font-bold text-[#1E293B] font-figtree">
+                          Ksh {fmtMoney(totalFoodCost)}
+                        </td>
+                        <td />
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-2 pb-4">
+            <Button variant="ghost" size="sm" onClick={backToGrid} className="font-figtree">
               Cancel
             </Button>
             <Button
-              className="h-12 px-10 rounded-[10px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black text-[14px] font-figtree gap-2 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all disabled:opacity-50"
-              disabled={!editForm.name.trim() || isSubmitting}
-              onClick={handleEdit}
+              size="sm"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-[#1E293B] hover:bg-slate-700 font-figtree"
             >
-              {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
+              {isSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" /> : <Check className="h-3.5 w-3.5 mr-1" />}
               Save Changes
             </Button>
-          </>
+          </div>
+        </div>
+
+        {/* ---------------------------------------------------------------- */}
+        {/* RIGHT PANEL                                                       */}
+        {/* ---------------------------------------------------------------- */}
+        <div className="w-64 shrink-0 flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-180px)]">
+          {/* Live Preview */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 font-figtree mb-3">
+              Live Preview
+            </p>
+            <div className="flex gap-3 items-start">
+              {imagePreview ? (
+                <Image
+                  src={imagePreview}
+                  alt=""
+                  width={56}
+                  height={56}
+                  className="rounded-lg object-cover w-14 h-14 shrink-0"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-lg bg-slate-100 shrink-0 flex items-center justify-center">
+                  <UtensilsCrossed className="h-5 w-5 text-slate-300" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-bold text-[#1E293B] font-figtree truncate">
+                  {form.name || "Dish Name"}
+                </p>
+                <p className="text-[13px] text-slate-600 font-figtree">
+                  Ksh {fmtMoney(sellingPrice)} / serving
+                </p>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 font-figtree">
+                  {form.category || "Signature"}
+                </span>
+              </div>
+            </div>
+            <div className="mt-2 flex">
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[10px] font-semibold font-figtree",
+                form.status === "active"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-slate-100 text-slate-500"
+              )}>
+                {form.status === "active" ? "Available" : "Unavailable"}
+              </span>
+            </div>
+          </div>
+
+          {/* Pricing Summary */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 font-figtree mb-3">
+              Pricing Summary
+            </p>
+            <div className="space-y-2">
+              <PricingRow label="Selling Price" value={`Ksh ${fmtMoney(sellingPrice)}`} />
+              <PricingRow label="Est. Food Cost" value={`Ksh ${fmtMoney(totalFoodCost)}`} />
+              <div className="border-t border-slate-100 my-1" />
+              <PricingRow label="Gross Profit / Plate" value={`Ksh ${fmtMoney(grossProfit)}`} bold />
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] text-slate-500 font-figtree">Gross Profit Margin</span>
+                <span className={cn("text-[13px] font-bold font-figtree", marginColor(grossMargin))}>
+                  {grossMargin.toFixed(1)}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* --------------------------------------------------------------- */}
+      {/* INGREDIENT PICKER MODAL                                          */}
+      {/* --------------------------------------------------------------- */}
+      <UnifiedModal
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        title="Add Ingredients"
+        footer={
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setPickerOpen(false)} className="font-figtree">
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={pickerSelected.length === 0}
+              onClick={confirmPickerSelection}
+              className="bg-[#1E293B] hover:bg-slate-700 font-figtree"
+            >
+              Add Selected Items ({pickerSelected.length})
+            </Button>
+          </div>
         }
       >
-        <DishForm
-          form={editForm}
-          onChange={setEditForm}
-          existingCategories={existingCategories}
-          isEdit
-          imageFile={editImageFile}
-          currentImageUrl={editingItem?.image_url ?? null}
-          onImageChange={setEditImageFile}
-        />
-        {/* Recipe section */}
-        <div className="border-t border-slate-100 pt-6 space-y-3 mt-2">
-          <div className="flex items-center gap-2">
-            <UtensilsCrossed className="h-4 w-4 text-slate-400" />
-            <span className="text-[13px] font-bold text-[#1E293B] font-figtree">Recipe</span>
-            <span className="text-[11px] font-semibold text-slate-400 font-figtree">— links to inventory for auto-depletion on sale</span>
+        <div className="flex gap-4 h-80">
+          {/* Left: product list */}
+          <div className="flex-1 flex flex-col gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                value={pickerSearch}
+                onChange={(e) => setPickerSearch(e.target.value)}
+                placeholder="Search inventory…"
+                className="w-full pl-8 pr-3 h-8 text-[13px] font-figtree border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300"
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto border border-slate-100 rounded-lg">
+              {pickerLoading ? (
+                <div className="space-y-2 p-2">
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-8 w-full rounded" />)}
+                </div>
+              ) : pickerProducts.length === 0 ? (
+                <p className="text-[12px] text-slate-400 font-figtree text-center py-8">
+                  {pickerSearch ? "No matches" : "No inventory items available"}
+                </p>
+              ) : (
+                pickerProducts.map((p) => {
+                  const isSelected = pickerSelected.some((s) => s.id === p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => togglePickerProduct(p)}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-50 border-b border-slate-50 last:border-b-0 transition-colors",
+                        isSelected && "bg-indigo-50"
+                      )}
+                    >
+                      <div className={cn(
+                        "h-4 w-4 rounded border shrink-0 flex items-center justify-center transition-colors",
+                        isSelected ? "bg-indigo-600 border-indigo-600" : "border-slate-300"
+                      )}>
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <span className="text-[13px] font-figtree text-slate-700 flex-1">{p.name}</span>
+                      <span className="text-[11px] text-slate-400 font-figtree shrink-0">{p.unit}</span>
+                      <span className={cn(
+                        "text-[10px] font-semibold font-figtree shrink-0",
+                        p.status_class === "healthy" ? "text-emerald-600" :
+                        p.status_class === "low" ? "text-amber-600" : "text-red-600"
+                      )}>
+                        {fmt(p.current_stock)} {p.unit}
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
           </div>
-          {editRecipeLoading ? (
-            <p className="text-[12px] text-slate-400 font-figtree">Loading…</p>
-          ) : (
-            <RecipeSection
-              recipe={editRecipe}
-              onChange={(r) => { setEditRecipe(r); setEditRecipeDirty(true); }}
-            />
-          )}
+
+          {/* Right: selected list */}
+          <div className="w-48 shrink-0 flex flex-col gap-2">
+            <p className="text-[12px] font-bold text-slate-600 font-figtree">
+              Selected ({pickerSelected.length})
+            </p>
+            <div className="flex-1 overflow-y-auto border border-slate-100 rounded-lg">
+              {pickerSelected.length === 0 ? (
+                <p className="text-[12px] text-slate-400 font-figtree text-center py-8 px-2">
+                  No items selected
+                </p>
+              ) : (
+                pickerSelected.map((p) => (
+                  <div key={p.id} className="flex items-center gap-2 px-3 py-2 border-b border-slate-50 last:border-b-0">
+                    <span className="text-[12px] font-figtree text-slate-700 flex-1">{p.name}</span>
+                    <button
+                      onClick={() => togglePickerProduct(p)}
+                      className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </UnifiedModal>
     </div>
@@ -488,603 +1049,87 @@ export function TabMenuManagement() {
 }
 
 // ---------------------------------------------------------------------------
-// Menu stat card (banner)
+// Grid card sub-component
 // ---------------------------------------------------------------------------
 
-function MenuStatCard({
-  label, value, caption, positive, icon: Icon, iconBg, iconColor,
-}: {
-  label: string; value: string; caption?: string; positive?: boolean;
-  icon: React.ComponentType<{ className?: string }>; iconBg: string; iconColor: string;
-}) {
-  const isText = isNaN(parseFloat(value.replace(/[^0-9.]/g, ""))) || value === "—";
-  return (
-    <div className="bg-white rounded-[12px] p-4 md:p-5 flex flex-col gap-3 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-      <div className="flex items-center gap-2">
-        <div className={cn("h-7 w-7 rounded-full flex items-center justify-center shrink-0", iconBg)}>
-          <Icon className={cn("h-3.5 w-3.5 stroke-[2px]", iconColor)} />
-        </div>
-        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.08em] font-figtree leading-tight">
-          {label}
-        </span>
-      </div>
-      <div className={cn(
-        "font-black font-figtree leading-tight",
-        isText ? "text-[16px] md:text-[18px] line-clamp-2" : "text-[22px] md:text-[26px]",
-        positive === true ? "text-emerald-600" : positive === false ? "text-rose-500" : "text-[#1E293B]"
-      )}>
-        {value}
-      </div>
-      {caption && (
-        <p className="text-[11px] text-slate-400 font-semibold font-figtree -mt-1">{caption}</p>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Dish card
-// ---------------------------------------------------------------------------
-
-function DishCard({
+function GridCard({
   item,
-  isConfirmingArchive,
-  isSubmitting,
   onEdit,
-  onRequestArchive,
-  onCancelArchive,
-  onConfirmArchive,
+  onArchive,
 }: {
   item: MenuItem;
-  isConfirmingArchive: boolean;
-  isSubmitting: boolean;
   onEdit: () => void;
-  onRequestArchive: () => void;
-  onCancelArchive: () => void;
-  onConfirmArchive: () => void;
+  onArchive: () => void;
 }) {
-  const margin = item.price > 0 ? ((item.price - item.cost) / item.price) * 100 : null;
-  const profit = item.price > 0 && item.cost > 0 ? item.price - item.cost : null;
-
-  const marginColor =
-    margin === null ? "text-slate-400" :
-    margin >= 50    ? "text-emerald-600" :
-    margin >= 20    ? "text-amber-600"   : "text-rose-500";
+  const margin = item.price > 0 ? ((item.price - (item.cost ?? 0)) / item.price) * 100 : null;
+  const fmtLocal = (n: number) =>
+    new Intl.NumberFormat("en", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
 
   return (
-    <div className={cn(
-      "rounded-[12px] border bg-white flex flex-col overflow-hidden transition-all",
-      isConfirmingArchive
-        ? "border-rose-200 shadow-[0_2px_12px_rgba(244,63,94,0.08)]"
-        : "border-slate-200 hover:border-slate-300 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
-    )}>
-      {/* Dish photo */}
-      {item.image_url ? (
-        <div className="relative h-36 w-full shrink-0">
-          <Image src={item.image_url} alt={item.name} fill className="object-cover" />
-        </div>
-      ) : (
-        <div className="h-36 w-full shrink-0 bg-slate-50 flex items-center justify-center border-b border-slate-100">
-          <ImagePlus className="h-8 w-8 text-slate-200" />
-        </div>
-      )}
-      {/* Card body */}
-      <div className="p-5 flex flex-col gap-1 flex-1">
-        {/* Name */}
-        <div className="text-[15px] font-black text-[#1E293B] font-figtree leading-tight">
-          {item.name}
-        </div>
-        {/* Category */}
-        <div className="text-[12px] italic text-slate-400 font-figtree mb-2">
-          {item.category}
-        </div>
-
-        {/* Price */}
-        <div className="text-[18px] font-black text-[#1E293B] font-figtree tabular-nums">
-          RWF {fmt(item.price)} / plate
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-slate-100 my-3" />
-
-        {/* Stats 2×2 grid */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-          <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree">Est. Cost</div>
-            <div className="text-[13px] font-bold text-[#1E293B] font-figtree tabular-nums mt-0.5">
-              {item.cost > 0 ? `RWF ${fmt(item.cost)}` : "—"}
-            </div>
-          </div>
-          <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree">Margin</div>
-            <div className={cn("text-[13px] font-bold tabular-nums mt-0.5 font-figtree", marginColor)}>
-              {margin !== null ? `${margin.toFixed(0)}%` : "—"}
-            </div>
-          </div>
-          <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree">Profit/Plate</div>
-            <div className="text-[13px] font-bold text-[#1E293B] font-figtree tabular-nums mt-0.5">
-              {profit !== null ? `RWF ${fmt(profit)}` : "—"}
-            </div>
-          </div>
-          <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree">Source</div>
-            <div className="text-[13px] font-bold text-[#1E293B] font-figtree mt-0.5 capitalize">
-              {item.source ?? "Manual"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Action strip */}
-      {isConfirmingArchive ? (
-        <div className="bg-rose-50 border-t border-rose-100 px-4 py-3 flex items-center justify-between gap-2">
-          <span className="text-[11px] font-bold text-rose-600 font-figtree flex items-center gap-1.5">
-            <AlertTriangle className="h-3 w-3" /> Archive this dish?
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onCancelArchive}
-              className="text-[11px] font-bold text-slate-400 hover:text-slate-600 font-figtree transition-colors"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onConfirmArchive}
-              disabled={isSubmitting}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-[6px] bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-bold font-figtree transition-all active:scale-95 disabled:opacity-60"
-            >
-              {isSubmitting ? <RefreshCw className="h-3 w-3 animate-spin" /> : null}
-              Confirm
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="border-t border-slate-100 px-4 py-3 flex items-center gap-2">
-          <button
-            onClick={onEdit}
-            className="flex-1 h-9 rounded-[8px] border border-slate-200 text-[12px] font-bold text-[#1E293B] font-figtree hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center gap-1.5"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            Edit Dish
-          </button>
-          <button
-            onClick={onRequestArchive}
-            className="flex-1 h-9 rounded-[8px] border border-rose-200 text-[12px] font-bold text-rose-500 font-figtree hover:bg-rose-50 transition-all active:scale-95 flex items-center justify-center gap-1.5"
-          >
-            <Archive className="h-3.5 w-3.5" />
-            Archive
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Dish form (shared between Add + Edit modals)
-// ---------------------------------------------------------------------------
-
-function DishForm({
-  form,
-  onChange,
-  existingCategories,
-  isEdit,
-  imageFile,
-  currentImageUrl,
-  onImageChange,
-}: {
-  form: DishForm;
-  onChange: (f: DishForm) => void;
-  existingCategories: string[];
-  isEdit?: boolean;
-  imageFile?: File | null;
-  currentImageUrl?: string | null;
-  onImageChange?: (file: File | null) => void;
-}) {
-  const price  = parseFloat(form.price)  || 0;
-  const cost   = parseFloat(form.cost)   || 0;
-  const margin = calcMargin(price, cost);
-
-  const marginColor =
-    margin === null                    ? "text-slate-400" :
-    margin >= 50                       ? "text-emerald-600" :
-    margin >= 20                       ? "text-amber-600"   : "text-rose-500";
-
-  const set = (key: keyof DishForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    onChange({ ...form, [key]: e.target.value });
-
-  return (
-    <div className="space-y-8">
-      {/* Dish photo */}
-      {onImageChange !== undefined && (
-        <ImageUploadZone
-          imageFile={imageFile ?? null}
-          currentImageUrl={currentImageUrl ?? null}
-          onImageChange={onImageChange}
-        />
-      )}
-      {/* Name */}
-      <FormField label="Dish Name" required>
-        <Input
-          placeholder="e.g. Grilled Salmon"
-          value={form.name}
-          onChange={set("name")}
-          className="h-12 text-[15px] font-semibold border-slate-200 rounded-[8px] focus-visible:ring-indigo-400/20 font-figtree"
-          autoFocus
-        />
-      </FormField>
-
-      {/* Category */}
-      <FormField label="Category">
-        <Input
-          placeholder="e.g. Signature, Drinks, Sides"
-          value={form.category}
-          onChange={set("category")}
-          list="category-suggestions"
-          className="h-12 text-[15px] font-semibold border-slate-200 rounded-[8px] focus-visible:ring-indigo-400/20 font-figtree"
-        />
-        <datalist id="category-suggestions">
-          {existingCategories.map((c) => <option key={c} value={c} />)}
-        </datalist>
-      </FormField>
-
-      {/* Price + Cost side by side */}
-      <div className="grid grid-cols-2 gap-5">
-        <FormField label="Selling Price">
-          <Input
-            type="number"
-            min="0"
-            step="any"
-            placeholder="0"
-            value={form.price}
-            onChange={set("price")}
-            onFocus={(e) => e.target.select()}
-            className="h-12 text-[15px] font-semibold border-slate-200 rounded-[8px] focus-visible:ring-indigo-400/20 font-figtree"
+    <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+      <div className="flex items-start gap-3">
+        {item.image_url ? (
+          <Image
+            src={item.image_url}
+            alt={item.name}
+            width={56}
+            height={56}
+            className="rounded-lg object-cover w-14 h-14 shrink-0"
           />
-        </FormField>
-        <FormField label="Cost Price" hint="optional">
-          <Input
-            type="number"
-            min="0"
-            step="any"
-            placeholder="0"
-            value={form.cost}
-            onChange={set("cost")}
-            onFocus={(e) => e.target.select()}
-            className="h-12 text-[15px] font-semibold border-slate-200 rounded-[8px] focus-visible:ring-indigo-400/20 font-figtree"
-          />
-        </FormField>
-      </div>
-
-      {/* Live margin preview */}
-      <div className="rounded-[10px] border border-slate-100 bg-slate-50/60 px-5 py-4 flex items-center justify-between gap-4">
-        <div className="space-y-0.5">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] font-figtree">
-            Margin Preview
-          </div>
-          <div className={cn("text-[26px] font-black font-figtree leading-none", marginColor)}>
-            {margin !== null ? `${margin.toFixed(1)}%` : "—"}
-          </div>
-        </div>
-        {price > 0 && cost > 0 && (
-          <div className="text-right space-y-0.5">
-            <div className="text-[11px] font-semibold text-slate-400 font-figtree">Profit per sale</div>
-            <div className={cn("text-[18px] font-black font-figtree tabular-nums", marginColor)}>
-              {fmt(price - cost)}
-            </div>
-          </div>
-        )}
-        {price > 0 && cost === 0 && (
-          <FigtreeText className="text-[12px] text-slate-400 max-w-[150px] text-right leading-relaxed">
-            Add a cost price to track your profit margin
-          </FigtreeText>
-        )}
-      </div>
-
-      {/* Status — edit mode only */}
-      {isEdit && (
-        <FormField label="Status">
-          <select
-            value={form.status}
-            onChange={(e) => onChange({ ...form, status: e.target.value })}
-            className="w-full h-12 px-3 text-[15px] font-semibold border border-slate-200 rounded-[8px] bg-white text-[#1E293B] focus:outline-none focus:ring-2 focus:ring-indigo-400/20 font-figtree"
-          >
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
-          </select>
-        </FormField>
-      )}
-    </div>
-  );
-}
-
-function FormField({
-  label,
-  hint,
-  required,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <label className="text-[13px] font-bold text-[#1E293B] font-figtree">
-          {label}
-          {required && <span className="text-rose-500 ml-0.5">*</span>}
-        </label>
-        {hint && (
-          <span className="text-[11px] font-semibold text-slate-400 font-figtree">{hint}</span>
-        )}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Recipe section (inside Edit modal)
-// ---------------------------------------------------------------------------
-
-function RecipeSection({
-  recipe,
-  onChange,
-}: {
-  recipe: RecipeIngredient[];
-  onChange: (r: RecipeIngredient[]) => void;
-}) {
-  const [search, setSearch]   = useState("");
-  const [results, setResults] = useState<InventoryProduct[]>([]);
-
-  const doSearch = useCallback(async (q: string) => {
-    if (!q.trim()) { setResults([]); return; }
-    try {
-      const products = await inventoryApi.getProducts({ search: q });
-      setResults(products.filter((p) => !recipe.some((r) => r.contextual_product_id === p.id)));
-    } catch {
-      setResults([]);
-    }
-  }, [recipe]);
-
-  useEffect(() => {
-    const t = setTimeout(() => doSearch(search), 350);
-    return () => clearTimeout(t);
-  }, [search, doSearch]);
-
-  const add = (p: InventoryProduct) => {
-    onChange([...recipe, {
-      id: `new-${p.id}`,
-      contextual_product_id: p.id,
-      product_name: p.name,
-      quantity_per_unit: 1,
-      unit: p.unit || null,
-    }]);
-    setSearch("");
-    setResults([]);
-  };
-
-  const remove = (idx: number) => onChange(recipe.filter((_, i) => i !== idx));
-  const setQty  = (idx: number, v: number) =>
-    onChange(recipe.map((r, i) => i === idx ? { ...r, quantity_per_unit: v } : r));
-  const setUnit = (idx: number, v: string) =>
-    onChange(recipe.map((r, i) => i === idx ? { ...r, unit: v || null } : r));
-
-  return (
-    <div className="space-y-3">
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 pointer-events-none" />
-        <Input
-          placeholder="Search inventory items to add…"
-          className="pl-10 h-10 text-[13px] border-slate-200 rounded-[8px] font-figtree"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {results.length > 0 && (
-          <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-slate-200 rounded-[8px] shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-            {results.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => add(p)}
-                className="w-full px-4 py-2.5 text-left hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
-              >
-                <div className="text-[13px] font-semibold text-[#1E293B] font-figtree">{p.name}</div>
-                <div className="text-[11px] text-slate-400 font-figtree">{p.unit} · Stock: {p.current_stock}</div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Ingredient rows */}
-      {recipe.length === 0 ? (
-        <p className="text-[12px] text-slate-400 font-figtree text-center py-2">
-          No ingredients yet. Search above to link inventory items.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {recipe.map((ing, idx) => (
-            <div key={ing.id} className="flex items-center gap-2 bg-slate-50 rounded-[8px] px-3 py-2">
-              <span className="flex-1 text-[13px] font-semibold text-[#1E293B] font-figtree truncate">
-                {ing.product_name ?? "Unknown"}
-              </span>
-              <Input
-                type="number"
-                min="0"
-                step="any"
-                value={ing.quantity_per_unit}
-                onChange={(e) => setQty(idx, parseFloat(e.target.value) || 0)}
-                onFocus={(e) => e.target.select()}
-                className="w-20 h-8 text-[13px] font-semibold border-slate-200 rounded-[6px] font-figtree text-center"
-              />
-              <Input
-                placeholder="unit"
-                value={ing.unit ?? ""}
-                onChange={(e) => setUnit(idx, e.target.value)}
-                className="w-16 h-8 text-[12px] border-slate-200 rounded-[6px] font-figtree"
-              />
-              <button
-                type="button"
-                onClick={() => remove(idx)}
-                className="h-8 w-8 flex items-center justify-center text-slate-300 hover:text-rose-400 transition-colors shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Image upload zone
-// ---------------------------------------------------------------------------
-
-function ImageUploadZone({
-  imageFile,
-  currentImageUrl,
-  onImageChange,
-}: {
-  imageFile: File | null;
-  currentImageUrl: string | null;
-  onImageChange: (file: File | null) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!imageFile) { setPreviewUrl(null); return; }
-    const url = URL.createObjectURL(imageFile);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [imageFile]);
-
-  const displayUrl = previewUrl ?? currentImageUrl;
-
-  return (
-    <FormField label="Dish Photo" hint="optional">
-      <div className="relative">
-        {displayUrl ? (
-          <div className="relative h-40 rounded-[8px] overflow-hidden border border-slate-200">
-            <Image src={displayUrl} alt="Dish preview" fill className="object-cover" unoptimized />
-            <button
-              type="button"
-              onClick={() => onImageChange(null)}
-              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors"
-            >
-              <X className="h-3.5 w-3.5 text-white" />
-            </button>
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="absolute bottom-2 right-2 px-2.5 py-1 rounded-[6px] bg-black/50 text-white text-[11px] font-bold font-figtree hover:bg-black/70 transition-colors flex items-center gap-1.5"
-            >
-              <ImagePlus className="h-3 w-3" />
-              Change
-            </button>
-          </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="w-full h-32 rounded-[8px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all group"
-          >
-            <ImagePlus className="h-6 w-6 text-slate-300 group-hover:text-indigo-400 transition-colors" />
-            <span className="text-[12px] font-semibold text-slate-400 font-figtree group-hover:text-indigo-500 transition-colors">
-              Click to add a photo
-            </span>
-          </button>
+          <div className="w-14 h-14 rounded-lg bg-slate-100 shrink-0 flex items-center justify-center">
+            <UtensilsCrossed className="h-5 w-5 text-slate-300" />
+          </div>
         )}
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0] ?? null;
-            if (f) onImageChange(f);
-            e.target.value = "";
-          }}
-        />
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-bold text-[#1E293B] font-figtree truncate">{item.name}</p>
+          <p className="text-[13px] text-slate-600 font-figtree">Ksh {fmtLocal(item.price)}</p>
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 font-figtree">
+              {item.category}
+            </span>
+            {margin !== null && (
+              <span className={cn("text-[10px] font-semibold font-figtree", marginColor(margin))}>
+                {margin.toFixed(0)}% margin
+              </span>
+            )}
+          </div>
+        </div>
       </div>
-    </FormField>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Empty state
-// ---------------------------------------------------------------------------
-
-function EmptyMenuState({ onAdd, hasMenu }: { onAdd: () => void; hasMenu: boolean }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-      <div className="h-14 w-14 rounded-[14px] bg-slate-50 border border-slate-100 flex items-center justify-center">
-        <Package className="h-6 w-6 text-slate-300" />
-      </div>
-      <div className="space-y-1.5">
-        <InriaHeading className="text-[20px] font-bold">
-          {hasMenu ? "No dishes match your search" : "No dishes yet"}
-        </InriaHeading>
-        <FigtreeText className="text-[13px] font-semibold text-slate-400 max-w-[220px] leading-relaxed">
-          {hasMenu
-            ? "Try a different search or category filter."
-            : "Add your first dish to start tracking sales and margins."}
-        </FigtreeText>
-      </div>
-      {!hasMenu && (
+      <div className="flex gap-2">
         <Button
-          className="h-10 px-6 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[13px] font-figtree gap-2 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all mt-2"
-          onClick={onAdd}
+          variant="ghost"
+          size="sm"
+          className="flex-1 h-7 text-[11px] font-figtree text-slate-500 border border-slate-100"
+          onClick={onArchive}
         >
-          <Plus className="h-4 w-4" />
-          Add First Dish
+          <Archive className="h-3 w-3 mr-1" />
+          Archive
         </Button>
-      )}
+        <Button
+          size="sm"
+          className="flex-1 h-7 text-[11px] font-figtree bg-[#1E293B] hover:bg-slate-700"
+          onClick={onEdit}
+        >
+          <Pencil className="h-3 w-3 mr-1" />
+          Edit Dish
+        </Button>
+      </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Skeleton
+// Pricing row sub-component
 // ---------------------------------------------------------------------------
 
-function MenuManagementSkeleton() {
+function PricingRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
-    <div>
-      <div className="bg-gradient-to-r from-[#091558] via-[#3851dd] to-[#091558] px-5 md:px-7 py-6 md:py-8 grid grid-cols-4 gap-3 md:gap-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white rounded-[12px] p-4 md:p-5 animate-pulse space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-full bg-slate-100" />
-              <div className="h-2 w-3/4 rounded bg-slate-100" />
-            </div>
-            <div className="h-8 w-2/3 rounded bg-slate-100" />
-            <div className="h-2 w-1/2 rounded bg-slate-100" />
-          </div>
-        ))}
-      </div>
-      <div className="p-6 md:p-7">
-        <div className="flex items-center justify-between mb-5">
-          <Skeleton className="h-7 w-32 rounded-[8px]" />
-          <div className="flex gap-3">
-            <Skeleton className="h-10 w-36 rounded-[8px]" />
-            <Skeleton className="h-10 w-36 rounded-[8px]" />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {[...Array(8)].map((_, i) => (
-            <Skeleton key={i} className="h-56 rounded-[12px]" />
-          ))}
-        </div>
-      </div>
+    <div className="flex items-center justify-between">
+      <span className="text-[12px] text-slate-500 font-figtree">{label}</span>
+      <span className={cn("text-[12px] font-figtree", bold ? "font-bold text-[#1E293B]" : "text-slate-700")}>
+        {value}
+      </span>
     </div>
   );
 }

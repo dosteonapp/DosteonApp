@@ -325,6 +325,7 @@ model MenuItemIngredient {
   contextual_product_id String   @db.Uuid
   quantity_per_unit     Float
   unit                  String?
+  unit_cost             Float?
   created_at            DateTime @default(now()) @db.Timestamptz(6)
 
   menu_item          MenuItem          @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)

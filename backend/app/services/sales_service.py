@@ -134,6 +134,7 @@ class SalesService:
                 "product_name": ing.contextual_product.name if ing.contextual_product else None,
                 "quantity_per_unit": ing.quantity_per_unit,
                 "unit": ing.unit,
+                "unit_cost": ing.unit_cost,
             }
             for ing in ingredients
         ]
@@ -160,6 +161,7 @@ class SalesService:
                 "contextual_product_id": ing["contextual_product_id"],
                 "quantity_per_unit": ing["quantity_per_unit"],
                 "unit": ing.get("unit"),
+                "unit_cost": ing.get("unit_cost"),
             })
 
         return await self.get_recipe(organization_id, item_id)

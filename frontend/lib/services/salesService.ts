@@ -49,6 +49,7 @@ export interface RecipeIngredient {
   product_name: string | null;
   quantity_per_unit: number;
   unit: string | null;
+  unit_cost?: number | null;
 }
 
 export interface SaleOrder {
@@ -135,7 +136,7 @@ export const salesService = {
 
   async setRecipe(
     itemId: string,
-    ingredients: { contextual_product_id: string; quantity_per_unit: number; unit?: string | null }[]
+    ingredients: { contextual_product_id: string; quantity_per_unit: number; unit?: string | null; unit_cost?: number | null }[]
   ): Promise<RecipeIngredient[]> {
     const { data } = await axiosInstance.put(`/sales/menu/${itemId}/recipe`, ingredients);
     return data;

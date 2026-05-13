@@ -12,6 +12,7 @@ class RecipeIngredientIn(BaseModel):
     contextual_product_id: str
     quantity_per_unit: float
     unit: Optional[str] = None
+    unit_cost: Optional[float] = None
 
     @field_validator("quantity_per_unit")
     @classmethod
