@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   TrendingUp,
   History,
-  BookOpen,
   Lock,
   ArrowRight,
   ShoppingCart,
@@ -23,7 +22,6 @@ import {
 } from "@/components/ui/dosteon-ui";
 import { TabLogSales } from "@/components/sales/TabLogSales";
 import { TabSalesHistory } from "@/components/sales/TabSalesHistory";
-import { TabMenuManagement } from "@/components/sales/TabMenuManagement";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
 import { useUser } from "@/context/UserContext";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
@@ -53,12 +51,11 @@ const todayLabel = () =>
 // Tab config
 // ---------------------------------------------------------------------------
 
-type SalesTab = "log" | "history" | "menu";
+type SalesTab = "log" | "history";
 
 const TABS: { id: SalesTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "log",     label: "Log Sales",             icon: TrendingUp },
   { id: "history", label: "Today's Sales History", icon: History    },
-  { id: "menu",    label: "Menu Management",        icon: BookOpen   },
 ];
 
 // ---------------------------------------------------------------------------
@@ -181,7 +178,6 @@ export default function SalesPage() {
             <div className={cn("transition-all duration-700", !isOpen && "blur-[5px] grayscale-[0.15] opacity-75 pointer-events-none select-none")}>
               {activeTab === "log"     && <TabLogSales cartMap={cartMap} onAddToCart={addToCart} refreshKey={salesRefreshKey} />}
               {activeTab === "history" && <TabSalesHistory />}
-              {activeTab === "menu"    && <TabMenuManagement />}
             </div>
           </div>
 

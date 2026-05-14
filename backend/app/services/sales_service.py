@@ -52,10 +52,10 @@ class SalesService:
         brand_id: Optional[str],
         search: str = "",
     ) -> dict:
-        """Return active menu items grouped by category."""
+        """Return active and inactive menu items grouped by category (excludes archived)."""
         where: dict = {
             "organization_id": organization_id,
-            "status": "active",
+            "NOT": {"status": "archived"},
             **self._brand_where(brand_id),
         }
         if search:
