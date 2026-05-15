@@ -30,9 +30,9 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 @router.get("/stats")
-async def get_restaurant_stats(ctx: SecurityContext = Depends(get_brand_context)):
-    """Get restaurant dashboard statistics (Healthy, Low, Critical), scoped to resolved brand."""
-    return await restaurant_service.get_stats(ctx.organization_id, brand_id=ctx.brand_id)
+async def get_restaurant_stats(ctx: SecurityContext = Depends(get_security_context)):
+    """Get restaurant dashboard statistics (Healthy, Low, Critical) — org-wide shared inventory."""
+    return await restaurant_service.get_stats(ctx.organization_id)
 
 @router.get("/inventory/running-low")
 async def get_running_low(ctx: SecurityContext = Depends(get_security_context)):

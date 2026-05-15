@@ -83,7 +83,7 @@ export function ExpenseForm() {
       queryClient.invalidateQueries({ queryKey: QK.expenseStats(brandId) });
       queryClient.invalidateQueries({ queryKey: QK.expenseWeekStats(brandId) });
       queryClient.invalidateQueries({ queryKey: QK.expenseHistory(brandId) });
-      queryClient.invalidateQueries({ queryKey: QK.inventoryStats(brandId) });
+      queryClient.invalidateQueries({ queryKey: QK.inventoryStats() });
       queryClient.invalidateQueries({ queryKey: QK.todayStats(brandId) });
 
       const baseMsg = `Expense logged — RWF ${data.amount.toLocaleString()}`;
