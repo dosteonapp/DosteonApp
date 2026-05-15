@@ -71,7 +71,7 @@ export function useRestaurantDayStatus() {
 
         // Transform API results (snake_case to camelCase)
         const isActuallyOpen = apiResult.is_opening_completed || apiResult.openingCompleted;
-        const apiState = apiResult.state || (isActuallyOpen ? DayState.OPEN : DayState.PRE_OPEN);
+        const apiState = (apiResult.state as DayState) || (isActuallyOpen ? DayState.OPEN : DayState.PRE_OPEN);
         
         const initialStatus: DayStatus = {
             state: apiState,

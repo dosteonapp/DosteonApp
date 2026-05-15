@@ -103,3 +103,12 @@ class SaleLogRequest(BaseModel):
         if not v:
             raise ValueError("At least one item is required")
         return v
+
+
+class SaleOrderItemUpdate(BaseModel):
+    quantity: int
+    unit_price: float
+
+
+class MarkReviewedPayload(BaseModel):
+    type: str  # "sales" | "expenses"

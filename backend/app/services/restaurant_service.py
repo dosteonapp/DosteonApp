@@ -819,55 +819,50 @@ class RestaurantService:
     async def get_closing_status(self, organization_id: str):
         from app.db.prisma import db
         ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
-
-        total = await db.contextualproduct.count(
-            where={"organization_id": organization_id, "is_active": True}
-        )
-        verified = 0
-        if ds and ds.metadata:
-            meta = ds.metadata if isinstance(ds.metadata, dict) else {}
-            verified = len(meta.get("closing_draft_confirmed_ids", []))
-
         day_state = str(ds.state) if ds and ds.state else "CLOSED"
-
-        if day_state == "CLOSING":
-            closing_state = "READY_TO_CLOSE"
-        elif total > 0 and verified >= total:
-            closing_state = "CHECKLIST_COMPLETE_KITCHEN_OPEN"
-        else:
-            closing_state = "INCOMPLETE"
-
+        meta = dict(ds.metadata or {}) if ds and ds.metadata else {}
+        sales_reviewed = bool(meta.get("sales_reviewed_at"))
+        expenses_reviewed = bool(meta.get("expenses_reviewed_at"))
         return {
-            "can_close": closing_state == "READY_TO_CLOSE",
+            "sales_reviewed": sales_reviewed,
+            "expenses_reviewed": expenses_reviewed,
+            "sales_reviewed_at": meta.get("sales_reviewed_at"),
+            "expenses_reviewed_at": meta.get("expenses_reviewed_at"),
+            "can_close": sales_reviewed and expenses_reviewed,
             "state": day_state,
-            "closing_state": closing_state,
-            "verified_count": verified,
-            "total_count": total,
         }
 
+    async def mark_reviewed(self, organization_id: str, review_type: str) -> dict:
+        from app.db.prisma import db
+        from datetime import timezone
+        ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
+        if not ds:
+            raise HTTPException(status_code=404, detail="Day status not found")
+        meta = dict(ds.metadata or {}) if ds.metadata else {}
+        key = "sales_reviewed_at" if review_type == "sales" else "expenses_reviewed_at"
+        meta[key] = datetime.now(timezone.utc).isoformat()
+        await db.daystatus.update(where={"id": ds.id}, data={"metadata": Json(meta)})
+        return {"success": True}
+
     async def close_kitchen(self, organization_id: str) -> dict:
-        """Transition day from OPEN → CLOSING. Requires checklist complete."""
+        """Transition day from OPEN → CLOSING. Requires sales and expenses reviewed."""
         from app.db.prisma import db
         from prisma.enums import DayState  # type: ignore
-
-        await self._require_unlocked(organization_id)
 
         ds = await db.daystatus.find_unique(where={"organization_id": organization_id})
         if not ds:
             raise HTTPException(status_code=404, detail="No active day found")
         if str(ds.state) == "CLOSING":
             return {"success": True, "message": "Kitchen already closed"}
+        if str(ds.state) != "OPEN":
+            raise HTTPException(status_code=400, detail="Kitchen is not open. Open the kitchen before closing.")
 
-        # Validate all items have been verified
-        total = await db.contextualproduct.count(
-            where={"organization_id": organization_id, "is_active": True}
-        )
-        meta = ds.metadata if isinstance(ds.metadata, dict) else {}
-        verified = len(meta.get("closing_draft_confirmed_ids", []))
-        if total > 0 and verified < total:
+        # Check that both sales and expenses have been reviewed
+        meta = dict(ds.metadata or {}) if ds.metadata else {}
+        if not (meta.get("sales_reviewed_at") and meta.get("expenses_reviewed_at")):
             raise HTTPException(
                 status_code=400,
-                detail=f"Complete the closing checklist before closing the kitchen ({verified}/{total} items verified)",
+                detail="Both sales and expenses must be reviewed before closing",
             )
 
         await db.daystatus.update(
@@ -901,9 +896,7 @@ class RestaurantService:
         return {"success": True}
 
     async def submit_closing_checklist(self, organization_id: str, payload: dict):
-        """Persist a lightweight record of the closing checklist and mark the day as closed.
-        Requires kitchen to be closed first (state = CLOSING).
-        """
+        """Mark the day as CLOSED. Requires kitchen to be in CLOSING state."""
         from app.db.prisma import db as _db
         _ds = await _db.daystatus.find_unique(where={"organization_id": str(organization_id)})
         if not _ds or str(_ds.state) != "CLOSING":
@@ -913,14 +906,14 @@ class RestaurantService:
             )
         try:
             from app.db.prisma import db
+            from prisma.enums import DayState  # type: ignore
 
             org_id_str = str(organization_id)
-            summary = payload.get("summary") or {}
-            items = payload.get("items") or []
-
             ds = await db.daystatus.find_first(where={"organization_id": org_id_str})
 
-            from prisma.enums import DayState  # type: ignore
+            # Preserve existing metadata (reviewed_at timestamps), add closing summary
+            existing_meta = dict(ds.metadata or {}) if ds and ds.metadata else {}
+            existing_meta["closed_at"] = datetime.utcnow().isoformat()
 
             if ds:
                 await db.daystatus.update(
@@ -929,10 +922,7 @@ class RestaurantService:
                         "state": DayState.CLOSED,
                         "closed_at": datetime.utcnow(),
                         "updated_at": datetime.utcnow(),
-                        "metadata": Json({
-                            "closing_summary": summary,
-                            "closing_items_count": len(items),
-                        }),
+                        "metadata": Json(existing_meta),
                     },
                 )
             else:
@@ -944,32 +934,8 @@ class RestaurantService:
                         "closed_at": datetime.utcnow(),
                         "updated_at": datetime.utcnow(),
                         "is_opening_completed": False,
-                        "metadata": Json({
-                            "closing_summary": summary,
-                            "closing_items_count": len(items),
-                        }),
+                        "metadata": Json(existing_meta),
                     }
-                )
-
-            # Record CLOSING_STOCK snapshot events — physical count only, no stock mutation
-            for item in items:
-                item_id = item.get("id")
-                # Prefer user-entered physical count; fall back to system currentStock
-                raw_count = item.get("physicalCount") if item.get("physicalCount") is not None else item.get("currentStock")
-                if not item_id or raw_count is None:
-                    continue
-                try:
-                    closing_qty = float(raw_count)
-                except (TypeError, ValueError):
-                    continue
-                unit = item.get("unit") or "units"
-                await inventory_repo.record_snapshot_event(
-                    contextual_product_id=str(item_id),
-                    organization_id=org_id_str,
-                    event_type="CLOSING_STOCK",
-                    quantity=closing_qty,
-                    unit=unit,
-                    metadata={"reason": "Closing stock verification"},
                 )
 
             return {"success": True}

@@ -85,6 +85,23 @@ export interface SalesHistory {
   orders: SaleOrder[];
 }
 
+export interface TodayOrderItem {
+  order_id: string;
+  item_id: string;
+  menu_item_id: string;
+  menu_item_name: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+  channel: string;
+  margin_pct: number;
+}
+
+export interface OrderItemUpdateResult {
+  old: { quantity: number; unit_price: number; line_total: number };
+  new: { quantity: number; unit_price: number; line_total: number };
+}
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
@@ -183,6 +200,25 @@ export const salesService = {
 
   async getOrderDetail(orderId: string): Promise<SaleOrderDetail> {
     const { data } = await axiosInstance.get(`/sales/history/${orderId}`);
+    return data;
+  },
+
+  async getTodayOrders(brandId?: string): Promise<TodayOrderItem[]> {
+    const { data } = await axiosInstance.get("/sales/today/orders", {
+      params: brandId ? { brand_id: brandId } : {},
+    });
+    return data;
+  },
+
+  async updateOrderItem(
+    orderId: string,
+    itemId: string,
+    payload: { quantity: number; unit_price: number }
+  ): Promise<OrderItemUpdateResult> {
+    const { data } = await axiosInstance.patch(
+      `/sales/orders/${orderId}/items/${itemId}`,
+      payload
+    );
     return data;
   },
 };

@@ -93,3 +93,11 @@ class ExpenseHistoryPage(BaseModel):
     limit: int
     pages: int
     items: List[ExpenseHistoryItem]
+
+
+class ExpenseUpdate(BaseModel):
+    item_name: Optional[str] = None
+    amount: Optional[float] = None
+    quantity: Optional[str] = None
+    unit: Optional[str] = None
+    expense_type: Optional[str] = None

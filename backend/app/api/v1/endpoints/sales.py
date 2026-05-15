@@ -6,7 +6,7 @@ from app.api.deps import (
     get_brand_mutation_context,
     SecurityContext,
 )
-from app.schemas.sales import MenuItemCreate, MenuItemUpdate, SaleLogRequest, RecipeIngredientIn
+from app.schemas.sales import MenuItemCreate, MenuItemUpdate, SaleLogRequest, RecipeIngredientIn, SaleOrderItemUpdate
 from app.services.sales_service import sales_service
 
 router = APIRouter()
@@ -85,6 +85,33 @@ async def archive_menu_item(
 # ---------------------------------------------------------------------------
 # Stats
 # ---------------------------------------------------------------------------
+
+@router.get("/today/orders")
+async def get_today_orders(
+    brand_id: Optional[str] = Query(None),
+    ctx: SecurityContext = Depends(get_brand_context),
+):
+    """List all today's completed sale order items for the closing review screen."""
+    effective_brand_id = brand_id or ctx.brand_id
+    return await sales_service.get_today_orders(ctx.organization_id, effective_brand_id)
+
+
+@router.patch("/orders/{order_id}/items/{item_id}")
+async def update_order_item(
+    order_id: str,
+    item_id: str,
+    payload: SaleOrderItemUpdate,
+    ctx: SecurityContext = Depends(get_brand_mutation_context),
+):
+    """Update quantity and unit_price of a sale order item (for the closing review edit flow)."""
+    return await sales_service.update_order_item(
+        ctx.organization_id,
+        order_id,
+        item_id,
+        payload.quantity,
+        payload.unit_price,
+    )
+
 
 @router.get("/stats/today")
 async def stats_today(ctx: SecurityContext = Depends(get_brand_context)):

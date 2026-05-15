@@ -91,7 +91,8 @@ function BrandAvatar({
 
 // ── Main component ────────────────────────────────────────────────────────────
 export function BrandSwitcherCard() {
-  const { brands, activeBrand, setActiveBrand, isLoading } = useBrand();
+  const { brands: allBrands, activeBrand, setActiveBrand, isLoading } = useBrand();
+  const brands = allBrands.filter((b) => b.is_active);
   const { user } = useUser();
   const { isOpen } = useRestaurantDayLifecycle();
   const [open, setOpen] = useState(false);
