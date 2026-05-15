@@ -12,6 +12,7 @@ export interface MenuItem {
   category: string;
   status: string;
   source: string;
+  image_url?: string;
 }
 
 export interface MenuCategory {
@@ -40,6 +41,15 @@ export interface MenuStats {
   top_selling_dish: string | null;
   avg_selling_price: number;
   avg_gross_margin: number;
+}
+
+export interface RecipeIngredient {
+  id: string;
+  contextual_product_id: string;
+  product_name: string | null;
+  quantity_per_unit: number;
+  unit: string | null;
+  unit_cost?: number | null;
 }
 
 export interface SaleOrder {
@@ -75,6 +85,23 @@ export interface SalesHistory {
   orders: SaleOrder[];
 }
 
+export interface TodayOrderItem {
+  order_id: string;
+  item_id: string;
+  menu_item_id: string;
+  menu_item_name: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+  channel: string;
+  margin_pct: number;
+}
+
+export interface OrderItemUpdateResult {
+  old: { quantity: number; unit_price: number; line_total: number };
+  new: { quantity: number; unit_price: number; line_total: number };
+}
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
@@ -92,6 +119,7 @@ export const salesService = {
     price: number;
     cost?: number;
     category?: string;
+    image_url?: string;
   }): Promise<MenuItem> {
     const { data } = await axiosInstance.post("/sales/menu", payload);
     return data;
@@ -99,9 +127,35 @@ export const salesService = {
 
   async updateMenuItem(
     id: string,
-    payload: Partial<{ name: string; price: number; cost: number; category: string; status: string }>
+    payload: Partial<{ name: string; price: number; cost: number; category: string; status: string; image_url: string | null }>
   ): Promise<MenuItem> {
     const { data } = await axiosInstance.patch(`/sales/menu/${id}`, payload);
+    return data;
+  },
+
+  async uploadMenuItemImage(itemId: string, file: File): Promise<string> {
+    const { createClient } = await import("@/lib/supabase/client");
+    const supabase = createClient();
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `menu-items/${itemId}.${ext}`;
+    const { error } = await supabase.storage
+      .from("inventory")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (error) throw new Error(error.message);
+    const { data } = supabase.storage.from("inventory").getPublicUrl(path);
+    return data.publicUrl;
+  },
+
+  async getRecipe(itemId: string): Promise<RecipeIngredient[]> {
+    const { data } = await axiosInstance.get(`/sales/menu/${itemId}/recipe`);
+    return data;
+  },
+
+  async setRecipe(
+    itemId: string,
+    ingredients: { contextual_product_id: string; quantity_per_unit: number; unit?: string | null; unit_cost?: number | null }[]
+  ): Promise<RecipeIngredient[]> {
+    const { data } = await axiosInstance.put(`/sales/menu/${itemId}/recipe`, ingredients);
     return data;
   },
 
@@ -146,6 +200,25 @@ export const salesService = {
 
   async getOrderDetail(orderId: string): Promise<SaleOrderDetail> {
     const { data } = await axiosInstance.get(`/sales/history/${orderId}`);
+    return data;
+  },
+
+  async getTodayOrders(brandId?: string): Promise<TodayOrderItem[]> {
+    const { data } = await axiosInstance.get("/sales/today/orders", {
+      params: brandId ? { brand_id: brandId } : {},
+    });
+    return data;
+  },
+
+  async updateOrderItem(
+    orderId: string,
+    itemId: string,
+    payload: { quantity: number; unit_price: number }
+  ): Promise<OrderItemUpdateResult> {
+    const { data } = await axiosInstance.patch(
+      `/sales/orders/${orderId}/items/${itemId}`,
+      payload
+    );
     return data;
   },
 };

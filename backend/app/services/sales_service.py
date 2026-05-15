@@ -39,6 +39,7 @@ class SalesService:
             "category": item.category,
             "status": item.status,
             "source": item.source,
+            "image_url": getattr(item, "image_url", None),
         }
 
     # -----------------------------------------------------------------------
@@ -51,10 +52,10 @@ class SalesService:
         brand_id: Optional[str],
         search: str = "",
     ) -> dict:
-        """Return active menu items grouped by category."""
+        """Return active and inactive menu items grouped by category (excludes archived)."""
         where: dict = {
             "organization_id": organization_id,
-            "status": "active",
+            "NOT": {"status": "archived"},
             **self._brand_where(brand_id),
         }
         if search:
@@ -80,17 +81,18 @@ class SalesService:
         brand_id: Optional[str],
         data: dict,
     ) -> dict:
-        item = await db.menuitem.create(
-            data={
-                "organization_id": organization_id,
-                "brand_id": brand_id,
-                "name": data["name"],
-                "price": data.get("price", 0),
-                "cost": data.get("cost", 0),
-                "category": data.get("category", "Signature"),
-                "source": "manual",
-            }
-        )
+        create_data: dict = {
+            "organization_id": organization_id,
+            "brand_id": brand_id,
+            "name": data["name"],
+            "price": data.get("price", 0),
+            "cost": data.get("cost", 0),
+            "category": data.get("category", "Signature"),
+            "source": "manual",
+        }
+        if data.get("image_url"):
+            create_data["image_url"] = data["image_url"]
+        item = await db.menuitem.create(data=create_data)
         return self._item_out(item)
 
     async def update_menu_item(
@@ -112,6 +114,57 @@ class SalesService:
             data=update_data,
         )
         return self._item_out(updated)
+
+    # -----------------------------------------------------------------------
+    # Recipe management
+    # -----------------------------------------------------------------------
+
+    async def get_recipe(self, organization_id: str, item_id: str) -> list:
+        item = await db.menuitem.find_unique(where={"id": item_id})
+        if not item or str(item.organization_id) != organization_id:
+            raise HTTPException(status_code=404, detail="Menu item not found")
+        ingredients = await db.menuitemingredient.find_many(
+            where={"menu_item_id": item_id},
+            include={"contextual_product": True},
+        )
+        return [
+            {
+                "id": ing.id,
+                "contextual_product_id": ing.contextual_product_id,
+                "product_name": ing.contextual_product.name if ing.contextual_product else None,
+                "quantity_per_unit": ing.quantity_per_unit,
+                "unit": ing.unit,
+                "unit_cost": ing.unit_cost,
+            }
+            for ing in ingredients
+        ]
+
+    async def set_recipe(self, organization_id: str, item_id: str, ingredients: list) -> list:
+        item = await db.menuitem.find_unique(where={"id": item_id})
+        if not item or str(item.organization_id) != organization_id:
+            raise HTTPException(status_code=404, detail="Menu item not found")
+
+        for ing in ingredients:
+            product = await db.contextualproduct.find_unique(
+                where={"id": ing["contextual_product_id"]}
+            )
+            if not product or str(product.organization_id) != organization_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Ingredient not found: {ing['contextual_product_id']}",
+                )
+
+        await db.menuitemingredient.delete_many(where={"menu_item_id": item_id})
+        for ing in ingredients:
+            await db.menuitemingredient.create(data={
+                "menu_item_id": item_id,
+                "contextual_product_id": ing["contextual_product_id"],
+                "quantity_per_unit": ing["quantity_per_unit"],
+                "unit": ing.get("unit"),
+                "unit_cost": ing.get("unit_cost"),
+            })
+
+        return await self.get_recipe(organization_id, item_id)
 
     async def archive_menu_item(
         self,
@@ -162,12 +215,132 @@ class SalesService:
         )
         categories_count = len({i.category for i in menu_items})
 
+        # Channel breakdown
+        channel_map: dict = {}
+        for o in orders:
+            ch = (str(o.channel) if o.channel else "DINE_IN").upper()
+            if ch not in channel_map:
+                channel_map[ch] = {"revenue": 0.0, "count": 0}
+            channel_map[ch]["revenue"] += o.total_revenue
+            channel_map[ch]["count"] += 1
+
+        def ch_pct(ch_key: str) -> float:
+            rev = channel_map.get(ch_key, {}).get("revenue", 0)
+            return round(rev / total_revenue * 100, 1) if total_revenue > 0 else 0.0
+
+        # Compute dishes_sold from order items
+        dishes_sold = 0
+        if orders:
+            order_ids = [o.id for o in orders]
+            all_items = await db.saleorderitem.find_many(
+                where={"sale_order_id": {"in": order_ids}}
+            )
+            dishes_sold = sum(i.quantity for i in all_items)
+
         return {
             "today_revenue": round(total_revenue, 2),
             "today_cogs": round(total_cogs, 2),
             "today_gross_profit": round(gross_profit, 2),
             "categories_count": categories_count,
+            "dishes_sold": dishes_sold,
+            "channels": {
+                "dine_in": {
+                    "revenue": round(channel_map.get("DINE_IN", {}).get("revenue", 0), 2),
+                    "count": channel_map.get("DINE_IN", {}).get("count", 0),
+                    "pct": ch_pct("DINE_IN"),
+                },
+                "takeaway": {
+                    "revenue": round(channel_map.get("TAKEAWAY", {}).get("revenue", 0), 2),
+                    "count": channel_map.get("TAKEAWAY", {}).get("count", 0),
+                    "pct": ch_pct("TAKEAWAY"),
+                },
+                "delivery": {
+                    "revenue": round(channel_map.get("DELIVERY", {}).get("revenue", 0), 2),
+                    "count": channel_map.get("DELIVERY", {}).get("count", 0),
+                    "pct": ch_pct("DELIVERY"),
+                },
+            },
         }
+
+    async def get_today_orders(
+        self,
+        organization_id: str,
+        brand_id: Optional[str],
+    ) -> list:
+        """Fetch all today's completed orders with their line items expanded."""
+        today = date.today()
+        orders = await db.saleorder.find_many(
+            where={
+                "organization_id": organization_id,
+                "business_date": self._dt(today),
+                "status": "COMPLETED",
+                **self._brand_where(brand_id),
+            },
+            order={"occurred_at": "desc"},
+        )
+        result = []
+        for order in orders:
+            items = await db.saleorderitem.find_many(where={"sale_order_id": order.id})
+            menu_ids = [i.menu_item_id for i in items]
+            menu_items_list = await db.menuitem.find_many(where={"id": {"in": menu_ids}})
+            name_map = {m.id: m.name for m in menu_items_list}
+            price_map = {m.id: m.price for m in menu_items_list}
+            channel = str(order.channel) if order.channel else "DINE_IN"
+            for item in items:
+                unit_price = item.unit_price if item.unit_price else price_map.get(item.menu_item_id, 0)
+                cost = item.unit_cogs if item.unit_cogs else 0
+                margin = round((unit_price - cost) / unit_price * 100, 1) if unit_price > 0 else 0.0
+                result.append({
+                    "order_id": order.id,
+                    "item_id": item.id,
+                    "menu_item_id": item.menu_item_id,
+                    "menu_item_name": name_map.get(item.menu_item_id, "Unknown"),
+                    "quantity": item.quantity,
+                    "unit_price": unit_price,
+                    "line_total": item.line_total,
+                    "channel": channel,
+                    "margin_pct": margin,
+                })
+        return result
+
+    async def update_order_item(
+        self,
+        organization_id: str,
+        order_id: str,
+        item_id: str,
+        quantity: int,
+        unit_price: float,
+    ) -> dict:
+        """Update quantity and unit_price of a sale order item, then recalculate order totals."""
+        order = await db.saleorder.find_unique(where={"id": order_id})
+        if not order or str(order.organization_id) != organization_id:
+            raise HTTPException(status_code=404, detail="Sale order not found")
+        item = await db.saleorderitem.find_unique(where={"id": item_id})
+        if not item or str(item.sale_order_id) != order_id:
+            raise HTTPException(status_code=404, detail="Order item not found")
+
+        old = {
+            "quantity": item.quantity,
+            "unit_price": item.unit_price,
+            "line_total": item.line_total,
+        }
+        new_line_total = round(quantity * unit_price, 2)
+        await db.saleorderitem.update(
+            where={"id": item_id},
+            data={"quantity": quantity, "unit_price": unit_price, "line_total": new_line_total},
+        )
+
+        # Recalculate order totals from all items
+        all_items = await db.saleorderitem.find_many(where={"sale_order_id": order_id})
+        new_total = round(sum(i.line_total for i in all_items), 2)
+        new_cogs = order.total_cogs  # keep COGS unchanged
+        await db.saleorder.update(
+            where={"id": order_id},
+            data={"total_revenue": new_total, "gross_profit": round(new_total - new_cogs, 2)},
+        )
+
+        new = {"quantity": quantity, "unit_price": unit_price, "line_total": new_line_total}
+        return {"old": old, "new": new}
 
     # -----------------------------------------------------------------------
     # Stats — week (rolling 7 days vs previous 7 days)
@@ -373,6 +546,31 @@ class SalesService:
             await db.saleorderitem.create(
                 data={"sale_order_id": order.id, **oi}
             )
+
+        # Auto-deplete inventory from recipes (non-fatal — sale succeeds regardless)
+        try:
+            for i in items:
+                ingredients = await db.menuitemingredient.find_many(
+                    where={"menu_item_id": i["menu_item_id"]}
+                )
+                for ing in ingredients:
+                    depletion_qty = ing.quantity_per_unit * i["quantity"]
+                    await db.inventoryevent.create(data={
+                        "contextual_product_id": ing.contextual_product_id,
+                        "organization_id": organization_id,
+                        "event_type": "USED",
+                        "quantity": -depletion_qty,
+                        "unit": ing.unit,
+                        "actor_type": "sale",
+                        "reference_id": order.id,
+                        "consumption_reason": "CUSTOMER_SERVICE",
+                    })
+                    await db.contextualproduct.update(
+                        where={"id": ing.contextual_product_id},
+                        data={"current_stock": {"decrement": depletion_qty}},
+                    )
+        except Exception as e:
+            logger.warning(f"[sales] inventory depletion failed for order {order.id}: {e}")
 
         return {
             "id": order.id,

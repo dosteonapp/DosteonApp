@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, Query, Request
+from typing import Optional
 
 from app.api.deps import get_brand_context, get_brand_mutation_context, SecurityContext
 from app.core.rate_limit import limiter
-from app.schemas.expense import ExpenseCreate
+from app.schemas.expense import ExpenseCreate, ExpenseUpdate
 from app.services.expense_service import expense_service
 
 router = APIRouter()
@@ -24,6 +25,30 @@ async def create_expense(
         brand_id=ctx.brand_id,
         user_id=ctx.user_id,
         data=payload,
+    )
+
+
+@router.get("/today")
+async def get_today_expenses(
+    brand_id: Optional[str] = Query(None),
+    ctx: SecurityContext = Depends(get_brand_context),
+):
+    """List all today's expenses for the closing review screen."""
+    effective_brand_id = brand_id or ctx.brand_id
+    return await expense_service.get_today(ctx.organization_id, effective_brand_id)
+
+
+@router.patch("/{expense_id}")
+async def update_expense(
+    expense_id: str,
+    payload: ExpenseUpdate,
+    ctx: SecurityContext = Depends(get_brand_mutation_context),
+):
+    """Update an expense item (for the closing review edit flow)."""
+    return await expense_service.update_expense(
+        ctx.organization_id,
+        expense_id,
+        payload.model_dump(exclude_none=True),
     )
 
 

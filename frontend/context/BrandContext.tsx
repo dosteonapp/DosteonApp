@@ -27,7 +27,7 @@ export interface Brand {
 }
 
 interface BrandContextValue {
-  /** All active brands for the org (fetched once on mount). */
+  /** All non-deleted brands for the org (active + inactive). */
   brands: Brand[];
   /** The currently selected brand. null while loading. */
   activeBrand: Brand | null;
@@ -81,8 +81,9 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   const loadBrands = useCallback(async () => {
     try {
       const { data } = await axiosInstance.get<Brand[]>("/brands");
-      const active = data.filter((b) => b.is_active && !b.deleted_at);
-      setBrands(active);
+      const all = data.filter((b) => !b.deleted_at);
+      const active = all.filter((b) => b.is_active);
+      setBrands(all);
 
       if (active.length === 0) return;
 
@@ -92,7 +93,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
           : null;
 
       setActiveBrandState((prev) => {
-        // If currently active brand is still in the refreshed list, keep it.
+        // If currently active brand is still active, keep it.
         const stillExists = prev ? active.find((b) => b.id === prev.id) : null;
         // Otherwise: restore from sessionStorage, or default (null for multi-brand, brand for single).
         const restored = !stillExists && savedId ? active.find((b) => b.id === savedId) : null;

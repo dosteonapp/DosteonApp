@@ -16,7 +16,7 @@ export default function BusinessSettingsLayout({ children }: BusinessSettingsLay
   const tabs = [
     { name: "Restaurant Profile", href: "/dashboard/settings/business/profile" },
     { name: "Team Management", href: "/dashboard/settings/business/team" },
-    { name: "Brands", href: "/dashboard/settings/business/brands" },
+    { name: "Menu Management", href: "/dashboard/settings/business/menu" },
   ];
 
   const isMemberDetails = pathname.includes("/settings/business/team/") && pathname.split("/").length > 5;

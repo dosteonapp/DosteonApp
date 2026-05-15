@@ -4,6 +4,24 @@ from enum import Enum
 from datetime import datetime, date
 
 
+# ---------------------------------------------------------------------------
+# Recipe (menu item → ingredients)
+# ---------------------------------------------------------------------------
+
+class RecipeIngredientIn(BaseModel):
+    contextual_product_id: str
+    quantity_per_unit: float
+    unit: Optional[str] = None
+    unit_cost: Optional[float] = None
+
+    @field_validator("quantity_per_unit")
+    @classmethod
+    def positive_qty(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("Quantity must be positive")
+        return v
+
+
 class SaleChannelEnum(str, Enum):
     DINE_IN = "DINE_IN"
     TAKEAWAY = "TAKEAWAY"
@@ -19,6 +37,7 @@ class MenuItemCreate(BaseModel):
     price: float = 0
     cost: Optional[float] = 0
     category: str = "Signature"
+    image_url: Optional[str] = None
 
     @field_validator("name")
     @classmethod
@@ -41,6 +60,7 @@ class MenuItemUpdate(BaseModel):
     cost: Optional[float] = None
     category: Optional[str] = None
     status: Optional[str] = None
+    image_url: Optional[str] = None
 
     @field_validator("name")
     @classmethod
@@ -83,3 +103,12 @@ class SaleLogRequest(BaseModel):
         if not v:
             raise ValueError("At least one item is required")
         return v
+
+
+class SaleOrderItemUpdate(BaseModel):
+    quantity: int
+    unit_price: float
+
+
+class MarkReviewedPayload(BaseModel):
+    type: str  # "sales" | "expenses"
