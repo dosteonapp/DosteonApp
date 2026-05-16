@@ -193,6 +193,59 @@ class ExpenseService:
         }
 
     # ------------------------------------------------------------------
+    # Today — list all today's expenses
+    # ------------------------------------------------------------------
+
+    async def get_today(self, org_id: str, brand_id: Optional[str]) -> list:
+        today = date.today()
+        expenses = await db.expense.find_many(
+            where={
+                "organization_id": org_id,
+                "business_date": self._to_dt(today),
+                **self._brand_where(brand_id),
+            },
+            order={"occurred_at": "desc"},
+        )
+        return [
+            {
+                "id": e.id,
+                "item_name": e.item_name,
+                "expense_type": e.expense_type,
+                "source": e.source,
+                "amount": e.amount,
+                "quantity": str(e.quantity) if e.quantity is not None else None,
+                "unit": e.unit,
+                "category": None,  # Expense model has no category field
+                "occurred_at": e.occurred_at.isoformat() if e.occurred_at else None,
+            }
+            for e in expenses
+        ]
+
+    async def update_expense(self, org_id: str, expense_id: str, data: dict) -> dict:
+        expense = await db.expense.find_unique(where={"id": expense_id})
+        if not expense or str(expense.organization_id) != org_id:
+            raise HTTPException(status_code=404, detail="Expense not found")
+        old = {
+            "item_name": expense.item_name,
+            "amount": expense.amount,
+            "expense_type": str(expense.expense_type),
+            "category": None,
+        }
+        # Only update allowed fields that exist on the Expense model
+        allowed_fields = {"item_name", "amount", "quantity", "unit", "expense_type"}
+        update_data = {k: v for k, v in data.items() if k in allowed_fields and v is not None}
+        if "quantity" in update_data:
+            # quantity is Float? on the DB — convert string to float if needed
+            try:
+                update_data["quantity"] = float(update_data["quantity"])
+            except (TypeError, ValueError):
+                update_data.pop("quantity", None)
+        if update_data:
+            await db.expense.update(where={"id": expense_id}, data=update_data)
+        new = {**old, **{k: data.get(k, old.get(k)) for k in ("item_name", "amount", "expense_type")}, "category": None}
+        return {"old": old, "new": new}
+
+    # ------------------------------------------------------------------
     # Stats — rolling 7-day week
     # ------------------------------------------------------------------
 

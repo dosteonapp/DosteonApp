@@ -50,9 +50,24 @@ import { formatUserName } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
 
 export default function KitchenServicePage() {
-  const { isOpen, isLoading: isStatusLoading, status } = useRestaurantDayLifecycle();
+  const { isOpen, isLoading: isStatusLoading, status, canStartOpening, finishOpening } = useRestaurantDayLifecycle();
   const { user } = useUser();
   const name = formatUserName(user?.first_name, user?.last_name);
+  const skipsStockCount = user?.daily_stock_count === false;
+  const [isQuickOpening, setIsQuickOpening] = useState(false);
+
+  const handleQuickOpen = async () => {
+    if (!canStartOpening) return;
+    setIsQuickOpening(true);
+    try {
+      await restaurantOpsService.submitOpeningChecklist({ counts: {} });
+      await finishOpening();
+    } catch {
+      // finishOpening updates local state even on network failure
+    } finally {
+      setIsQuickOpening(false);
+    }
+  };
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -157,22 +172,34 @@ export default function KitchenServicePage() {
         ) : (
              <UnifiedHeroSurface
                  title={`Hello, ${name}`}
-                 description="Do your opening stock count before starting your restaurant operations."
+                 description={skipsStockCount
+                     ? "Open your kitchen to start kitchen service and operations."
+                     : "Do your opening stock count before starting your restaurant operations."}
                  isLocked={true}
                  bgIcon={<ChefHat className="h-64 w-64 text-white" />}
                  badge={
                      <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm shadow-sm w-fit mb-4">
                          <ClipboardList className="h-4 w-4 text-white" />
-                         <FigtreeText className="text-[13px] font-bold text-white leading-none whitespace-nowrap">Inventory items need counting</FigtreeText>
+                         <FigtreeText className="text-[13px] font-bold text-white leading-none whitespace-nowrap">
+                             {skipsStockCount ? "Kitchen Closed" : "Inventory items need counting"}
+                         </FigtreeText>
                      </div>
                  }
-                 action={
+                 action={skipsStockCount ? (
+                     <Button
+                         className="w-fit h-14 px-10 rounded-[10px] bg-white text-[#3B59DA] hover:bg-slate-50 font-black gap-4 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.1)] font-figtree active:scale-95 group text-[18px] border-none"
+                         onClick={handleQuickOpen}
+                         disabled={isQuickOpening || !canStartOpening}
+                     >
+                         {isQuickOpening ? "Opening..." : "Open Kitchen"} <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
+                     </Button>
+                 ) : (
                      <Button className="w-fit h-14 px-10 rounded-[10px] bg-white text-[#3B59DA] hover:bg-slate-50 font-black gap-4 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.1)] font-figtree active:scale-95 group text-[18px] border-none" asChild>
                          <Link href="/dashboard/inventory/daily-stock-count">
                              Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
                          </Link>
                      </Button>
-                 }
+                 )}
              />
         )}
       </div>
@@ -278,7 +305,14 @@ export default function KitchenServicePage() {
         </div>
 
         {/* Locked State Blurred Overlay */}
-        {!isOpen && <KitchenServiceLockedOverlay />}
+        {!isOpen && (
+          <KitchenServiceLockedOverlay
+            skipsStockCount={skipsStockCount}
+            canStartOpening={canStartOpening}
+            isQuickOpening={isQuickOpening}
+            onQuickOpen={handleQuickOpen}
+          />
+        )}
       </div>
 
       {/* Modals */}
@@ -312,34 +346,56 @@ export default function KitchenServicePage() {
   );
 }
 
-function KitchenServiceLockedOverlay() {
+function KitchenServiceLockedOverlay({
+    skipsStockCount,
+    canStartOpening,
+    isQuickOpening,
+    onQuickOpen,
+}: {
+    skipsStockCount: boolean;
+    canStartOpening: boolean;
+    isQuickOpening: boolean;
+    onQuickOpen: () => void;
+}) {
     return (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-auto rounded-[12px] overflow-hidden">
             {/* Premium Frosted Glass with Depth */}
             <div className="absolute inset-0 bg-white/50 backdrop-blur-[6px]" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[120px]" />
-            
+
             <div className="relative z-10 flex flex-col items-center justify-center max-w-xl mx-auto px-6 animate-in fade-in zoom-in-95 duration-1000">
                 {/* 3D-effect Lock Icon */}
                 <div className="w-20 h-20 bg-white shadow-[0_12px_44px_rgba(0,0,0,0.06)] rounded-[20px] flex items-center justify-center mb-10 border border-slate-100/50">
                     <Lock className="h-9 w-9 text-slate-800/80 stroke-[2.5px] drop-shadow-sm" />
                 </div>
-                
+
                 <div className="space-y-4 max-w-[480px] text-center mb-12">
                     <h2 className="text-[34px] md:text-[40px] font-black text-[#1E293B] tracking-tight leading-tight font-figtree">Kitchen Service is Locked</h2>
                     <FigtreeText className="text-slate-500 text-[16px] md:text-[18px] leading-relaxed font-bold max-w-[360px] mx-auto opacity-70">
-                        The Kitchen Service workflow is not yet available. Please do your daily stock count before you proceed to Kitchen Service.
+                        {skipsStockCount
+                            ? "Open your kitchen to unlock kitchen service and start operations."
+                            : "Please do your daily stock count before you proceed to Kitchen Service."}
                     </FigtreeText>
                 </div>
- 
-                <Button 
-                    className="h-16 px-14 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.25)] transition-all active:scale-95 group font-figtree text-[19px] border-none" 
-                    asChild
-                >
-                    <Link href="/dashboard/inventory/daily-stock-count">
-                        Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
-                    </Link>
-                </Button>
+
+                {skipsStockCount ? (
+                    <Button
+                        className="h-16 px-14 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.25)] transition-all active:scale-95 group font-figtree text-[19px] border-none"
+                        onClick={onQuickOpen}
+                        disabled={isQuickOpening || !canStartOpening}
+                    >
+                        {isQuickOpening ? "Opening..." : "Open Kitchen"} <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
+                    </Button>
+                ) : (
+                    <Button
+                        className="h-16 px-14 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black gap-4 shadow-[0_20px_50px_rgba(59,89,218,0.25)] transition-all active:scale-95 group font-figtree text-[19px] border-none"
+                        asChild
+                    >
+                        <Link href="/dashboard/inventory/daily-stock-count">
+                            Count Daily Stock <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-2" />
+                        </Link>
+                    </Button>
+                )}
             </div>
         </div>
     );

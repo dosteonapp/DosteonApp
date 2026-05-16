@@ -91,11 +91,13 @@ function BrandAvatar({
 
 // ── Main component ────────────────────────────────────────────────────────────
 export function BrandSwitcherCard() {
-  const { brands, activeBrand, setActiveBrand, isLoading } = useBrand();
+  const { brands: allBrands, activeBrand, setActiveBrand, isLoading } = useBrand();
+  const brands = allBrands.filter((b) => b.is_active);
   const { user } = useUser();
   const { isOpen } = useRestaurantDayLifecycle();
   const [open, setOpen] = useState(false);
   const [location, setLocation] = useState<string>("");
+  const [orgLogoUrl, setOrgLogoUrl] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const isMultiBrand = brands.length > 1;
 
@@ -103,6 +105,7 @@ export function BrandSwitcherCard() {
   useEffect(() => {
     restaurantOpsService.getSettings().then((s: any) => {
       if (s?.location) setLocation(s.location);
+      if (s?.logo_url) setOrgLogoUrl(s.logo_url);
     }).catch(() => {});
   }, []);
 
@@ -163,7 +166,7 @@ export function BrandSwitcherCard() {
 
   // Determine display values for the trigger card
   const displayName = isAllBrands ? "All Brands" : (activeBrand?.name ?? "");
-  const displayLogoUrl = isAllBrands ? null : (activeBrand?.logo_url ?? null);
+  const displayLogoUrl = isAllBrands ? null : (activeBrand?.logo_url ?? orgLogoUrl ?? null);
   const displayColorIdx = isAllBrands
     ? 0
     : activeBrand

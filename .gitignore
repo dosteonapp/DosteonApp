@@ -135,6 +135,14 @@ Desktop.ini
 **/prisma/migrations_lock.toml
 !**/prisma/schema.prisma
 
+# Claude Code
+CLAUDE.md
+.mcp.json
+.claude/
+
+# Test results
+apps/frontend/test-results/
+
 # ===================================
 # Deployment
 # ===================================

@@ -21,6 +21,7 @@ from app.schemas.inventory import (
     ClosingChecklistSubmit,
 )
 from app.schemas.auth import TeamInviteRequest, TeamRoleUpdate
+from app.schemas.sales import MarkReviewedPayload
 
 router = APIRouter()
 
@@ -29,9 +30,9 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 @router.get("/stats")
-async def get_restaurant_stats(ctx: SecurityContext = Depends(get_brand_context)):
-    """Get restaurant dashboard statistics (Healthy, Low, Critical), scoped to resolved brand."""
-    return await restaurant_service.get_stats(ctx.organization_id, brand_id=ctx.brand_id)
+async def get_restaurant_stats(ctx: SecurityContext = Depends(get_security_context)):
+    """Get restaurant dashboard statistics (Healthy, Low, Critical) — org-wide shared inventory."""
+    return await restaurant_service.get_stats(ctx.organization_id)
 
 @router.get("/inventory/running-low")
 async def get_running_low(ctx: SecurityContext = Depends(get_security_context)):
@@ -242,11 +243,20 @@ async def log_waste(
     """Log ingredient waste in kitchen"""
     return await restaurant_service.record_kitchen_event(ctx.organization_id, payload.itemId, payload.amount, "waste", payload.reason)
 
+@router.post("/closing/mark-reviewed")
+async def mark_reviewed(
+    payload: MarkReviewedPayload,
+    ctx: SecurityContext = Depends(get_mutation_context),
+):
+    """Mark sales or expenses as reviewed. type must be 'sales' or 'expenses'."""
+    return await restaurant_service.mark_reviewed(ctx.organization_id, payload.type)
+
+
 @router.post("/closing/close-kitchen")
 async def close_kitchen(
     ctx: SecurityContext = Depends(get_mutation_context),
 ):
-    """Transition day OPEN → CLOSING. Requires closing checklist complete."""
+    """Transition day OPEN → CLOSING. Requires both sales and expenses reviewed."""
     return await restaurant_service.close_kitchen(ctx.organization_id)
 
 

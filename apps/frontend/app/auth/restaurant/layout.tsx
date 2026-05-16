@@ -7,7 +7,7 @@ const RestaurantAuthLayout: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex-1 flex flex-col">
       <DynamicHeader role="restaurant" />
       <Container>{children}</Container>
     </div>

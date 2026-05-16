@@ -248,7 +248,7 @@ export default function ProductEditPage({ params }: any) {
                         id="price"
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="1.0"
                         value={product.price}
                         onChange={(e) =>
                           handleInputChange(
@@ -312,7 +312,7 @@ export default function ProductEditPage({ params }: any) {
                         id="wholesalePrice"
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="1.0"
                         value={product.wholesalePrice || ""}
                         onChange={(e) =>
                           handleInputChange(

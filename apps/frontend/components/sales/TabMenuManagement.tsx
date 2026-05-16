@@ -1,38 +1,23 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  Plus,
-  Pencil,
-  Archive,
-  Package,
-  ChevronDown,
-  AlertTriangle,
-  RefreshCw,
-  BookOpen,
-  Award,
-  Tag,
-  Percent,
-  TrendingUp,
-  TrendingDown,
+  useState, useEffect, useCallback, useRef, useMemo,
+} from "react";
+import {
+  ArrowLeft, Plus, Pencil, Search, Check,
+  ChevronDown, ChevronRight, ImagePlus, UtensilsCrossed, RefreshCw, Trash2,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { UnifiedModal, UnifiedErrorBanner } from "@/components/ui/dosteon-ui";
 import {
-  FigtreeText,
-  InriaHeading,
-  UnifiedModal,
-  UnifiedErrorBanner,
-} from "@/components/ui/dosteon-ui";
-import { SalesStatsBanner } from "@/components/sales/SalesStatsBanner";
-import {
-  salesService,
-  MenuItem,
-  MenuCategory,
-  MenuStats,
+  salesService, MenuItem, MenuCategory, MenuStats, RecipeIngredient,
 } from "@/lib/services/salesService";
+import { inventoryApi, InventoryProduct } from "@/lib/services/inventoryService";
 import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
@@ -42,33 +27,38 @@ import { toast } from "sonner";
 const fmt = (n: number) =>
   new Intl.NumberFormat("en", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
 
-function calcMargin(price: number, cost: number): number | null {
-  if (price <= 0) return null;
-  return ((price - cost) / price) * 100;
+const fmtMoney = (n: number) =>
+  new Intl.NumberFormat("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+function marginColor(margin: number): string {
+  if (margin >= 60) return "text-emerald-600";
+  if (margin >= 30) return "text-amber-600";
+  return "text-red-600";
 }
 
 // ---------------------------------------------------------------------------
-// Form state type
+// Types / constants
 // ---------------------------------------------------------------------------
+
+type View = "grid" | "editor";
 
 interface DishForm {
   name: string;
   price: string;
-  cost: string;
   category: string;
   status: string;
+  image_url: string;
 }
 
-const EMPTY_FORM: DishForm = { name: "", price: "", cost: "", category: "Signature", status: "active" };
+const EMPTY_FORM: DishForm = {
+  name: "", price: "", category: "Signature", status: "active", image_url: "",
+};
 
-function formToPayload(f: DishForm) {
-  return {
-    name: f.name.trim(),
-    price: parseFloat(f.price) || 0,
-    cost: parseFloat(f.cost) || 0,
-    category: f.category.trim() || "Signature",
-    status: f.status,
-  };
+const CATEGORIES = ["Signature", "Main", "Starter", "Dessert", "Beverage", "Side", "Special"];
+const UNITS = ["kg", "g", "ml", "L", "pc", "tbsp", "tsp", "oz", "lb", "cup"];
+
+function flatItems(cats: MenuCategory[]): MenuItem[] {
+  return cats.flatMap((c) => c.items);
 }
 
 // ---------------------------------------------------------------------------
@@ -76,687 +66,1214 @@ function formToPayload(f: DishForm) {
 // ---------------------------------------------------------------------------
 
 export function TabMenuManagement() {
+  const [view, setView] = useState<View>("grid");
   const [categories, setCategories] = useState<MenuCategory[]>([]);
-  const [menuStats, setMenuStats]   = useState<MenuStats | null>(null);
-  const [isLoading, setIsLoading]   = useState(true);
-  const [error, setError]           = useState<string | null>(null);
+  const [menuStats, setMenuStats] = useState<MenuStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [search, setSearch]           = useState("");
-  const [activeCategory, setActiveCategory] = useState("all");
+  // Editor state
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [isNewDish, setIsNewDish] = useState(false);
+  const [form, setForm] = useState<DishForm>(EMPTY_FORM);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [recipe, setRecipe] = useState<RecipeIngredient[]>([]);
+  const [recipeLoading, setRecipeLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
 
-  const [addModalOpen, setAddModalOpen]   = useState(false);
-  const [editingItem, setEditingItem]     = useState<MenuItem | null>(null);
+  // Grid state
+  const [gridSearch, setGridSearch] = useState("");
+  const [gridCategory, setGridCategory] = useState("all");
+  const [activeChannel, setActiveChannel] = useState("All");
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
 
-  const [addForm, setAddForm]   = useState<DishForm>(EMPTY_FORM);
-  const [editForm, setEditForm] = useState<DishForm>(EMPTY_FORM);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Sidebar search
+  const [sidebarSearch, setSidebarSearch] = useState("");
 
-  // ── Load ──────────────────────────────────────────────────────────────
+  // Ingredient picker state
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerSearch, setPickerSearch] = useState("");
+  const [pickerProducts, setPickerProducts] = useState<InventoryProduct[]>([]);
+  const [pickerSelected, setPickerSelected] = useState<InventoryProduct[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
 
-  const load = useCallback(async (silent = false) => {
-    if (!silent) setIsLoading(true);
-    setError(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // -------------------------------------------------------------------------
+  // Data loading
+  // -------------------------------------------------------------------------
+
+  const loadMenu = useCallback(async () => {
     try {
-      const [menuData, stats] = await Promise.all([
+      setIsLoading(true);
+      setError(null);
+      const [menuData, statsData] = await Promise.all([
         salesService.getMenu(),
-        salesService.getMenuStats(),
+        salesService.getMenuStats().catch(() => null),
       ]);
       setCategories(menuData.categories);
-      setMenuStats(stats);
+      if (statsData) setMenuStats(statsData);
     } catch {
-      setError("Could not load menu items. Please refresh the page.");
+      setError("Failed to load menu. Please try again.");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadMenu(); }, [loadMenu]);
 
-  // ── Filtered items ─────────────────────────────────────────────────────
+  // -------------------------------------------------------------------------
+  // Recipe loading
+  // -------------------------------------------------------------------------
 
-  const allItems = useMemo(() => categories.flatMap((c) => c.items), [categories]);
-  const existingCategories = useMemo(() => categories.map((c) => c.category), [categories]);
-
-  const visibleItems = useMemo(() => {
-    const pool = activeCategory === "all"
-      ? allItems
-      : (categories.find((c) => c.category === activeCategory)?.items ?? []);
-    if (!search.trim()) return pool;
-    const q = search.toLowerCase();
-    return pool.filter((i) => i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
-  }, [allItems, categories, activeCategory, search]);
-
-  // ── Add dish ──────────────────────────────────────────────────────────
-
-  const openAdd = () => { setAddForm(EMPTY_FORM); setAddModalOpen(true); };
-
-  const handleAdd = async () => {
-    if (!addForm.name.trim()) return;
-    setIsSubmitting(true);
+  const loadRecipe = useCallback(async (itemId: string) => {
+    setRecipeLoading(true);
     try {
-      await salesService.createMenuItem(formToPayload(addForm));
-      setAddModalOpen(false);
-      toast.success("Dish added!", { description: addForm.name });
-      load(true); // fire-and-forget
+      const ing = await salesService.getRecipe(itemId);
+      setRecipe(ing);
     } catch {
-      toast.error("Could not add dish. Please try again.");
+      setRecipe([]);
     } finally {
-      setIsSubmitting(false);
+      setRecipeLoading(false);
     }
-  };
+  }, []);
 
-  // ── Edit dish ─────────────────────────────────────────────────────────
+  // -------------------------------------------------------------------------
+  // Navigation
+  // -------------------------------------------------------------------------
 
-  const openEdit = (item: MenuItem) => {
-    setEditingItem(item);
-    setEditForm({
+  function openEditor(item: MenuItem | null) {
+    // null → default empty state (no selection)
+    setSelectedItemId(item ? item.id : null);
+    setIsNewDish(false);
+    if (item) {
+      setForm({
+        name: item.name,
+        price: item.price.toString(),
+        category: item.category,
+        status: item.status,
+        image_url: item.image_url ?? "",
+      });
+      setImagePreview(item.image_url ?? null);
+      setImageFile(null);
+      loadRecipe(item.id);
+    } else {
+      setForm(EMPTY_FORM);
+      setImagePreview(null);
+      setImageFile(null);
+      setRecipe([]);
+    }
+    setSidebarSearch("");
+    setView("editor");
+  }
+
+  function openNewDish() {
+    setSelectedItemId(null);
+    setIsNewDish(true);
+    setForm(EMPTY_FORM);
+    setImagePreview(null);
+    setImageFile(null);
+    setRecipe([]);
+    setSidebarSearch("");
+    setView("editor");
+  }
+
+  function backToGrid() {
+    setView("grid");
+    setSelectedItemId(null);
+    setIsNewDish(false);
+  }
+
+  function selectSidebarItem(item: MenuItem) {
+    if (isSaving || item.id === selectedItemId) return;
+    setSelectedItemId(item.id);
+    setIsNewDish(false);
+    setForm({
       name: item.name,
-      price: item.price > 0 ? String(item.price) : "",
-      cost: item.cost > 0 ? String(item.cost) : "",
+      price: item.price.toString(),
       category: item.category,
       status: item.status,
+      image_url: item.image_url ?? "",
     });
-  };
+    setImagePreview(item.image_url ?? null);
+    setImageFile(null);
+    loadRecipe(item.id);
+  }
 
-  const handleEdit = async () => {
-    if (!editingItem || !editForm.name.trim()) return;
-    setIsSubmitting(true);
+  // -------------------------------------------------------------------------
+  // Image
+  // -------------------------------------------------------------------------
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  // -------------------------------------------------------------------------
+  // Save
+  // -------------------------------------------------------------------------
+
+  async function handleSave() {
+    if (!form.name.trim()) { toast.error("Dish name is required"); return; }
+    const price = parseFloat(form.price) || 0;
+    if (price < 0) { toast.error("Price must be non-negative"); return; }
+
+    setIsSaving(true);
     try {
-      await salesService.updateMenuItem(editingItem.id, formToPayload(editForm));
-      // Optimistic inline update — dish reflects new values immediately
-      const { name, price: priceStr, cost: costStr } = editForm;
-      setCategories((prev) =>
-        prev.map((cat) => ({
-          ...cat,
-          items: cat.items.map((it) =>
-            it.id === editingItem.id
-              ? { ...it, name, price: parseFloat(priceStr) || it.price, cost: parseFloat(costStr) || it.cost }
-              : it
-          ),
-        }))
+      let finalImageUrl: string | undefined = form.image_url || undefined;
+      if (imageFile && !isNewDish && selectedItemId) {
+        finalImageUrl = await salesService.uploadMenuItemImage(selectedItemId, imageFile);
+      }
+
+      const totalFoodCost = recipe.reduce(
+        (sum, ing) => sum + ing.quantity_per_unit * (ing.unit_cost ?? 0), 0
       );
-      setEditingItem(null);
-      toast.success("Dish updated!", { description: editForm.name });
-      load(true); // fire-and-forget
-    } catch {
-      load(true); // restore correct state on error
-      toast.error("Could not update dish. Please try again.");
+
+      const payload = {
+        name: form.name.trim(),
+        price,
+        cost: totalFoodCost,
+        category: form.category || "Signature",
+        status: form.status,
+        ...(finalImageUrl ? { image_url: finalImageUrl } : {}),
+      };
+
+      let savedItem: MenuItem;
+      if (isNewDish) {
+        savedItem = await salesService.createMenuItem(payload) as unknown as MenuItem;
+        if (imageFile) {
+          try {
+            const imgUrl = await salesService.uploadMenuItemImage(savedItem.id, imageFile);
+            await salesService.updateMenuItem(savedItem.id, { image_url: imgUrl });
+            savedItem = { ...savedItem, image_url: imgUrl };
+          } catch { /* non-fatal */ }
+        }
+        setSelectedItemId(savedItem.id);
+        setIsNewDish(false);
+      } else {
+        savedItem = await salesService.updateMenuItem(selectedItemId!, payload) as unknown as MenuItem;
+      }
+
+      try {
+        await salesService.setRecipe(
+          savedItem.id,
+          recipe.map((r) => ({
+            contextual_product_id: r.contextual_product_id,
+            quantity_per_unit: r.quantity_per_unit,
+            unit: r.unit,
+            unit_cost: r.unit_cost,
+          }))
+        );
+      } catch { /* non-fatal */ }
+
+      toast.success(isNewDish ? "Dish created!" : "Changes saved!");
+      await loadMenu();
+      setForm({
+        name: savedItem.name,
+        price: savedItem.price.toString(),
+        category: savedItem.category,
+        status: savedItem.status,
+        image_url: savedItem.image_url ?? "",
+      });
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } };
+      toast.error(err?.response?.data?.detail ?? "Failed to save");
     } finally {
-      setIsSubmitting(false);
+      setIsSaving(false);
     }
-  };
+  }
 
-  // ── Archive dish ──────────────────────────────────────────────────────
+  // -------------------------------------------------------------------------
+  // Archive
+  // -------------------------------------------------------------------------
 
-  const handleArchive = async (item: MenuItem) => {
-    setIsSubmitting(true);
+  async function handleArchive(itemId: string) {
     try {
-      await salesService.archiveMenuItem(item.id);
-      // Optimistic removal — dish disappears instantly
-      setCategories((prev) =>
-        prev
-          .map((cat) => ({ ...cat, items: cat.items.filter((it) => it.id !== item.id) }))
-          .filter((cat) => cat.items.length > 0)
-      );
+      await salesService.archiveMenuItem(itemId);
+      toast.success("Dish archived");
       setConfirmArchiveId(null);
-      toast.success("Dish archived.", { description: `"${item.name}" has been removed from the menu.` });
-      load(true); // fire-and-forget
+      await loadMenu();
+      if (selectedItemId === itemId) backToGrid();
     } catch {
-      load(true); // restore correct state on error
-      toast.error("Could not archive dish. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+      toast.error("Failed to archive");
     }
-  };
+  }
 
-  // ── Render ─────────────────────────────────────────────────────────────
+  // -------------------------------------------------------------------------
+  // Ingredient picker
+  // -------------------------------------------------------------------------
 
-  if (isLoading) return <MenuManagementSkeleton />;
+  const existingProductIds = useMemo(
+    () => new Set(recipe.map((r) => r.contextual_product_id)),
+    [recipe]
+  );
 
-  const s = menuStats ?? { total_dishes: 0, top_selling_dish: null, avg_selling_price: 0, avg_gross_margin: 0 };
+  useEffect(() => {
+    if (!pickerOpen) return;
+    let cancelled = false;
+    setPickerLoading(true);
+    inventoryApi.getProducts({ search: pickerSearch }).then((products) => {
+      if (!cancelled) {
+        setPickerProducts(products.filter((p) => !existingProductIds.has(p.id)));
+        setPickerLoading(false);
+      }
+    }).catch(() => { if (!cancelled) setPickerLoading(false); });
+    return () => { cancelled = true; };
+  }, [pickerOpen, pickerSearch, existingProductIds]);
 
-  return (
-    <div>
-      {/* ── Menu stats banner (dark gradient, 4 white cards) ── */}
-      <div className="bg-gradient-to-r from-[#091558] via-[#3851dd] to-[#091558] px-5 md:px-7 py-6 md:py-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          <MenuStatCard
-            label="Total Dishes"
-            value={String(s.total_dishes)}
-            caption={s.total_dishes > 0 ? `Across ${categories.length} ${categories.length === 1 ? "category" : "categories"}` : "No dishes yet"}
-            icon={BookOpen} iconBg="bg-indigo-100" iconColor="text-[#3B59DA]"
-          />
-          <MenuStatCard
-            label="Top Selling Dish"
-            value={s.top_selling_dish ?? "—"}
-            caption={s.top_selling_dish ? "most ordered dish" : "No sales data yet"}
-            icon={Award} iconBg="bg-amber-100" iconColor="text-amber-500"
-          />
-          <MenuStatCard
-            label="Avg Selling Price"
-            value={s.avg_selling_price > 0 ? `RWF ${fmt(s.avg_selling_price)}` : "—"}
-            caption="RWF per plate"
-            icon={Tag} iconBg="bg-blue-100" iconColor="text-blue-600"
-          />
-          <MenuStatCard
-            label="Avg Gross Margin"
-            value={s.avg_gross_margin > 0 ? `${s.avg_gross_margin.toFixed(1)}%` : "—"}
-            caption={categories.length > 0 ? `Across ${categories.length} ${categories.length === 1 ? "category" : "categories"}` : undefined}
-            positive={s.avg_gross_margin >= 50 ? true : s.avg_gross_margin >= 20 ? undefined : s.avg_gross_margin > 0 ? false : undefined}
-            icon={Percent} iconBg="bg-emerald-100" iconColor="text-emerald-600"
-          />
-        </div>
+  function togglePickerProduct(product: InventoryProduct) {
+    setPickerSelected((prev) =>
+      prev.find((p) => p.id === product.id)
+        ? prev.filter((p) => p.id !== product.id)
+        : [...prev, product]
+    );
+  }
+
+  function confirmPickerSelection() {
+    setRecipe((prev) => [
+      ...prev,
+      ...pickerSelected.map((p) => ({
+        id: "",
+        contextual_product_id: p.id,
+        product_name: p.name,
+        quantity_per_unit: 1,
+        unit: p.unit,
+        unit_cost: 0,
+      })),
+    ]);
+    setPickerSelected([]);
+    setPickerSearch("");
+    setPickerOpen(false);
+  }
+
+  // -------------------------------------------------------------------------
+  // Recipe row edits
+  // -------------------------------------------------------------------------
+
+  function updateRecipeRow(idx: number, field: keyof RecipeIngredient, value: string | number) {
+    setRecipe((prev) => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
+  }
+
+  function removeRecipeRow(idx: number) {
+    setRecipe((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  // -------------------------------------------------------------------------
+  // Derived values
+  // -------------------------------------------------------------------------
+
+  const sellingPrice = parseFloat(form.price) || 0;
+  const totalFoodCost = recipe.reduce(
+    (sum, ing) => sum + ing.quantity_per_unit * (ing.unit_cost ?? 0), 0
+  );
+  const grossProfit = sellingPrice - totalFoodCost;
+  const grossMargin = sellingPrice > 0 ? (grossProfit / sellingPrice) * 100 : 0;
+
+  // -------------------------------------------------------------------------
+  // Grid filters
+  // -------------------------------------------------------------------------
+
+  const CHANNELS = ["All", "Dine-in", "Takeaway", "Delivery"];
+
+  const filteredCategories = useMemo(() => {
+    if (!gridSearch && gridCategory === "all") return categories;
+    return categories
+      .map((c) => ({
+        ...c,
+        items: c.items.filter((item) => {
+          const matchSearch = !gridSearch || item.name.toLowerCase().includes(gridSearch.toLowerCase());
+          const matchCat = gridCategory === "all" || c.category === gridCategory;
+          return matchSearch && matchCat;
+        }),
+      }))
+      .filter((c) => c.items.length > 0);
+  }, [categories, gridSearch, gridCategory]);
+
+  const allItems = flatItems(categories);
+  const totalDishes = allItems.length;
+  const availableDishes = allItems.filter((i) => i.status === "active").length;
+
+  const sidebarItems = useMemo(() => {
+    const q = sidebarSearch.toLowerCase();
+    return categories
+      .map((c) => ({
+        ...c,
+        items: c.items.filter((i) => !q || i.name.toLowerCase().includes(q)),
+      }))
+      .filter((c) => c.items.length > 0);
+  }, [categories, sidebarSearch]);
+
+  // -------------------------------------------------------------------------
+  // Loading state
+  // -------------------------------------------------------------------------
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 p-4">
+        {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
       </div>
+    );
+  }
 
-      <div className="p-5 md:p-7 space-y-5">
+  // =========================================================================
+  // GRID VIEW
+  // =========================================================================
+
+  if (view === "grid") {
+    return (
+      <div className="space-y-4 mt-8">
         {error && <UnifiedErrorBanner message={error} />}
 
-        {/* Section header: "All Dishes" + dropdown + Add button */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h2 className="text-[20px] font-black text-[#1E293B] font-figtree">All Dishes</h2>
+        {/* Single white card — header + filter + grid all inside with consistent padding */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
 
-          <div className="flex items-center gap-3 shrink-0">
-            {/* Category dropdown */}
-            <div className="relative">
-              <select
-                value={activeCategory}
-                onChange={(e) => setActiveCategory(e.target.value)}
-                className="appearance-none h-10 pl-4 pr-9 text-[13px] font-semibold border border-slate-200 rounded-[8px] bg-white text-[#1E293B] focus:outline-none focus:ring-2 focus:ring-indigo-400/20 font-figtree cursor-pointer"
-              >
-                <option value="all">All Categories</option>
-                {categories.map((c) => (
-                  <option key={c.category} value={c.category}>{c.category}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+          {/* Header row */}
+          <div className="flex items-start justify-between px-6 pt-6 pb-5">
+            <div>
+              <h2 className="text-[17px] font-bold text-[#1E293B] font-figtree">Menu Management</h2>
+              <p className="text-[13px] text-slate-400 font-figtree mt-0.5">
+                Manage all your restaurant dishes, edit, and add as you see fit.
+              </p>
             </div>
-            {/* Add button */}
-            <Button
-              className="h-10 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[13px] font-figtree gap-2 px-5 shadow-[0_2px_10px_rgba(59,89,218,0.25)] active:scale-95 transition-all"
-              onClick={openAdd}
-            >
-              <Plus className="h-4 w-4" />
-              Add New Dish
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[13px] font-figtree h-9 border-slate-200 gap-1.5"
+                onClick={() => openEditor(null)}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit Recipes
+              </Button>
+              <Button
+                size="sm"
+                className="text-[13px] font-figtree h-9 bg-blue-600 hover:bg-blue-700 gap-1"
+                onClick={openNewDish}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add New Dish
+              </Button>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-slate-100" />
+
+          {/* Filter row: "All Dishes" left, pills + dropdown right */}
+          <div className="flex items-center gap-3 px-6 py-4">
+            <span className="text-[15px] font-bold text-[#1E293B] font-figtree shrink-0">All Dishes</span>
+            <div className="flex items-center gap-2 ml-auto flex-wrap justify-end">
+              {CHANNELS.map((ch) => (
+                <button
+                  key={ch}
+                  onClick={() => setActiveChannel(ch)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-[12px] font-semibold font-figtree border transition-colors",
+                    activeChannel === ch
+                      ? "bg-[#1E293B] text-white border-[#1E293B]"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                  )}
+                >
+                  {ch}
+                </button>
+              ))}
+              <div className="relative">
+                <select
+                  value={gridCategory}
+                  onChange={(e) => setGridCategory(e.target.value)}
+                  className="h-8 pl-3 pr-7 text-[12px] font-figtree border border-slate-200 rounded-lg appearance-none focus:outline-none focus:ring-1 focus:ring-slate-300 bg-white"
+                >
+                  <option value="all">All Categories</option>
+                  {categories.map((c) => (
+                    <option key={c.category} value={c.category}>{c.category}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Grid */}
+          <div className="px-6 pb-6">
+            {filteredCategories.length === 0 ? (
+              <div className="text-center py-16 text-slate-400 font-figtree">
+                {totalDishes === 0 ? "No dishes yet — add your first one!" : "No dishes match your filters."}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {filteredCategories.map((cat) => (
+                  <div key={cat.category}>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {cat.items.map((item) => (
+                        <GridCard
+                          key={item.id}
+                          item={item}
+                          onEdit={() => openEditor(item)}
+                          onArchive={() => setConfirmArchiveId(item.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Dish grid */}
-        {visibleItems.length === 0 ? (
-          <EmptyMenuState onAdd={openAdd} hasMenu={allItems.length > 0} />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {visibleItems.map((item) => (
-              <DishCard
-                key={item.id}
-                item={item}
-                isConfirmingArchive={confirmArchiveId === item.id}
-                isSubmitting={isSubmitting}
-                onEdit={() => openEdit(item)}
-                onRequestArchive={() => setConfirmArchiveId(item.id)}
-                onCancelArchive={() => setConfirmArchiveId(null)}
-                onConfirmArchive={() => handleArchive(item)}
+        {/* Archive confirm */}
+        <UnifiedModal
+          isOpen={!!confirmArchiveId}
+          onClose={() => setConfirmArchiveId(null)}
+          title="Archive Dish?"
+          footer={
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setConfirmArchiveId(null)}>Cancel</Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => confirmArchiveId && handleArchive(confirmArchiveId)}
+              >
+                Archive
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-[13px] text-slate-600 font-figtree">
+            This dish will be hidden from the menu. You can restore it later.
+          </p>
+        </UnifiedModal>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // EDITOR VIEW
+  // =========================================================================
+
+  const hasSelection = selectedItemId !== null || isNewDish;
+
+  return (
+    <div className="mt-8 bg-slate-50 rounded-2xl border border-slate-100 p-6">
+      <div className="flex gap-4">
+        {/* ---------------------------------------------------------------- */}
+        {/* LEFT SIDEBAR                                                      */}
+        {/* ---------------------------------------------------------------- */}
+        <div className="w-56 shrink-0">
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex flex-col gap-3">
+          {/* Back nav */}
+          <button
+            onClick={backToGrid}
+            className="flex items-center gap-1.5 text-[13px] text-slate-500 hover:text-slate-800 font-figtree transition-colors w-fit"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to Menu Management
+          </button>
+          <div className="border-b border-slate-100 -mx-4" />
+          {/* Stats */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[13px] font-bold text-slate-700 font-figtree">Menu Items</span>
+              <span className="text-[12px] font-semibold text-slate-500 font-figtree">
+                {availableDishes}/{totalDishes}
+              </span>
+            </div>
+            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all"
+                style={{ width: totalDishes > 0 ? `${(availableDishes / totalDishes) * 100}%` : "0%" }}
               />
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <input
+              value={sidebarSearch}
+              onChange={(e) => setSidebarSearch(e.target.value)}
+              placeholder="Search dishes..."
+              className="w-full pl-8 pr-3 h-9 text-[13px] font-figtree border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 bg-white"
+            />
+          </div>
+
+          {/* New dish button */}
+          <button
+            onClick={openNewDish}
+            className="flex items-center gap-1.5 w-full px-3 py-2 rounded-lg border-2 border-dashed border-slate-200 text-[12px] text-slate-400 hover:border-slate-400 hover:text-slate-600 font-figtree transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New Dish
+          </button>
+
+          {/* Dish list */}
+          <div className="flex-1 overflow-y-auto space-y-4 max-h-[calc(100vh-440px)] pr-1">
+            {isNewDish && (
+              <div className="px-2 py-2 rounded-lg bg-indigo-50 border border-indigo-200">
+                <span className="text-[12px] font-semibold text-indigo-700 font-figtree">New Dish</span>
+              </div>
+            )}
+            {sidebarItems.map((cat) => (
+              <div key={cat.category}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-figtree px-1 mb-1.5">
+                  {cat.category}
+                </p>
+                <div className="space-y-0.5">
+                  {cat.items.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => selectSidebarItem(item)}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left transition-colors",
+                        selectedItemId === item.id
+                          ? "bg-[#3B55E6] text-white"
+                          : "hover:bg-slate-50 text-slate-700"
+                      )}
+                    >
+                      <span className={cn(
+                        "h-2 w-2 rounded-full shrink-0",
+                        item.status === "active" ? "bg-emerald-500" : "bg-slate-300"
+                      )} />
+                      <span className="text-[12px] font-figtree flex-1 truncate">{item.name}</span>
+                      <span className={cn(
+                        "text-[11px] font-figtree shrink-0",
+                        selectedItemId === item.id ? "text-blue-200" : "text-slate-400"
+                      )}>
+                        {fmt(item.price)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
+            {sidebarItems.length === 0 && !isNewDish && (
+              <p className="text-[11px] text-slate-400 font-figtree text-center py-4">No dishes found</p>
+            )}
+          </div>
+          </div> {/* bg-white sidebar card */}
+        </div>   {/* w-56 shrink-0 */}
+
+        {/* ---------------------------------------------------------------- */}
+        {/* CENTER PANEL                                                      */}
+        {/* ---------------------------------------------------------------- */}
+        {!hasSelection ? (
+          /* Default empty state */
+          <div className="flex-1 min-w-0 bg-slate-100 rounded-xl flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 text-center px-8">
+              <div className="bg-white rounded-full p-5 shadow-sm">
+                <UtensilsCrossed className="h-7 w-7 text-slate-400" />
+              </div>
+              <p className="text-[17px] font-bold text-[#1E293B] font-figtree mt-1">
+                Select a dish to edit
+              </p>
+              <p className="text-[13px] text-slate-500 font-figtree max-w-xs leading-relaxed">
+                Pick any dish from the left to update its details and build its recipe.
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* Dish form */
+          <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-280px)] pr-1">
+
+            {/* Dish Details Card */}
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1E293B] font-figtree">Dish Details</h3>
+                  <p className="text-[12px] text-slate-400 font-figtree mt-0.5">
+                    Update how this dish appears on the menu and how the team identifies it during service.
+                  </p>
+                </div>
+                <span className={cn(
+                  "px-2.5 py-1 rounded-full text-[11px] font-semibold font-figtree border shrink-0 ml-4",
+                  form.status === "active"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-slate-100 text-slate-500 border-slate-200"
+                )}>
+                  {form.status === "active" ? "Active" : "Inactive"}
+                </span>
+              </div>
+
+              {/* Image + upload */}
+              <div className="flex gap-5 mb-5">
+                <div
+                  onClick={() => imageInputRef.current?.click()}
+                  className="w-40 h-40 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer hover:border-slate-400 transition-colors overflow-hidden shrink-0 bg-slate-50"
+                >
+                  {imagePreview ? (
+                    <Image src={imagePreview} alt="" width={160} height={160} className="object-cover w-full h-full" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                      <ImagePlus className="h-8 w-8" />
+                      <span className="text-[11px] font-figtree">Upload photo</span>
+                    </div>
+                  )}
+                </div>
+                <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+                <div className="flex flex-col justify-center gap-2">
+                  <p className="text-[14px] font-bold text-[#1E293B] font-figtree">Dish image</p>
+                  <p className="text-[12px] text-slate-500 font-figtree leading-relaxed">
+                    Use a clear square photo for menus, reports, and<br />kitchen references. Recommended: 1200 × 1200.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-fit text-[12px] font-figtree mt-1 h-8"
+                    onClick={() => imageInputRef.current?.click()}
+                  >
+                    Replace image
+                  </Button>
+                </div>
+              </div>
+
+              {/* Form fields */}
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 font-figtree mb-1">
+                    Dish Name
+                  </label>
+                  <Input
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="e.g. Grilled Chicken"
+                    className="h-9 text-[13px] font-figtree"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 font-figtree mb-1">
+                    Selling Price
+                  </label>
+                  <div className="flex items-center border border-input rounded-md overflow-hidden h-9 bg-background">
+                    <span className="px-2.5 text-[12px] text-slate-500 font-figtree bg-slate-50 border-r border-input h-full flex items-center shrink-0">
+                      Ksh
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.price}
+                      onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                      placeholder="0"
+                      className="flex-1 px-2.5 text-[13px] font-figtree focus:outline-none bg-transparent h-full"
+                      onFocus={(e) => { if (e.target.value === "0") e.target.select(); }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 font-figtree mb-1">
+                    Menu Category
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={form.category}
+                      onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                      className="h-9 w-full pl-3 pr-7 text-[13px] font-figtree border border-input rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-ring bg-background"
+                    >
+                      {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Add Custom Category link */}
+              <button className="flex items-center gap-1 text-[12px] text-blue-600 font-figtree font-semibold hover:text-blue-800 transition-colors mb-4">
+                <Plus className="h-3.5 w-3.5" />
+                Add Custom Category
+              </button>
+
+              {/* Dish Availability */}
+              <div className="flex items-center justify-between py-4 border-t border-slate-100">
+                <div>
+                  <p className="text-[13px] font-bold text-[#1E293B] font-figtree">Dish Availability</p>
+                  <p className="text-[12px] text-slate-400 font-figtree mt-0.5">
+                    Choose whether or not this dish is available on the menu
+                  </p>
+                </div>
+                <Switch
+                  checked={form.status === "active"}
+                  onCheckedChange={(checked) =>
+                    setForm((f) => ({ ...f, status: checked ? "active" : "inactive" }))
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Bill of Materials Card */}
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+              <div className="flex items-start justify-between mb-1">
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="text-[15px] font-bold text-[#1E293B] font-figtree">Bill of Materials</h3>
+                    {recipe.length > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 font-figtree">
+                        {recipe.length} ingredients
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[12px] text-slate-400 font-figtree">
+                    Link ingredients from your inventory. Cost per plate updates automatically when you log expenses.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[12px] font-figtree h-8 border-blue-200 text-blue-600 hover:bg-blue-50 shrink-0 ml-4 gap-1"
+                  onClick={() => { setPickerSelected([]); setPickerSearch(""); setPickerOpen(true); }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add ingredient
+                </Button>
+              </div>
+
+              {recipeLoading ? (
+                <div className="space-y-2 mt-4">
+                  {[1, 2].map((i) => <Skeleton key={i} className="h-12 w-full rounded" />)}
+                </div>
+              ) : recipe.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-10 text-center">
+                  <div className="bg-slate-100 rounded-full p-3">
+                    <UtensilsCrossed className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <p className="text-[14px] font-bold text-slate-600 font-figtree">No ingredients yet</p>
+                  <p className="text-[12px] text-slate-400 font-figtree max-w-xs leading-relaxed">
+                    Add ingredients to automatically track inventory depletion and calculate food cost per plate.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto mt-4">
+                  <table className="w-full text-[12px] font-figtree">
+                    <thead>
+                      <tr className="border-b border-slate-100">
+                        <th className="text-left py-2 pr-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ingredient</th>
+                        <th className="text-left py-2 pr-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-20">Quantity</th>
+                        <th className="text-left py-2 pr-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-28">Unit Measure</th>
+                        <th className="text-left py-2 pr-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-28">Unit Cost</th>
+                        <th className="text-left py-2 pr-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-24">Line Cost</th>
+                        <th className="w-8" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recipe.map((ing, idx) => {
+                        const lineCost = ing.quantity_per_unit * (ing.unit_cost ?? 0);
+                        return (
+                          <tr key={idx} className="border-b border-slate-50">
+                            <td className="py-3 pr-3">
+                              <p className="font-semibold text-[13px] text-slate-700">{ing.product_name}</p>
+                              <p className="text-[11px] text-slate-400">No price logged yet</p>
+                            </td>
+                            <td className="py-3 pr-3">
+                              <input
+                                type="number"
+                                min={0}
+                                step={0.01}
+                                value={ing.quantity_per_unit}
+                                onChange={(e) => updateRecipeRow(idx, "quantity_per_unit", parseFloat(e.target.value) || 0)}
+                                className="w-full border border-slate-200 rounded px-2 h-8 text-[12px] focus:outline-none focus:ring-1 focus:ring-slate-300"
+                              />
+                            </td>
+                            <td className="py-3 pr-3">
+                              <div className="relative">
+                                <select
+                                  value={ing.unit ?? "kg"}
+                                  onChange={(e) => updateRecipeRow(idx, "unit", e.target.value)}
+                                  className="w-full border border-slate-200 rounded px-2 pr-6 h-8 text-[12px] appearance-none focus:outline-none focus:ring-1 focus:ring-slate-300 bg-white"
+                                >
+                                  {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                                </select>
+                                <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+                              </div>
+                            </td>
+                            <td className="py-3 pr-3">
+                              <div className="flex items-center border border-slate-200 rounded overflow-hidden h-8">
+                                <span className="px-2 text-[11px] text-slate-400 bg-slate-50 border-r border-slate-200 h-full flex items-center shrink-0">
+                                  Ksh
+                                </span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step={0.01}
+                                  value={ing.unit_cost ?? 0}
+                                  onChange={(e) => updateRecipeRow(idx, "unit_cost", parseFloat(e.target.value) || 0)}
+                                  className="flex-1 px-2 text-[12px] focus:outline-none bg-transparent h-full min-w-0"
+                                />
+                              </div>
+                            </td>
+                            <td className="py-3 pr-3 text-[13px] font-medium text-slate-600">
+                              Ksh {fmtMoney(lineCost)}
+                            </td>
+                            <td className="py-3">
+                              <button
+                                onClick={() => removeRecipeRow(idx)}
+                                className="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-slate-200">
+                        <td colSpan={4} className="py-3 text-[13px] font-semibold text-slate-700 font-figtree">
+                          Est. Total Food Cost
+                        </td>
+                        <td className="py-3 text-[14px] font-bold text-blue-600 font-figtree">
+                          Ksh {fmtMoney(totalFoodCost)}
+                        </td>
+                        <td />
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom action bar */}
+            <div className="flex items-center justify-between bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+              <span className="text-[13px] text-slate-400 font-figtree">Unsaved changes</span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={backToGrid} className="font-figtree">
+                  Discard
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="bg-[#1E293B] hover:bg-slate-700 font-figtree gap-1"
+                >
+                  {isSaving && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
+                  Save Changes
+                </Button>
+              </div>
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Add Dish modal */}
+        {/* ---------------------------------------------------------------- */}
+        {/* RIGHT PANEL                                                       */}
+        {/* ---------------------------------------------------------------- */}
+        <div className={cn(
+          "shrink-0 flex flex-col gap-1 transition-all duration-200",
+          rightCollapsed ? "w-8" : "w-72"
+        )}>
+          {rightCollapsed ? (
+            <button
+              onClick={() => setRightCollapsed(false)}
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+              title="Expand panel"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <div className="flex flex-col gap-3 overflow-y-auto max-h-[calc(100vh-280px)]">
+              {/* Live Preview */}
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <button
+                    onClick={() => setRightCollapsed(true)}
+                    className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                    title="Collapse panel"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5 rotate-180" />
+                  </button>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-figtree">
+                    Live Preview
+                  </p>
+                </div>
+                <div className="rounded-lg overflow-hidden bg-slate-100 w-full aspect-square mb-3">
+                  {imagePreview ? (
+                    <Image
+                      src={imagePreview}
+                      alt=""
+                      width={288}
+                      height={288}
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImagePlus className="h-8 w-8 text-slate-300" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[16px] font-bold text-[#1E293B] font-figtree">
+                  {form.name || "--"}
+                </p>
+                {sellingPrice > 0 ? (
+                  <p className="text-[13px] text-slate-600 font-figtree">
+                    Ksh {fmtMoney(sellingPrice)}
+                    <span className="text-slate-400 text-[12px]"> / serving</span>
+                  </p>
+                ) : (
+                  <p className="text-[13px] text-slate-400 font-figtree">--</p>
+                )}
+                {form.category && (
+                  <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 font-figtree">
+                    {form.category}
+                  </span>
+                )}
+                <p className="text-[11px] text-slate-400 font-figtree mt-3">
+                  Live menu preview for cashiers and service staff.
+                </p>
+              </div>
+
+              {/* Pricing Summary */}
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-figtree mb-2">
+                  Pricing Summary
+                </p>
+                <p className="text-[13px] font-bold text-[#1E293B] font-figtree">
+                  Financial effect of this recipe
+                </p>
+                <p className="text-[11px] text-slate-400 font-figtree mb-4">
+                  Based on last logged ingredient prices.
+                </p>
+                <div className="space-y-2.5">
+                  <PricingRow
+                    label="Selling price"
+                    value={sellingPrice > 0 ? `Ksh ${fmtMoney(sellingPrice)}` : "--"}
+                  />
+                  <PricingRow
+                    label="Est. Food Cost"
+                    value={recipe.length > 0 ? `Ksh ${fmtMoney(totalFoodCost)}` : "--"}
+                  />
+                  <div className="border-t border-slate-100 pt-2.5 space-y-2.5">
+                    <PricingRow
+                      label="Gross profit / plate"
+                      value={sellingPrice > 0 ? `Ksh ${fmtMoney(grossProfit)}` : "--"}
+                      bold
+                      valueClass={sellingPrice > 0 ? marginColor(grossMargin) : "text-slate-400"}
+                    />
+                    <div className="flex items-center justify-between">
+                      <span className="text-[12px] text-slate-500 font-figtree">Gross Profit Margin</span>
+                      <span className={cn(
+                        "text-[13px] font-bold font-figtree",
+                        sellingPrice > 0 ? marginColor(grossMargin) : "text-slate-400"
+                      )}>
+                        {sellingPrice > 0 ? `${grossMargin.toFixed(0)}%` : "--"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+      </div>  {/* flex gap-4 — 3-panel row */}
+    </div>    {/* mt-8 bg-slate-50 outer */}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* INGREDIENT PICKER MODAL                                             */}
+      {/* ------------------------------------------------------------------ */}
       <UnifiedModal
-        isOpen={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
-        title="Add New Dish"
-        subtitle="Add a dish to your menu. Set a cost to track profit margins."
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        title="Add Ingredients"
         footer={
-          <>
-            <Button
-              variant="outline"
-              className="h-12 px-8 rounded-[10px] border-slate-200 font-bold text-[14px] font-figtree"
-              onClick={() => setAddModalOpen(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="h-12 px-10 rounded-[10px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black text-[14px] font-figtree gap-2 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all disabled:opacity-50"
-              disabled={!addForm.name.trim() || isSubmitting}
-              onClick={handleAdd}
-            >
-              {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Add Dish
-            </Button>
-          </>
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[13px] text-slate-400 font-figtree">Select ingredients from the left</span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPickerOpen(false)}
+                className="font-figtree"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={pickerSelected.length === 0}
+                onClick={confirmPickerSelection}
+                className="bg-[#1E293B] hover:bg-slate-700 font-figtree"
+              >
+                Add Selected Items
+              </Button>
+            </div>
+          </div>
         }
       >
-        <DishForm
-          form={addForm}
-          onChange={setAddForm}
-          existingCategories={existingCategories}
-        />
-      </UnifiedModal>
+        <div className="flex flex-col gap-4" style={{ minHeight: "400px" }}>
+          {/* Full-width search */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              value={pickerSearch}
+              onChange={(e) => setPickerSearch(e.target.value)}
+              placeholder="Search inventory..."
+              className="w-full pl-11 pr-4 h-11 text-[14px] font-figtree border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-300"
+            />
+          </div>
 
-      {/* Edit Dish modal */}
-      <UnifiedModal
-        isOpen={!!editingItem}
-        onClose={() => setEditingItem(null)}
-        title="Edit Dish"
-        subtitle={editingItem?.name}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              className="h-12 px-8 rounded-[10px] border-slate-200 font-bold text-[14px] font-figtree"
-              onClick={() => setEditingItem(null)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="h-12 px-10 rounded-[10px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black text-[14px] font-figtree gap-2 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all disabled:opacity-50"
-              disabled={!editForm.name.trim() || isSubmitting}
-              onClick={handleEdit}
-            >
-              {isSubmitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
-              Save Changes
-            </Button>
-          </>
-        }
-      >
-        <DishForm
-          form={editForm}
-          onChange={setEditForm}
-          existingCategories={existingCategories}
-          isEdit
-        />
-      </UnifiedModal>
-    </div>
-  );
-}
+          {/* Two-column split */}
+          <div className="flex gap-4 flex-1 min-h-0" style={{ height: "340px" }}>
+            {/* Left: product list */}
+            <div className="flex-1 overflow-y-auto border border-slate-100 rounded-xl divide-y divide-slate-50">
+              {pickerLoading ? (
+                <div className="space-y-2 p-3">
+                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-10 w-full rounded" />)}
+                </div>
+              ) : pickerProducts.length === 0 ? (
+                <p className="text-[13px] text-slate-400 font-figtree text-center py-10">
+                  {pickerSearch ? "No matches found" : "No inventory items available"}
+                </p>
+              ) : (
+                pickerProducts.map((p) => {
+                  const isSelected = pickerSelected.some((s) => s.id === p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => togglePickerProduct(p)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors",
+                        isSelected && "bg-blue-50 hover:bg-blue-50"
+                      )}
+                    >
+                      <div className={cn(
+                        "h-5 w-5 rounded border-2 shrink-0 flex items-center justify-center transition-colors",
+                        isSelected ? "bg-[#1E293B] border-[#1E293B]" : "border-slate-300 bg-white"
+                      )}>
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <span className="text-[14px] font-semibold text-slate-700 font-figtree flex-1">
+                        {p.name}
+                      </span>
+                      <span className="text-[12px] text-slate-400 font-figtree shrink-0">
+                        {fmt(p.current_stock)} / {p.unit}
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
 
-// ---------------------------------------------------------------------------
-// Menu stat card (banner)
-// ---------------------------------------------------------------------------
-
-function MenuStatCard({
-  label, value, caption, positive, icon: Icon, iconBg, iconColor,
-}: {
-  label: string; value: string; caption?: string; positive?: boolean;
-  icon: React.ComponentType<{ className?: string }>; iconBg: string; iconColor: string;
-}) {
-  const isText = isNaN(parseFloat(value.replace(/[^0-9.]/g, ""))) || value === "—";
-  return (
-    <div className="bg-white rounded-[12px] p-4 md:p-5 flex flex-col gap-3 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-      <div className="flex items-center gap-2">
-        <div className={cn("h-7 w-7 rounded-full flex items-center justify-center shrink-0", iconBg)}>
-          <Icon className={cn("h-3.5 w-3.5 stroke-[2px]", iconColor)} />
+            {/* Right: selected items */}
+            <div className="w-56 shrink-0 flex flex-col gap-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-figtree">
+                Selected Items
+              </p>
+              {pickerSelected.length === 0 ? (
+                <p className="text-[14px] font-semibold text-blue-500 font-figtree">None Selected</p>
+              ) : (
+                <div className="space-y-2 overflow-y-auto flex-1">
+                  {pickerSelected.map((p) => (
+                    <div
+                      key={p.id}
+                      className="bg-white border border-slate-100 rounded-xl p-3 shadow-sm flex items-start justify-between gap-2"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-[#1E293B] font-figtree truncate">{p.name}</p>
+                        <p className="text-[11px] text-slate-400 font-figtree">{p.unit}</p>
+                      </div>
+                      <button
+                        onClick={() => togglePickerProduct(p)}
+                        className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors shrink-0 mt-0.5"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.08em] font-figtree leading-tight">
-          {label}
-        </span>
-      </div>
-      <div className={cn(
-        "font-black font-figtree leading-tight",
-        isText ? "text-[16px] md:text-[18px] line-clamp-2" : "text-[22px] md:text-[26px]",
-        positive === true ? "text-emerald-600" : positive === false ? "text-rose-500" : "text-[#1E293B]"
-      )}>
-        {value}
-      </div>
-      {caption && (
-        <p className="text-[11px] text-slate-400 font-semibold font-figtree -mt-1">{caption}</p>
-      )}
+      </UnifiedModal>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Dish card
+// Grid card
 // ---------------------------------------------------------------------------
 
-function DishCard({
+function GridCard({
   item,
-  isConfirmingArchive,
-  isSubmitting,
   onEdit,
-  onRequestArchive,
-  onCancelArchive,
-  onConfirmArchive,
+  onArchive,
 }: {
   item: MenuItem;
-  isConfirmingArchive: boolean;
-  isSubmitting: boolean;
   onEdit: () => void;
-  onRequestArchive: () => void;
-  onCancelArchive: () => void;
-  onConfirmArchive: () => void;
+  onArchive: () => void;
 }) {
-  const margin = item.price > 0 ? ((item.price - item.cost) / item.price) * 100 : null;
-  const profit = item.price > 0 && item.cost > 0 ? item.price - item.cost : null;
-
-  const marginColor =
-    margin === null ? "text-slate-400" :
-    margin >= 50    ? "text-emerald-600" :
-    margin >= 20    ? "text-amber-600"   : "text-rose-500";
+  const fmtLocal = (n: number) =>
+    new Intl.NumberFormat("en", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
 
   return (
-    <div className={cn(
-      "rounded-[12px] border bg-white flex flex-col overflow-hidden transition-all",
-      isConfirmingArchive
-        ? "border-rose-200 shadow-[0_2px_12px_rgba(244,63,94,0.08)]"
-        : "border-slate-200 hover:border-slate-300 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
-    )}>
-      {/* Card body */}
-      <div className="p-5 flex flex-col gap-1 flex-1">
-        {/* Name */}
-        <div className="text-[15px] font-black text-[#1E293B] font-figtree leading-tight">
-          {item.name}
-        </div>
-        {/* Category */}
-        <div className="text-[12px] italic text-slate-400 font-figtree mb-2">
-          {item.category}
-        </div>
-
-        {/* Price */}
-        <div className="text-[18px] font-black text-[#1E293B] font-figtree tabular-nums">
-          RWF {fmt(item.price)} / plate
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-slate-100 my-3" />
-
-        {/* Stats 2×2 grid */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-          <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree">Est. Cost</div>
-            <div className="text-[13px] font-bold text-[#1E293B] font-figtree tabular-nums mt-0.5">
-              {item.cost > 0 ? `RWF ${fmt(item.cost)}` : "—"}
-            </div>
+    <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+      <div className="w-full h-44 bg-slate-100">
+        {item.image_url ? (
+          <Image
+            src={item.image_url}
+            alt={item.name}
+            width={320}
+            height={320}
+            className="object-cover w-full h-full"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <UtensilsCrossed className="h-8 w-8 text-slate-300" />
           </div>
-          <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree">Margin</div>
-            <div className={cn("text-[13px] font-bold tabular-nums mt-0.5 font-figtree", marginColor)}>
-              {margin !== null ? `${margin.toFixed(0)}%` : "—"}
-            </div>
-          </div>
-          <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree">Profit/Plate</div>
-            <div className="text-[13px] font-bold text-[#1E293B] font-figtree tabular-nums mt-0.5">
-              {profit !== null ? `RWF ${fmt(profit)}` : "—"}
-            </div>
-          </div>
-          <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] font-figtree">Source</div>
-            <div className="text-[13px] font-bold text-[#1E293B] font-figtree mt-0.5 capitalize">
-              {item.source ?? "Manual"}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
-
-      {/* Action strip */}
-      {isConfirmingArchive ? (
-        <div className="bg-rose-50 border-t border-rose-100 px-4 py-3 flex items-center justify-between gap-2">
-          <span className="text-[11px] font-bold text-rose-600 font-figtree flex items-center gap-1.5">
-            <AlertTriangle className="h-3 w-3" /> Archive this dish?
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onCancelArchive}
-              className="text-[11px] font-bold text-slate-400 hover:text-slate-600 font-figtree transition-colors"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onConfirmArchive}
-              disabled={isSubmitting}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-[6px] bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-bold font-figtree transition-all active:scale-95 disabled:opacity-60"
-            >
-              {isSubmitting ? <RefreshCw className="h-3 w-3 animate-spin" /> : null}
-              Confirm
-            </button>
-          </div>
+      <div className="p-4">
+        <div className="flex items-baseline justify-between gap-2 mb-1 min-w-0">
+          <p className="text-[14px] font-bold text-[#1E293B] font-figtree truncate flex-1 min-w-0">{item.name}</p>
+          <p className="text-[12px] text-slate-500 font-figtree shrink-0 whitespace-nowrap">
+            Ksh {fmtLocal(item.price)} / serving
+          </p>
         </div>
-      ) : (
-        <div className="border-t border-slate-100 px-4 py-3 flex items-center gap-2">
-          <button
-            onClick={onEdit}
-            className="flex-1 h-9 rounded-[8px] border border-slate-200 text-[12px] font-bold text-[#1E293B] font-figtree hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+        <p className="text-[12px] italic text-slate-400 font-figtree mb-4">{item.category} Food</p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-9 text-[13px] font-figtree text-red-500 border-red-300 hover:bg-red-50 hover:text-red-600 hover:border-red-400"
+            onClick={onArchive}
           >
-            <Pencil className="h-3.5 w-3.5" />
-            Edit Dish
-          </button>
-          <button
-            onClick={onRequestArchive}
-            className="flex-1 h-9 rounded-[8px] border border-rose-200 text-[12px] font-bold text-rose-500 font-figtree hover:bg-rose-50 transition-all active:scale-95 flex items-center justify-center gap-1.5"
-          >
-            <Archive className="h-3.5 w-3.5" />
             Archive
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Dish form (shared between Add + Edit modals)
-// ---------------------------------------------------------------------------
-
-function DishForm({
-  form,
-  onChange,
-  existingCategories,
-  isEdit,
-}: {
-  form: DishForm;
-  onChange: (f: DishForm) => void;
-  existingCategories: string[];
-  isEdit?: boolean;
-}) {
-  const price  = parseFloat(form.price)  || 0;
-  const cost   = parseFloat(form.cost)   || 0;
-  const margin = calcMargin(price, cost);
-
-  const marginColor =
-    margin === null                    ? "text-slate-400" :
-    margin >= 50                       ? "text-emerald-600" :
-    margin >= 20                       ? "text-amber-600"   : "text-rose-500";
-
-  const set = (key: keyof DishForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    onChange({ ...form, [key]: e.target.value });
-
-  return (
-    <div className="space-y-8">
-      {/* Name */}
-      <FormField label="Dish Name" required>
-        <Input
-          placeholder="e.g. Grilled Salmon"
-          value={form.name}
-          onChange={set("name")}
-          className="h-12 text-[15px] font-semibold border-slate-200 rounded-[8px] focus-visible:ring-indigo-400/20 font-figtree"
-          autoFocus
-        />
-      </FormField>
-
-      {/* Category */}
-      <FormField label="Category">
-        <Input
-          placeholder="e.g. Signature, Drinks, Sides"
-          value={form.category}
-          onChange={set("category")}
-          list="category-suggestions"
-          className="h-12 text-[15px] font-semibold border-slate-200 rounded-[8px] focus-visible:ring-indigo-400/20 font-figtree"
-        />
-        <datalist id="category-suggestions">
-          {existingCategories.map((c) => <option key={c} value={c} />)}
-        </datalist>
-      </FormField>
-
-      {/* Price + Cost side by side */}
-      <div className="grid grid-cols-2 gap-5">
-        <FormField label="Selling Price">
-          <Input
-            type="number"
-            min="0"
-            step="any"
-            placeholder="0"
-            value={form.price}
-            onChange={set("price")}
-            onFocus={(e) => e.target.select()}
-            className="h-12 text-[15px] font-semibold border-slate-200 rounded-[8px] focus-visible:ring-indigo-400/20 font-figtree"
-          />
-        </FormField>
-        <FormField label="Cost Price" hint="optional">
-          <Input
-            type="number"
-            min="0"
-            step="any"
-            placeholder="0"
-            value={form.cost}
-            onChange={set("cost")}
-            onFocus={(e) => e.target.select()}
-            className="h-12 text-[15px] font-semibold border-slate-200 rounded-[8px] focus-visible:ring-indigo-400/20 font-figtree"
-          />
-        </FormField>
-      </div>
-
-      {/* Live margin preview */}
-      <div className="rounded-[10px] border border-slate-100 bg-slate-50/60 px-5 py-4 flex items-center justify-between gap-4">
-        <div className="space-y-0.5">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] font-figtree">
-            Margin Preview
-          </div>
-          <div className={cn("text-[26px] font-black font-figtree leading-none", marginColor)}>
-            {margin !== null ? `${margin.toFixed(1)}%` : "—"}
-          </div>
-        </div>
-        {price > 0 && cost > 0 && (
-          <div className="text-right space-y-0.5">
-            <div className="text-[11px] font-semibold text-slate-400 font-figtree">Profit per sale</div>
-            <div className={cn("text-[18px] font-black font-figtree tabular-nums", marginColor)}>
-              {fmt(price - cost)}
-            </div>
-          </div>
-        )}
-        {price > 0 && cost === 0 && (
-          <FigtreeText className="text-[12px] text-slate-400 max-w-[150px] text-right leading-relaxed">
-            Add a cost price to track your profit margin
-          </FigtreeText>
-        )}
-      </div>
-
-      {/* Status — edit mode only */}
-      {isEdit && (
-        <FormField label="Status">
-          <select
-            value={form.status}
-            onChange={(e) => onChange({ ...form, status: e.target.value })}
-            className="w-full h-12 px-3 text-[15px] font-semibold border border-slate-200 rounded-[8px] bg-white text-[#1E293B] focus:outline-none focus:ring-2 focus:ring-indigo-400/20 font-figtree"
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-9 text-[13px] font-figtree"
+            onClick={onEdit}
           >
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
-          </select>
-        </FormField>
-      )}
+            Edit Dish
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
 
-function FormField({
+// ---------------------------------------------------------------------------
+// Pricing row
+// ---------------------------------------------------------------------------
+
+function PricingRow({
   label,
-  hint,
-  required,
-  children,
+  value,
+  bold,
+  valueClass,
 }: {
   label: string;
-  hint?: string;
-  required?: boolean;
-  children: React.ReactNode;
+  value: string;
+  bold?: boolean;
+  valueClass?: string;
 }) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <label className="text-[13px] font-bold text-[#1E293B] font-figtree">
-          {label}
-          {required && <span className="text-rose-500 ml-0.5">*</span>}
-        </label>
-        {hint && (
-          <span className="text-[11px] font-semibold text-slate-400 font-figtree">{hint}</span>
-        )}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Empty state
-// ---------------------------------------------------------------------------
-
-function EmptyMenuState({ onAdd, hasMenu }: { onAdd: () => void; hasMenu: boolean }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-      <div className="h-14 w-14 rounded-[14px] bg-slate-50 border border-slate-100 flex items-center justify-center">
-        <Package className="h-6 w-6 text-slate-300" />
-      </div>
-      <div className="space-y-1.5">
-        <InriaHeading className="text-[20px] font-bold">
-          {hasMenu ? "No dishes match your search" : "No dishes yet"}
-        </InriaHeading>
-        <FigtreeText className="text-[13px] font-semibold text-slate-400 max-w-[220px] leading-relaxed">
-          {hasMenu
-            ? "Try a different search or category filter."
-            : "Add your first dish to start tracking sales and margins."}
-        </FigtreeText>
-      </div>
-      {!hasMenu && (
-        <Button
-          className="h-10 px-6 rounded-[8px] bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-bold text-[13px] font-figtree gap-2 shadow-[0_4px_14px_rgba(59,89,218,0.3)] active:scale-95 transition-all mt-2"
-          onClick={onAdd}
-        >
-          <Plus className="h-4 w-4" />
-          Add First Dish
-        </Button>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Skeleton
-// ---------------------------------------------------------------------------
-
-function MenuManagementSkeleton() {
-  return (
-    <div>
-      <div className="bg-gradient-to-r from-[#091558] via-[#3851dd] to-[#091558] px-5 md:px-7 py-6 md:py-8 grid grid-cols-4 gap-3 md:gap-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white rounded-[12px] p-4 md:p-5 animate-pulse space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-full bg-slate-100" />
-              <div className="h-2 w-3/4 rounded bg-slate-100" />
-            </div>
-            <div className="h-8 w-2/3 rounded bg-slate-100" />
-            <div className="h-2 w-1/2 rounded bg-slate-100" />
-          </div>
-        ))}
-      </div>
-      <div className="p-6 md:p-7">
-        <div className="flex items-center justify-between mb-5">
-          <Skeleton className="h-7 w-32 rounded-[8px]" />
-          <div className="flex gap-3">
-            <Skeleton className="h-10 w-36 rounded-[8px]" />
-            <Skeleton className="h-10 w-36 rounded-[8px]" />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {[...Array(8)].map((_, i) => (
-            <Skeleton key={i} className="h-56 rounded-[12px]" />
-          ))}
-        </div>
-      </div>
+    <div className="flex items-center justify-between">
+      <span className="text-[12px] text-slate-500 font-figtree">{label}</span>
+      <span className={cn(
+        "text-[13px] font-figtree",
+        bold ? "font-bold" : "",
+        valueClass ?? "text-slate-700"
+      )}>
+        {value}
+      </span>
     </div>
   );
 }

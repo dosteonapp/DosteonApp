@@ -68,6 +68,30 @@ export interface ExpenseHistoryPage {
   items: ExpenseHistoryItem[];
 }
 
+export interface ExpenseHistoryParams {
+  page?: number;
+  limit?: number;
+  days?: number;
+  expense_type?: ExpenseType;
+}
+
+export interface TodayExpenseItem {
+  id: string;
+  item_name: string;
+  expense_type: string;
+  source: string | null;
+  amount: number;
+  quantity: string | null;
+  unit: string | null;
+  category: string | null;
+  occurred_at: string | null;
+}
+
+export interface ExpenseUpdateResult {
+  old: { item_name: string; amount: number; expense_type: string; category: string | null };
+  new: { item_name: string; amount: number; expense_type: string; category: string | null };
+}
+
 export const expenseService = {
   async createExpense(payload: ExpenseCreatePayload): Promise<ExpenseOut> {
     const { data } = await axiosInstance.post<ExpenseOut>("/expenses", payload);
@@ -84,12 +108,32 @@ export const expenseService = {
     return data;
   },
 
-  async getHistory(params?: {
-    page?: number;
-    limit?: number;
-    days?: number;
-  }): Promise<ExpenseHistoryPage> {
+  async getHistory(params?: ExpenseHistoryParams): Promise<ExpenseHistoryPage> {
     const { data } = await axiosInstance.get<ExpenseHistoryPage>("/expenses/history", { params });
+    return data;
+  },
+
+  async getToday(brandId?: string): Promise<TodayExpenseItem[]> {
+    const { data } = await axiosInstance.get<TodayExpenseItem[]>("/expenses/today", {
+      params: brandId ? { brand_id: brandId } : {},
+    });
+    return data;
+  },
+
+  async updateExpense(
+    expenseId: string,
+    payload: Partial<{
+      item_name: string;
+      amount: number;
+      quantity: string;
+      unit: string;
+      expense_type: string;
+    }>
+  ): Promise<ExpenseUpdateResult> {
+    const { data } = await axiosInstance.patch<ExpenseUpdateResult>(
+      `/expenses/${expenseId}`,
+      payload
+    );
     return data;
   },
 };

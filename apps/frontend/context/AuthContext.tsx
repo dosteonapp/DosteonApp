@@ -67,7 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { mutateAsync: loginMutation } = useMutation({
     mutationFn: async (credentials: LoginValues) => {
-      const { data } = await axiosInstance.post("auth/login", credentials);
+      const { data } = await axiosInstance.post("auth/login", {
+        ...credentials,
+        email: credentials.email.trim().toLowerCase(),
+      });
       return data;
     },
   });
@@ -75,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { mutateAsync: signupMutation } = useMutation({
     mutationFn: async (values: SignupValues) => {
       const { data } = await axiosInstance.post("auth/signup", {
-        email: values.email,
+        email: values.email.trim().toLowerCase(),
         password: values.password,
         role: values.accountType,
       });
@@ -216,9 +219,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push(onboardingCompleted ? "/dashboard" : "/onboarding");
       return true;
     } catch (error) {
-      // Keep the error inline on the form — never route away on a login failure.
-      // Routing to a failure page for a wrong password breaks the mental model.
-      helpers.setStatus({ error: handleApiError(error).message });
+      const errorMsg = handleApiError(error).message;
+      const needsVerification = errorMsg.toLowerCase().includes("verify your email");
+      helpers.setStatus({ error: errorMsg, needsVerification });
       return false;
     } finally {
       helpers.setSubmitting(false);
@@ -305,16 +308,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       await resendVerificationMutation(email);
-      toast.success("Verification email resent", {
-        description: `We've sent a new verification link to ${email}.`,
-      });
       return { success: true };
     } catch (error) {
-      const handled = handleApiError(error);
-      toast.error("Could not resend verification email", {
-        description: handled.message,
-      });
-      return { success: false };
+      // Re-throw so callers (EmailCheckScreen) can show inline feedback.
+      // 429 rate-limit and other errors are surfaced there instead of a toast.
+      throw error;
     }
   };
 
