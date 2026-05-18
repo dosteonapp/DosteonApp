@@ -85,13 +85,14 @@ const nextConfig = {
         source: '/(.*)',
         headers: securityHeaders,
       },
-      {
+      ...(process.env.NODE_ENV === 'production' ? [{
         // Hash-named JS/CSS chunks — safe to cache forever (new hash = new URL on each build).
+        // Production only: Next.js dev mode rejects custom Cache-Control on /_next/static/*.
         source: '/_next/static/(.*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
-      },
+      }] : []),
       {
         // Static public files — cache for 1 day (no content hash, so shorter TTL).
         source: '/:file(favicon\\.ico|manifest\\.json)',
