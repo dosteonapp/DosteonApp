@@ -5,31 +5,26 @@ from app.core.logging import get_logger
 
 logger = get_logger("security")
 
-async def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
+async def verify_firebase_token(token: str) -> Optional[Dict[str, Any]]:
     """
-    Verify the Supabase JWT token.
-    In a real production environment, this would verify the signature using 
-    the Supabase JWT secret or public key.
-    
-    For now, we use the Supabase client's get_user which is the most 
-    bulletproof way as it also checks session validity with the Auth server.
+    Verify the Firebase ID token using firebase-admin.
     """
     try:
-        from app.core.supabase import supabase
+        from firebase_admin import auth
         
-        # This call verifies the token integrity and checks with Supabase GoTrue
-        user_response = supabase.auth.get_user(token)
+        # Verify the token integrity and check with Firebase Auth
+        decoded_token = auth.verify_id_token(token)
         
-        if not user_response or not user_response.user:
+        if not decoded_token or not decoded_token.get("uid"):
             return None
             
         # Return the user data as the payload
         return {
-            "id": user_response.user.id,
-            "email": user_response.user.email,
-            "role": user_response.user.role,
-            "app_metadata": user_response.user.app_metadata,
-            "user_metadata": user_response.user.user_metadata,
+            "id": decoded_token.get("uid"),
+            "email": decoded_token.get("email"),
+            "role": decoded_token.get("role", "STAFF"),
+            "app_metadata": decoded_token, # Custom claims or other metadata
+            "user_metadata": decoded_token, # Keep parity with expected payload
         }
     except Exception as e:
         logger.error(f"JWT Verification failed: {str(e)}")

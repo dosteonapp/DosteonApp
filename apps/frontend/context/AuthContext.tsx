@@ -3,7 +3,7 @@
 import React, { createContext, useContext, ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import axiosInstance from "@/lib/axios";
+
 import { bypassAuth } from "@/lib/flags";
 import {
   handleApiError,
@@ -18,8 +18,20 @@ import {
   ResetPasswordValues,
 } from "@/types/auth";
 import { FormikHelpers } from "formik";
-import { useGoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
+import { 
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  confirmPasswordReset,
+  signInWithPopup,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signOut
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -28,36 +40,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [authenticatingWithGoogle, setAuthenticatingWithGoogle] =
     React.useState<boolean>(false);
+  const [authenticatingWithApple, setAuthenticatingWithApple] =
+    React.useState<boolean>(false);
 
   React.useEffect(() => {
     if (bypassAuth) return;
     
-    const initAuth = async () => {
-      const { createClient } = await import("@/lib/supabase/client");
-      try {
-        const supabase = createClient();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      // Invalidate user query to trigger UI refresh on any auth change
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+    });
 
-        const {
-          data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event: string, _session: any) => {
-          // Invalidate user query to trigger UI refresh on any auth change
-          queryClient.invalidateQueries({ queryKey: ["user"] });
-        });
-
-        return () => {
-          subscription.unsubscribe();
-        };
-      } catch (err) {
-        console.warn("Supabase initialization skipped:", err);
-      }
+    return () => {
+      unsubscribe();
     };
-
-    initAuth();
   }, [queryClient, router]);
 
   const authenticateWithGoogle = async () => {
     setAuthenticatingWithGoogle(true);
     await authenticateWithOAuth("google");
+    setAuthenticatingWithGoogle(false);
+  };
+
+  const authenticateWithApple = async () => {
+    setAuthenticatingWithApple(true);
+    await authenticateWithOAuth("apple");
+    setAuthenticatingWithApple(false);
   };
 
   const [resetPasswordData, setResetPasswordData] = React.useState<{
@@ -65,79 +73,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     selector?: string;
   } | null>(null);
 
-  const { mutateAsync: loginMutation } = useMutation({
-    mutationFn: async (credentials: LoginValues) => {
-      const { data } = await axiosInstance.post("auth/login", {
-        ...credentials,
-        email: credentials.email.trim().toLowerCase(),
-      });
-      return data;
-    },
-  });
-
-  const { mutateAsync: signupMutation } = useMutation({
-    mutationFn: async (values: SignupValues) => {
-      const { data } = await axiosInstance.post("auth/signup", {
-        email: values.email.trim().toLowerCase(),
-        password: values.password,
-        role: values.accountType,
-      });
-      return data;
-    },
-  });
-
-  const { mutateAsync: forgotPasswordMutation } = useMutation({
-    mutationFn: async (values: ForgotPasswordValues) => {
-      const { data } = await axiosInstance.post("auth/forgot-password", {
-        email: values.email,
-        account_type: values.accountType,
-      });
-      return data;
-    },
-  });
-
-  const { mutateAsync: resetPasswordMutation } = useMutation({
-    mutationFn: async (values: ResetPasswordValues) => {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session?.access_token) {
-        throw new Error("Your password reset link has expired. Please request a new one.");
-      }
-
-      const { data } = await axiosInstance.post("auth/reset-password", {
-        access_token: session.access_token,
-        password: values.password,
-        confirmPassword: values.confirmPassword,
-      });
-      return data;
-    },
-  });
-
-  const { mutateAsync: resendVerificationMutation } = useMutation({
-    mutationFn: async (email: string) => {
-      const { data } = await axiosInstance.post("auth/resend-verification", { email });
-      return data;
-    },
-  });
-
   const sendMagicLink = async (email: string) => {
     if (bypassAuth) {
       toast.info("Magic links are disabled in bypass mode");
       return { success: true };
     }
-
-    try {
-      await axiosInstance.post("auth/magic-link", { email });
-      return { success: true };
-    } catch (error) {
-      const parsed = handleApiError(error);
-      toast.error("Error sending magic link email", {
-        description: parsed.message,
-      });
-      return { success: false };
-    }
+    toast.error("Magic link not yet fully migrated to Firebase");
+    return { success: false };
   };
 
   const authenticateWithOAuth = async (provider: 'google' | 'apple') => {
@@ -154,17 +96,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    const { createClient } = await import("@/lib/supabase/client");
-    const supabase = createClient();
-    if (!supabase) return;
+    let authProvider;
+    if (provider === 'google') {
+      authProvider = new GoogleAuthProvider();
+    } else if (provider === 'apple') {
+      authProvider = new OAuthProvider('apple.com');
+      authProvider.addScope('email');
+      authProvider.addScope('name');
+    } else {
+      throw new Error("Provider not yet implemented with Firebase");
+    }
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      }
-    });
-    if (error) throw error;
+    try {
+      const result = await signInWithPopup(auth, authProvider);
+      
+      router.push("/dashboard");
+      
+    } catch (error: any) {
+      console.error(`OAuth login failed for ${provider}`, error);
+      toast.error(error.message || `Failed to sign in with ${provider}`);
+      throw error;
+    }
   };
 
   const login = async (
@@ -191,35 +143,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       }
 
-      const data = await loginMutation(values);
-
-      // Set the session in the Supabase client — single source of truth.
-      if (data.access_token && data.refresh_token) {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-        });
-        if (sessionError) throw sessionError;
-      }
+      const email = values.email.trim().toLowerCase();
+      await signInWithEmailAndPassword(auth, email, values.password);
 
       // Flush stale user/profile cache so the dashboard loads fresh data.
       await queryClient.invalidateQueries({ queryKey: ["user"] });
 
-      // Route based on onboarding status — new users who verified email but
-      // abandoned the flow must be funnelled back to /onboarding, not /dashboard.
-      let onboardingCompleted = true; // safe default: don't block existing users on API failure
-      try {
-        const { data: profile } = await axiosInstance.get("/auth/me");
-        onboardingCompleted = Boolean(profile?.onboarding_completed);
-      } catch {
-        // API unreachable — keep safe default (true) so existing users aren't blocked
-      }
-      router.push(onboardingCompleted ? "/dashboard" : "/onboarding");
+      router.push("/dashboard");
       return true;
-    } catch (error) {
-      const errorMsg = handleApiError(error).message;
+    } catch (error: any) {
+      // Provide user-friendly errors or keep it simple
+      const errorMsg = error.message || "Failed to login";
       const needsVerification = errorMsg.toLowerCase().includes("verify your email");
       helpers.setStatus({ error: errorMsg, needsVerification });
       return false;
@@ -240,10 +174,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true, email: values.email };
       }
 
-      await signupMutation(values);
+      const email = values.email.trim().toLowerCase();
+      
+      // Step 1: Create user in Firebase
+      const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
+      
+      // Send verification email optionally
+      await sendEmailVerification(userCredential.user);
+
+
+
       return { success: true, email: values.email };
-    } catch (error) {
-      helpers.setStatus({ error: handleApiError(error).message });
+    } catch (error: any) {
+      helpers.setStatus({ error: error.message || "Failed to sign up" });
       return { success: false };
     } finally {
       helpers.setSubmitting(false);
@@ -256,21 +199,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<{ success: boolean } | void> => {
     try {
       resetFormStatus(helpers);
-      // Infer which tenant is using the flow from the current path.
-      // This lets the backend generate a reset link that returns
-      // to the correct reset-password page (restaurant vs supplier).
-      const inferredAccountType: "restaurant" | "supplier" =
-        typeof window !== "undefined" && window.location.pathname.includes("/supplier/")
-          ? "supplier"
-          : "restaurant";
-
-      await forgotPasswordMutation({
-        ...values,
-        accountType: values.accountType ?? inferredAccountType,
-      });
+      
+      await sendPasswordResetEmail(auth, values.email);
+      
       return { success: true };
-    } catch (error) {
-      helpers.setStatus({ error: handleApiError(error).message });
+    } catch (error: any) {
+      helpers.setStatus({ error: error.message || "Failed to send reset email" });
     } finally {
       helpers.setSubmitting(false);
     }
@@ -282,19 +216,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       resetFormStatus(helpers);
-      await resetPasswordMutation(values);
+      
+      const queryParams = new URLSearchParams(window.location.search);
+      const oobCode = queryParams.get('oobCode');
 
-      // Invalidate all sessions after a password change — force re-authentication.
-      // This ensures any compromised session tokens are revoked immediately.
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      if (supabase) await supabase.auth.signOut({ scope: "global" });
+      if (!oobCode) {
+        throw new Error("Password reset link is invalid or expired.");
+      }
+
+      await confirmPasswordReset(auth, oobCode, values.password);
+
+      // Sign out to force re-authentication
+      await signOut(auth);
 
       queryClient.clear();
       toast.success("Password reset successfully. Please sign in again.");
       router.replace("/auth/restaurant/signin");
-    } catch (error) {
-      helpers.setStatus({ error: handleApiError(error).message });
+    } catch (error: any) {
+      helpers.setStatus({ error: error.message || "Failed to reset password" });
     } finally {
       helpers.setSubmitting(false);
     }
@@ -307,11 +246,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       }
 
-      await resendVerificationMutation(email);
+      const currentUser = auth.currentUser;
+      if (currentUser && !currentUser.emailVerified) {
+        await sendEmailVerification(currentUser);
+      }
       return { success: true };
     } catch (error) {
-      // Re-throw so callers (EmailCheckScreen) can show inline feedback.
-      // 429 rate-limit and other errors are surfaced there instead of a toast.
       throw error;
     }
   };
@@ -325,9 +265,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resetPasswordData,
     setResetPasswordData,
     sendMagicLink,
-    authenticateWithOAuth,
     authenticatingWithGoogle,
     authenticateWithGoogle,
+    authenticatingWithApple,
+    authenticateWithApple,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

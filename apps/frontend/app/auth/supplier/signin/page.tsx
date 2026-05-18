@@ -22,7 +22,7 @@ import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, sendMagicLink, authenticateWithOAuth, resendVerification } = useAuth();
+  const { login, sendMagicLink, authenticateWithGoogle, authenticateWithApple, resendVerification } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'password' | 'magic'>('password');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
@@ -68,13 +68,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
-    try {
-      await authenticateWithOAuth(provider);
-    } catch (err: any) {
-      toast.error(err.message || "Social login failed");
-    }
-  };
+
 
   if (redirecting) {
     return (
@@ -254,8 +248,8 @@ export default function LoginPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    disabled
-                    className="flex-1 flex items-center justify-center gap-2 h-12 rounded-lg border-gray-200 opacity-50 cursor-not-allowed"
+                    onClick={() => authenticateWithGoogle()}
+                    className="flex-1 flex items-center justify-center gap-2 h-12 rounded-lg border-gray-200"
                   >
                     <img src="/images/google-icon.svg" alt="Google" className="w-5 h-5" />
                     Google
@@ -263,8 +257,8 @@ export default function LoginPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    disabled
-                    className="flex-1 flex items-center justify-center gap-2 h-12 rounded-lg border-gray-200 opacity-50 cursor-not-allowed"
+                    onClick={() => authenticateWithApple()}
+                    className="flex-1 flex items-center justify-center gap-2 h-12 rounded-lg border-gray-200"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M16.365 1.43c0 1.14-.93 2.07-2.07 2.07-.04 0-.08 0-.12-.01-.02-.04-.03-.09-.03-.14 0-1.13.93-2.06 2.07-2.06.04 0 .08 0 .12.01.02.04.03.09.03.13zm2.52 4.13c-1.34-.08-2.47.77-3.11.77-.65 0-1.65-.75-2.72-.73-1.4.02-2.7.82-3.42 2.09-1.46 2.54-.37 6.3 1.05 8.36.7 1.01 1.53 2.14 2.62 2.1 1.06-.04 1.46-.68 2.74-.68 1.28 0 1.64.68 2.73.66 1.13-.02 1.84-1.03 2.53-2.04.8-1.18 1.13-2.32 1.14-2.38-.02-.01-2.19-.84-2.21-3.33-.02-2.08 1.7-3.07 1.78-3.12-1-.15-1.97.6-2.5.6-.53 0-1.34-.59-2.21-.57zm-2.6-3.36c.38-.46.64-1.1.57-1.74-.55.02-1.22.37-1.62.83-.36.41-.67 1.07-.55 1.7.59.05 1.21-.34 1.6-.79z" />

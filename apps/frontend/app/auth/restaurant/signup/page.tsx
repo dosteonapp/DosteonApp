@@ -32,7 +32,7 @@ export default function RegisterPage() {
 }
 
 function RegisterPageContent() {
-  const { signup, authenticateWithOAuth, resendVerification } = useAuth();
+  const { signup, authenticateWithGoogle, authenticateWithApple, resendVerification } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [email, setEmail] = useState("");
@@ -61,13 +61,7 @@ function RegisterPageContent() {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
-    try {
-      await authenticateWithOAuth(provider);
-    } catch (err: any) {
-      toast.error(err.message || "Social login failed");
-    }
-  };
+
 
   const handleResendVerification = async () => {
     if (!email) return;
@@ -225,8 +219,8 @@ function RegisterPageContent() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button
                       type="button"
-                      disabled
-                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 opacity-50 cursor-not-allowed transition-colors"
+                      onClick={() => authenticateWithGoogle()}
+                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       <img
                         src="/images/google-icon.svg"
@@ -237,8 +231,8 @@ function RegisterPageContent() {
                     </Button>
                     <Button
                       type="button"
-                      disabled
-                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 opacity-50 cursor-not-allowed transition-colors"
+                      onClick={() => authenticateWithApple()}
+                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       <svg
                         className="w-5 h-5"

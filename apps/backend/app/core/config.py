@@ -20,12 +20,13 @@ class Settings(BaseSettings):
     RATE_LIMIT_AUTH: str = Field("10/minute", validation_alias="RATE_LIMIT_AUTH")
     RATE_LIMIT_MUTATIONS: str = Field("120/minute", validation_alias="RATE_LIMIT_MUTATIONS")
 
-    # ── Supabase ──────────────────────────────────────────────────────────
+    # ── Supabase & Firebase ───────────────────────────────────────────────
     s_url: str = Field("https://fpxzixwzixwzixwzixwz.supabase.co", validation_alias="SUPABASE_URL")
     s_anon_key: str = Field(..., validation_alias="SUPABASE_ANON_KEY")
     s_service_role_key: Optional[str] = Field(None, validation_alias="SUPABASE_SERVICE_ROLE_KEY")
     DATABASE_URL: Optional[str] = Field(None, validation_alias="DATABASE_URL")
     DIRECT_URL: Optional[str] = Field(None, validation_alias="DIRECT_URL")
+    FIREBASE_ADMIN_CREDENTIALS: Optional[str] = Field(None, validation_alias="FIREBASE_ADMIN_CREDENTIALS")
 
     # ── CORS ──────────────────────────────────────────────────────────────
     # Stored as str so pydantic_settings doesn't try to JSON-decode it in its

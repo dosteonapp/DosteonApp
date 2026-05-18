@@ -71,7 +71,7 @@ export interface AuthContextType {
     helpers: FormikHelpers<ResetPasswordValues>
   ) => Promise<void>;
   sendMagicLink: (email: string) => Promise<{ success: boolean }>;
-  authenticateWithOAuth: (provider: 'google' | 'apple') => Promise<void>;
+
   resendVerification: (email: string) => Promise<{ success: boolean }>;
   resetPasswordData: { email?: string; selector?: string } | null;
   setResetPasswordData: (
@@ -79,5 +79,7 @@ export interface AuthContextType {
   ) => void;
   authenticateWithGoogle: () => Promise<void>;
   authenticatingWithGoogle: boolean;
+  authenticateWithApple: () => Promise<void>;
+  authenticatingWithApple: boolean;
   verifyEmail: (email: string, code: string) => Promise<any>;
 }

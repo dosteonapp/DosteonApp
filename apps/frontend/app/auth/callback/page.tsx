@@ -10,143 +10,47 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      if (!supabase) {
-        router.replace("/auth/restaurant/signin");
-        return;
-      }
-
+      const { auth } = await import("@/lib/firebase");
+      const { isSignInWithEmailLink, signInWithEmailLink } = await import("firebase/auth");
+      
       const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      const type = params.get("type");
-      const errorParam = params.get("error");
-      const errorDescription = params.get("error_description");
-      const accountType = params.get("account_type");
       const nextParam = params.get("next");
 
-      // Supabase passes errors as query params on some flows (e.g. expired link)
-      if (errorParam) {
-        const msg =
-          errorDescription?.replace(/\+/g, " ") ??
-          "This link is invalid or has expired. Please request a new one.";
-        setError(msg);
-        return;
-      }
-
-      // Recovery flow (password reset)
-      if (type === "recovery") {
-        const targetPath =
-          accountType === "supplier"
-            ? "/auth/supplier/reset-password"
-            : "/auth/restaurant/reset-password";
-        router.replace(targetPath);
-        return;
-      }
-
-      let session = null;
-
-      // PKCE flow — code in query string
-      if (code) {
-        const { data, error: exchError } = await supabase.auth.exchangeCodeForSession(code);
-        if (exchError) {
-          console.error("[auth/callback] exchangeCodeForSession failed:", exchError.message);
-          const isExpired =
-            exchError.message.toLowerCase().includes("expired") ||
-            exchError.message.toLowerCase().includes("invalid");
-          setError(
-            isExpired
-              ? "This verification link has expired or already been used. Please request a new one."
-              : "Sign in could not be completed. Please try again."
-          );
-          return;
-        }
-        session = data.session;
-      } else {
-        // Implicit flow — tokens are in the URL hash fragment
-        const hash = window.location.hash.substring(1);
-        const hashParams = new URLSearchParams(hash);
-        const accessToken = hashParams.get("access_token");
-        const refreshToken = hashParams.get("refresh_token");
-        const hashError = hashParams.get("error");
-        const hashErrorDesc = hashParams.get("error_description");
-
-        if (hashError) {
-          setError(
-            hashErrorDesc?.replace(/\+/g, " ") ??
-            "This link is invalid or has expired. Please request a new one."
-          );
+      if (isSignInWithEmailLink(auth, window.location.href)) {
+        let email = window.localStorage.getItem('emailForSignIn');
+        if (!email) {
+          // If missing email, we could prompt the user for it, but for simplicity here we assume it's available or we fail gracefully
+          setError("Session expired or missing email. Please try signing in again.");
           return;
         }
 
-        if (accessToken && refreshToken) {
-          const { data, error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (sessionError) {
-            console.error("[auth/callback] setSession failed:", sessionError.message);
-            setError("Sign in could not be completed. Please try again.");
-            return;
-          }
-          session = data.session;
-        }
-      }
-
-      if (!session) {
-        // No code, no hash tokens — link is malformed, expired, or already used.
-        setError(
-          "This link is invalid or has already been used. Please sign in or request a new verification email."
-        );
-        return;
-      }
-
-      // Identify and track email verification once per callback
-      if (!emailVerifiedFired.current) {
-        emailVerifiedFired.current = true;
-        const userId = session.user?.id;
-        if (userId) {
-          identifyUser(userId, { email: session.user?.email });
-        }
-        trackEvent("email_verified", {
-          user_id: userId ?? null,
-          method: "email/password",
-        });
-      }
-
-      // Fetch the backend profile — DB is the source of truth for onboarding_completed.
-      // Use a direct fetch with AbortController instead of axiosInstance so we bypass
-      // the 5s retry-wait in the network-error interceptor.
-      let onboardingCompleted = false;
-      {
-        const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 3000);
         try {
-          const res = await fetch("/api/v1/auth/me", {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-            credentials: "include",
-            signal: controller.signal,
-          });
-          clearTimeout(tid);
-          if (res.ok) {
-            const profile = await res.json();
-            onboardingCompleted = Boolean(profile?.onboarding_completed);
-          } else {
-            const metadata = session.user?.user_metadata ?? {};
-            onboardingCompleted = Boolean(metadata.onboarding_completed);
+          const result = await signInWithEmailLink(auth, email, window.location.href);
+          window.localStorage.removeItem('emailForSignIn');
+          
+          if (!emailVerifiedFired.current) {
+            emailVerifiedFired.current = true;
+            const userId = result.user.uid;
+            identifyUser(userId, { email: result.user.email });
+            trackEvent("email_verified", {
+              user_id: userId,
+              method: "email/password",
+            });
           }
-        } catch {
-          clearTimeout(tid);
-          const metadata = session.user?.user_metadata ?? {};
-          onboardingCompleted = Boolean(metadata.onboarding_completed);
+          
+          if (nextParam?.startsWith("/")) {
+            router.replace(nextParam);
+          } else {
+            router.replace("/dashboard");
+          }
+        } catch (err: any) {
+          console.error("Firebase sign in with link failed", err);
+          setError("This link is invalid or has expired. Please request a new one.");
         }
-      }
-
-      if (onboardingCompleted && nextParam?.startsWith("/")) {
-        // Only honour ?next= for already-onboarded users to prevent skipping
-        router.replace(nextParam);
+      } else if (auth.currentUser) {
+         router.replace(nextParam?.startsWith("/") ? nextParam : "/dashboard");
       } else {
-        router.replace(onboardingCompleted ? "/dashboard" : "/onboarding");
+         setError("This link is invalid or has already been used.");
       }
     };
 

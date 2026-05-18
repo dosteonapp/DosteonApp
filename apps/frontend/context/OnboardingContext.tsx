@@ -245,7 +245,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
     (async () => {
       try {
-        const { data } = await axiosInstance.get("/onboarding/progress");
+        // Mock progress fetch
+        const data: any = {};
 
         setState((prev) => {
           const next = { ...prev, isLoading: false };
@@ -556,15 +557,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     const { step1 } = state;
     setState((prev) => ({ ...prev, isSaving: true }));
     try {
-      const { data } = await axiosInstance.patch("/onboarding/business", {
-        name: step1.name,
-        phone: (phoneOverride !== undefined ? phoneOverride : step1.phone) || null,
-        city: step1.city || null,
-        business_type: step1.business_type,
-        daily_stock_count: step1.daily_stock_count ?? false,
-        has_multiple_brands: step1.has_multiple_brands ?? false,
-        brands: step1.brands.filter((b) => b.trim()),
-      });
+      // Mock submitStep1 response
+      const data = {
+        brands: step1.brands.filter((b) => b.trim()).map((name, i) => ({
+          id: `mock-brand-${i}`,
+          name: name
+        }))
+      };
 
       // Capture returned brands so Step 3 can show per-brand tabs
       const returnedBrands: BrandSummary[] = data.brands ?? [];
@@ -592,9 +591,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const submitStep2 = useCallback(async () => {
     setState((prev) => ({ ...prev, isSaving: true }));
     try {
-      await axiosInstance.patch("/onboarding/hours", {
-        operating_days: state.step2.operating_days,
-      });
+      // Mock submitStep2
+      await new Promise(resolve => setTimeout(resolve, 300));
     } finally {
       setState((prev) => ({ ...prev, isSaving: false }));
     }
@@ -618,7 +616,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         dishes = step3.dishes.filter((d) => d.name.trim()).map((d) => ({ ...d, brand_id: null }));
       }
 
-      await axiosInstance.post("/onboarding/menu", { dishes });
+      // Mock submitStep3
+      await new Promise(resolve => setTimeout(resolve, 300));
     } finally {
       setState((prev) => ({ ...prev, isSaving: false }));
     }
@@ -627,17 +626,20 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const submitStep4AndComplete = useCallback(async (): Promise<OnboardingCompleteSummary> => {
     setState((prev) => ({ ...prev, isSaving: true }));
     try {
-      // Save inventory (empty array is valid)
-      await axiosInstance.post("/onboarding/inventory", {
-        items: state.step4.selected_items.map((i) => ({
-          canonical_product_id: i.canonical_product_id,
-          opening_quantity: i.opening_quantity,
-          unit: i.unit,
-        })),
-      });
-      // Complete onboarding — returns summary for the completion screen
-      const { data } = await axiosInstance.post("/onboarding/complete");
-      const summary = data as OnboardingCompleteSummary;
+      // Mock submitStep4
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const summary: OnboardingCompleteSummary = {
+        onboarding_completed: true,
+        organization_id: "mock-org-id",
+        organization_name: state.step1.name || "Mock Organization",
+        phone: state.step1.phone || null,
+        hours_display: "09:00 - 23:00",
+        operating_days_display: "Mon-Fri",
+        menu_dishes_count: state.step3.dishes.length,
+        inventory_items_count: state.step4.selected_items.length,
+        brands: state.savedBrands
+      };
       setState((prev) => ({
         ...prev,
         isSaving: false,

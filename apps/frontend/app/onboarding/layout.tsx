@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { OnboardingProvider } from "@/context/OnboardingContext";
+import { auth } from "@/lib/firebase";
 
 /**
  * Onboarding layout — two responsibilities:
@@ -23,34 +24,12 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
     if (checked.current) return;
     checked.current = true;
 
-    (async () => {
-      try {
-        // Need a live session to know the onboarding status.
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        if (!supabase) return;
-
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          // No session — send to sign in; they can't be in onboarding without auth.
-          router.replace("/auth/restaurant/signin");
-          return;
-        }
-
-        // Fetch backend profile — source of truth for onboarding_completed.
-        const { default: axiosInstance } = await import("@/lib/axios");
-        const { data: profile } = await axiosInstance.get("/auth/me");
-
-        if (profile?.onboarding_completed === true) {
-          // Already completed — bounce to dashboard silently.
-          router.replace("/dashboard");
-        }
-        // If not completed: do nothing, let the onboarding page render.
-      } catch {
-        // Network error or cold-start — let the page render; it handles
-        // its own loading state via OnboardingContext.
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      unsubscribe();
+      if (!user) {
+        router.replace("/auth/restaurant/signin");
       }
-    })();
+    });
   }, [router]);
 
   return (

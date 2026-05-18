@@ -188,37 +188,6 @@ async def _ensure_storage_buckets():
         logger.warning(f"Storage RLS policy setup failed (non-fatal): {e}")
 
 
-async def _validate_supabase_admin():
-    """Verify the Supabase client is using the service role key.
-
-    Makes a cheap admin API call at startup. If it returns 403 or throws,
-    we log a loud CRITICAL error so Render logs surface the problem
-    immediately — instead of discovering it from user signup complaints.
-    """
-    from app.core.logging import get_logger
-    from app.core.supabase import supabase
-
-    logger = get_logger("startup.supabase")
-    try:
-        # Cheapest admin call: list 1 user — just to verify key permissions
-        await asyncio.to_thread(lambda: supabase.auth.admin.list_users(page=1, per_page=1))
-        logger.info("Supabase admin client: OK (service role key confirmed)")
-    except Exception as e:
-        err = str(e).lower()
-        if "403" in err or "user not allowed" in err or "forbidden" in err:
-            logger.critical(
-                "SUPABASE ADMIN CLIENT IS MISCONFIGURED — "
-                "admin.list_users returned 403. The service role key is missing, "
-                "wrong, or Supabase has disabled admin access. "
-                "Signup and email verification WILL FAIL until this is fixed. "
-                f"Raw error: {e}"
-            )
-        else:
-            logger.error(
-                f"Supabase admin client check failed (non-403): {e}. "
-                "Signup may be degraded."
-            )
-
 
 @app.on_event("startup")
 async def startup_event():
@@ -229,9 +198,12 @@ async def startup_event():
         logger = get_logger("startup")
         logger.error(f"Failed to connect to database on startup: {e}")
 
+    # Initialize Firebase Admin
+    from app.core.firebase import initialize_firebase
+    initialize_firebase()
+
     # Validate Supabase admin client — loud failure if service role key is wrong
     import asyncio
-    asyncio.create_task(_validate_supabase_admin())
     asyncio.create_task(_ensure_storage_buckets())
 
     # Run GDPR retention purge in the background — non-blocking, non-fatal

@@ -7,9 +7,10 @@ import {
   useMutation,
 } from "@tanstack/react-query";
 import { User, UserContextType } from "@/types/user";
-import axiosInstance from "@/lib/axios";
 import { bypassAuth } from "@/lib/flags";
 import { toast } from "sonner";
+import { auth } from "@/lib/firebase";
+import { updateProfile } from "firebase/auth";
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -37,76 +38,57 @@ const UserContent: React.FC<{ children: React.ReactNode; queryClient: QueryClien
     queryFn: async () => {
       // 1. Bypass Auth Mode (Mock Data)
       if (bypassAuth) {
-        try {
-          // Attempt to get real profile if backend is alive
-          const { data } = await axiosInstance.get("auth/me");
-          return data;
-        } catch {
-          const savedMock = localStorage.getItem('mock_user');
-          if (savedMock) {
-            try {
-              return JSON.parse(savedMock) as User;
-            } catch {
-              // Silently fail mock parse
-            }
+        const savedMock = localStorage.getItem('mock_user');
+        if (savedMock) {
+          try {
+            return JSON.parse(savedMock) as User;
+          } catch {
+            // Silently fail mock parse
           }
-          return {
-            id: "mock-restaurant-id",
-            email: "admin@therestaurant.com",
-            first_name: "Sherry",
-            last_name: "Harper",
-            role: "MANAGER",
-            created_at: new Date().toISOString(),
-          } as User;
         }
+        return {
+          id: "mock-restaurant-id",
+          email: "admin@therestaurant.com",
+          first_name: "Sherry",
+          last_name: "Harper",
+          role: "MANAGER",
+          created_at: new Date().toISOString(),
+        } as User;
       }
       
-      // 2. Production Auth Mode (Session Check First)
-      try {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        if (!supabase) return null;
-
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        // No session = no point calling the backend auth/me
-        if (!session) return null;
-
-        const metadata = (session.user?.user_metadata ?? {}) as Record<string, any>;
-
-        // Fetch the backend profile now that we have a confirmed session
-        const { data } = await axiosInstance.get("auth/me");
-        return {
-          ...data,
-          // Use the backend-resolved value (DB merged with metadata) as the
-          // canonical source of truth. Fall back to metadata only when the DB
-          // field is absent (pre-migration sessions).
-          onboardingCompleted: data.onboarding_completed !== undefined
-            ? Boolean(data.onboarding_completed)
-            : Boolean(metadata.onboarding_completed),
-          onboardingSkipped: Boolean(metadata.onboarding_skipped),
-          emailVerified: Boolean(metadata.email_verified),
-        } as User;
-      } catch (err: unknown) {
-        // 3. Graceful error handling for network/Supabase failures
-        const error = err as any;
-        const isNetworkError = error.message === 'Failed to fetch' || !error.response;
-        
-        if (isNetworkError) {
-          // If we're offline or Supabase is down, don't spam the console with a Stack Trace
-          // Just let the UI handle the 'No User' state.
-          console.warn("User profile fetch skipped: Network unreachable or Supabase project is down.");
-        } else {
-          const errorStatus = error.response?.status;
-          const friendlyDetail = error.response?.data?.detail || error.message;
-          if (typeof errorStatus === "number" && errorStatus >= 400 && errorStatus !== 401 && errorStatus !== 404) {
-            toast.error(`Error ${errorStatus}`, { description: friendlyDetail });
-          } else if (errorStatus !== 401 && errorStatus !== 404) {
-            console.error("Error fetching user profile:", error);
+      // 2. Production Auth Mode (Firebase)
+      return new Promise<User | null>((resolve, reject) => {
+        const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+          unsubscribe(); // Just read the current state once for the query
+          
+          if (!firebaseUser) {
+            resolve(null);
+            return;
           }
-        }
-        return null;
-      }
+
+          try {
+            // Attempt to get custom claims for role
+            const tokenResult = await firebaseUser.getIdTokenResult();
+            const role = (tokenResult.claims.role as "OWNER" | "MANAGER" | "CHEF" | "STAFF" | "SUPPLIER") || "OWNER";
+
+            resolve({
+              id: firebaseUser.uid,
+              email: firebaseUser.email || "",
+              first_name: firebaseUser.displayName?.split(" ")[0] || "",
+              last_name: firebaseUser.displayName?.split(" ").slice(1).join(" ") || "",
+              role: role,
+              created_at: firebaseUser.metadata.creationTime || new Date().toISOString(),
+              emailVerified: firebaseUser.emailVerified,
+              image_url: firebaseUser.photoURL || undefined,
+              avatar_url: firebaseUser.photoURL || undefined,
+              onboardingCompleted: true, // Defaulting to true since backend flow is stripped
+            } as User);
+          } catch (error) {
+            console.error("Error fetching user profile:", error);
+            resolve(null);
+          }
+        }, reject);
+      });
     },
     retry: false,
     throwOnError: false, // Prevents secondary logging of caught rejections
@@ -125,7 +107,21 @@ const UserContent: React.FC<{ children: React.ReactNode; queryClient: QueryClien
           }
           return;
       }
-      await axiosInstance.patch("auth/me", profileData);
+      
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const updates: any = {};
+        if (profileData.first_name || profileData.last_name) {
+          updates.displayName = `${profileData.first_name || ""} ${profileData.last_name || ""}`.trim();
+        }
+        if (profileData.avatar_url || profileData.image_url) {
+          updates.photoURL = profileData.avatar_url || profileData.image_url;
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          await updateProfile(currentUser, updates);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });

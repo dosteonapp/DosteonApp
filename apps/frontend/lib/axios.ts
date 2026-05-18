@@ -98,35 +98,23 @@ axiosInstance.interceptors.request.use(async (config) => {
     return config;
   }
 
-  const { createClient } = await import("./supabase/client");
-  const supabase = createClient();
-  if (!supabase) return config;
-
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+  const { auth } = await import("./firebase");
+  let token: string | undefined;
+  if (auth.currentUser) {
+    try {
+      token = await auth.currentUser.getIdToken(false);
+    } catch (e) {
+      // Ignore
+    }
+  }
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // Double-submit cookie CSRF: read the cookie the backend set on /auth/me
-  // and echo it as a header for every state-changing request.
   const method = (config.method ?? "get").toLowerCase();
   if (method !== "get" && method !== "head" && method !== "options") {
     let csrfToken = getCookie("csrf_token");
-    // If cookie is absent (e.g. fresh page load before UserContext fetches /auth/me),
-    // proactively call /auth/me to set it, then read it again.
-    if (!csrfToken && token && !config.url?.includes("auth/me")) {
-      try {
-        await fetch("/api/v1/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-          credentials: "include",
-        });
-        csrfToken = getCookie("csrf_token");
-      } catch {
-        // Non-fatal; request will proceed without CSRF header and backend will 403
-      }
-    }
     if (csrfToken) {
       config.headers["X-CSRF-Token"] = csrfToken;
     }
@@ -236,15 +224,13 @@ axiosInstance.interceptors.response.use(
 
       error.config._retry = true;
       try {
-        const { createClient } = await import("./supabase/client");
-        const supabase = createClient();
-        if (!supabase) throw new Error("No supabase client");
+        const { auth } = await import("./firebase");
+        if (!auth.currentUser) throw new Error("No firebase user");
 
-        const { data, error: refreshError } = await supabase.auth.refreshSession();
-        if (refreshError || !data.session) throw refreshError;
+        const newToken = await auth.currentUser.getIdToken(true);
 
         // Update header with new token and retry
-        error.config.headers.Authorization = `Bearer ${data.session.access_token}`;
+        error.config.headers.Authorization = `Bearer ${newToken}`;
         return axiosInstance(error.config);
       } catch {
         // Refresh failed — redirect to login
@@ -288,40 +274,9 @@ axiosInstance.interceptors.response.use(
         });
         break;
       case 403:
-        if (detail.toLowerCase().includes("csrf")) {
-          // Auto-retry once after refreshing the CSRF cookie via /auth/me
-          if (!error.config._csrfRetry) {
-            error.config._csrfRetry = true;
-            try {
-              const { createClient: _createClient } = await import("./supabase/client");
-              const _supabase = _createClient();
-              if (_supabase) {
-                const { data: _sd } = await _supabase.auth.getSession();
-                const _token = _sd.session?.access_token;
-                if (_token) {
-                  await fetch("/api/v1/auth/me", {
-                    headers: { Authorization: `Bearer ${_token}` },
-                    credentials: "include",
-                  });
-                  const newCsrf = getCookie("csrf_token");
-                  if (newCsrf) {
-                    error.config.headers["X-CSRF-Token"] = newCsrf;
-                    return axiosInstance(error.config);
-                  }
-                }
-              }
-            } catch {
-              // Fall through to toast
-            }
-          }
-          toast.error("Session Security Error", {
-            description: "Security token mismatch. Please reload the page and try again.",
-          });
-        } else {
-          toast.error("Permission Denied", {
-            description: "You don't have authorization to perform this action.",
-          });
-        }
+        toast.error("Permission Denied", {
+          description: "You don't have authorization to perform this action.",
+        });
         break;
       default:
         // Auth form endpoints handle their own errors inline — skip global toast.

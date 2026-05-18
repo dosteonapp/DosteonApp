@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, Header, status
 from fastapi.security import HTTPBearer
 from fastapi.security.http import HTTPAuthorizationCredentials
-from app.core.security import verify_supabase_token
+from app.core.security import verify_firebase_token
 from app.db.repositories.profile_repository import profile_repo
 from app.core.logging import get_logger, set_log_user_context
 from app.core.config import settings
@@ -15,8 +15,9 @@ optional_security = HTTPBearer(auto_error=False)
 
 
 async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentials) -> dict:
+    from app.core.security import verify_firebase_token
     token = credentials.credentials
-    payload = await verify_supabase_token(token)
+    payload = await verify_firebase_token(token)
 
     if not payload:
         raise HTTPException(
@@ -25,39 +26,42 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # 1. Try to get profile by ID
-    profile = await profile_repo.get_profile_by_id(payload["id"])
+    # 1. Try to get profile by ID (from custom claims if present)
+    profile = None
+    postgres_uuid = payload.get("app_metadata", {}).get("postgres_uuid")
+    
+    if postgres_uuid:
+        profile = await profile_repo.get_profile_by_id(postgres_uuid)
 
-    # 2. Fallback: try by email (handles users created before profile fix)
+    # 2. Fallback: try by email (links existing users to Firebase)
     if not profile and "email" in payload:
         profile = await profile_repo.get_profile_by_email(payload["email"])
 
     # 3. Auto-create profile if still not found
-    # This handles users who signed up via Supabase directly or before the fix
     if not profile:
         email = payload.get("email")
         logger.warning(f"Profile not found for {email} — auto-creating")
 
         from app.db.prisma import db  # noqa: F401 (kept for engine init side effects)
         from app.db.repositories.organization_repository import organization_repo
-        from app.core.supabase import supabase
         import asyncio
+        import uuid
 
-        user_id = payload["id"]
+        firebase_uid = payload["id"]
         metadata = payload.get("user_metadata") or {}
-        first_name = metadata.get("first_name") or (email.split("@")[0] if email else "User")
+        first_name = metadata.get("name") or metadata.get("first_name") or (email.split("@")[0] if email else "User")
         last_name = metadata.get("last_name")
 
         async def ensure_profile_and_org() -> dict:
-            # If another request just created the profile, reuse it
-            existing = await profile_repo.get_profile_by_id(user_id)
+            # Check by email again just in case
+            existing = await profile_repo.get_profile_by_email(email)
             if existing:
                 return existing
 
-            # Try to reuse organization from Supabase metadata when present
             org_id = metadata.get("organization_id")
             if org_id:
                 try:
+                    from uuid import UUID
                     org = await organization_repo._get_by_id_async(UUID(org_id))
                     if org is None:
                         org_id = None
@@ -71,12 +75,11 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
                 org = await organization_repo._create_async(f"{first_name}'s Restaurant")
                 org_id = org["id"]
 
-            # NOTE: inventory is NOT bootstrapped here.
-            # ContextualProducts are created only from the user's onboarding selection.
+            # Generate a new Postgres UUID for the profile
+            new_postgres_uuid = str(uuid.uuid4())
 
-            # Create or update profile idempotently
             profile_data = {
-                "id": user_id,
+                "id": new_postgres_uuid,
                 "email": email,
                 "first_name": first_name,
                 "last_name": last_name,
@@ -84,15 +87,6 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
                 "organization_id": str(org_id),
             }
             profile_obj = await profile_repo.create_profile(profile_data)
-
-            # Ensure Supabase user_metadata carries the organization_id
-            current_org_meta = metadata.get("organization_id")
-            if current_org_meta != str(org_id):
-                supabase.auth.admin.update_user_by_id(
-                    user_id,
-                    {"user_metadata": {**metadata, "organization_id": str(org_id)}},
-                )
-
             return profile_obj
 
         # Small, bounded retry to handle transient connection issues / races
@@ -107,14 +101,10 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
                 logger.error(
                     f"Auto-create profile attempt {attempt + 1} failed for {email}: {e}",
                 )
-
-                # If a parallel request succeeded in the meantime, reuse that profile
-                existing = await profile_repo.get_profile_by_id(user_id)
+                existing = await profile_repo.get_profile_by_email(email)
                 if existing:
                     profile = existing
                     break
-
-                # Brief backoff before a final retry
                 if attempt == 0:
                     await asyncio.sleep(0.2)
 
@@ -131,6 +121,35 @@ async def _resolve_user_from_credentials(credentials: HTTPAuthorizationCredentia
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User profile not found and could not be created. Please contact support.",
             )
+
+    # 4. Sync custom claims if postgres_uuid is missing or organization_id is not in user_metadata
+    if profile:
+        from firebase_admin import auth
+        firebase_uid = payload["id"]
+        claims = payload.get("app_metadata", {})
+        
+        needs_sync = False
+        new_claims = dict(claims)
+        
+        # We store postgres_uuid and organization_id in custom claims
+        if new_claims.get("postgres_uuid") != profile["id"]:
+            new_claims["postgres_uuid"] = profile["id"]
+            needs_sync = True
+            
+        if new_claims.get("organization_id") != profile.get("organization_id"):
+            new_claims["organization_id"] = profile.get("organization_id")
+            needs_sync = True
+            
+        if new_claims.get("role") != profile.get("role", "STAFF"):
+            new_claims["role"] = profile.get("role", "STAFF")
+            needs_sync = True
+            
+        if needs_sync:
+            try:
+                auth.set_custom_user_claims(firebase_uid, new_claims)
+                logger.info(f"Synced custom claims for {firebase_uid}")
+            except Exception as e:
+                logger.error(f"Failed to set custom claims: {e}")
 
     # Attach selected Supabase user_metadata flags to the profile dict so
     # downstream callers (e.g. /auth/me) can expose them without having
