@@ -131,6 +131,7 @@ model ContextualProduct {
   pack_size             Float?
   pack_unit             String?
   preferred_unit        String?
+  base_unit             String?  // canonical unit for current_stock tracking (e.g. "kg", "L")
 
   current_stock         Float     @default(0) // Performance Cache
   reorder_threshold     Float?    @default(0)

@@ -11,10 +11,12 @@ export interface InventoryProduct {
   category: string;
   brand_name: string | null;
   unit: string;
+  base_unit: string | null;
   current_stock: number;
   min_level: number;
   status_class: "healthy" | "low" | "critical";
   updated_at: string;
+  latest_unit_cost: number | null;
 }
 
 export interface StatCard {

@@ -706,7 +706,7 @@ export function TabStockUsage() {
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
-    timerRef.current = setInterval(() => loadHistory(true), 5_000);
+    timerRef.current = setInterval(() => loadHistory(true), 30_000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [loadHistory]);
 

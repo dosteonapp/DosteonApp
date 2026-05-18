@@ -5,7 +5,7 @@ import {
 } from "react";
 import {
   ArrowLeft, Plus, Pencil, Search, Check,
-  ChevronDown, ChevronRight, ImagePlus, UtensilsCrossed, RefreshCw, Trash2,
+  ChevronDown, ChevronRight, ImagePlus, UtensilsCrossed, RefreshCw, Trash2, AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ import {
 } from "@/lib/services/salesService";
 import { inventoryApi, InventoryProduct } from "@/lib/services/inventoryService";
 import { toast } from "sonner";
+import { useMenuEditor } from "@/context/MenuEditorContext";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -55,7 +56,6 @@ const EMPTY_FORM: DishForm = {
 };
 
 const CATEGORIES = ["Signature", "Main", "Starter", "Dessert", "Beverage", "Side", "Special"];
-const UNITS = ["kg", "g", "ml", "L", "pc", "tbsp", "tsp", "oz", "lb", "cup"];
 
 function flatItems(cats: MenuCategory[]): MenuItem[] {
   return cats.flatMap((c) => c.items);
@@ -66,6 +66,7 @@ function flatItems(cats: MenuCategory[]): MenuItem[] {
 // ---------------------------------------------------------------------------
 
 export function TabMenuManagement() {
+  const { setEditorOpen } = useMenuEditor();
   const [view, setView] = useState<View>("grid");
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuStats, setMenuStats] = useState<MenuStats | null>(null);
@@ -80,6 +81,9 @@ export function TabMenuManagement() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [recipe, setRecipe] = useState<RecipeIngredient[]>([]);
   const [recipeLoading, setRecipeLoading] = useState(false);
+  const [recipeError, setRecipeError] = useState<string | null>(null);
+  const [pickerError, setPickerError] = useState<string | null>(null);
+  const [pickerRetry, setPickerRetry] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
 
@@ -130,11 +134,13 @@ export function TabMenuManagement() {
 
   const loadRecipe = useCallback(async (itemId: string) => {
     setRecipeLoading(true);
+    setRecipeError(null);
     try {
       const ing = await salesService.getRecipe(itemId);
       setRecipe(ing);
     } catch {
       setRecipe([]);
+      setRecipeError("Could not load this dish's recipe. Check your connection and try again.");
     } finally {
       setRecipeLoading(false);
     }
@@ -167,6 +173,7 @@ export function TabMenuManagement() {
     }
     setSidebarSearch("");
     setView("editor");
+    setEditorOpen(true);
   }
 
   function openNewDish() {
@@ -178,12 +185,14 @@ export function TabMenuManagement() {
     setRecipe([]);
     setSidebarSearch("");
     setView("editor");
+    setEditorOpen(true);
   }
 
   function backToGrid() {
     setView("grid");
     setSelectedItemId(null);
     setIsNewDish(false);
+    setEditorOpen(false);
   }
 
   function selectSidebarItem(item: MenuItem) {
@@ -316,14 +325,20 @@ export function TabMenuManagement() {
     if (!pickerOpen) return;
     let cancelled = false;
     setPickerLoading(true);
+    setPickerError(null);
     inventoryApi.getProducts({ search: pickerSearch }).then((products) => {
       if (!cancelled) {
         setPickerProducts(products.filter((p) => !existingProductIds.has(p.id)));
         setPickerLoading(false);
       }
-    }).catch(() => { if (!cancelled) setPickerLoading(false); });
+    }).catch(() => {
+      if (!cancelled) {
+        setPickerLoading(false);
+        setPickerError("Could not load inventory items. Please try again.");
+      }
+    });
     return () => { cancelled = true; };
-  }, [pickerOpen, pickerSearch, existingProductIds]);
+  }, [pickerOpen, pickerSearch, existingProductIds, pickerRetry]);
 
   function togglePickerProduct(product: InventoryProduct) {
     setPickerSelected((prev) =>
@@ -342,7 +357,7 @@ export function TabMenuManagement() {
         product_name: p.name,
         quantity_per_unit: 1,
         unit: p.unit,
-        unit_cost: 0,
+        unit_cost: p.latest_unit_cost ?? 0,
       })),
     ]);
     setPickerSelected([]);
@@ -704,7 +719,7 @@ export function TabMenuManagement() {
                   className="w-40 h-40 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer hover:border-slate-400 transition-colors overflow-hidden shrink-0 bg-slate-50"
                 >
                   {imagePreview ? (
-                    <Image src={imagePreview} alt="" width={160} height={160} className="object-cover w-full h-full" />
+                    <Image src={imagePreview} alt="" width={160} height={160} className="object-cover w-full h-full" priority />
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <ImagePlus className="h-8 w-8" />
@@ -748,7 +763,7 @@ export function TabMenuManagement() {
                   </label>
                   <div className="flex items-center border border-input rounded-md overflow-hidden h-9 bg-background">
                     <span className="px-2.5 text-[12px] text-slate-500 font-figtree bg-slate-50 border-r border-input h-full flex items-center shrink-0">
-                      Ksh
+                      RWF
                     </span>
                     <input
                       type="number"
@@ -832,6 +847,25 @@ export function TabMenuManagement() {
                 <div className="space-y-2 mt-4">
                   {[1, 2].map((i) => <Skeleton key={i} className="h-12 w-full rounded" />)}
                 </div>
+              ) : recipeError ? (
+                <div className="flex flex-col items-center gap-3 py-10 text-center mt-2">
+                  <div className="bg-red-50 rounded-full p-3">
+                    <AlertCircle className="h-5 w-5 text-red-400" />
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-bold text-slate-600 font-figtree">Failed to load recipe</p>
+                    <p className="text-[12px] text-slate-400 font-figtree mt-1 max-w-xs leading-relaxed">
+                      {recipeError}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => selectedItemId && loadRecipe(selectedItemId)}
+                    className="flex items-center gap-1.5 text-[12px] font-semibold text-[#3B59DA] font-figtree hover:underline"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Retry
+                  </button>
+                </div>
               ) : recipe.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 py-10 text-center">
                   <div className="bg-slate-100 rounded-full p-3">
@@ -875,21 +909,14 @@ export function TabMenuManagement() {
                               />
                             </td>
                             <td className="py-3 pr-3">
-                              <div className="relative">
-                                <select
-                                  value={ing.unit ?? "kg"}
-                                  onChange={(e) => updateRecipeRow(idx, "unit", e.target.value)}
-                                  className="w-full border border-slate-200 rounded px-2 pr-6 h-8 text-[12px] appearance-none focus:outline-none focus:ring-1 focus:ring-slate-300 bg-white"
-                                >
-                                  {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-                                </select>
-                                <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
-                              </div>
+                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium h-9 w-20 justify-center">
+                                {ing.unit || "—"}
+                              </span>
                             </td>
                             <td className="py-3 pr-3">
                               <div className="flex items-center border border-slate-200 rounded overflow-hidden h-8">
                                 <span className="px-2 text-[11px] text-slate-400 bg-slate-50 border-r border-slate-200 h-full flex items-center shrink-0">
-                                  Ksh
+                                  RWF
                                 </span>
                                 <input
                                   type="number"
@@ -902,7 +929,7 @@ export function TabMenuManagement() {
                               </div>
                             </td>
                             <td className="py-3 pr-3 text-[13px] font-medium text-slate-600">
-                              Ksh {fmtMoney(lineCost)}
+                              RWF {fmtMoney(lineCost)}
                             </td>
                             <td className="py-3">
                               <button
@@ -922,7 +949,7 @@ export function TabMenuManagement() {
                           Est. Total Food Cost
                         </td>
                         <td className="py-3 text-[14px] font-bold text-blue-600 font-figtree">
-                          Ksh {fmtMoney(totalFoodCost)}
+                          RWF {fmtMoney(totalFoodCost)}
                         </td>
                         <td />
                       </tr>
@@ -992,6 +1019,7 @@ export function TabMenuManagement() {
                       width={288}
                       height={288}
                       className="object-cover w-full h-full"
+                      priority
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -1004,7 +1032,7 @@ export function TabMenuManagement() {
                 </p>
                 {sellingPrice > 0 ? (
                   <p className="text-[13px] text-slate-600 font-figtree">
-                    Ksh {fmtMoney(sellingPrice)}
+                    RWF {fmtMoney(sellingPrice)}
                     <span className="text-slate-400 text-[12px]"> / serving</span>
                   </p>
                 ) : (
@@ -1034,16 +1062,16 @@ export function TabMenuManagement() {
                 <div className="space-y-2.5">
                   <PricingRow
                     label="Selling price"
-                    value={sellingPrice > 0 ? `Ksh ${fmtMoney(sellingPrice)}` : "--"}
+                    value={sellingPrice > 0 ? `RWF ${fmtMoney(sellingPrice)}` : "--"}
                   />
                   <PricingRow
                     label="Est. Food Cost"
-                    value={recipe.length > 0 ? `Ksh ${fmtMoney(totalFoodCost)}` : "--"}
+                    value={recipe.length > 0 ? `RWF ${fmtMoney(totalFoodCost)}` : "--"}
                   />
                   <div className="border-t border-slate-100 pt-2.5 space-y-2.5">
                     <PricingRow
                       label="Gross profit / plate"
-                      value={sellingPrice > 0 ? `Ksh ${fmtMoney(grossProfit)}` : "--"}
+                      value={sellingPrice > 0 ? `RWF ${fmtMoney(grossProfit)}` : "--"}
                       bold
                       valueClass={sellingPrice > 0 ? marginColor(grossMargin) : "text-slate-400"}
                     />
@@ -1114,6 +1142,18 @@ export function TabMenuManagement() {
               {pickerLoading ? (
                 <div className="space-y-2 p-3">
                   {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-10 w-full rounded" />)}
+                </div>
+              ) : pickerError ? (
+                <div className="flex flex-col items-center gap-2 py-10 px-4 text-center">
+                  <AlertCircle className="h-6 w-6 text-red-300" />
+                  <p className="text-[13px] font-semibold text-slate-600 font-figtree">Failed to load inventory</p>
+                  <p className="text-[12px] text-slate-400 font-figtree">{pickerError}</p>
+                  <button
+                    onClick={() => { setPickerError(null); setPickerRetry((c) => c + 1); }}
+                    className="text-[12px] font-semibold text-[#3B59DA] font-figtree hover:underline mt-1"
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : pickerProducts.length === 0 ? (
                 <p className="text-[13px] text-slate-400 font-figtree text-center py-10">
@@ -1211,6 +1251,7 @@ function GridCard({
             width={320}
             height={320}
             className="object-cover w-full h-full"
+            priority
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -1222,7 +1263,7 @@ function GridCard({
         <div className="flex items-baseline justify-between gap-2 mb-1 min-w-0">
           <p className="text-[14px] font-bold text-[#1E293B] font-figtree truncate flex-1 min-w-0">{item.name}</p>
           <p className="text-[12px] text-slate-500 font-figtree shrink-0 whitespace-nowrap">
-            Ksh {fmtLocal(item.price)} / serving
+            RWF {fmtLocal(item.price)} / serving
           </p>
         </div>
         <p className="text-[12px] italic text-slate-400 font-figtree mb-4">{item.category} Food</p>
