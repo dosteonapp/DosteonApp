@@ -179,12 +179,15 @@ async def _ensure_storage_buckets():
     """
 
     try:
-        conn = await asyncpg.connect(direct_url)
+        conn = await asyncpg.connect(direct_url, timeout=5)
         try:
             await conn.execute(policies_sql)
             logger.info("Storage RLS policies ensured.")
         finally:
             await conn.close()
+    except OSError as e:
+        # DNS / TCP failure — normal in local dev when direct Postgres isn't reachable
+        logger.debug(f"Storage RLS policy setup skipped (direct DB unreachable locally): {e}")
     except Exception as e:
         logger.warning(f"Storage RLS policy setup failed (non-fatal): {e}")
 
