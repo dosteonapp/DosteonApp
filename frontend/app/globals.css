@@ -112,8 +112,8 @@
   scrollbar-color: #e2e8f0 transparent;
 }
 *::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+  width: 2px;
+  height: 2px;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
@@ -132,8 +132,8 @@
   scrollbar-color: #e2e8f0 transparent;
 }
 .custom-scrollbar::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+  width: 2px;
+  height: 2px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
