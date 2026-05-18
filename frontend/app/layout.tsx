@@ -12,6 +12,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { CookieConsent } from "@/components/CookieConsent";
 import { EnvironmentBanner } from "@/components/EnvironmentBanner";
+import { PWARegister } from "@/components/PWARegister";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 
 const inriaSerif = Inria_Serif({
@@ -30,7 +32,7 @@ export const metadata: Metadata = {
   title: "Dosteon - Restaurant & Supplier Platform",
   description:
     "Real-time procurement & inventory platform for restaurants and suppliers",
-  manifest: "/site.webmanifest",
+  manifest: "/manifest.json",
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -57,6 +59,8 @@ export default function RootLayout({
         className={`${figtree.className} ${inriaSerif.variable} ${figtree.variable}`}
         suppressHydrationWarning
       >
+        <PWARegister />
+        <PWAInstallPrompt />
         <EnvironmentBanner />
         <PostHogProvider>
           <AppProvider>
