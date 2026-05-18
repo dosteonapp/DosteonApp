@@ -396,6 +396,29 @@ export function TabMenuManagement() {
     setRecipe((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  // Unit conversion helpers (mirrors backend _convert_unit)
+  const UNIT_FAMILIES: Record<string, Record<string, number>> = {
+    mass:   { g: 1, kg: 1000, mg: 0.001 },
+    volume: { ml: 1, l: 1000, cl: 10 },
+    count:  { pcs: 1, pieces: 1, units: 1, pc: 1 },
+  };
+
+  function convertForDisplay(qty: number, fromUnit: string | null, toUnit: string | null): { converted: number; compatible: boolean } | null {
+    if (!fromUnit || !toUnit || fromUnit.toLowerCase() === toUnit.toLowerCase()) return null;
+    const f = fromUnit.toLowerCase().trim();
+    const t = toUnit.toLowerCase().trim();
+    for (const family of Object.values(UNIT_FAMILIES)) {
+      if (f in family && t in family) {
+        return { converted: qty * family[f] / family[t], compatible: true };
+      }
+    }
+    // Check if from_unit is in any family at all — if so, mismatch across families
+    const fromKnown = Object.values(UNIT_FAMILIES).some((fam) => f in fam);
+    const toKnown = Object.values(UNIT_FAMILIES).some((fam) => t in fam);
+    if (fromKnown || toKnown) return { converted: 0, compatible: false };
+    return null;
+  }
+
   // -------------------------------------------------------------------------
   // Derived values
   // -------------------------------------------------------------------------
@@ -975,6 +998,7 @@ export function TabMenuManagement() {
                     <tbody>
                       {recipe.map((ing, idx) => {
                         const lineCost = ing.quantity_per_unit * (ing.unit_cost ?? 0);
+                        const conversionHint = convertForDisplay(ing.quantity_per_unit, ing.unit, ing.base_unit ?? null);
                         return (
                           <tr key={idx} className="border-b border-slate-50">
                             <td className="py-3 pr-3">
@@ -992,9 +1016,23 @@ export function TabMenuManagement() {
                               />
                             </td>
                             <td className="py-3 pr-3">
-                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium h-9 w-20 justify-center">
-                                {ing.unit || "—"}
-                              </span>
+                              <div className="flex flex-col gap-0.5">
+                                <input
+                                  type="text"
+                                  value={ing.unit ?? ""}
+                                  onChange={(e) => updateRecipeRow(idx, "unit", e.target.value)}
+                                  placeholder={ing.base_unit ?? "unit"}
+                                  className="w-20 border border-slate-200 rounded px-2 h-8 text-[12px] focus:outline-none focus:ring-1 focus:ring-slate-300"
+                                />
+                                {conversionHint && conversionHint.compatible && (
+                                  <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                                    → {conversionHint.converted % 1 === 0 ? conversionHint.converted : conversionHint.converted.toFixed(3).replace(/\.?0+$/, "")} {ing.base_unit}
+                                  </span>
+                                )}
+                                {conversionHint && !conversionHint.compatible && (
+                                  <span className="text-[10px] text-amber-500 whitespace-nowrap">⚠ unit mismatch</span>
+                                )}
+                              </div>
                             </td>
                             <td className="py-3 pr-3">
                               <div className="flex items-center border border-slate-200 rounded overflow-hidden h-8">

@@ -50,6 +50,7 @@ export interface RecipeIngredient {
   quantity_per_unit: number;
   unit: string | null;
   unit_cost?: number | null;
+  base_unit?: string | null;
 }
 
 export interface OrgMenuCategory {

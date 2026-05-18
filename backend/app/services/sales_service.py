@@ -13,6 +13,30 @@ from fastapi import HTTPException
 
 logger = get_logger("sales")
 
+# ---------------------------------------------------------------------------
+# Unit conversion helpers
+# ---------------------------------------------------------------------------
+
+_UNIT_FAMILIES: dict[str, dict[str, float]] = {
+    "mass":   {"g": 1.0, "kg": 1000.0, "mg": 0.001},
+    "volume": {"ml": 1.0, "l": 1000.0, "cl": 10.0},
+    "count":  {"pcs": 1.0, "pieces": 1.0, "units": 1.0, "pc": 1.0},
+}
+
+
+def _convert_unit(qty: float, from_unit: Optional[str], to_unit: Optional[str]) -> float:
+    """Convert qty from from_unit to to_unit within the same SI family.
+    Returns qty unchanged if units are the same, unknown, or from different families."""
+    if not from_unit or not to_unit:
+        return qty
+    f, t = from_unit.lower().strip(), to_unit.lower().strip()
+    if f == t:
+        return qty
+    for family in _UNIT_FAMILIES.values():
+        if f in family and t in family:
+            return qty * family[f] / family[t]
+    return qty  # incompatible families — pass through unchanged
+
 
 class SalesService:
 
@@ -184,6 +208,7 @@ class SalesService:
                 "quantity_per_unit": ing.quantity_per_unit,
                 "unit": ing.unit,
                 "unit_cost": ing.unit_cost or latest_cost_map.get(str(ing.contextual_product_id)),
+                "base_unit": ing.contextual_product.base_unit if ing.contextual_product else None,
             }
             for ing in ingredients
         ]
@@ -647,16 +672,21 @@ class SalesService:
         try:
             for i in items:
                 ingredients = await db.menuitemingredient.find_many(
-                    where={"menu_item_id": i["menu_item_id"]}
+                    where={"menu_item_id": i["menu_item_id"]},
+                    include={"contextual_product": True},
                 )
                 for ing in ingredients:
-                    depletion_qty = ing.quantity_per_unit * i["quantity"]
+                    raw_qty = ing.quantity_per_unit * i["quantity"]
+                    base_unit = ing.contextual_product.base_unit if ing.contextual_product else None
+                    # Convert recipe unit → stock base_unit before decrementing
+                    depletion_qty = _convert_unit(raw_qty, ing.unit, base_unit)
+                    stock_unit = base_unit or ing.unit
                     await db.inventoryevent.create(data={
                         "contextual_product_id": ing.contextual_product_id,
                         "organization_id": organization_id,
                         "event_type": "USED",
                         "quantity": -depletion_qty,
-                        "unit": ing.unit,
+                        "unit": stock_unit,
                         "actor_type": "sale",
                         "reference_id": order.id,
                         "consumption_reason": "CUSTOMER_SERVICE",
