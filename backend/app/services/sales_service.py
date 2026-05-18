@@ -751,9 +751,8 @@ class SalesService:
 
         total = await db.saleorder.count(where=where)
 
-        # Sum revenue at DB level — avoid fetching all rows just for an aggregate
-        agg = await db.saleorder.aggregate(where=where, _sum={"total_revenue": True})
-        period_revenue = (agg.sum.total_revenue or 0.0) if agg.sum else 0.0
+        rev_rows = await db.saleorder.find_many(where=where)
+        period_revenue = sum((r.total_revenue or 0.0) for r in rev_rows)
 
         orders = await db.saleorder.find_many(
             where=where,
