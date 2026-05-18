@@ -39,6 +39,7 @@ model Organization {
   menu_items        MenuItem[]
   sale_orders       SaleOrder[]
   expenses          Expense[]
+  menu_categories   MenuCategory[]
 
   @@map("organizations")
 }
@@ -131,6 +132,7 @@ model ContextualProduct {
   pack_size             Float?
   pack_unit             String?
   preferred_unit        String?
+  base_unit             String?  // canonical unit for current_stock tracking (e.g. "kg", "L")
 
   current_stock         Float     @default(0) // Performance Cache
   reorder_threshold     Float?    @default(0)
@@ -401,6 +403,18 @@ model SaleOrderItem {
 enum ExpenseType {
   INGREDIENT
   OVERHEAD
+}
+
+model MenuCategory {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organization_id String   @db.Uuid
+  name            String
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+
+  organization    Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  @@unique([organization_id, name])
+  @@map("menu_categories")
 }
 
 model Expense {

@@ -4,6 +4,7 @@ import React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useMenuEditor } from "@/context/MenuEditorContext";
 
 interface BusinessSettingsLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ interface BusinessSettingsLayoutProps {
 export default function BusinessSettingsLayout({ children }: BusinessSettingsLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { isEditorOpen } = useMenuEditor();
 
   const tabs = [
     { name: "Restaurant Profile", href: "/dashboard/settings/business/profile" },
@@ -20,12 +22,17 @@ export default function BusinessSettingsLayout({ children }: BusinessSettingsLay
   ];
 
   const isMemberDetails = pathname.includes("/settings/business/team/") && pathname.split("/").length > 5;
-
   if (isMemberDetails) return <div>{children}</div>;
+
+  const isMenuRoute = pathname.includes("/settings/business/menu");
+  const hideChrome = isMenuRoute && isEditorOpen;
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-1.5 p-1.5 bg-slate-50 rounded-2xl w-fit border border-slate-100/50">
+      <div className={cn(
+        "flex items-center gap-1.5 p-1.5 bg-slate-50 rounded-2xl w-fit border border-slate-100/50",
+        hideChrome && "hidden"
+      )}>
         {tabs.map((tab) => (
           <Button
             key={tab.href}

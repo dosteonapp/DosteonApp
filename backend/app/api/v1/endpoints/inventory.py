@@ -9,7 +9,7 @@ from app.services.inventory_service import inventory_service
 from typing import List, Optional
 from app.api.deps import (
     get_restaurant_user, get_optional_user,
-    get_brand_context, get_brand_mutation_context,
+    get_security_context, get_brand_context, get_brand_mutation_context,
     SecurityContext,
 )
 from app.core.rate_limit import limiter
@@ -23,23 +23,23 @@ router = APIRouter()
 
 @router.get("/products", response_model=List[InventoryProductItem])
 async def read_products(
-    ctx:      SecurityContext      = Depends(get_brand_context),
+    ctx:      SecurityContext      = Depends(get_security_context),
     search:   Optional[str]        = Query(None, description="Search by name or SKU"),
     category: Optional[str]        = Query(None, description="Filter by category"),
 ):
-    """Enhanced product list with brand, status classification, search/filter."""
+    """Enhanced product list — org-scoped (shared across all brands)."""
     return await inventory_service.get_products(
         ctx.organization_id,
-        brand_id=ctx.brand_id,
+        brand_id=None,
         search=search,
         category=category,
     )
 
 
 @router.get("/stats", response_model=InventoryStats)
-async def read_inventory_stats(ctx: SecurityContext = Depends(get_brand_context)):
-    """Return items_in_stock / healthy / low / critical counts with last-week trend."""
-    return await inventory_service.get_stats(ctx.organization_id, brand_id=ctx.brand_id)
+async def read_inventory_stats(ctx: SecurityContext = Depends(get_security_context)):
+    """Return items_in_stock / healthy / low / critical counts — org-scoped."""
+    return await inventory_service.get_stats(ctx.organization_id, brand_id=None)
 
 
 # ---------------------------------------------------------------------------
@@ -47,21 +47,21 @@ async def read_inventory_stats(ctx: SecurityContext = Depends(get_brand_context)
 # ---------------------------------------------------------------------------
 
 @router.get("/stock-usage/stats", response_model=StockUsageStats)
-async def read_stock_usage_stats(ctx: SecurityContext = Depends(get_brand_context)):
-    """Today's consumption + waste totals and top items."""
+async def read_stock_usage_stats(ctx: SecurityContext = Depends(get_security_context)):
+    """Today's consumption + waste totals across all brands (shared pool)."""
     return await inventory_service.get_stock_usage_stats(
-        ctx.organization_id, brand_id=ctx.brand_id
+        ctx.organization_id, brand_id=None
     )
 
 
 @router.get("/stock-usage/history", response_model=List[StockUsageEvent])
 async def read_stock_usage_history(
-    ctx:   SecurityContext = Depends(get_brand_context),
+    ctx:   SecurityContext = Depends(get_security_context),
     limit: int             = Query(10, ge=1, le=50),
 ):
-    """Recent USED / WASTED events for the Kitchen Service History feed."""
+    """Recent USED / WASTED events across all brands."""
     return await inventory_service.get_stock_usage_history(
-        ctx.organization_id, brand_id=ctx.brand_id, limit=limit
+        ctx.organization_id, brand_id=None, limit=limit
     )
 
 
@@ -122,18 +122,13 @@ async def search_canonical_catalog(
 
 @router.get("/", response_model=List[InventoryItem])
 async def read_inventory(
-    ctx: SecurityContext = Depends(get_brand_context),
+    ctx: SecurityContext = Depends(get_security_context),
     offset: int = Query(0, ge=0, description="Number of items to skip"),
     limit: int = Query(100, ge=1, le=500, description="Maximum number of items to return"),
 ):
-    """Read inventory items for the organisation, scoped to the resolved brand.
-
-    Pass X-Brand-ID header to select a specific brand. Omit it to use the
-    default (first active brand). Rows with brand_id=null are always included
-    for backwards compatibility.
-    """
+    """Read all inventory items for the organisation — shared across all brands."""
     return await inventory_service.get_inventory(
-        ctx.organization_id, skip=offset, limit=limit, brand_id=ctx.brand_id
+        ctx.organization_id, skip=offset, limit=limit, brand_id=None
     )
 
 

@@ -22,7 +22,8 @@
 // Org-scoped queries use orgId (day status, settings) because Dosteon's
 // kitchen runs as one unit per org — the same day is open/closed regardless
 // of which brand is active. Brand-scoped queries use brandId because sales,
-// inventory levels, and activities differ per brand.
+// expenses, and activities differ per brand. Inventory is org-scoped (shared
+// pool across all brands).
 
 export const QK = {
   // ── Brand-scoped ──────────────────────────────────────────────────────────
@@ -32,9 +33,6 @@ export const QK = {
   salesHistory:     (brandId: string | null, ...params: unknown[]) =>
                       ["salesHistory",     brandId ?? "all", ...params] as const,
   menuItems:        (brandId: string | null) => ["menuItems",        brandId ?? "all"] as const,
-  inventoryStats:   (brandId: string | null) => ["inventoryStats",   brandId ?? "all"] as const,
-  kitchenLog:       (brandId: string | null) => ["kitchenLog",       brandId ?? "all"] as const,
-  stockUsage:       (brandId: string | null) => ["stockUsage",       brandId ?? "all"] as const,
   closingStatus:    (brandId: string | null) => ["closingStatus",    brandId ?? "all"] as const,
   expenseStats:     (brandId: string | null) => ["expenseStats",     brandId ?? "all"] as const,
   expenseWeekStats: (brandId: string | null) => ["expenseWeekStats", brandId ?? "all"] as const,
@@ -43,9 +41,18 @@ export const QK = {
 
   // ── Org-scoped ────────────────────────────────────────────────────────────
   // One kitchen, one day — these do not change when switching brands.
-  dayStatus:   (orgId: string | null, date: string) => ["restaurantDayStatus",   orgId, date] as const,
-  orgSettings: (orgId: string | null)               => ["restaurantSettings",    orgId] as const,
-  systemState: (orgId: string | null)               => ["restaurantSystemState", orgId] as const,
+  // Inventory is shared across all brands — same pool regardless of active brand.
+  dayStatus:        (orgId: string | null, date: string) => ["restaurantDayStatus",   orgId, date] as const,
+  orgSettings:      (orgId: string | null)               => ["restaurantSettings",    orgId] as const,
+  systemState:      (orgId: string | null)               => ["restaurantSystemState", orgId] as const,
+  inventoryStats:   (orgId: string | null)               => ["inventoryStats", orgId] as const,
+  inventoryProducts:(orgId: string | null)               => ["inventoryProducts", orgId] as const,
+  menuCategories:   (orgId: string | null)               => ["menuCategories", orgId] as const,
+  kitchenLog:       ()                                   => ["kitchenLog"] as const,
+  stockUsage:       ()                                   => ["stockUsage"] as const,
+
+  // ── Brand-scoped (added here because menu stats vary per brand) ───────────
+  menuStats: (brandId: string | null) => ["menuStats", brandId ?? "all"] as const,
 
   // ── Global ────────────────────────────────────────────────────────────────
   user:              () => ["user"] as const,
@@ -64,11 +71,9 @@ export const BRAND_SCOPED_KEYS: readonly string[] = [
   "todayStats",
   "salesHistory",
   "menuItems",
-  "inventoryStats",
-  "kitchenLog",
-  "stockUsage",
   "closingStatus",
   "expenseStats",
   "expenseWeekStats",
   "expenseHistory",
+  "menuStats",
 ];

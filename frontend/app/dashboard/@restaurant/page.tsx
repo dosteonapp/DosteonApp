@@ -200,7 +200,7 @@ export default function RestaurantDashboardPage() {
   });
 
   const { data: menuStats } = useQuery({
-    queryKey: ["menuStats", brandId],
+    queryKey: QK.menuStats(brandId),
     queryFn: () => salesService.getMenuStats(),
     staleTime: 5 * 60_000,
     gcTime: 10 * 60_000,
@@ -208,7 +208,7 @@ export default function RestaurantDashboardPage() {
   });
 
   const { data: settings } = useQuery({
-    queryKey: ["restaurantSettings"],
+    queryKey: QK.orgSettings(user?.organization_id ?? null),
     queryFn: () => restaurantOpsService.getSettings(),
     staleTime: 5 * 60_000,
     gcTime: 10 * 60_000,

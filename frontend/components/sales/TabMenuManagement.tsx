@@ -5,7 +5,7 @@ import {
 } from "react";
 import {
   ArrowLeft, Plus, Pencil, Search, Check,
-  ChevronDown, ChevronRight, ImagePlus, UtensilsCrossed, RefreshCw, Trash2,
+  ChevronDown, ChevronRight, ImagePlus, UtensilsCrossed, RefreshCw, Trash2, AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -15,10 +15,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { UnifiedModal, UnifiedErrorBanner } from "@/components/ui/dosteon-ui";
 import {
-  salesService, MenuItem, MenuCategory, MenuStats, RecipeIngredient,
+  salesService, MenuItem, MenuCategory, MenuStats, RecipeIngredient, OrgMenuCategory,
 } from "@/lib/services/salesService";
 import { inventoryApi, InventoryProduct } from "@/lib/services/inventoryService";
 import { toast } from "sonner";
+import { useMenuEditor } from "@/context/MenuEditorContext";
+import { useUser } from "@/context/UserContext";
+import { QK } from "@/lib/queryKeys";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -54,8 +58,6 @@ const EMPTY_FORM: DishForm = {
   name: "", price: "", category: "Signature", status: "active", image_url: "",
 };
 
-const CATEGORIES = ["Signature", "Main", "Starter", "Dessert", "Beverage", "Side", "Special"];
-const UNITS = ["kg", "g", "ml", "L", "pc", "tbsp", "tsp", "oz", "lb", "cup"];
 
 function flatItems(cats: MenuCategory[]): MenuItem[] {
   return cats.flatMap((c) => c.items);
@@ -66,6 +68,11 @@ function flatItems(cats: MenuCategory[]): MenuItem[] {
 // ---------------------------------------------------------------------------
 
 export function TabMenuManagement() {
+  const { setEditorOpen } = useMenuEditor();
+  const { user } = useUser();
+  const orgId = user?.organization_id ?? null;
+  const queryClient = useQueryClient();
+
   const [view, setView] = useState<View>("grid");
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuStats, setMenuStats] = useState<MenuStats | null>(null);
@@ -80,14 +87,30 @@ export function TabMenuManagement() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [recipe, setRecipe] = useState<RecipeIngredient[]>([]);
   const [recipeLoading, setRecipeLoading] = useState(false);
+  const [recipeError, setRecipeError] = useState<string | null>(null);
+  const [pickerError, setPickerError] = useState<string | null>(null);
+  const [pickerRetry, setPickerRetry] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+
+  // Inline category creation (editor)
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [newCatInput, setNewCatInput] = useState("");
+  const [savingCat, setSavingCat] = useState(false);
 
   // Grid state
   const [gridSearch, setGridSearch] = useState("");
   const [gridCategory, setGridCategory] = useState("all");
-  const [activeChannel, setActiveChannel] = useState("All");
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
+
+  // Org-level menu categories
+  const { data: orgCategories = [], refetch: refetchOrgCategories } = useQuery({
+    queryKey: QK.menuCategories(orgId),
+    queryFn: () => salesService.getCategories(),
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    enabled: !!orgId,
+  });
 
   // Sidebar search
   const [sidebarSearch, setSidebarSearch] = useState("");
@@ -130,11 +153,13 @@ export function TabMenuManagement() {
 
   const loadRecipe = useCallback(async (itemId: string) => {
     setRecipeLoading(true);
+    setRecipeError(null);
     try {
       const ing = await salesService.getRecipe(itemId);
       setRecipe(ing);
     } catch {
       setRecipe([]);
+      setRecipeError("Could not load this dish's recipe. Check your connection and try again.");
     } finally {
       setRecipeLoading(false);
     }
@@ -160,30 +185,33 @@ export function TabMenuManagement() {
       setImageFile(null);
       loadRecipe(item.id);
     } else {
-      setForm(EMPTY_FORM);
+      setForm({ ...EMPTY_FORM, category: orgCategories[0]?.name ?? "Signature" });
       setImagePreview(null);
       setImageFile(null);
       setRecipe([]);
     }
     setSidebarSearch("");
     setView("editor");
+    setEditorOpen(true);
   }
 
   function openNewDish() {
     setSelectedItemId(null);
     setIsNewDish(true);
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, category: orgCategories[0]?.name ?? "Signature" });
     setImagePreview(null);
     setImageFile(null);
     setRecipe([]);
     setSidebarSearch("");
     setView("editor");
+    setEditorOpen(true);
   }
 
   function backToGrid() {
     setView("grid");
     setSelectedItemId(null);
     setIsNewDish(false);
+    setEditorOpen(false);
   }
 
   function selectSidebarItem(item: MenuItem) {
@@ -316,14 +344,20 @@ export function TabMenuManagement() {
     if (!pickerOpen) return;
     let cancelled = false;
     setPickerLoading(true);
+    setPickerError(null);
     inventoryApi.getProducts({ search: pickerSearch }).then((products) => {
       if (!cancelled) {
         setPickerProducts(products.filter((p) => !existingProductIds.has(p.id)));
         setPickerLoading(false);
       }
-    }).catch(() => { if (!cancelled) setPickerLoading(false); });
+    }).catch(() => {
+      if (!cancelled) {
+        setPickerLoading(false);
+        setPickerError("Could not load inventory items. Please try again.");
+      }
+    });
     return () => { cancelled = true; };
-  }, [pickerOpen, pickerSearch, existingProductIds]);
+  }, [pickerOpen, pickerSearch, existingProductIds, pickerRetry]);
 
   function togglePickerProduct(product: InventoryProduct) {
     setPickerSelected((prev) =>
@@ -342,7 +376,7 @@ export function TabMenuManagement() {
         product_name: p.name,
         quantity_per_unit: 1,
         unit: p.unit,
-        unit_cost: 0,
+        unit_cost: p.latest_unit_cost ?? 0,
       })),
     ]);
     setPickerSelected([]);
@@ -362,6 +396,29 @@ export function TabMenuManagement() {
     setRecipe((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  // Unit conversion helpers (mirrors backend _convert_unit)
+  const UNIT_FAMILIES: Record<string, Record<string, number>> = {
+    mass:   { g: 1, kg: 1000, mg: 0.001 },
+    volume: { ml: 1, l: 1000, cl: 10 },
+    count:  { pcs: 1, pieces: 1, units: 1, pc: 1 },
+  };
+
+  function convertForDisplay(qty: number, fromUnit: string | null, toUnit: string | null): { converted: number; compatible: boolean } | null {
+    if (!fromUnit || !toUnit || fromUnit.toLowerCase() === toUnit.toLowerCase()) return null;
+    const f = fromUnit.toLowerCase().trim();
+    const t = toUnit.toLowerCase().trim();
+    for (const family of Object.values(UNIT_FAMILIES)) {
+      if (f in family && t in family) {
+        return { converted: qty * family[f] / family[t], compatible: true };
+      }
+    }
+    // Check if from_unit is in any family at all — if so, mismatch across families
+    const fromKnown = Object.values(UNIT_FAMILIES).some((fam) => f in fam);
+    const toKnown = Object.values(UNIT_FAMILIES).some((fam) => t in fam);
+    if (fromKnown || toKnown) return { converted: 0, compatible: false };
+    return null;
+  }
+
   // -------------------------------------------------------------------------
   // Derived values
   // -------------------------------------------------------------------------
@@ -376,8 +433,6 @@ export function TabMenuManagement() {
   // -------------------------------------------------------------------------
   // Grid filters
   // -------------------------------------------------------------------------
-
-  const CHANNELS = ["All", "Dine-in", "Takeaway", "Delivery"];
 
   const filteredCategories = useMemo(() => {
     if (!gridSearch && gridCategory === "all") return categories;
@@ -463,38 +518,33 @@ export function TabMenuManagement() {
           {/* Divider */}
           <div className="border-t border-slate-100" />
 
-          {/* Filter row: "All Dishes" left, pills + dropdown right */}
-          <div className="flex items-center gap-3 px-6 py-4">
-            <span className="text-[15px] font-bold text-[#1E293B] font-figtree shrink-0">All Dishes</span>
-            <div className="flex items-center gap-2 ml-auto flex-wrap justify-end">
-              {CHANNELS.map((ch) => (
-                <button
-                  key={ch}
-                  onClick={() => setActiveChannel(ch)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-[12px] font-semibold font-figtree border transition-colors",
-                    activeChannel === ch
-                      ? "bg-[#1E293B] text-white border-[#1E293B]"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
-                  )}
-                >
-                  {ch}
-                </button>
-              ))}
-              <div className="relative">
-                <select
-                  value={gridCategory}
-                  onChange={(e) => setGridCategory(e.target.value)}
-                  className="h-8 pl-3 pr-7 text-[12px] font-figtree border border-slate-200 rounded-lg appearance-none focus:outline-none focus:ring-1 focus:ring-slate-300 bg-white"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map((c) => (
-                    <option key={c.category} value={c.category}>{c.category}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+          {/* Filter row: category chips left, search right */}
+          <div className="flex items-center gap-3 px-6 py-4 flex-wrap">
+            <button
+              onClick={() => setGridCategory("all")}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-[12px] font-semibold font-figtree border transition-colors",
+                gridCategory === "all"
+                  ? "bg-[#1E293B] text-white border-[#1E293B]"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+              )}
+            >
+              All
+            </button>
+            {orgCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setGridCategory(cat.name)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-[12px] font-semibold font-figtree border transition-colors",
+                  gridCategory === cat.name
+                    ? "bg-[#1E293B] text-white border-[#1E293B]"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                )}
+              >
+                {cat.name}
+              </button>
+            ))}
           </div>
 
           {/* Grid */}
@@ -704,7 +754,7 @@ export function TabMenuManagement() {
                   className="w-40 h-40 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer hover:border-slate-400 transition-colors overflow-hidden shrink-0 bg-slate-50"
                 >
                   {imagePreview ? (
-                    <Image src={imagePreview} alt="" width={160} height={160} className="object-cover w-full h-full" />
+                    <Image src={imagePreview} alt="" width={160} height={160} className="object-cover w-full h-full" priority />
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <ImagePlus className="h-8 w-8" />
@@ -748,7 +798,7 @@ export function TabMenuManagement() {
                   </label>
                   <div className="flex items-center border border-input rounded-md overflow-hidden h-9 bg-background">
                     <span className="px-2.5 text-[12px] text-slate-500 font-figtree bg-slate-50 border-r border-input h-full flex items-center shrink-0">
-                      Ksh
+                      RWF
                     </span>
                     <input
                       type="number"
@@ -771,18 +821,89 @@ export function TabMenuManagement() {
                       onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
                       className="h-9 w-full pl-3 pr-7 text-[13px] font-figtree border border-input rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-ring bg-background"
                     >
-                      {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                      {orgCategories.map((c) => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                      {orgCategories.length === 0 && (
+                        <option value={form.category}>{form.category}</option>
+                      )}
                     </select>
                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
               </div>
 
-              {/* Add Custom Category link */}
-              <button className="flex items-center gap-1 text-[12px] text-blue-600 font-figtree font-semibold hover:text-blue-800 transition-colors mb-4">
-                <Plus className="h-3.5 w-3.5" />
-                Add Custom Category
-              </button>
+              {/* Add Custom Category */}
+              {showNewCat ? (
+                <div className="flex items-center gap-2 mb-4">
+                  <input
+                    autoFocus
+                    value={newCatInput}
+                    onChange={(e) => setNewCatInput(e.target.value)}
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const name = newCatInput.trim();
+                        if (!name) return;
+                        setSavingCat(true);
+                        try {
+                          const created = await salesService.createCategory(name);
+                          queryClient.invalidateQueries({ queryKey: QK.menuCategories(orgId) });
+                          setForm((f) => ({ ...f, category: created.name }));
+                          setShowNewCat(false);
+                          setNewCatInput("");
+                        } catch {
+                          toast.error("Failed to create category");
+                        } finally {
+                          setSavingCat(false);
+                        }
+                      }
+                      if (e.key === "Escape") {
+                        setShowNewCat(false);
+                        setNewCatInput("");
+                      }
+                    }}
+                    placeholder="Category name…"
+                    className="flex-1 h-8 px-3 text-[13px] font-figtree border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300"
+                  />
+                  <button
+                    disabled={savingCat || !newCatInput.trim()}
+                    onClick={async () => {
+                      const name = newCatInput.trim();
+                      if (!name) return;
+                      setSavingCat(true);
+                      try {
+                        const created = await salesService.createCategory(name);
+                        queryClient.invalidateQueries({ queryKey: QK.menuCategories(orgId) });
+                        setForm((f) => ({ ...f, category: created.name }));
+                        setShowNewCat(false);
+                        setNewCatInput("");
+                      } catch {
+                        toast.error("Failed to create category");
+                      } finally {
+                        setSavingCat(false);
+                      }
+                    }}
+                    className="h-8 px-3 text-[12px] font-semibold font-figtree bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  >
+                    {savingCat ? "…" : "Add"}
+                  </button>
+                  <button
+                    onClick={() => { setShowNewCat(false); setNewCatInput(""); }}
+                    className="h-8 px-2 text-slate-400 hover:text-slate-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowNewCat(true)}
+                  className="flex items-center gap-1 text-[12px] text-blue-600 font-figtree font-semibold hover:text-blue-800 transition-colors mb-4"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Custom Category
+                </button>
+              )}
 
               {/* Dish Availability */}
               <div className="flex items-center justify-between py-4 border-t border-slate-100">
@@ -832,6 +953,25 @@ export function TabMenuManagement() {
                 <div className="space-y-2 mt-4">
                   {[1, 2].map((i) => <Skeleton key={i} className="h-12 w-full rounded" />)}
                 </div>
+              ) : recipeError ? (
+                <div className="flex flex-col items-center gap-3 py-10 text-center mt-2">
+                  <div className="bg-red-50 rounded-full p-3">
+                    <AlertCircle className="h-5 w-5 text-red-400" />
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-bold text-slate-600 font-figtree">Failed to load recipe</p>
+                    <p className="text-[12px] text-slate-400 font-figtree mt-1 max-w-xs leading-relaxed">
+                      {recipeError}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => selectedItemId && loadRecipe(selectedItemId)}
+                    className="flex items-center gap-1.5 text-[12px] font-semibold text-[#3B59DA] font-figtree hover:underline"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Retry
+                  </button>
+                </div>
               ) : recipe.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 py-10 text-center">
                   <div className="bg-slate-100 rounded-full p-3">
@@ -858,6 +998,7 @@ export function TabMenuManagement() {
                     <tbody>
                       {recipe.map((ing, idx) => {
                         const lineCost = ing.quantity_per_unit * (ing.unit_cost ?? 0);
+                        const conversionHint = convertForDisplay(ing.quantity_per_unit, ing.unit, ing.base_unit ?? null);
                         return (
                           <tr key={idx} className="border-b border-slate-50">
                             <td className="py-3 pr-3">
@@ -875,21 +1016,28 @@ export function TabMenuManagement() {
                               />
                             </td>
                             <td className="py-3 pr-3">
-                              <div className="relative">
-                                <select
-                                  value={ing.unit ?? "kg"}
+                              <div className="flex flex-col gap-0.5">
+                                <input
+                                  type="text"
+                                  value={ing.unit ?? ""}
                                   onChange={(e) => updateRecipeRow(idx, "unit", e.target.value)}
-                                  className="w-full border border-slate-200 rounded px-2 pr-6 h-8 text-[12px] appearance-none focus:outline-none focus:ring-1 focus:ring-slate-300 bg-white"
-                                >
-                                  {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-                                </select>
-                                <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+                                  placeholder={ing.base_unit ?? "unit"}
+                                  className="w-20 border border-slate-200 rounded px-2 h-8 text-[12px] focus:outline-none focus:ring-1 focus:ring-slate-300"
+                                />
+                                {conversionHint && conversionHint.compatible && (
+                                  <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                                    → {conversionHint.converted % 1 === 0 ? conversionHint.converted : conversionHint.converted.toFixed(3).replace(/\.?0+$/, "")} {ing.base_unit}
+                                  </span>
+                                )}
+                                {conversionHint && !conversionHint.compatible && (
+                                  <span className="text-[10px] text-amber-500 whitespace-nowrap">⚠ unit mismatch</span>
+                                )}
                               </div>
                             </td>
                             <td className="py-3 pr-3">
                               <div className="flex items-center border border-slate-200 rounded overflow-hidden h-8">
                                 <span className="px-2 text-[11px] text-slate-400 bg-slate-50 border-r border-slate-200 h-full flex items-center shrink-0">
-                                  Ksh
+                                  RWF
                                 </span>
                                 <input
                                   type="number"
@@ -902,7 +1050,7 @@ export function TabMenuManagement() {
                               </div>
                             </td>
                             <td className="py-3 pr-3 text-[13px] font-medium text-slate-600">
-                              Ksh {fmtMoney(lineCost)}
+                              RWF {fmtMoney(lineCost)}
                             </td>
                             <td className="py-3">
                               <button
@@ -922,7 +1070,7 @@ export function TabMenuManagement() {
                           Est. Total Food Cost
                         </td>
                         <td className="py-3 text-[14px] font-bold text-blue-600 font-figtree">
-                          Ksh {fmtMoney(totalFoodCost)}
+                          RWF {fmtMoney(totalFoodCost)}
                         </td>
                         <td />
                       </tr>
@@ -992,6 +1140,7 @@ export function TabMenuManagement() {
                       width={288}
                       height={288}
                       className="object-cover w-full h-full"
+                      priority
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -1004,7 +1153,7 @@ export function TabMenuManagement() {
                 </p>
                 {sellingPrice > 0 ? (
                   <p className="text-[13px] text-slate-600 font-figtree">
-                    Ksh {fmtMoney(sellingPrice)}
+                    RWF {fmtMoney(sellingPrice)}
                     <span className="text-slate-400 text-[12px]"> / serving</span>
                   </p>
                 ) : (
@@ -1034,16 +1183,16 @@ export function TabMenuManagement() {
                 <div className="space-y-2.5">
                   <PricingRow
                     label="Selling price"
-                    value={sellingPrice > 0 ? `Ksh ${fmtMoney(sellingPrice)}` : "--"}
+                    value={sellingPrice > 0 ? `RWF ${fmtMoney(sellingPrice)}` : "--"}
                   />
                   <PricingRow
                     label="Est. Food Cost"
-                    value={recipe.length > 0 ? `Ksh ${fmtMoney(totalFoodCost)}` : "--"}
+                    value={recipe.length > 0 ? `RWF ${fmtMoney(totalFoodCost)}` : "--"}
                   />
                   <div className="border-t border-slate-100 pt-2.5 space-y-2.5">
                     <PricingRow
                       label="Gross profit / plate"
-                      value={sellingPrice > 0 ? `Ksh ${fmtMoney(grossProfit)}` : "--"}
+                      value={sellingPrice > 0 ? `RWF ${fmtMoney(grossProfit)}` : "--"}
                       bold
                       valueClass={sellingPrice > 0 ? marginColor(grossMargin) : "text-slate-400"}
                     />
@@ -1114,6 +1263,18 @@ export function TabMenuManagement() {
               {pickerLoading ? (
                 <div className="space-y-2 p-3">
                   {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-10 w-full rounded" />)}
+                </div>
+              ) : pickerError ? (
+                <div className="flex flex-col items-center gap-2 py-10 px-4 text-center">
+                  <AlertCircle className="h-6 w-6 text-red-300" />
+                  <p className="text-[13px] font-semibold text-slate-600 font-figtree">Failed to load inventory</p>
+                  <p className="text-[12px] text-slate-400 font-figtree">{pickerError}</p>
+                  <button
+                    onClick={() => { setPickerError(null); setPickerRetry((c) => c + 1); }}
+                    className="text-[12px] font-semibold text-[#3B59DA] font-figtree hover:underline mt-1"
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : pickerProducts.length === 0 ? (
                 <p className="text-[13px] text-slate-400 font-figtree text-center py-10">
@@ -1211,6 +1372,7 @@ function GridCard({
             width={320}
             height={320}
             className="object-cover w-full h-full"
+            priority
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -1222,7 +1384,7 @@ function GridCard({
         <div className="flex items-baseline justify-between gap-2 mb-1 min-w-0">
           <p className="text-[14px] font-bold text-[#1E293B] font-figtree truncate flex-1 min-w-0">{item.name}</p>
           <p className="text-[12px] text-slate-500 font-figtree shrink-0 whitespace-nowrap">
-            Ksh {fmtLocal(item.price)} / serving
+            RWF {fmtLocal(item.price)} / serving
           </p>
         </div>
         <p className="text-[12px] italic text-slate-400 font-figtree mb-4">{item.category} Food</p>

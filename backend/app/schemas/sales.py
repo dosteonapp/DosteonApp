@@ -5,6 +5,27 @@ from datetime import datetime, date
 
 
 # ---------------------------------------------------------------------------
+# Menu categories
+# ---------------------------------------------------------------------------
+
+class MenuCategoryOut(BaseModel):
+    id: str
+    name: str
+
+
+class MenuCategoryCreate(BaseModel):
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def name_not_empty(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Category name is required")
+        return v
+
+
+# ---------------------------------------------------------------------------
 # Recipe (menu item → ingredients)
 # ---------------------------------------------------------------------------
 

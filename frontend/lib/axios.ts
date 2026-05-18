@@ -282,11 +282,20 @@ axiosInstance.interceptors.response.use(
       case 404:
         // Silent — expected for unauthenticated state checks
         break;
-      case 500:
-        toast.error("Server Error", {
-          description: "Something went wrong on our end. Please try again later.",
-        });
+      case 500: {
+        // Content-loading endpoints have their own inline error states — skip the global toast
+        const url500 = error.config?.url ?? "";
+        const isSilent500 =
+          /\/menu\/[^/]+\/recipe/.test(url500) ||
+          url500.endsWith("/products") ||
+          url500.includes("/inventory/products");
+        if (!isSilent500) {
+          toast.error("Server Error", {
+            description: "Something went wrong on our end. Please try again later.",
+          });
+        }
         break;
+      }
       case 403:
         if (detail.toLowerCase().includes("csrf")) {
           // Auto-retry once after refreshing the CSRF cookie via /auth/me

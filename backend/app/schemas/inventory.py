@@ -67,16 +67,18 @@ class StockUsageStats(BaseModel):
 # ---------------------------------------------------------------------------
 
 class InventoryProductItem(BaseModel):
-    id:            UUID
-    name:          str
-    sku:           Optional[str]  = None
-    category:      str
-    brand_name:    Optional[str]  = None   # Restaurant brand (Brand.name)
-    unit:          str
-    current_stock: float
-    min_level:     float
-    status_class:  str                     # "healthy" | "low" | "critical"
-    updated_at:    datetime
+    id:               UUID
+    name:             str
+    sku:              Optional[str]   = None
+    category:         str
+    brand_name:       Optional[str]   = None   # Restaurant brand (Brand.name)
+    unit:             str
+    base_unit:        Optional[str]   = None
+    current_stock:    float
+    min_level:        float
+    status_class:     str                      # "healthy" | "low" | "critical"
+    updated_at:       datetime
+    latest_unit_cost: Optional[float] = None   # derived from latest INGREDIENT expense
 
     class Config:
         from_attributes = True
@@ -117,6 +119,7 @@ class InventoryItem(BaseModel):
     category: str # From Canonical
     brand: Optional[str] = None # From Contextual
     unit: str # From Contextual/Canonical
+    base_unit: Optional[str] = None
     current_stock: float = 0 # Aggregated from Events
     min_level: float = 0 # From Contextual (reorder_threshold)
     location: Optional[str] = None # From Contextual

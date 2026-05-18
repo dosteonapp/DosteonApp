@@ -119,10 +119,9 @@ export function DashboardHeader() {
   })();
 
   const getBreadcrumbs = (): string[] => {
-    // Home
     if (dashPath === "/dashboard") return ["Home"];
 
-    // Sales — tab name from ?tab= search param
+    // Sales — sub-tab from ?tab= query param
     if (dashPath === "/dashboard/sales") {
       const tab = searchParams.get("tab") ?? "log";
       const label: Record<string, string> = {
@@ -132,44 +131,79 @@ export function DashboardHeader() {
       };
       return ["Sales", label[tab] ?? "Log Sales"];
     }
+    if (dashPath.startsWith("/dashboard/sales")) return ["Sales"];
+
+    // Expenses
+    if (dashPath.startsWith("/dashboard/expenses")) return ["Expenses"];
 
     // Expenditure
-    if (dashPath === "/dashboard/expenditure/history")
-      return ["Expenditure", "Expenditure History"];
-    if (dashPath.startsWith("/dashboard/expenditure"))
-      return ["Expenditure"];
+    if (dashPath === "/dashboard/expenditure/history") return ["Expenditure", "History"];
+    if (dashPath.startsWith("/dashboard/expenditure")) return ["Expenditure"];
 
     // Inventory
     if (dashPath === "/dashboard/inventory/daily-stock-count")
       return ["Inventory", "Daily Stock Count"];
-    if (dashPath === "/dashboard/inventory/new") {
+    if (dashPath === "/dashboard/inventory/new")
       return ["Inventory", searchParams.get("edit") ? "Edit Item" : "Add New Item"];
-    }
+    if (dashPath === "/dashboard/inventory/items") return ["Inventory", "All Items"];
     if (dashPath === "/dashboard/inventory") {
       const tab = searchParams.get("tab") ?? "catalog";
-      const label: Record<string, string> = {
-        catalog: "Product Catalog",
-        usage:   "Stock Usage",
-      };
+      const label: Record<string, string> = { catalog: "Product Catalog", usage: "Stock Usage" };
       return ["Inventory", label[tab] ?? "Product Catalog"];
     }
-    if (dashPath.startsWith("/dashboard/inventory/"))
-      return ["Inventory", "Item Details"];
-    if (dashPath.startsWith("/dashboard/inventory"))
-      return ["Inventory"];
+    if (/^\/dashboard\/inventory\/[^/]+$/.test(dashPath)) return ["Inventory", "Item Details"];
+    if (dashPath.startsWith("/dashboard/inventory")) return ["Inventory"];
 
-    // Closing
+    // Closing / Opening
     if (dashPath.startsWith("/dashboard/closing")) return ["Closing"];
+    if (dashPath.startsWith("/dashboard/opening")) return ["Opening"];
+
+    // Activities
+    if (dashPath.startsWith("/dashboard/activities")) return ["Activities"];
+
+    // Kitchen & Operations
+    if (dashPath.startsWith("/dashboard/kitchen-service")) return ["Kitchen Service"];
+    if (dashPath.startsWith("/dashboard/stock-tracking")) return ["Stock Tracking"];
+    if (dashPath.startsWith("/dashboard/schedule")) return ["Schedule"];
+    if (dashPath.startsWith("/dashboard/petty-cash")) return ["Petty Cash"];
+    if (dashPath.startsWith("/dashboard/logs")) return ["Logs"];
+
+    // Orders
+    if (/^\/dashboard\/orders\/[^/]+\/payment\/confirmation/.test(dashPath))
+      return ["Orders", "Payment", "Confirmation"];
+    if (/^\/dashboard\/orders\/[^/]+\/payment/.test(dashPath))
+      return ["Orders", "Payment"];
+    if (dashPath.startsWith("/dashboard/orders")) return ["Orders"];
+
+    // Suppliers
+    if (dashPath === "/dashboard/suppliers/discover") return ["Suppliers", "Discover"];
+    if (dashPath === "/dashboard/suppliers/dashboard") return ["Suppliers", "Overview"];
+    if (/^\/dashboard\/suppliers\/[^/]+\/chat$/.test(dashPath)) return ["Suppliers", "Chat"];
+    if (/^\/dashboard\/suppliers\/[^/]+$/.test(dashPath)) return ["Suppliers", "Supplier Details"];
+    if (dashPath.startsWith("/dashboard/suppliers")) return ["Suppliers"];
 
     // Notifications
     if (dashPath.startsWith("/dashboard/notifications")) return ["Notifications"];
 
-    // Settings
+    // Settings — full 3-level hierarchy
     if (dashPath.startsWith("/dashboard/settings")) {
-      const parts = ["Settings"];
-      if (dashPath.includes("/personal"))       parts.push("Personal Details");
-      else if (dashPath.includes("/business"))  parts.push("Business Settings");
-      else if (dashPath.includes("/notifications")) parts.push("Notification Settings");
+      const parts: string[] = ["Settings"];
+
+      if (dashPath.includes("/personal")) {
+        parts.push("Personal");
+        if (dashPath.includes("/profile")) parts.push("Profile");
+        else if (dashPath.includes("/security")) parts.push("Security");
+      } else if (dashPath.includes("/business")) {
+        parts.push("Business Settings");
+        if (dashPath.includes("/profile")) parts.push("Restaurant Profile");
+        else if (/\/team\/[^/]+/.test(dashPath)) { parts.push("Team Management"); parts.push("Member Details"); }
+        else if (dashPath.includes("/team")) parts.push("Team Management");
+        else if (dashPath.includes("/menu")) parts.push("Menu Management");
+        else if (dashPath.includes("/brands")) parts.push("Brands");
+      } else if (dashPath.includes("/notifications")) {
+        parts.push("Notification Settings");
+      }
+
       return parts;
     }
 
