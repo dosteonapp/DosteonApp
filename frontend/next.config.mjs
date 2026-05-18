@@ -48,7 +48,13 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
   },
 
   async rewrites() {
@@ -78,6 +84,20 @@ const nextConfig = {
         // Apply security headers to all routes.
         source: '/(.*)',
         headers: securityHeaders,
+      },
+      {
+        // Hash-named JS/CSS chunks — safe to cache forever (new hash = new URL on each build).
+        source: '/_next/static/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        // Static public files — cache for 1 day (no content hash, so shorter TTL).
+        source: '/:file(favicon\\.ico|manifest\\.json)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400' },
+        ],
       },
     ];
   },

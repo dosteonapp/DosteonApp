@@ -1,6 +1,5 @@
 "use client";
 import { createContext, useContext } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppContextType } from "@/types/app";
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -15,16 +14,8 @@ export const useAppContext = () => {
   return context;
 };
 
-const queryClient = new QueryClient();
-
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  return (
-    <>
-      <QueryClientProvider client={queryClient}>
-        <AppContext.Provider value={{}}>{children}</AppContext.Provider>
-      </QueryClientProvider>
-    </>
-  );
+  return <AppContext.Provider value={{}}>{children}</AppContext.Provider>;
 };

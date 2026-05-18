@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useBrand } from "@/context/BrandContext";
+import { useUser } from "@/context/UserContext";
 import { QK } from "@/lib/queryKeys";
 import { expenseService, ExpenseType } from "@/lib/services/expenseService";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,8 @@ const EMPTY: FormState = {
 export function ExpenseForm() {
   const { activeBrand } = useBrand();
   const brandId = activeBrand?.id ?? null;
+  const { user } = useUser();
+  const orgId = user?.organization_id ?? null;
   const queryClient = useQueryClient();
   const idempotencyKey = useRef<string>(crypto.randomUUID());
 
@@ -83,7 +86,7 @@ export function ExpenseForm() {
       queryClient.invalidateQueries({ queryKey: QK.expenseStats(brandId) });
       queryClient.invalidateQueries({ queryKey: QK.expenseWeekStats(brandId) });
       queryClient.invalidateQueries({ queryKey: QK.expenseHistory(brandId) });
-      queryClient.invalidateQueries({ queryKey: QK.inventoryStats() });
+      queryClient.invalidateQueries({ queryKey: QK.inventoryStats(orgId) });
       queryClient.invalidateQueries({ queryKey: QK.todayStats(brandId) });
 
       const baseMsg = `Expense logged — RWF ${data.amount.toLocaleString()}`;

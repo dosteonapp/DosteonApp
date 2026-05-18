@@ -14,6 +14,13 @@ class RestaurantService:
         if not organization_id:
             return {"totalItems": 0, "countedItems": 0, "healthy": 0, "low": 0, "critical": 0, "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}}
 
+        from app.cache.ops import cache_get, cache_set
+        from app.cache.keys import CacheKeys
+        _cache_key = CacheKeys.restaurant_stats(organization_id)
+        _cached = await cache_get(_cache_key, resource="restaurant_stats")
+        if _cached is not None:
+            return _cached
+
         try:
             try:
                 UUID(str(organization_id))
@@ -59,7 +66,7 @@ class RestaurantService:
             except Exception:
                 pass
 
-            return {
+            _result = {
                 "totalItems": total,
                 "countedItems": counted,
                 "healthy": healthy,
@@ -67,6 +74,8 @@ class RestaurantService:
                 "critical": critical,
                 "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}
             }
+            await cache_set(_cache_key, _result, ttl=300)
+            return _result
         except Exception as e:
             logger.exception("Failed to compute inventory stats")
             return {"totalItems": 0, "countedItems": 0, "healthy": 0, "low": 0, "critical": 0, "changes": {"total": 0, "healthy": 0, "low": 0, "critical": 0}}
@@ -171,6 +180,7 @@ class RestaurantService:
             name=name,
             current_stock=0.0,
             pack_unit=unit,
+            base_unit=unit,
             storage_type=location,
             image_url=image_url,
             status="Healthy" if stock > 0 else "Critical",
@@ -185,6 +195,14 @@ class RestaurantService:
                 unit=unit,
                 metadata={"reason": "Initial item setup"}
             )
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(
+            CacheKeys.inventory(organization_id),
+            CacheKeys.products(organization_id),
+            CacheKeys.inventory_stats(organization_id),
+            CacheKeys.restaurant_stats(organization_id),
+        )
         return {"success": True, "item": item}
 
     async def update_inventory_item(self, organization_id: str, item_id: str, payload: dict):
@@ -198,6 +216,7 @@ class RestaurantService:
             data["name"] = payload["name"]
         if "unit" in payload:
             data["pack_unit"] = payload["unit"]
+            data["base_unit"] = payload["unit"]
         if "location" in payload:
             data["storage_type"] = payload["location"]
         if "imageUrl" in payload:
@@ -226,6 +245,14 @@ class RestaurantService:
 
         try:
             await inventory_repo.update_contextual_product(UUID(item_id), data)
+            from app.cache.ops import cache_delete
+            from app.cache.keys import CacheKeys
+            await cache_delete(
+                CacheKeys.inventory(organization_id),
+                CacheKeys.products(organization_id),
+                CacheKeys.inventory_stats(organization_id),
+                CacheKeys.restaurant_stats(organization_id),
+            )
             return {"success": True}
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -250,6 +277,13 @@ class RestaurantService:
                     unit=unit_value,
                     metadata={"reason": "Manual stock override"}
                 )
+            from app.cache.ops import cache_delete
+            from app.cache.keys import CacheKeys
+            await cache_delete(
+                CacheKeys.inventory(organization_id),
+                CacheKeys.inventory_stats(organization_id),
+                CacheKeys.restaurant_stats(organization_id),
+            )
             return {"success": True}
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -722,6 +756,13 @@ class RestaurantService:
         if not organization_id:
             return {"name": "Restaurant", "opening_time": "08:00", "closing_time": "22:00"}
 
+        from app.cache.ops import cache_get, cache_set
+        from app.cache.keys import CacheKeys
+        _cache_key = CacheKeys.settings(organization_id)
+        _cached = await cache_get(_cache_key, resource="settings")
+        if _cached is not None:
+            return _cached
+
         org = await db.organization.find_unique(where={"id": organization_id})
         if not org:
             raise HTTPException(status_code=404, detail="Organization not found")
@@ -734,7 +775,7 @@ class RestaurantService:
                 settings = {}
 
         # Explicit DB columns always win over anything stored in the JSON blob.
-        return {
+        _settings_result = {
             **settings,
             "id": str(org.id),
             "name": org.name,
@@ -745,6 +786,8 @@ class RestaurantService:
             # map city → location so the frontend field name matches
             "location": org.city or settings.get("location"),
         }
+        await cache_set(_cache_key, _settings_result, ttl=3600)
+        return _settings_result
 
     async def update_settings(self, organization_id: str, new_settings: dict):
         from app.db.prisma import db
@@ -770,6 +813,10 @@ class RestaurantService:
             where={"id": organization_id},
             data=update_data,
         )
+
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(CacheKeys.settings(organization_id))
 
         return {
             **new_settings,

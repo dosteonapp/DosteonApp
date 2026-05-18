@@ -21,6 +21,18 @@ class InventoryService:
         skip: number of items to skip (offset)
         limit: maximum number of items to return
         """
+        is_unfiltered = skip == 0 and limit is None and brand_id is None
+        if is_unfiltered:
+            from app.cache.ops import cache_get, cache_set
+            from app.cache.keys import CacheKeys
+            _cache_key = CacheKeys.inventory(organization_id)
+            _cached = await cache_get(_cache_key, resource="inventory")
+            if _cached is not None:
+                return _cached
+            result = await inventory_repo.get_by_organization(UUID(organization_id), skip=0, take=None, brand_id=None)
+            await cache_set(_cache_key, result, ttl=900)
+            return result
+
         take = limit if limit is not None and limit > 0 else None
         return await inventory_repo.get_by_organization(
             UUID(organization_id), skip=skip, take=take, brand_id=brand_id
@@ -78,9 +90,37 @@ class InventoryService:
         search: Optional[str] = None,
         category: Optional[str] = None,
     ):
+        _is_unfiltered = not search and not category and brand_id is None
+        if _is_unfiltered:
+            from app.cache.ops import cache_get
+            from app.cache.keys import CacheKeys
+            _products_cache_key = CacheKeys.products(organization_id)
+            _cached = await cache_get(_products_cache_key, resource="products")
+            if _cached is not None:
+                return _cached
+
+        from app.db.prisma import db as _db
         products = await inventory_repo.get_products_enhanced(
             organization_id, brand_id=brand_id, search=search, category=category
         )
+
+        # Batch-load latest procurement unit cost for all products
+        product_ids = [str(p.id) for p in products]
+        latest_cost_map: dict[str, float] = {}
+        if product_ids:
+            expenses = await _db.expense.find_many(
+                where={
+                    "contextual_product_id": {"in": product_ids},
+                    "expense_type": "INGREDIENT",
+                    "quantity": {"gt": 0},
+                },
+                order={"occurred_at": "desc"},
+            )
+            for exp in expenses:
+                pid = str(exp.contextual_product_id)
+                if pid not in latest_cost_map and exp.quantity:
+                    latest_cost_map[pid] = round(exp.amount / exp.quantity, 4)
+
         result = []
         for p in products:
             reorder  = float(p.reorder_threshold  or 0)
@@ -98,17 +138,22 @@ class InventoryService:
             brand_obj  = p.brand
 
             result.append({
-                "id":            p.id,
-                "name":          p.name or (canonical.name if canonical else "Unknown"),
-                "sku":           p.sku  or (canonical.sku  if canonical else None),
-                "category":      canonical.category if canonical else "General",
-                "brand_name":    brand_obj.name if brand_obj else None,
-                "unit":          p.pack_unit or (canonical.base_unit if canonical else "units"),
-                "current_stock": stock,
-                "min_level":     reorder,
-                "status_class":  status_class,
-                "updated_at":    p.updated_at,
+                "id":               p.id,
+                "name":             p.name or (canonical.name if canonical else "Unknown"),
+                "sku":              p.sku  or (canonical.sku  if canonical else None),
+                "category":         canonical.category if canonical else "General",
+                "brand_name":       brand_obj.name if brand_obj else None,
+                "unit":             p.pack_unit or (canonical.base_unit if canonical else "units"),
+                "base_unit":        p.base_unit or p.pack_unit or (canonical.base_unit if canonical else None),
+                "current_stock":    stock,
+                "min_level":        reorder,
+                "status_class":     status_class,
+                "updated_at":       p.updated_at,
+                "latest_unit_cost": latest_cost_map.get(str(p.id)),
             })
+        if _is_unfiltered:
+            from app.cache.ops import cache_set
+            await cache_set(_products_cache_key, result, ttl=900)
         return result
 
     async def get_stats(
@@ -116,6 +161,16 @@ class InventoryService:
         organization_id: str,
         brand_id: Optional[str] = None,
     ):
+        if brand_id is None:
+            from app.cache.ops import cache_get, cache_set
+            from app.cache.keys import CacheKeys
+            _cache_key = CacheKeys.inventory_stats(organization_id)
+            _cached = await cache_get(_cache_key, resource="inventory_stats")
+            if _cached is not None:
+                return _cached
+            result = await inventory_repo.get_inventory_counts(organization_id, brand_id=None)
+            await cache_set(_cache_key, result, ttl=600)
+            return result
         return await inventory_repo.get_inventory_counts(organization_id, brand_id=brand_id)
 
     # -----------------------------------------------------------------------
@@ -170,7 +225,7 @@ class InventoryService:
         if not product or str(product.get("organization_id", "")) != organization_id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
-        return await inventory_repo.add_usage_event(
+        result = await inventory_repo.add_usage_event(
             contextual_product_id=product_id,
             organization_id=organization_id,
             event_type="USED",
@@ -179,6 +234,14 @@ class InventoryService:
             consumption_reason=data.consumption_reason.value,
             actor_id=actor_id,
         )
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(
+            CacheKeys.inventory(organization_id),
+            CacheKeys.inventory_stats(organization_id),
+            CacheKeys.restaurant_stats(organization_id),
+        )
+        return result
 
     async def log_waste(
         self,
@@ -192,7 +255,7 @@ class InventoryService:
         if not product or str(product.get("organization_id", "")) != organization_id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
-        return await inventory_repo.add_usage_event(
+        result = await inventory_repo.add_usage_event(
             contextual_product_id=product_id,
             organization_id=organization_id,
             event_type="WASTED",
@@ -201,6 +264,14 @@ class InventoryService:
             waste_reason=data.waste_reason.value,
             actor_id=actor_id,
         )
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(
+            CacheKeys.inventory(organization_id),
+            CacheKeys.inventory_stats(organization_id),
+            CacheKeys.restaurant_stats(organization_id),
+        )
+        return result
 
     async def remove_item(self, organization_id: str, item_id: str):
         """Soft-delete an inventory item, ensuring it belongs to the org."""
@@ -210,6 +281,15 @@ class InventoryService:
         if not existing or str(existing.get("organization_id")) != str(organization_id):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
 
-        return await inventory_repo.delete_contextual_product(item_uuid)
+        result = await inventory_repo.delete_contextual_product(item_uuid)
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(
+            CacheKeys.inventory(organization_id),
+            CacheKeys.products(organization_id),
+            CacheKeys.inventory_stats(organization_id),
+            CacheKeys.restaurant_stats(organization_id),
+        )
+        return result
 
 inventory_service = InventoryService()

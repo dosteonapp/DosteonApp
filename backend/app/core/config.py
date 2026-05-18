@@ -65,6 +65,11 @@ class Settings(BaseSettings):
     RESEND_API_KEY: Optional[str] = Field(None, validation_alias="RESEND_API_KEY")
     RESEND_FROM_EMAIL: Optional[str] = Field(None, validation_alias="RESEND_FROM_EMAIL")
 
+    # ── Redis / Cache ─────────────────────────────────────────────────────
+    REDIS_URL: Optional[str] = Field(None, validation_alias="REDIS_URL")
+    REDIS_ENABLED: bool = Field(True, validation_alias="REDIS_ENABLED")
+    CACHE_VERSION: str = Field("v1", validation_alias="CACHE_VERSION")
+
     # ── Internal admin API key ─────────────────────────────────────────────
     ADMIN_API_KEY: Optional[str] = Field(None, validation_alias="ADMIN_API_KEY")
 

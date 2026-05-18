@@ -167,6 +167,15 @@ class ExpenseService:
         result["note"] = note
         if linked_product_id:
             result["contextual_product_id"] = linked_product_id
+
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(
+            CacheKeys.expense_today_stats(org_id, brand_id),
+            CacheKeys.expense_today_stats(org_id, None),
+            CacheKeys.inventory_stats(org_id),
+            CacheKeys.products(org_id),
+        )
         return result
 
     # ------------------------------------------------------------------
@@ -174,6 +183,13 @@ class ExpenseService:
     # ------------------------------------------------------------------
 
     async def get_today_stats(self, org_id: str, brand_id: Optional[str]) -> dict:
+        from app.cache.ops import cache_get, cache_set
+        from app.cache.keys import CacheKeys
+        _cache_key = CacheKeys.expense_today_stats(org_id, brand_id)
+        _cached = await cache_get(_cache_key, resource="expense_today_stats")
+        if _cached is not None:
+            return _cached
+
         today = date.today()
         expenses = await db.expense.find_many(
             where={
@@ -185,12 +201,14 @@ class ExpenseService:
         total = sum(e.amount for e in expenses)
         cogs = sum(e.amount for e in expenses if e.expense_type == "INGREDIENT")
         overhead = sum(e.amount for e in expenses if e.expense_type == "OVERHEAD")
-        return {
+        _result = {
             "total_expenses": round(total, 2),
             "cogs": round(cogs, 2),
             "overhead": round(overhead, 2),
             "expense_count": len(expenses),
         }
+        await cache_set(_cache_key, _result, ttl=300)
+        return _result
 
     # ------------------------------------------------------------------
     # Today — list all today's expenses
@@ -243,6 +261,13 @@ class ExpenseService:
         if update_data:
             await db.expense.update(where={"id": expense_id}, data=update_data)
         new = {**old, **{k: data.get(k, old.get(k)) for k in ("item_name", "amount", "expense_type")}, "category": None}
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        _exp_brand_id = str(expense.brand_id) if expense.brand_id else None
+        await cache_delete(
+            CacheKeys.expense_today_stats(org_id, _exp_brand_id),
+            CacheKeys.expense_today_stats(org_id, None),
+        )
         return {"old": old, "new": new}
 
     # ------------------------------------------------------------------

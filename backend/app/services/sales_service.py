@@ -53,6 +53,15 @@ class SalesService:
         search: str = "",
     ) -> dict:
         """Return active and inactive menu items grouped by category (excludes archived)."""
+        _is_unfiltered = not search
+        if _is_unfiltered:
+            from app.cache.ops import cache_get, cache_set
+            from app.cache.keys import CacheKeys
+            _menu_cache_key = CacheKeys.menu(organization_id, brand_id)
+            _cached = await cache_get(_menu_cache_key, resource="menu")
+            if _cached is not None:
+                return _cached
+
         where: dict = {
             "organization_id": organization_id,
             "NOT": {"status": "archived"},
@@ -68,12 +77,15 @@ class SalesService:
             cat = item.category or "Uncategorized"
             groups.setdefault(cat, []).append(self._item_out(item))
 
-        return {
+        _result = {
             "categories": [
                 {"category": cat, "items": items_list}
                 for cat, items_list in sorted(groups.items())
             ]
         }
+        if _is_unfiltered:
+            await cache_set(_menu_cache_key, _result, ttl=3600)
+        return _result
 
     async def create_menu_item(
         self,
@@ -93,6 +105,12 @@ class SalesService:
         if data.get("image_url"):
             create_data["image_url"] = data["image_url"]
         item = await db.menuitem.create(data=create_data)
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(
+            CacheKeys.menu(organization_id, brand_id),
+            CacheKeys.menu(organization_id, None),
+        )
         return self._item_out(item)
 
     async def update_menu_item(
@@ -113,6 +131,12 @@ class SalesService:
             where={"id": item_id},
             data=update_data,
         )
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(
+            CacheKeys.menu(organization_id, str(item.brand_id) if item.brand_id else None),
+            CacheKeys.menu(organization_id, None),
+        )
         return self._item_out(updated)
 
     # -----------------------------------------------------------------------
@@ -120,6 +144,13 @@ class SalesService:
     # -----------------------------------------------------------------------
 
     async def get_recipe(self, organization_id: str, item_id: str) -> list:
+        from app.cache.ops import cache_get, cache_set
+        from app.cache.keys import CacheKeys
+        _recipe_cache_key = CacheKeys.recipe(organization_id, item_id)
+        _cached = await cache_get(_recipe_cache_key, resource="recipe")
+        if _cached is not None:
+            return _cached
+
         item = await db.menuitem.find_unique(where={"id": item_id})
         if not item or str(item.organization_id) != organization_id:
             raise HTTPException(status_code=404, detail="Menu item not found")
@@ -127,17 +158,37 @@ class SalesService:
             where={"menu_item_id": item_id},
             include={"contextual_product": True},
         )
-        return [
+
+        # Batch-load latest procurement unit cost for ingredients missing a stored cost
+        product_ids = [ing.contextual_product_id for ing in ingredients if not ing.unit_cost]
+        latest_cost_map: dict[str, float] = {}
+        if product_ids:
+            expenses = await db.expense.find_many(
+                where={
+                    "contextual_product_id": {"in": product_ids},
+                    "expense_type": "INGREDIENT",
+                    "quantity": {"gt": 0},
+                },
+                order={"occurred_at": "desc"},
+            )
+            for exp in expenses:
+                pid = str(exp.contextual_product_id)
+                if pid not in latest_cost_map and exp.quantity:
+                    latest_cost_map[pid] = round(exp.amount / exp.quantity, 4)
+
+        _recipe_result = [
             {
                 "id": ing.id,
                 "contextual_product_id": ing.contextual_product_id,
                 "product_name": ing.contextual_product.name if ing.contextual_product else None,
                 "quantity_per_unit": ing.quantity_per_unit,
                 "unit": ing.unit,
-                "unit_cost": ing.unit_cost,
+                "unit_cost": ing.unit_cost or latest_cost_map.get(str(ing.contextual_product_id)),
             }
             for ing in ingredients
         ]
+        await cache_set(_recipe_cache_key, _recipe_result, ttl=86400)
+        return _recipe_result
 
     async def set_recipe(self, organization_id: str, item_id: str, ingredients: list) -> list:
         item = await db.menuitem.find_unique(where={"id": item_id})
@@ -155,15 +206,21 @@ class SalesService:
                 )
 
         await db.menuitemingredient.delete_many(where={"menu_item_id": item_id})
-        for ing in ingredients:
-            await db.menuitemingredient.create(data={
-                "menu_item_id": item_id,
-                "contextual_product_id": ing["contextual_product_id"],
-                "quantity_per_unit": ing["quantity_per_unit"],
-                "unit": ing.get("unit"),
-                "unit_cost": ing.get("unit_cost"),
-            })
+        if ingredients:
+            await db.menuitemingredient.create_many(data=[
+                {
+                    "menu_item_id": item_id,
+                    "contextual_product_id": ing["contextual_product_id"],
+                    "quantity_per_unit": ing["quantity_per_unit"],
+                    "unit": ing.get("unit"),
+                    "unit_cost": ing.get("unit_cost"),
+                }
+                for ing in ingredients
+            ])
 
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(CacheKeys.recipe(organization_id, item_id))
         return await self.get_recipe(organization_id, item_id)
 
     async def archive_menu_item(
@@ -181,6 +238,12 @@ class SalesService:
             where={"id": item_id},
             data={"status": "archived"},
         )
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(
+            CacheKeys.menu(organization_id, str(item.brand_id) if item.brand_id else None),
+            CacheKeys.menu(organization_id, None),
+        )
         return {"status": "archived"}
 
     # -----------------------------------------------------------------------
@@ -192,6 +255,13 @@ class SalesService:
         organization_id: str,
         brand_id: Optional[str],
     ) -> dict:
+        from app.cache.ops import cache_get, cache_set
+        from app.cache.keys import CacheKeys
+        _cache_key = CacheKeys.sales_today_stats(organization_id, brand_id)
+        _cached = await cache_get(_cache_key, resource="sales_today_stats")
+        if _cached is not None:
+            return _cached
+
         today = date.today()
         orders = await db.saleorder.find_many(
             where={
@@ -237,7 +307,7 @@ class SalesService:
             )
             dishes_sold = sum(i.quantity for i in all_items)
 
-        return {
+        _result = {
             "today_revenue": round(total_revenue, 2),
             "today_cogs": round(total_cogs, 2),
             "today_gross_profit": round(gross_profit, 2),
@@ -261,13 +331,19 @@ class SalesService:
                 },
             },
         }
+        await cache_set(_cache_key, _result, ttl=300)
+        return _result
 
     async def get_today_orders(
         self,
         organization_id: str,
         brand_id: Optional[str],
     ) -> list:
-        """Fetch all today's completed orders with their line items expanded."""
+        """Fetch all today's completed orders with their line items expanded.
+
+        Uses 3 queries total (orders → all items → all menu items) instead of
+        the previous N+1 pattern (1 + 2 queries per order).
+        """
         today = date.today()
         orders = await db.saleorder.find_many(
             where={
@@ -278,28 +354,48 @@ class SalesService:
             },
             order={"occurred_at": "desc"},
         )
+        if not orders:
+            return []
+
+        # Batch-load all order items in one query
+        order_ids = [o.id for o in orders]
+        all_items = await db.saleorderitem.find_many(
+            where={"sale_order_id": {"in": order_ids}}
+        )
+
+        # Batch-load all referenced menu items in one query
+        menu_ids = list({i.menu_item_id for i in all_items})
+        menu_map = {}
+        if menu_ids:
+            menu_items = await db.menuitem.find_many(where={"id": {"in": menu_ids}})
+            menu_map = {m.id: m for m in menu_items}
+
+        # Map order items by sale_order_id for fast lookup
+        items_by_order: dict[str, list] = {}
+        for item in all_items:
+            items_by_order.setdefault(item.sale_order_id, []).append(item)
+
+        # Build channel map keyed by order id
+        channel_by_order = {o.id: (str(o.channel) if o.channel else "DINE_IN") for o in orders}
+
         result = []
         for order in orders:
-            items = await db.saleorderitem.find_many(where={"sale_order_id": order.id})
-            menu_ids = [i.menu_item_id for i in items]
-            menu_items_list = await db.menuitem.find_many(where={"id": {"in": menu_ids}})
-            name_map = {m.id: m.name for m in menu_items_list}
-            price_map = {m.id: m.price for m in menu_items_list}
-            channel = str(order.channel) if order.channel else "DINE_IN"
-            for item in items:
-                unit_price = item.unit_price if item.unit_price else price_map.get(item.menu_item_id, 0)
-                cost = item.unit_cogs if item.unit_cogs else 0
+            channel = channel_by_order[order.id]
+            for item in items_by_order.get(order.id, []):
+                menu = menu_map.get(item.menu_item_id)
+                unit_price = item.unit_price or (menu.price if menu else 0)
+                cost = item.unit_cogs or 0
                 margin = round((unit_price - cost) / unit_price * 100, 1) if unit_price > 0 else 0.0
                 result.append({
-                    "order_id": order.id,
-                    "item_id": item.id,
-                    "menu_item_id": item.menu_item_id,
-                    "menu_item_name": name_map.get(item.menu_item_id, "Unknown"),
-                    "quantity": item.quantity,
-                    "unit_price": unit_price,
-                    "line_total": item.line_total,
-                    "channel": channel,
-                    "margin_pct": margin,
+                    "order_id":        order.id,
+                    "item_id":         item.id,
+                    "menu_item_id":    item.menu_item_id,
+                    "menu_item_name":  menu.name if menu else "Unknown",
+                    "quantity":        item.quantity,
+                    "unit_price":      unit_price,
+                    "line_total":      item.line_total,
+                    "channel":         channel,
+                    "margin_pct":      margin,
                 })
         return result
 
@@ -572,6 +668,16 @@ class SalesService:
         except Exception as e:
             logger.warning(f"[sales] inventory depletion failed for order {order.id}: {e}")
 
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(
+            CacheKeys.sales_today_stats(organization_id, brand_id),
+            CacheKeys.sales_today_stats(organization_id, None),
+            CacheKeys.inventory(organization_id),
+            CacheKeys.inventory_stats(organization_id),
+            CacheKeys.restaurant_stats(organization_id),
+        )
+
         return {
             "id": order.id,
             "channel": order.channel,
@@ -615,9 +721,9 @@ class SalesService:
 
         total = await db.saleorder.count(where=where)
 
-        # Sum revenue across ALL matching orders for the period total
-        all_orders_rev = await db.saleorder.find_many(where=where)
-        period_revenue = sum(o.total_revenue for o in all_orders_rev)
+        # Sum revenue at DB level — avoid fetching all rows just for an aggregate
+        agg = await db.saleorder.aggregate(where=where, _sum={"total_revenue": True})
+        period_revenue = (agg.sum.total_revenue or 0.0) if agg.sum else 0.0
 
         orders = await db.saleorder.find_many(
             where=where,

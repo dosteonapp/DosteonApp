@@ -45,9 +45,13 @@ export const QK = {
   dayStatus:      (orgId: string | null, date: string) => ["restaurantDayStatus",   orgId, date] as const,
   orgSettings:    (orgId: string | null)               => ["restaurantSettings",    orgId] as const,
   systemState:    (orgId: string | null)               => ["restaurantSystemState", orgId] as const,
-  inventoryStats: ()                                   => ["inventoryStats"] as const,
+  inventoryStats:    (orgId: string | null)               => ["inventoryStats", orgId] as const,
+  inventoryProducts: (orgId: string | null)               => ["inventoryProducts", orgId] as const,
   kitchenLog:     ()                                   => ["kitchenLog"] as const,
   stockUsage:     ()                                   => ["stockUsage"] as const,
+
+  // ── Brand-scoped (added here because menu stats vary per brand) ───────────
+  menuStats: (brandId: string | null) => ["menuStats", brandId ?? "all"] as const,
 
   // ── Global ────────────────────────────────────────────────────────────────
   user:              () => ["user"] as const,
@@ -70,4 +74,5 @@ export const BRAND_SCOPED_KEYS: readonly string[] = [
   "expenseStats",
   "expenseWeekStats",
   "expenseHistory",
+  "menuStats",
 ];

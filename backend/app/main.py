@@ -9,6 +9,7 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.prisma import connect_db, disconnect_db, ensure_connected, mark_connection_failed
+from app.cache.client import connect_cache, disconnect_cache
 from app.middleware.request_id import RequestIDMiddleware, get_request_id
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.middleware.metrics import MetricsMiddleware, MetricsStore
@@ -229,6 +230,8 @@ async def startup_event():
         logger = get_logger("startup")
         logger.error(f"Failed to connect to database on startup: {e}")
 
+    await connect_cache()
+
     # Validate Supabase admin client — loud failure if service role key is wrong
     import asyncio
     asyncio.create_task(_validate_supabase_admin())
@@ -251,6 +254,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    await disconnect_cache()
     await disconnect_db()
 
 # CORS
@@ -262,6 +266,15 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+@app.middleware("http")
+async def cache_control_middleware(request: Request, call_next):
+    """Prevent tenant API responses from being cached by proxies or shared caches."""
+    response = await call_next(request)
+    if request.url.path.startswith("/api/") and request.method in ("GET", "HEAD"):
+        response.headers["Cache-Control"] = "private, no-store"
+    return response
+
 
 @app.middleware("http")
 async def db_reconnect_middleware(request: Request, call_next):
