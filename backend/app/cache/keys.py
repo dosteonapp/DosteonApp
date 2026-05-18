@@ -51,3 +51,7 @@ class CacheKeys:
     @staticmethod
     def recipe(org_id: str, item_id: str) -> str:
         return f"{CACHE_VERSION}:recipe:{org_id}:{item_id}"
+
+    @staticmethod
+    def menu_categories(org_id: str) -> str:
+        return f"{CACHE_VERSION}:menu_categories:{org_id}"

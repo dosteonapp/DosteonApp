@@ -42,13 +42,14 @@ export const QK = {
   // ── Org-scoped ────────────────────────────────────────────────────────────
   // One kitchen, one day — these do not change when switching brands.
   // Inventory is shared across all brands — same pool regardless of active brand.
-  dayStatus:      (orgId: string | null, date: string) => ["restaurantDayStatus",   orgId, date] as const,
-  orgSettings:    (orgId: string | null)               => ["restaurantSettings",    orgId] as const,
-  systemState:    (orgId: string | null)               => ["restaurantSystemState", orgId] as const,
-  inventoryStats:    (orgId: string | null)               => ["inventoryStats", orgId] as const,
-  inventoryProducts: (orgId: string | null)               => ["inventoryProducts", orgId] as const,
-  kitchenLog:     ()                                   => ["kitchenLog"] as const,
-  stockUsage:     ()                                   => ["stockUsage"] as const,
+  dayStatus:        (orgId: string | null, date: string) => ["restaurantDayStatus",   orgId, date] as const,
+  orgSettings:      (orgId: string | null)               => ["restaurantSettings",    orgId] as const,
+  systemState:      (orgId: string | null)               => ["restaurantSystemState", orgId] as const,
+  inventoryStats:   (orgId: string | null)               => ["inventoryStats", orgId] as const,
+  inventoryProducts:(orgId: string | null)               => ["inventoryProducts", orgId] as const,
+  menuCategories:   (orgId: string | null)               => ["menuCategories", orgId] as const,
+  kitchenLog:       ()                                   => ["kitchenLog"] as const,
+  stockUsage:       ()                                   => ["stockUsage"] as const,
 
   // ── Brand-scoped (added here because menu stats vary per brand) ───────────
   menuStats: (brandId: string | null) => ["menuStats", brandId ?? "all"] as const,

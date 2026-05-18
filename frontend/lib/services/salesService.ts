@@ -52,6 +52,11 @@ export interface RecipeIngredient {
   unit_cost?: number | null;
 }
 
+export interface OrgMenuCategory {
+  id: string;
+  name: string;
+}
+
 export interface SaleOrder {
   id: string;
   channel: string;
@@ -220,5 +225,19 @@ export const salesService = {
       payload
     );
     return data;
+  },
+
+  async getCategories(): Promise<OrgMenuCategory[]> {
+    const { data } = await axiosInstance.get("/sales/categories");
+    return data;
+  },
+
+  async createCategory(name: string): Promise<OrgMenuCategory> {
+    const { data } = await axiosInstance.post("/sales/categories", { name });
+    return data;
+  },
+
+  async deleteCategory(id: string): Promise<void> {
+    await axiosInstance.delete(`/sales/categories/${id}`);
   },
 };

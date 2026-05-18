@@ -4,12 +4,41 @@ from typing import Optional, List
 from app.api.deps import (
     get_brand_context,
     get_brand_mutation_context,
+    get_security_context,
     SecurityContext,
 )
-from app.schemas.sales import MenuItemCreate, MenuItemUpdate, SaleLogRequest, RecipeIngredientIn, SaleOrderItemUpdate
+from app.schemas.sales import MenuItemCreate, MenuItemUpdate, SaleLogRequest, RecipeIngredientIn, SaleOrderItemUpdate, MenuCategoryCreate
 from app.services.sales_service import sales_service
 
 router = APIRouter()
+
+# ---------------------------------------------------------------------------
+# Menu categories
+# ---------------------------------------------------------------------------
+
+@router.get("/categories")
+async def list_categories(ctx: SecurityContext = Depends(get_security_context)):
+    """List org's menu categories, auto-seeding from existing dishes on first call."""
+    return await sales_service.get_categories(ctx.organization_id)
+
+
+@router.post("/categories", status_code=201)
+async def create_category(
+    payload: MenuCategoryCreate,
+    ctx: SecurityContext = Depends(get_security_context),
+):
+    """Create a new menu category (idempotent — returns existing if name already used)."""
+    return await sales_service.create_category(ctx.organization_id, payload.name)
+
+
+@router.delete("/categories/{category_id}", status_code=200)
+async def delete_category(
+    category_id: str,
+    ctx: SecurityContext = Depends(get_security_context),
+):
+    """Delete a menu category. Returns 400 if non-archived dishes still use it."""
+    return await sales_service.delete_category(ctx.organization_id, category_id)
+
 
 # ---------------------------------------------------------------------------
 # Menu management (read)

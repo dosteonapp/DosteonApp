@@ -15,11 +15,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { UnifiedModal, UnifiedErrorBanner } from "@/components/ui/dosteon-ui";
 import {
-  salesService, MenuItem, MenuCategory, MenuStats, RecipeIngredient,
+  salesService, MenuItem, MenuCategory, MenuStats, RecipeIngredient, OrgMenuCategory,
 } from "@/lib/services/salesService";
 import { inventoryApi, InventoryProduct } from "@/lib/services/inventoryService";
 import { toast } from "sonner";
 import { useMenuEditor } from "@/context/MenuEditorContext";
+import { useUser } from "@/context/UserContext";
+import { QK } from "@/lib/queryKeys";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -55,7 +58,6 @@ const EMPTY_FORM: DishForm = {
   name: "", price: "", category: "Signature", status: "active", image_url: "",
 };
 
-const CATEGORIES = ["Signature", "Main", "Starter", "Dessert", "Beverage", "Side", "Special"];
 
 function flatItems(cats: MenuCategory[]): MenuItem[] {
   return cats.flatMap((c) => c.items);
@@ -67,6 +69,10 @@ function flatItems(cats: MenuCategory[]): MenuItem[] {
 
 export function TabMenuManagement() {
   const { setEditorOpen } = useMenuEditor();
+  const { user } = useUser();
+  const orgId = user?.organization_id ?? null;
+  const queryClient = useQueryClient();
+
   const [view, setView] = useState<View>("grid");
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuStats, setMenuStats] = useState<MenuStats | null>(null);
@@ -87,11 +93,24 @@ export function TabMenuManagement() {
   const [isSaving, setIsSaving] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
 
+  // Inline category creation (editor)
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [newCatInput, setNewCatInput] = useState("");
+  const [savingCat, setSavingCat] = useState(false);
+
   // Grid state
   const [gridSearch, setGridSearch] = useState("");
   const [gridCategory, setGridCategory] = useState("all");
-  const [activeChannel, setActiveChannel] = useState("All");
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
+
+  // Org-level menu categories
+  const { data: orgCategories = [], refetch: refetchOrgCategories } = useQuery({
+    queryKey: QK.menuCategories(orgId),
+    queryFn: () => salesService.getCategories(),
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    enabled: !!orgId,
+  });
 
   // Sidebar search
   const [sidebarSearch, setSidebarSearch] = useState("");
@@ -166,7 +185,7 @@ export function TabMenuManagement() {
       setImageFile(null);
       loadRecipe(item.id);
     } else {
-      setForm(EMPTY_FORM);
+      setForm({ ...EMPTY_FORM, category: orgCategories[0]?.name ?? "Signature" });
       setImagePreview(null);
       setImageFile(null);
       setRecipe([]);
@@ -179,7 +198,7 @@ export function TabMenuManagement() {
   function openNewDish() {
     setSelectedItemId(null);
     setIsNewDish(true);
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, category: orgCategories[0]?.name ?? "Signature" });
     setImagePreview(null);
     setImageFile(null);
     setRecipe([]);
@@ -392,8 +411,6 @@ export function TabMenuManagement() {
   // Grid filters
   // -------------------------------------------------------------------------
 
-  const CHANNELS = ["All", "Dine-in", "Takeaway", "Delivery"];
-
   const filteredCategories = useMemo(() => {
     if (!gridSearch && gridCategory === "all") return categories;
     return categories
@@ -478,38 +495,33 @@ export function TabMenuManagement() {
           {/* Divider */}
           <div className="border-t border-slate-100" />
 
-          {/* Filter row: "All Dishes" left, pills + dropdown right */}
-          <div className="flex items-center gap-3 px-6 py-4">
-            <span className="text-[15px] font-bold text-[#1E293B] font-figtree shrink-0">All Dishes</span>
-            <div className="flex items-center gap-2 ml-auto flex-wrap justify-end">
-              {CHANNELS.map((ch) => (
-                <button
-                  key={ch}
-                  onClick={() => setActiveChannel(ch)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-[12px] font-semibold font-figtree border transition-colors",
-                    activeChannel === ch
-                      ? "bg-[#1E293B] text-white border-[#1E293B]"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
-                  )}
-                >
-                  {ch}
-                </button>
-              ))}
-              <div className="relative">
-                <select
-                  value={gridCategory}
-                  onChange={(e) => setGridCategory(e.target.value)}
-                  className="h-8 pl-3 pr-7 text-[12px] font-figtree border border-slate-200 rounded-lg appearance-none focus:outline-none focus:ring-1 focus:ring-slate-300 bg-white"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map((c) => (
-                    <option key={c.category} value={c.category}>{c.category}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+          {/* Filter row: category chips left, search right */}
+          <div className="flex items-center gap-3 px-6 py-4 flex-wrap">
+            <button
+              onClick={() => setGridCategory("all")}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-[12px] font-semibold font-figtree border transition-colors",
+                gridCategory === "all"
+                  ? "bg-[#1E293B] text-white border-[#1E293B]"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+              )}
+            >
+              All
+            </button>
+            {orgCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setGridCategory(cat.name)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-[12px] font-semibold font-figtree border transition-colors",
+                  gridCategory === cat.name
+                    ? "bg-[#1E293B] text-white border-[#1E293B]"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                )}
+              >
+                {cat.name}
+              </button>
+            ))}
           </div>
 
           {/* Grid */}
@@ -786,18 +798,89 @@ export function TabMenuManagement() {
                       onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
                       className="h-9 w-full pl-3 pr-7 text-[13px] font-figtree border border-input rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-ring bg-background"
                     >
-                      {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                      {orgCategories.map((c) => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                      {orgCategories.length === 0 && (
+                        <option value={form.category}>{form.category}</option>
+                      )}
                     </select>
                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
               </div>
 
-              {/* Add Custom Category link */}
-              <button className="flex items-center gap-1 text-[12px] text-blue-600 font-figtree font-semibold hover:text-blue-800 transition-colors mb-4">
-                <Plus className="h-3.5 w-3.5" />
-                Add Custom Category
-              </button>
+              {/* Add Custom Category */}
+              {showNewCat ? (
+                <div className="flex items-center gap-2 mb-4">
+                  <input
+                    autoFocus
+                    value={newCatInput}
+                    onChange={(e) => setNewCatInput(e.target.value)}
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const name = newCatInput.trim();
+                        if (!name) return;
+                        setSavingCat(true);
+                        try {
+                          const created = await salesService.createCategory(name);
+                          queryClient.invalidateQueries({ queryKey: QK.menuCategories(orgId) });
+                          setForm((f) => ({ ...f, category: created.name }));
+                          setShowNewCat(false);
+                          setNewCatInput("");
+                        } catch {
+                          toast.error("Failed to create category");
+                        } finally {
+                          setSavingCat(false);
+                        }
+                      }
+                      if (e.key === "Escape") {
+                        setShowNewCat(false);
+                        setNewCatInput("");
+                      }
+                    }}
+                    placeholder="Category name…"
+                    className="flex-1 h-8 px-3 text-[13px] font-figtree border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300"
+                  />
+                  <button
+                    disabled={savingCat || !newCatInput.trim()}
+                    onClick={async () => {
+                      const name = newCatInput.trim();
+                      if (!name) return;
+                      setSavingCat(true);
+                      try {
+                        const created = await salesService.createCategory(name);
+                        queryClient.invalidateQueries({ queryKey: QK.menuCategories(orgId) });
+                        setForm((f) => ({ ...f, category: created.name }));
+                        setShowNewCat(false);
+                        setNewCatInput("");
+                      } catch {
+                        toast.error("Failed to create category");
+                      } finally {
+                        setSavingCat(false);
+                      }
+                    }}
+                    className="h-8 px-3 text-[12px] font-semibold font-figtree bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  >
+                    {savingCat ? "…" : "Add"}
+                  </button>
+                  <button
+                    onClick={() => { setShowNewCat(false); setNewCatInput(""); }}
+                    className="h-8 px-2 text-slate-400 hover:text-slate-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowNewCat(true)}
+                  className="flex items-center gap-1 text-[12px] text-blue-600 font-figtree font-semibold hover:text-blue-800 transition-colors mb-4"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Custom Category
+                </button>
+              )}
 
               {/* Dish Availability */}
               <div className="flex items-center justify-between py-4 border-t border-slate-100">

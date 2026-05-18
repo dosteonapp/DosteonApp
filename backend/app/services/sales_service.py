@@ -808,4 +808,94 @@ class SalesService:
         }
 
 
+    # -----------------------------------------------------------------------
+    # Menu categories (org-scoped)
+    # -----------------------------------------------------------------------
+
+    async def get_categories(self, organization_id: str) -> list:
+        """Return org's categories sorted alphabetically.
+        On first call (empty table) auto-seeds from existing MenuItem.category values."""
+        from app.cache.ops import cache_get, cache_set
+        from app.cache.keys import CacheKeys
+        key = CacheKeys.menu_categories(organization_id)
+        cached = await cache_get(key, resource="menu_categories")
+        if cached is not None:
+            return cached
+
+        cats = await db.menucategory.find_many(
+            where={"organization_id": organization_id},
+            order={"name": "asc"},
+        )
+
+        if not cats:
+            # Auto-seed from distinct MenuItem.category values already in the org
+            items = await db.menuitem.find_many(
+                where={"organization_id": organization_id, "NOT": {"status": "archived"}},
+            )
+            seen: dict[str, bool] = {}
+            for item in items:
+                name = (item.category or "").strip()
+                if name and name.lower() not in seen:
+                    seen[name.lower()] = True
+                    try:
+                        await db.menucategory.create(
+                            data={"organization_id": organization_id, "name": name}
+                        )
+                    except Exception:
+                        pass  # unique constraint race — safe to ignore
+            cats = await db.menucategory.find_many(
+                where={"organization_id": organization_id},
+                order={"name": "asc"},
+            )
+
+        result = [{"id": c.id, "name": c.name} for c in cats]
+        await cache_set(key, result, ttl=3600)
+        return result
+
+    async def create_category(self, organization_id: str, name: str) -> dict:
+        """Create a category (idempotent — returns existing if name already in use)."""
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        name = name.strip()
+        existing = await db.menucategory.find_first(
+            where={"organization_id": organization_id, "name": {"equals": name, "mode": "insensitive"}}
+        )
+        if existing:
+            return {"id": existing.id, "name": existing.name}
+        cat = await db.menucategory.create(
+            data={"organization_id": organization_id, "name": name}
+        )
+        await cache_delete(CacheKeys.menu_categories(organization_id))
+        return {"id": cat.id, "name": cat.name}
+
+    async def delete_category(self, organization_id: str, category_id: str) -> dict:
+        """Delete a category. Blocked if any non-archived dishes use the category name."""
+        cat = await db.menucategory.find_first(
+            where={"id": category_id, "organization_id": organization_id}
+        )
+        if not cat:
+            raise HTTPException(status_code=404, detail="Category not found")
+
+        in_use = await db.menuitem.count(
+            where={
+                "organization_id": organization_id,
+                "category": cat.name,
+                "NOT": {"status": "archived"},
+            }
+        )
+        if in_use > 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot delete '{cat.name}' — {in_use} dish(es) still use this category. "
+                       f"Reassign or archive them first.",
+            )
+
+        await db.menucategory.delete(where={"id": category_id})
+
+        from app.cache.ops import cache_delete
+        from app.cache.keys import CacheKeys
+        await cache_delete(CacheKeys.menu_categories(organization_id))
+        return {"success": True}
+
+
 sales_service = SalesService()
