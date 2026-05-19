@@ -253,7 +253,7 @@ function CatalogRow({
                   value={
                     Array.isArray(draft.synonyms)
                       ? draft.synonyms.join(", ")
-                      : (draft.synonyms as string) ?? ""
+                      : (draft.synonyms as unknown as string) ?? ""
                   }
                   onChange={(v) =>
                     setDraft((d) => ({ ...d, synonyms: v as any }))

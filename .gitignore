@@ -128,6 +128,9 @@ CLAUDE.md
 # Test results
 frontend/test-results/
 
+# HTTPS dev certificates (private keys — never commit)
+frontend/certificates/
+
 # Local planning/notes files (not part of the product repo)
 improvement.md
 levels.md

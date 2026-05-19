@@ -356,7 +356,7 @@ export default function PerformancePage() {
                         dataKey="value"
                         nameKey="name"
                         label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
+                          `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                         }
                       >
                         {deliveryIssues.map((entry, index) => (
@@ -474,7 +474,7 @@ export default function PerformancePage() {
                         dataKey="value"
                         nameKey="name"
                         label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
+                          `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                         }
                       >
                         {qualityIssues.map((entry, index) => (
@@ -611,7 +611,7 @@ export default function PerformancePage() {
                           dataKey="value"
                           nameKey="name"
                           label={({ name, percent }) =>
-                            `${name}: ${(percent * 100).toFixed(0)}%`
+                            `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                           }
                         >
                           {feedbackCategories.map((entry, index) => (

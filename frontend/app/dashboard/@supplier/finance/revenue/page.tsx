@@ -256,7 +256,7 @@ export default function SupplierRevenueDetailsPage() {
                           dataKey="value"
                           nameKey="name"
                           label={({ name, percent }) =>
-                            `${name}: ${(percent * 100).toFixed(0)}%`
+                            `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                           }
                         >
                           {categoryData.map((entry, index) => (
@@ -267,7 +267,7 @@ export default function SupplierRevenueDetailsPage() {
                           ))}
                         </Pie>
                         <Tooltip
-                          formatter={(value) => `RWF ${value.toLocaleString()}`}
+                          formatter={(value) => `RWF ${(value ?? 0).toLocaleString()}`}
                         />
                         <Legend />
                       </PieChart>
@@ -294,7 +294,7 @@ export default function SupplierRevenueDetailsPage() {
                         <XAxis dataKey="name" />
                         <YAxis />
                         <Tooltip
-                          formatter={(value) => `RWF ${value.toLocaleString()}`}
+                          formatter={(value) => `RWF ${(value ?? 0).toLocaleString()}`}
                         />
                         <Legend />
                         <Bar dataKey="value" fill="#8884d8" name="Revenue" />
@@ -645,7 +645,7 @@ export default function SupplierRevenueDetailsPage() {
                         dataKey="value"
                         nameKey="name"
                         label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
+                          `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                         }
                       >
                         {locationChartData.map((entry, index) => (
@@ -656,7 +656,7 @@ export default function SupplierRevenueDetailsPage() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value) => `RWF ${value.toLocaleString()}`}
+                        formatter={(value) => `RWF ${(value ?? 0).toLocaleString()}`}
                       />
                       <Legend />
                     </PieChart>

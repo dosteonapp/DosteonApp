@@ -28,23 +28,25 @@ export default async function RestaurantLayout({
     <RestaurantDayLifecycleProvider>
       <SidebarProvider>
         <BrandProvider>
-          <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
-            <RestaurantSidebar />
-            <main className="flex-1 min-w-0 relative flex flex-col overflow-hidden">
-              <Suspense fallback={<div className="h-[100px] bg-white border-b border-slate-100" />}>
-                <DashboardHeader />
-              </Suspense>
-              <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
-                  <RestaurantDayLifecycleOverlay />
-                  <RestaurantDayRouteGuard>
-                    {children}
-                  </RestaurantDayRouteGuard>
+          <div className="flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
+            <Suspense fallback={<div className="h-[86px] bg-white border-b border-slate-100 shrink-0" />}>
+              <DashboardHeader />
+            </Suspense>
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+              <RestaurantSidebar />
+              <main className="flex-1 min-w-0 relative flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                  <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
+                    <RestaurantDayLifecycleOverlay />
+                    <RestaurantDayRouteGuard>
+                      {children}
+                    </RestaurantDayRouteGuard>
+                  </div>
                 </div>
-              </div>
-              <BrandSwitchOverlay />
-              <ToastContainer />
-            </main>
+                <BrandSwitchOverlay />
+                <ToastContainer />
+              </main>
+            </div>
           </div>
         </BrandProvider>
       </SidebarProvider>

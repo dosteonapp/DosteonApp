@@ -90,5 +90,6 @@ async def ensure_connected():
                 await db.disconnect()
             except Exception:
                 pass
+            await asyncio.sleep(1.0)  # Give engine time to fully clean up before restart
             await connect_db()
             _last_ping_success = time.monotonic()

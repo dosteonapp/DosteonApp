@@ -16,6 +16,7 @@ import {
   Plus,
   ClipboardList,
   Loader2,
+  MapPin,
 } from "lucide-react";
 import Link from "next/link";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -74,7 +75,7 @@ export function DashboardHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, isSidebarCollapsed } = useSidebar();
   const { activeBrand, brands, setActiveBrand } = useBrand();
   const { user } = useUser();
   const { isOpen, canStartOpening, finishOpening } = useRestaurantDayLifecycle();
@@ -232,9 +233,11 @@ export function DashboardHeader() {
 
   const brandDisplayName = activeBrand?.name ?? "My Restaurant";
   const [orgLogoUrl, setOrgLogoUrl] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
   useEffect(() => {
     restaurantOpsService.getSettings().then((s: any) => {
       if (s?.logo_url) setOrgLogoUrl(s.logo_url);
+      if (s?.location) setLocation(s.location);
     }).catch(() => {});
   }, []);
   const brandLogoUrl = activeBrand?.logo_url ?? orgLogoUrl ?? null;
@@ -259,35 +262,118 @@ export function DashboardHeader() {
     </span>
   );
 
-  // Small contained avatar + stacked text
-  const brandCardBody = (
+  // Shared brand card inner content (avatar + name + location + live pill)
+  const brandCardInner = (
     <>
-      <div className="h-8 w-8 rounded-[8px] overflow-hidden shrink-0 border border-slate-100 shadow-sm">
+      <div className="h-10 w-10 rounded-full overflow-hidden shrink-0 border border-slate-100 shadow-sm">
         <BrandAvatar logoUrl={brandLogoUrl} name={brandDisplayName} />
       </div>
-      <div className="flex flex-col justify-center min-w-[100px] max-w-[160px]">
+      <div className="flex flex-col min-w-0 flex-1">
         <span className="text-[13px] font-bold text-[#1E293B] truncate leading-tight">
           {brandDisplayName}
         </span>
-        <div className="flex items-center gap-1.5 mt-[3px]">
+        {location && (
+          <span className="text-[11px] text-slate-400 flex items-center gap-1 truncate mt-0.5">
+            <MapPin className="h-2.5 w-2.5 shrink-0" />
+            {location}
+          </span>
+        )}
+        <div className="mt-1">
           {livePill}
         </div>
       </div>
     </>
   );
 
-  // Small square caret button — only for multi-brand
-  const caretSection = (
-    <div className="h-7 w-7 rounded-[7px] bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 transition-colors group-hover:bg-slate-200 [[data-state=open]_&]:bg-slate-200">
-      <ChevronDown className="h-3.5 w-3.5 text-slate-600 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
-    </div>
-  );
-
   return (
-    <div className="bg-white border-b border-slate-100 h-[72px] md:h-[88px] sticky top-0 z-40 font-figtree w-full">
-      <div className="h-full px-4 sm:px-6 md:px-8 flex items-center justify-between gap-4">
+    <div className="bg-white border-b border-slate-100 h-[86px] sticky top-0 z-40 font-figtree w-full flex">
 
-        {/* ── Left: hamburger (mobile) + logo icon (md+) + separator + brand card + back + breadcrumbs ── */}
+      {/* ── LEFT PANEL: fixed width matching sidebar ── */}
+      <div className={cn(
+        "hidden md:flex items-center border-r border-slate-100 shrink-0 transition-all duration-500 overflow-hidden",
+        isSidebarCollapsed ? "w-[90px] justify-center" : "w-[280px] px-4 gap-2"
+      )}>
+        {isSidebarCollapsed ? (
+          /* Collapsed: icon-only logo (same as collapsed sidebar) */
+          <Link href={homeHref} className="group active:scale-95 transition-all">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-50/80 to-white rounded-xl flex items-center justify-center border border-indigo-100/50 overflow-hidden shadow-sm group-hover:shadow-md transition-all">
+              <div className="w-8 h-8 relative overflow-hidden flex items-center justify-center">
+                <img
+                  src="/images/logo-full.png"
+                  alt="D"
+                  className="absolute left-0 h-8 w-auto max-w-none -translate-x-[3px] object-cover"
+                />
+              </div>
+            </div>
+          </Link>
+        ) : (
+          /* Expanded: logo icon + thin separator + brand card */
+          <>
+            <Link href={homeHref} className="shrink-0 group active:scale-95 transition-all">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50/80 to-white border border-indigo-100/50 overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
+                <div className="w-7 h-7 relative overflow-hidden flex items-center justify-center">
+                  <img
+                    src="/images/logo-full.png"
+                    alt="D"
+                    className="absolute left-0 h-7 w-auto max-w-none -translate-x-[3px] object-cover"
+                  />
+                </div>
+              </div>
+            </Link>
+
+            <div className="h-8 w-px bg-slate-100 shrink-0" />
+
+            {/* Brand card */}
+            <div className="flex-1 min-w-0 rounded-xl border border-slate-100 bg-slate-50/60 shadow-sm">
+              {isOwner && isMultiBrand ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="group flex items-center gap-2.5 w-full py-2.5 px-3 hover:bg-slate-100/80 rounded-xl transition-all focus:outline-none active:scale-[0.98]">
+                      {brandCardInner}
+                      <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200 group-[[data-state=open]]:rotate-180" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    sideOffset={6}
+                    className="w-56 rounded-2xl border-slate-100 shadow-xl p-1.5 animate-in fade-in-0 zoom-in-95 duration-150 z-[200]"
+                  >
+                    {brands.map((brand) => {
+                      const isActive = activeBrand?.id === brand.id;
+                      return (
+                        <DropdownMenuItem
+                          key={brand.id}
+                          onClick={() => { if (!isActive) setActiveBrand(brand); }}
+                          className={cn(
+                            "rounded-xl gap-2 font-semibold text-[13px] px-3 py-2.5 cursor-pointer",
+                            isActive
+                              ? "text-[#3B59DA] bg-indigo-50/80 focus:bg-indigo-50/80 focus:text-[#3B59DA]"
+                              : "text-slate-700"
+                          )}
+                        >
+                          <span className="flex-1 truncate">{brand.name}</span>
+                          {isActive && (
+                            <CheckCircle2 className="h-3.5 w-3.5 text-[#3B59DA] shrink-0" />
+                          )}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex items-center gap-2.5 py-2.5 px-3">
+                  {brandCardInner}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── RIGHT CONTENT: flex-1 ── */}
+      <div className="flex-1 flex items-center justify-between px-4 sm:px-6 gap-4 min-w-0">
+
+        {/* Left inner: mobile hamburger + back button + breadcrumbs */}
         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
 
           {/* Mobile hamburger — hidden on md+ */}
@@ -299,105 +385,6 @@ export function DashboardHeader() {
           >
             <Menu className="h-5 w-5 stroke-[2.5px]" />
           </Button>
-
-          {/* Dosteon logo icon — md+ only (icon-only, CSS crop of full logo) */}
-          <Link href={homeHref} className="hidden md:flex shrink-0 group active:scale-95 transition-all">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50/80 to-white border border-indigo-100/50 overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
-              <div className="w-7 h-7 relative overflow-hidden flex items-center justify-center">
-                <img
-                  src="/images/logo-full.png"
-                  alt="D"
-                  className="absolute left-0 h-7 w-auto max-w-none -translate-x-[3px] object-cover"
-                />
-              </div>
-            </div>
-          </Link>
-
-          {/* Separator after logo */}
-          <div className="hidden md:block h-6 w-px bg-slate-100 shrink-0" />
-
-          {/* Brand card — owner only, now in left section */}
-          {isOwner && (
-            isMultiBrand ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="group flex items-center gap-2.5 h-[46px] bg-white border border-slate-200 rounded-[12px] shadow-sm px-2.5 hover:border-slate-300 hover:shadow-md transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B59DA]/25 active:scale-[0.98]">
-                    {/* Mobile: compact avatar + name + chevron */}
-                    <div className="flex sm:hidden items-center gap-2">
-                      <div className="h-7 w-7 rounded-[6px] overflow-hidden shrink-0 border border-slate-100">
-                        <BrandAvatar logoUrl={brandLogoUrl} name={brandDisplayName} />
-                      </div>
-                      <span className="text-[13px] font-bold text-[#1E293B] max-w-[90px] truncate">
-                        {brandDisplayName}
-                      </span>
-                      <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
-                    </div>
-                    {/* sm+: full card body + caret */}
-                    <div className="hidden sm:flex items-center gap-2.5">
-                      {brandCardBody}
-                      {caretSection}
-                    </div>
-                  </button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent
-                  align="start"
-                  sideOffset={6}
-                  className="w-52 rounded-2xl border-slate-100 shadow-xl p-1.5 animate-in fade-in-0 zoom-in-95 duration-150"
-                >
-                  {brands.map((brand) => {
-                    const isActive = activeBrand?.id === brand.id;
-                    return (
-                      <DropdownMenuItem
-                        key={brand.id}
-                        onClick={() => { if (!isActive) setActiveBrand(brand); }}
-                        className={cn(
-                          "rounded-xl gap-2 font-semibold text-[13px] px-3 py-2.5 cursor-pointer",
-                          isActive
-                            ? "text-[#3B59DA] bg-indigo-50/80 focus:bg-indigo-50/80 focus:text-[#3B59DA]"
-                            : "text-slate-700"
-                        )}
-                      >
-                        <span className="flex-1 truncate">{brand.name}</span>
-                        {isActive && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-[#3B59DA] shrink-0" />
-                        )}
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              /* Single brand — same visual, no caret, not interactive */
-              <div className="flex items-center gap-2.5 h-[46px] bg-white border border-slate-200 rounded-[12px] shadow-sm px-2.5 cursor-default select-none">
-                {/* Mobile */}
-                <div className="flex sm:hidden items-center gap-2">
-                  <div className="h-7 w-7 rounded-[6px] overflow-hidden shrink-0 border border-slate-100">
-                    <BrandAvatar logoUrl={brandLogoUrl} name={brandDisplayName} />
-                  </div>
-                  <span className="text-[13px] font-bold text-[#1E293B] max-w-[90px] truncate">
-                    {brandDisplayName}
-                  </span>
-                </div>
-                {/* sm+ */}
-                <div className="hidden sm:flex items-center gap-2.5">
-                  {brandCardBody}
-                </div>
-              </div>
-            )
-          )}
-
-          {/* Non-owner static brand label */}
-          {!isOwner && activeBrand && (
-            <span className="hidden sm:inline-flex items-center rounded-xl px-3 py-1.5 text-[13px] font-bold text-[#3B59DA] bg-indigo-50 border border-indigo-100/80 shrink-0 max-w-[160px] truncate">
-              {activeBrand.name}
-            </span>
-          )}
-
-          {/* Separator before breadcrumbs (when there are breadcrumbs) */}
-          {breadcrumbs.length > 0 && (
-            <div className="hidden sm:block h-6 w-px bg-slate-100 shrink-0" />
-          )}
 
           {/* Back button */}
           {breadcrumbs.length > 1 && (
@@ -433,7 +420,7 @@ export function DashboardHeader() {
           </div>
         </div>
 
-        {/* ── Right: action buttons + date/time + bell ── */}
+        {/* Right inner: action buttons + date/time + bell */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
           {/* Context-aware action buttons */}

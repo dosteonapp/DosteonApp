@@ -57,7 +57,7 @@ export interface AuthContextType {
   login: (
     values: LoginValues,
     helpers: FormikHelpers<LoginValues>
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   signup: (
     values: SignupValues,
     helpers: FormikHelpers<SignupValues>
@@ -79,5 +79,4 @@ export interface AuthContextType {
   ) => void;
   authenticateWithGoogle: () => Promise<void>;
   authenticatingWithGoogle: boolean;
-  verifyEmail: (email: string, code: string) => Promise<any>;
 }
