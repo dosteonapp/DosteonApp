@@ -159,7 +159,7 @@ axiosInstance.interceptors.response.use(
     if (isGatewayError) {
       if (!error.config._retry) {
         error.config._retry = true;
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         try {
           return await axiosInstance(error.config);
         } catch {
@@ -169,11 +169,11 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 1b. Handle network errors (e.g. Render cold start / ECONNRESET) — silently retry once
+    // 1b. Handle network errors (ECONNRESET / backend restart) — silently retry once
     if (!error.response) {
       if (!error.config._retry) {
         error.config._retry = true;
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         try {
           return await axiosInstance(error.config);
         } catch {
