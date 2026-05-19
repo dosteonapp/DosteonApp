@@ -2,13 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  ChefHat,
   Trash2,
   Package,
-  Lock,
   RotateCcw,
-  Clock,
-  Activity,
   X,
   Minus,
   Plus,
@@ -19,10 +15,12 @@ import {
   Thermometer,
   HelpCircle,
   TrendingUp,
+  Activity,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { FigtreeText } from "@/components/ui/dosteon-ui";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -36,11 +34,21 @@ import {
   StockUsageStats,
   StockUsageEvent,
 } from "@/lib/services/inventoryService";
-import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
+
+const PAGE_SIZE = 20;
+
+const FILTER_PILLS = [
+  { id: "all",            label: "All"                },
+  { id: "sale_deduction", label: "Sales Deduction"    },
+  { id: "consumption",    label: "Manual Consumption" },
+  { id: "waste",          label: "Waste"              },
+] as const;
+
+type FilterType = (typeof FILTER_PILLS)[number]["id"];
 
 const WASTE_REASONS = [
   { value: "SPOILED_EXPIRED",   label: "Expired",  icon: CalendarX      },
@@ -55,20 +63,48 @@ const WASTE_REASONS = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const secs = Math.floor(diff / 1000);
-  if (secs < 60)  return "Just now";
-  const mins = Math.floor(secs / 60);
-  if (mins < 60)  return `${mins}m ago`;
-  const hrs  = Math.floor(mins / 60);
-  if (hrs  < 24)  return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
 function fmt(n: number) {
   return new Intl.NumberFormat("en").format(n);
 }
+
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function formatContext(event: StockUsageEvent): string {
+  if (event.event_type === "USED" && event.actor_type === "sale") {
+    return "Recipe deduction";
+  }
+  const crMap: Record<string, string> = {
+    CUSTOMER_SERVICE: "Customer Service",
+    STAFF_MEAL:       "Staff Meal",
+    OTHER:            "Other",
+  };
+  const wrMap: Record<string, string> = {
+    SPOILED_EXPIRED:   "Spoiled / Expired",
+    DAMAGED_PACKAGING: "Damaged Packaging",
+    SPILLED_DROPPED:   "Spilled / Dropped",
+    OVERCOOKED_BURNED: "Overcooked / Burned",
+    QUALITY_ISSUE:     "Quality Issue",
+    OTHER:             "Other",
+  };
+  return (
+    crMap[event.consumption_reason ?? ""] ||
+    wrMap[event.waste_reason ?? ""] ||
+    "—"
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Status badge (for modal stock level display)
+// ---------------------------------------------------------------------------
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
@@ -82,6 +118,32 @@ function StatusBadge({ status }: { status: string }) {
       map[status] ?? map.healthy
     )}>
       {status}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Type badge (table)
+// ---------------------------------------------------------------------------
+
+function TypeBadge({ event }: { event: StockUsageEvent }) {
+  if (event.event_type === "WASTED") {
+    return (
+      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 whitespace-nowrap">
+        Waste
+      </span>
+    );
+  }
+  if (event.actor_type === "sale") {
+    return (
+      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-700 whitespace-nowrap">
+        Sale Deduction
+      </span>
+    );
+  }
+  return (
+    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 whitespace-nowrap">
+      Consumption
     </span>
   );
 }
@@ -156,13 +218,12 @@ function LogUsageModal({
   products:    InventoryProduct[];
   onSubmitted: () => void;
 }) {
-  const [productId, setProductId] = useState("");
-  const [quantity,  setQuantity]  = useState("1");
+  const [productId,  setProductId]  = useState("");
+  const [quantity,   setQuantity]   = useState("1");
   const [submitting, setSubmitting] = useState(false);
 
   const selected = products.find((p) => p.id === productId);
 
-  // Reset on open
   useEffect(() => {
     if (open) { setProductId(""); setQuantity("1"); }
   }, [open]);
@@ -193,7 +254,6 @@ function LogUsageModal({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent hideCloseButton className="p-0 gap-0 max-w-[400px] rounded-[16px] overflow-hidden border-0 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
         <DialogTitle className="sr-only">Log Usage</DialogTitle>
-        {/* Blue header */}
         <div className="bg-[#3B59DA] px-5 pt-5 pb-5">
           <div className="flex items-start justify-between mb-3">
             <span className="text-white font-black text-[20px] font-figtree leading-tight">
@@ -203,8 +263,6 @@ function LogUsageModal({
               <X className="h-4 w-4 text-white stroke-[2.5px]" />
             </DialogClose>
           </div>
-
-          {/* Product selector inside header */}
           <select
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
@@ -218,7 +276,6 @@ function LogUsageModal({
               </option>
             ))}
           </select>
-
           {selected && (
             <div className="mt-2.5 flex items-center gap-2">
               <span className="text-white/80 text-[12px] font-semibold font-figtree">
@@ -228,8 +285,6 @@ function LogUsageModal({
             </div>
           )}
         </div>
-
-        {/* Body */}
         <div className="bg-white px-5 py-5 space-y-4">
           <div className="space-y-2">
             <label className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.1em] font-figtree">
@@ -242,7 +297,6 @@ function LogUsageModal({
               color="blue"
             />
           </div>
-
           {selected && parseFloat(quantity) > 0 && (
             <p className="text-[11px] text-slate-400 font-semibold font-figtree">
               Will deduct{" "}
@@ -253,8 +307,6 @@ function LogUsageModal({
             </p>
           )}
         </div>
-
-        {/* Footer */}
         <div className="bg-white px-5 pb-5 flex gap-3">
           <Button
             variant="outline"
@@ -291,9 +343,9 @@ function LogWastageModal({
   products:    InventoryProduct[];
   onSubmitted: () => void;
 }) {
-  const [productId, setProductId] = useState("");
-  const [quantity,  setQuantity]  = useState("1");
-  const [reason,    setReason]    = useState("");
+  const [productId,  setProductId]  = useState("");
+  const [quantity,   setQuantity]   = useState("1");
+  const [reason,     setReason]     = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const selected = products.find((p) => p.id === productId);
@@ -328,7 +380,6 @@ function LogWastageModal({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent hideCloseButton className="p-0 gap-0 max-w-[400px] rounded-[16px] overflow-hidden border-0 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
         <DialogTitle className="sr-only">Log Wastage</DialogTitle>
-        {/* Red header */}
         <div className="bg-[#C0392B] px-5 pt-5 pb-5">
           <div className="flex items-start justify-between mb-3">
             <span className="text-white font-black text-[20px] font-figtree leading-tight">
@@ -338,7 +389,6 @@ function LogWastageModal({
               <X className="h-4 w-4 text-white stroke-[2.5px]" />
             </DialogClose>
           </div>
-
           <select
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
@@ -352,7 +402,6 @@ function LogWastageModal({
               </option>
             ))}
           </select>
-
           {selected && (
             <div className="mt-2.5 flex items-center gap-2">
               <span className="text-white/80 text-[12px] font-semibold font-figtree">
@@ -362,10 +411,7 @@ function LogWastageModal({
             </div>
           )}
         </div>
-
-        {/* Body */}
         <div className="bg-white px-5 py-5 space-y-5">
-          {/* Waste reason icons */}
           <div className="space-y-2">
             <div>
               <p className="text-[13px] font-bold text-[#1E293B] font-figtree">Log Waste Reason</p>
@@ -405,8 +451,6 @@ function LogWastageModal({
               ))}
             </div>
           </div>
-
-          {/* Stepper */}
           <div className="space-y-2">
             <label className="text-[12px] font-bold text-slate-500 uppercase tracking-[0.1em] font-figtree">
               Enter Amount
@@ -418,7 +462,6 @@ function LogWastageModal({
               color="red"
             />
           </div>
-
           {selected && parseFloat(quantity) > 0 && (
             <p className="text-[11px] text-slate-400 font-semibold font-figtree">
               Will discard{" "}
@@ -429,8 +472,6 @@ function LogWastageModal({
             </p>
           )}
         </div>
-
-        {/* Footer */}
         <div className="bg-white px-5 pb-5 flex gap-3">
           <Button
             variant="outline"
@@ -453,46 +494,46 @@ function LogWastageModal({
 }
 
 // ---------------------------------------------------------------------------
-// Stats banner
+// Stats banner (dark navy)
 // ---------------------------------------------------------------------------
 
 function StatsBanner({ stats }: { stats: StockUsageStats | null }) {
   const cards = [
     {
-      label:    "Most Used Item",
-      value:    stats?.most_used_item ?? "—",
-      sub:      "Most used today",
-      icon:     TrendingUp,
-      iconBg:   "bg-emerald-100",
-      iconColor:"text-emerald-600",
-      isText:   true,
+      label:     "Most Used Item",
+      value:     stats?.most_used_item ?? "—",
+      sub:       "Most used today",
+      icon:      TrendingUp,
+      iconBg:    "bg-emerald-100",
+      iconColor: "text-emerald-600",
+      isText:    true,
     },
     {
-      label:    "Consumption Today",
-      value:    stats ? fmt(stats.consumption_today) : "—",
-      sub:      "Units used in the kitchen",
-      icon:     Activity,
-      iconBg:   "bg-blue-100",
-      iconColor:"text-blue-600",
-      isText:   false,
+      label:     "Consumption Today",
+      value:     stats ? fmt(stats.consumption_today) : "—",
+      sub:       "Units used in the kitchen",
+      icon:      Activity,
+      iconBg:    "bg-blue-100",
+      iconColor: "text-blue-600",
+      isText:    false,
     },
     {
-      label:    "Waste Today",
-      value:    stats ? fmt(stats.waste_today) : "—",
-      sub:      "Units wasted",
-      icon:     Trash2,
-      iconBg:   "bg-rose-100",
-      iconColor:"text-rose-600",
-      isText:   false,
+      label:     "Waste Today",
+      value:     stats ? fmt(stats.waste_today) : "—",
+      sub:       "Units wasted",
+      icon:      Trash2,
+      iconBg:    "bg-rose-100",
+      iconColor: "text-rose-600",
+      isText:    false,
     },
     {
-      label:    "Most Wasted Item",
-      value:    stats?.most_wasted_item ?? "—",
-      sub:      "Most wasted today",
-      icon:     Package,
-      iconBg:   "bg-rose-100",
-      iconColor:"text-rose-600",
-      isText:   true,
+      label:     "Most Wasted Item",
+      value:     stats?.most_wasted_item ?? "—",
+      sub:       "Most wasted today",
+      icon:      Package,
+      iconBg:    "bg-rose-100",
+      iconColor: "text-rose-600",
+      isText:    true,
     },
   ];
 
@@ -527,224 +568,247 @@ function StatsBanner({ stats }: { stats: StockUsageStats | null }) {
 }
 
 // ---------------------------------------------------------------------------
-// Action cards (left panel)
-// ---------------------------------------------------------------------------
-
-function ActionCards({ onUsage, onWastage }: { onUsage: () => void; onWastage: () => void }) {
-  return (
-    <div className="grid grid-cols-2 gap-4">
-      <button
-        onClick={onUsage}
-        className="flex flex-col items-center justify-center gap-3 rounded-[12px] border border-slate-100 bg-white hover:border-[#3B59DA]/30 hover:bg-indigo-50/20 transition-all active:scale-[0.98] py-10 px-4 group"
-      >
-        <div className="h-14 w-14 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-[#3B59DA] transition-colors">
-          <ChefHat className="h-7 w-7 text-[#3B59DA] group-hover:text-white stroke-[2px] transition-colors" />
-        </div>
-        <span className="text-[14px] font-black text-[#1E293B] font-figtree group-hover:text-[#3B59DA] transition-colors">
-          Log Consumption
-        </span>
-      </button>
-
-      <button
-        onClick={onWastage}
-        className="flex flex-col items-center justify-center gap-3 rounded-[12px] border border-slate-100 bg-white hover:border-rose-200 hover:bg-rose-50/20 transition-all active:scale-[0.98] py-10 px-4 group"
-      >
-        <div className="h-14 w-14 rounded-full bg-rose-50 flex items-center justify-center group-hover:bg-[#C0392B] transition-colors">
-          <Trash2 className="h-6 w-6 text-rose-500 group-hover:text-white stroke-[2px] transition-colors" />
-        </div>
-        <span className="text-[14px] font-black text-[#1E293B] font-figtree group-hover:text-rose-600 transition-colors">
-          Log Waste
-        </span>
-      </button>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Locked panel
-// ---------------------------------------------------------------------------
-
-function LockedPanel() {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 px-6 text-center space-y-4 rounded-[10px] border border-slate-100 bg-slate-50/50">
-      <div className="h-14 w-14 rounded-[14px] bg-white border border-slate-100 shadow-sm flex items-center justify-center">
-        <Lock className="h-6 w-6 text-slate-400 stroke-[2px]" />
-      </div>
-      <div className="space-y-2 max-w-[260px]">
-        <div className="text-[14px] font-black text-[#1E293B] font-figtree">Service Not Started</div>
-        <FigtreeText className="text-[12px] text-slate-400 font-medium leading-relaxed">
-          Complete your daily opening stock count to start logging consumption and waste.
-        </FigtreeText>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// History feed
-// ---------------------------------------------------------------------------
-
-function HistoryFeed({ events, isRefreshing }: { events: StockUsageEvent[]; isRefreshing: boolean }) {
-  return (
-    <div className="flex flex-col h-full">
-      {/* Panel header */}
-      <div className="flex items-start justify-between mb-1">
-        <div>
-          <div className="text-[15px] font-black text-[#1E293B] font-figtree">Kitchen Service History</div>
-          <p className="text-[12px] text-slate-400 font-medium font-figtree mt-0.5">
-            Recent waste and consumption entries captured for this shift.
-          </p>
-        </div>
-        {isRefreshing && (
-          <div className="flex items-center gap-1 text-[11px] text-slate-400 font-medium font-figtree shrink-0 mt-1">
-            <RotateCcw className="h-3 w-3 animate-spin" />
-          </div>
-        )}
-      </div>
-
-      <div className="mt-4 flex-1">
-        {events.length === 0 && (
-          <div className="py-10 text-center text-slate-400 text-[13px] font-medium font-figtree">
-            No activity yet today.
-          </div>
-        )}
-        {events.map((event, i) => {
-          const isUsed = event.event_type === "USED";
-          return (
-            <div
-              key={event.id}
-              className={cn(
-                "flex items-center gap-3 py-3",
-                i < events.length - 1 && "border-b border-slate-50"
-              )}
-            >
-              {/* Icon circle */}
-              <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                {isUsed
-                  ? <ChefHat className="h-4 w-4 text-slate-400 stroke-[2px]" />
-                  : <Trash2  className="h-4 w-4 text-slate-400 stroke-[2px]" />
-                }
-              </div>
-
-              {/* Name + time + badge */}
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-bold text-[#1E293B] font-figtree truncate">
-                  {event.product_name}
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[11px] text-slate-400 font-figtree">
-                    {relativeTime(event.occurred_at)}
-                  </span>
-                  <span className={cn(
-                    "text-[10px] font-bold px-2 py-0.5 rounded-full font-figtree",
-                    isUsed
-                      ? "bg-indigo-100 text-indigo-700"
-                      : "bg-rose-500 text-white"
-                  )}>
-                    {isUsed ? "Consumption" : "Marked as Waste"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Quantity */}
-              <div className={cn(
-                "text-[13px] font-black font-figtree shrink-0",
-                isUsed ? "text-[#1E293B]" : "text-rose-500"
-              )}>
-                {!isUsed && "- "}{fmt(event.quantity)} {event.unit}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Main tab
 // ---------------------------------------------------------------------------
 
-export function TabStockUsage() {
-  const { isOpen } = useRestaurantDayLifecycle();
-
-  const [stats,   setStats]   = useState<StockUsageStats | null>(null);
-  const [history, setHistory] = useState<StockUsageEvent[]>([]);
-  const [products,setProducts]= useState<InventoryProduct[]>([]);
-  const [isHistoryRefreshing, setIsHistoryRefreshing] = useState(false);
-
+export function TabConsumption() {
+  const [stats,       setStats]       = useState<StockUsageStats | null>(null);
+  const [history,     setHistory]     = useState<StockUsageEvent[]>([]);
+  const [total,       setTotal]       = useState(0);
+  const [products,    setProducts]    = useState<InventoryProduct[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [filterType,  setFilterType]  = useState<FilterType>("all");
+  const [page,        setPage]        = useState(0);
+  const [dateFrom,    setDateFrom]    = useState("");
+  const [dateTo,      setDateTo]      = useState("");
   const [usageOpen,   setUsageOpen]   = useState(false);
   const [wastageOpen, setWastageOpen] = useState(false);
 
-  const loadHistory = useCallback(async (silent = false) => {
-    if (silent) setIsHistoryRefreshing(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
-      const [s, h] = await Promise.all([
+      const [s, h, p] = await Promise.all([
         inventoryApi.getStockUsageStats(),
-        inventoryApi.getStockUsageHistory({ limit: 10 }),
+        inventoryApi.getStockUsageHistory({
+          limit:       PAGE_SIZE,
+          offset:      page * PAGE_SIZE,
+          filter_type: filterType,
+          start_date:  dateFrom || undefined,
+          end_date:    dateTo   || undefined,
+        }),
+        inventoryApi.getProducts(),
       ]);
       setStats(s);
       setHistory(h.events);
-    } catch { /* handled by axios interceptor */ } finally {
-      setIsHistoryRefreshing(false);
+      setTotal(h.total);
+      setProducts(p);
+    } catch {
+      // handled by axios interceptor
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [page, filterType, dateFrom, dateTo]);
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const [s, h, p] = await Promise.all([
-          inventoryApi.getStockUsageStats(),
-          inventoryApi.getStockUsageHistory({ limit: 10 }),
-          inventoryApi.getProducts(),
-        ]);
-        setStats(s); setHistory(h.events); setProducts(p);
-      } catch { /* handled by axios interceptor */ }
-    };
-    init();
-  }, []);
+  useEffect(() => { load(); }, [load]);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
-    timerRef.current = setInterval(() => loadHistory(true), 30_000);
+    timerRef.current = setInterval(() => load(true), 30_000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [loadHistory]);
+  }, [load]);
 
-  const handleSubmitted = useCallback(() => { loadHistory(true); }, [loadHistory]);
+  const handleSubmitted = useCallback(() => { load(true); }, [load]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const rangeStart = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const rangeEnd   = Math.min((page + 1) * PAGE_SIZE, total);
 
   return (
     <div>
-
-      {/* Dark stats banner — flush to card edges */}
+      {/* Dark stats banner */}
       <StatsBanner stats={stats} />
 
       {/* Content area */}
-      <div className="p-5 md:p-6 flex flex-col lg:flex-row gap-5">
+      <div className="p-5 md:p-6 space-y-4">
 
-        {/* Left panel */}
-        <div className="flex-1 min-w-0 bg-white border border-slate-100 rounded-[12px] p-5 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-          {!isOpen ? (
-            <LockedPanel />
-          ) : (
-            <>
-              <div className="mb-5">
-                <div className="text-[15px] font-black text-[#1E293B] font-figtree">Log Stock Usage</div>
-                <p className="text-[12px] text-slate-400 font-medium font-figtree mt-0.5">
-                  Select whether to log usage or waste.
-                </p>
-              </div>
-              <ActionCards
-                onUsage={() => setUsageOpen(true)}
-                onWastage={() => setWastageOpen(true)}
-              />
-            </>
+        {/* Controls row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[17px] font-black text-[#1E293B] font-figtree">Consumption Activity</h2>
+            <p className="text-slate-400 text-[12px] font-medium font-figtree mt-0.5">
+              Recent waste &amp; consumption entries
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 px-4 text-[13px] font-bold font-figtree border-slate-200 text-slate-600 hover:bg-slate-50"
+              onClick={() => setUsageOpen(true)}
+            >
+              Log Consumption
+            </Button>
+            <Button
+              size="sm"
+              className="h-9 px-4 text-[13px] font-bold font-figtree bg-rose-500 hover:bg-rose-600 text-white border-none shadow-sm"
+              onClick={() => setWastageOpen(true)}
+            >
+              Log Waste
+            </Button>
+          </div>
+        </div>
+
+        {/* Filter bar */}
+        <div className="flex flex-wrap items-center gap-3 bg-slate-50 rounded-xl px-4 py-3">
+          {/* Date range */}
+          <div className="flex items-center gap-2 text-[12px]">
+            <label className="text-slate-500 font-semibold font-figtree">From</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => { setDateFrom(e.target.value); setPage(0); }}
+              className="h-8 rounded-lg border border-slate-200 px-2 text-[12px] font-figtree bg-white focus:outline-none focus:ring-1 focus:ring-indigo-300"
+            />
+            <label className="text-slate-500 font-semibold font-figtree">To</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => { setDateTo(e.target.value); setPage(0); }}
+              className="h-8 rounded-lg border border-slate-200 px-2 text-[12px] font-figtree bg-white focus:outline-none focus:ring-1 focus:ring-indigo-300"
+            />
+          </div>
+
+          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+
+          {/* Filter pills */}
+          <div className="flex flex-wrap gap-1.5">
+            {FILTER_PILLS.map((pill) => (
+              <button
+                key={pill.id}
+                onClick={() => { setFilterType(pill.id); setPage(0); }}
+                className={cn(
+                  "px-3 py-1 rounded-full text-[12px] font-bold font-figtree transition-all",
+                  filterType === pill.id
+                    ? "bg-[#1E293B] text-white"
+                    : "bg-white border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                )}
+              >
+                {pill.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Data table */}
+        <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13px] border-collapse">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">
+                    Time
+                  </th>
+                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">
+                    Inventory Item
+                  </th>
+                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">
+                    Qty Used
+                  </th>
+                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">
+                    Cost Impact (RWF)
+                  </th>
+                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">
+                    Type
+                  </th>
+                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">
+                    Context
+                  </th>
+                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">
+                    Logged By
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="border-b border-slate-50">
+                      {Array.from({ length: 7 }).map((_, j) => (
+                        <td key={j} className="px-4 py-3">
+                          <div className="h-3.5 bg-slate-100 rounded animate-pulse w-[80%]" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : history.map((event) => (
+                  <tr
+                    key={event.id}
+                    className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
+                  >
+                    <td className="px-4 py-3 text-slate-500 text-[12px] whitespace-nowrap font-figtree">
+                      {formatDateTime(event.occurred_at)}
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-[#1E293B] font-figtree">
+                      {event.product_name}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-[#1E293B]">
+                      {fmt(event.quantity)} {event.unit}
+                    </td>
+                    <td className="px-4 py-3 text-slate-400 font-figtree">
+                      —
+                    </td>
+                    <td className="px-4 py-3">
+                      <TypeBadge event={event} />
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 font-figtree text-[12px]">
+                      {formatContext(event)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-400 font-figtree text-[12px]">
+                      {event.actor_type === "sale" ? "Auto (Sale)" : "Manual"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {!loading && history.length === 0 && (
+            <div className="py-12 text-center text-slate-400 text-[13px] font-medium font-figtree">
+              No activity matches your filters.
+            </div>
           )}
         </div>
 
-        {/* Right panel */}
-        <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0 bg-white border border-slate-100 rounded-[12px] p-5 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-          <HistoryFeed events={history} isRefreshing={isHistoryRefreshing} />
-        </div>
+        {/* Pagination */}
+        {total > PAGE_SIZE && (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[12px] text-slate-400 font-figtree">
+              Showing {rangeStart}–{rangeEnd} of {total} records
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+                className="h-8 px-3 text-[12px] font-bold font-figtree gap-1"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page + 1 >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                className="h-8 px-3 text-[12px] font-bold font-figtree gap-1"
+              >
+                Next
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
+
       </div>
 
       <LogUsageModal

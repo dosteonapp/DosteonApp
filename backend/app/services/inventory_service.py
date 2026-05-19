@@ -188,9 +188,18 @@ class InventoryService:
         self,
         organization_id: str,
         brand_id: Optional[str] = None,
-        limit: int = 10,
-    ):
-        events = await inventory_repo.get_usage_history(organization_id, brand_id=brand_id, limit=limit)
+        limit: int = 20,
+        offset: int = 0,
+        filter_type: str = "all",
+        start_date=None,
+        end_date=None,
+    ) -> dict:
+        events, total_count = await inventory_repo.get_usage_history(
+            organization_id, brand_id=brand_id,
+            limit=limit, offset=offset,
+            filter_type=filter_type,
+            start_date=start_date, end_date=end_date,
+        )
         result = []
         for e in events:
             p = e.product
@@ -209,8 +218,9 @@ class InventoryService:
                 "consumption_reason": e.consumption_reason,
                 "waste_reason":       e.waste_reason,
                 "occurred_at":        e.occurred_at,
+                "actor_type":         e.actor_type,
             })
-        return result
+        return {"events": result, "total": total_count}
 
     async def log_consumption(
         self,

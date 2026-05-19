@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from app.schemas.inventory import (
     InventoryItem, InventoryItemCreate, InventoryItemUpdate, CanonicalCatalogItem,
     InventoryProductItem, InventoryStats,
-    StockUsageStats, StockUsageEvent,
+    StockUsageStats, StockUsageEvent, StockUsageHistoryPage,
     ConsumptionCreate, WasteCreate,
 )
 from app.services.inventory_service import inventory_service
@@ -54,15 +54,26 @@ async def read_stock_usage_stats(ctx: SecurityContext = Depends(get_security_con
     )
 
 
-@router.get("/stock-usage/history", response_model=List[StockUsageEvent])
+@router.get("/stock-usage/history", response_model=StockUsageHistoryPage)
 async def read_stock_usage_history(
-    ctx:   SecurityContext = Depends(get_security_context),
-    limit: int             = Query(10, ge=1, le=50),
+    ctx:         SecurityContext = Depends(get_security_context),
+    limit:       int             = Query(20, ge=1, le=100),
+    offset:      int             = Query(0, ge=0),
+    filter_type: str             = Query("all"),
+    start_date:  Optional[str]   = Query(None),   # "YYYY-MM-DD"
+    end_date:    Optional[str]   = Query(None),
 ):
-    """Recent USED / WASTED events across all brands."""
-    return await inventory_service.get_stock_usage_history(
-        ctx.organization_id, brand_id=None, limit=limit
+    """Recent USED / WASTED events — filterable by type, date range, paginated."""
+    from datetime import datetime, timezone
+    sd = datetime.fromisoformat(start_date).replace(tzinfo=timezone.utc) if start_date else None
+    ed = datetime.fromisoformat(end_date  ).replace(tzinfo=timezone.utc) if end_date   else None
+    result = await inventory_service.get_stock_usage_history(
+        ctx.organization_id, brand_id=None,
+        limit=limit, offset=offset,
+        filter_type=filter_type,
+        start_date=sd, end_date=ed,
     )
+    return {**result, "page_size": limit, "offset": offset}
 
 
 @router.post("/stock-usage/consumption", status_code=201)

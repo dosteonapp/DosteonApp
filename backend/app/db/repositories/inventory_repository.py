@@ -644,23 +644,45 @@ WHERE cp.id = v.id;
         self,
         organization_id: str,
         brand_id: Optional[str] = None,
-        limit: int = 10,
-    ) -> List:
-        conditions: list = [
-            {"organization_id": organization_id},
-            {"event_type": {"in": ["USED", "WASTED"]}},
-        ]
+        limit: int = 20,
+        offset: int = 0,
+        filter_type: str = "all",   # "all" | "consumption" | "waste" | "sale_deduction"
+        start_date=None,
+        end_date=None,
+    ) -> tuple:
+        conditions: list = [{"organization_id": organization_id}]
+
+        if filter_type == "waste":
+            conditions.append({"event_type": "WASTED"})
+        elif filter_type == "sale_deduction":
+            conditions.append({"event_type": "USED"})
+            conditions.append({"actor_type": "sale"})
+        elif filter_type == "consumption":
+            conditions.append({"event_type": "USED"})
+            conditions.append({"actor_type": None})
+        else:
+            conditions.append({"event_type": {"in": ["USED", "WASTED"]}})
+
+        if start_date:
+            conditions.append({"occurred_at": {"gte": start_date}})
+        if end_date:
+            conditions.append({"occurred_at": {"lte": end_date}})
+
         if brand_id:
             conditions.append({"product": {"AND": [
                 {"OR": [{"brand_id": None}, {"brand_id": brand_id}]}
             ]}})
 
-        return await db.inventoryevent.find_many(
-            where={"AND": conditions},
+        where = {"AND": conditions}
+        total = await db.inventoryevent.count(where=where)
+        events = await db.inventoryevent.find_many(
+            where=where,
             include={"product": {"include": {"canonical": True}}},
             order={"occurred_at": "desc"},
             take=limit,
+            skip=offset,
         )
+        return events, total
 
     async def add_usage_event(
         self,

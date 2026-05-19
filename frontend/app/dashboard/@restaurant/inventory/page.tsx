@@ -5,21 +5,21 @@ import { LayoutGrid, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppContainer } from "@/components/ui/dosteon-ui";
 import { TabProductCatalog } from "@/components/inventory/TabProductCatalog";
-import { TabStockUsage } from "@/components/inventory/TabStockUsage";
+import { TabConsumption } from "@/components/inventory/TabConsumption";
 
 // ---------------------------------------------------------------------------
 // Tab config
 // ---------------------------------------------------------------------------
 
-type InventoryTab = "catalog" | "usage";
+type InventoryTab = "catalog" | "consumption";
 
 const TABS: {
   id: InventoryTab;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 }[] = [
-  { id: "catalog", label: "Product Catalog", icon: LayoutGrid },
-  { id: "usage",   label: "Stock Usage",     icon: Activity   },
+  { id: "catalog",     label: "Product Catalog", icon: LayoutGrid },
+  { id: "consumption", label: "Consumption",      icon: Activity   },
 ];
 
 // ---------------------------------------------------------------------------
@@ -73,8 +73,8 @@ export default function InventoryPage() {
         </div>
 
         {/* Tab content */}
-        {activeTab === "catalog" && <TabProductCatalog />}
-        {activeTab === "usage"   && <TabStockUsage />}
+        {activeTab === "catalog"     && <TabProductCatalog />}
+        {activeTab === "consumption" && <TabConsumption />}
       </div>
 
     </AppContainer>

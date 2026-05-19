@@ -50,9 +50,17 @@ class StockUsageEvent(BaseModel):
     consumption_reason:  Optional[str] = None
     waste_reason:        Optional[str] = None
     occurred_at:         datetime
+    actor_type:          Optional[str] = None   # "sale" for auto-depletion, None for manual
 
     class Config:
         from_attributes = True
+
+
+class StockUsageHistoryPage(BaseModel):
+    events:    List[StockUsageEvent]
+    total:     int
+    page_size: int
+    offset:    int
 
 
 class StockUsageStats(BaseModel):
