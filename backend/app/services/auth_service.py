@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import datetime
 from app.core.supabase import supabase
 from app.core.config import settings
@@ -7,6 +8,8 @@ from app.db.repositories.profile_repository import profile_repo
 from app.db.repositories.organization_repository import organization_repo
 from app.services.email_service import email_service
 from fastapi import HTTPException, status
+
+logger = logging.getLogger("dosteon.auth")
 
 # Map frontend role values to valid Prisma UserRole enum values.
 # DB roles: OWNER / MANAGER (full access), CHEF (Procurement Officer), STAFF (Kitchen Staff)
@@ -92,6 +95,8 @@ class AuthService:
             print(f"Background verification email error for {user_data.email}: {e}")
 
     async def signup(self, user_data: UserSignup):
+        logger.info("signup_start", extra={"email_domain": user_data.email.split("@")[1] if "@" in user_data.email else "unknown"})
+        
         try:
             # 1. Create Supabase user FIRST — before touching the DB.
             #    This way a rejected email (already registered, invalid, etc.)
@@ -115,31 +120,29 @@ class AuthService:
                     or "forbidden" in error_str.lower()
                 )
                 if is_config_error:
-                    import logging as _logging
-                    _logging.getLogger("dosteon.auth").critical(
-                        "CRITICAL: supabase.auth.admin.create_user returned 403. "
-                        "SUPABASE_SERVICE_ROLE_KEY on Render is set but INVALID "
-                        "(wrong project, malformed, or rotated). "
-                        "Go to Supabase Dashboard → Project Settings → API, "
-                        "copy the 'service_role' key, update SUPABASE_SERVICE_ROLE_KEY "
-                        "on Render, and redeploy. "
-                        f"Raw error: {error_str}"
+                    logger.critical(
+                        "signup_admin_auth_failure: SUPABASE_SERVICE_ROLE_KEY appears invalid. "
+                        "This may indicate a stale or cached session in the Supabase admin client. "
+                        "Fix: verify SERVICE_ROLE_KEY on Render, or check if client options (persistSession, autoRefreshToken) are properly set to False. "
+                        "Render should be redeployed with the stateless admin client configuration."
                     )
                     raise HTTPException(
                         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                         detail="Signup is temporarily unavailable. Our team has been notified. Please try again in a few minutes."
                     )
                 else:
-                    print(f"Supabase admin.create_user failed: {error_str}")
+                    logger.warning("signup_admin_create_user_error", extra={"error_type": type(e).__name__})
                     raise
 
             if not user_res or not user_res.user:
+                logger.warning("signup_user_creation_failed: no user returned from Supabase")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="User creation failed. Please try again."
                 )
 
             user_id = str(user_res.user.id)
+            logger.info("signup_supabase_user_created", extra={"user_id": user_id})
 
             # 2. Supabase user exists — now safe to create the organization.
             _prefix = (user_data.email.split('@')[0] or "my").replace('.', ' ').replace('_', ' ').title()
@@ -210,7 +213,7 @@ class AuthService:
                 })
             except Exception as brand_err:
                 # Non-fatal — resolve_brand_for_org() in deps.py will auto-create on first API call
-                print(f"[signup] Brand auto-creation warning for org {org_id}: {brand_err}")
+                logger.warning("signup_brand_auto_creation_failed", extra={"error_type": type(brand_err).__name__, "org_id": org_id})
 
             # 7. Kick off verification email in the background so the
             #    signup response can return quickly. Wrapped with a 30s
@@ -225,6 +228,8 @@ class AuthService:
                     print(f"[email] Verification email timed out for {user_data.email}")
             asyncio.create_task(_email_with_timeout())
 
+            logger.info("signup_complete", extra={"user_id": user_id, "org_id": org_id})
+            
             return {
                 "status": "ok",
                 "message": "Signup successful. Check email for confirmation link.",
@@ -236,7 +241,7 @@ class AuthService:
             raise
         except Exception as e:
             error_str = str(e)
-            print(f"Signup error: {e}")
+            logger.error("signup_failed", extra={"error_type": type(e).__name__})
             if "rate limit" in error_str.lower():
                 raise HTTPException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
