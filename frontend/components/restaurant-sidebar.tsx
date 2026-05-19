@@ -128,27 +128,16 @@ export function RestaurantSidebar() {
         isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}
     >
-      <div className="flex h-[100px] items-center justify-between px-6 border-b border-slate-50 relative shrink-0 transition-all duration-500">
-        {!isSidebarCollapsed ? (
-          <Link
-            href={homeHref}
-            className="flex items-center group transition-all duration-500 active:scale-95 px-4"
-          >
-            <img
-              src="/images/logo-full.png"
-              alt="Dosteon"
-              className="h-9 w-auto group-hover:drop-shadow-sm transition-all"
-            />
-          </Link>
-        ) : (
+      <div className="flex h-[72px] items-center justify-between px-6 border-b border-slate-50 relative shrink-0 transition-all duration-500">
+        {isSidebarCollapsed && (
           <div className="flex-1 flex justify-center py-2">
              <Link href={homeHref} className="group transition-all duration-500 active:scale-95">
-                <div className="w-14 h-14 bg-gradient-to-br from-indigo-50/80 to-white rounded-2xl flex items-center justify-center border border-indigo-100/50 overflow-hidden shadow-sm group-hover:shadow-md transition-all">
-                    <div className="w-10 h-10 relative overflow-hidden flex items-center justify-center">
-                        <img 
-                            src="/images/logo-full.png" 
-                            alt="D" 
-                            className="absolute left-0 h-10 w-auto max-w-none -translate-x-1.5 object-cover"
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-50/80 to-white rounded-xl flex items-center justify-center border border-indigo-100/50 overflow-hidden shadow-sm group-hover:shadow-md transition-all">
+                    <div className="w-8 h-8 relative overflow-hidden flex items-center justify-center">
+                        <img
+                            src="/images/logo-full.png"
+                            alt="D"
+                            className="absolute left-0 h-8 w-auto max-w-none -translate-x-[3px] object-cover"
                         />
                     </div>
                 </div>
