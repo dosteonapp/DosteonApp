@@ -182,15 +182,34 @@ class InventoryService:
         organization_id: str,
         brand_id: Optional[str] = None,
     ):
+        if brand_id is None:
+            from app.cache.ops import cache_get, cache_set
+            from app.cache.keys import CacheKeys
+            _key = CacheKeys.usage_stats_today(organization_id)
+            _cached = await cache_get(_key, resource="usage_stats_today")
+            if _cached is not None:
+                return _cached
+            result = await inventory_repo.get_usage_stats_today(organization_id, brand_id=None)
+            await cache_set(_key, result, ttl=60)
+            return result
         return await inventory_repo.get_usage_stats_today(organization_id, brand_id=brand_id)
 
     async def get_stock_usage_history(
         self,
         organization_id: str,
         brand_id: Optional[str] = None,
-        limit: int = 10,
-    ):
-        events = await inventory_repo.get_usage_history(organization_id, brand_id=brand_id, limit=limit)
+        limit: int = 20,
+        offset: int = 0,
+        filter_type: str = "all",
+        start_date=None,
+        end_date=None,
+    ) -> dict:
+        events, total_count = await inventory_repo.get_usage_history(
+            organization_id, brand_id=brand_id,
+            limit=limit, offset=offset,
+            filter_type=filter_type,
+            start_date=start_date, end_date=end_date,
+        )
         result = []
         for e in events:
             p = e.product
@@ -209,8 +228,9 @@ class InventoryService:
                 "consumption_reason": e.consumption_reason,
                 "waste_reason":       e.waste_reason,
                 "occurred_at":        e.occurred_at,
+                "actor_type":         e.actor_type,
             })
-        return result
+        return {"events": result, "total": total_count}
 
     async def log_consumption(
         self,
@@ -240,6 +260,7 @@ class InventoryService:
             CacheKeys.inventory(organization_id),
             CacheKeys.inventory_stats(organization_id),
             CacheKeys.restaurant_stats(organization_id),
+            CacheKeys.usage_stats_today(organization_id),
         )
         return result
 
@@ -270,6 +291,7 @@ class InventoryService:
             CacheKeys.inventory(organization_id),
             CacheKeys.inventory_stats(organization_id),
             CacheKeys.restaurant_stats(organization_id),
+            CacheKeys.usage_stats_today(organization_id),
         )
         return result
 

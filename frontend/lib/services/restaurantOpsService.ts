@@ -203,7 +203,7 @@ export const restaurantOpsService = {
         const saved = localStorage.getItem('mock_day_status');
         if (saved) return JSON.parse(saved);
       }
-      return mockDayStatus;
+      return mockDayStatus as unknown as DayStatusApiResponse;
     }
     const { data } = await axiosInstance.get("restaurant/day-status");
     return data;

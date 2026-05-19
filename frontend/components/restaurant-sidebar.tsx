@@ -122,55 +122,24 @@ export function RestaurantSidebar() {
   return (
     <div
       className={cn(
-        "h-screen flex-col border-r border-slate-100 bg-white transition-all duration-500 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-[120] flex shrink-0",
-        isSidebarCollapsed ? "w-[90px]" : "w-[300px]",
+        "h-full flex-col border-r border-slate-100 bg-white transition-all duration-500 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-[120] flex shrink-0 relative",
+        isSidebarCollapsed ? "w-[90px]" : "w-[280px]",
         "fixed inset-y-0 left-0 md:relative md:translate-x-0 transition-transform",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}
     >
-      <div className="flex h-[100px] items-center justify-between px-6 border-b border-slate-50 relative shrink-0 transition-all duration-500">
-        {!isSidebarCollapsed ? (
-          <Link
-            href={homeHref}
-            className="flex items-center group transition-all duration-500 active:scale-95 px-4"
-          >
-            <img
-              src="/images/logo-full.png"
-              alt="Dosteon"
-              className="h-9 w-auto group-hover:drop-shadow-sm transition-all"
-            />
-          </Link>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 rounded-xl border border-slate-100 bg-white shadow-sm absolute -right-4 top-4 z-50 transition-all hover:shadow-md hover:border-indigo-100 active:scale-90 hidden md:flex"
+        onClick={toggleCollapse}
+      >
+        {isSidebarCollapsed ? (
+          <ChevronRight className="h-4 w-4 text-[#3B59DA] stroke-[3px]" />
         ) : (
-          <div className="flex-1 flex justify-center py-2">
-             <Link href={homeHref} className="group transition-all duration-500 active:scale-95">
-                <div className="w-14 h-14 bg-gradient-to-br from-indigo-50/80 to-white rounded-2xl flex items-center justify-center border border-indigo-100/50 overflow-hidden shadow-sm group-hover:shadow-md transition-all">
-                    <div className="w-10 h-10 relative overflow-hidden flex items-center justify-center">
-                        <img 
-                            src="/images/logo-full.png" 
-                            alt="D" 
-                            className="absolute left-0 h-10 w-auto max-w-none -translate-x-1.5 object-cover"
-                        />
-                    </div>
-                </div>
-              </Link>
-          </div>
+          <ChevronLeft className="h-4 w-4 text-slate-400 stroke-[3px]" />
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-8 w-8 rounded-xl border border-slate-100 bg-white shadow-sm absolute -right-4 top-[36px] z-50 transition-all hover:shadow-md hover:border-indigo-100 active:scale-90 hidden md:flex", 
-            isSidebarCollapsed && "static mt-0"
-          )}
-          onClick={toggleCollapse}
-        >
-          {isSidebarCollapsed ? (
-            <ChevronRight className="h-4 w-4 text-[#3B59DA] stroke-[3px]" />
-          ) : (
-            <ChevronLeft className="h-4 w-4 text-slate-400 stroke-[3px]" />
-          )}
-        </Button>
-      </div>
+      </Button>
 
       <div className="flex-1 flex flex-col justify-between overflow-y-auto no-scrollbar py-6 px-6">
         {/* Tier 1: Operations Section */}

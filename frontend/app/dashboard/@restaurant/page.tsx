@@ -1,13 +1,8 @@
 "use client";
 
 import {
-  ArrowRight,
   Package,
-  Plus,
-  Receipt,
-  Clock,
   ChefHat,
-  ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -22,7 +17,6 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useBrand } from "@/context/BrandContext";
 import { useUser } from "@/context/UserContext";
 import { QK } from "@/lib/queryKeys";
-import { useState } from "react";
 
 // ---------------------------------------------------------------------------
 // Donut chart (CSS conic-gradient, no extra deps)
@@ -148,11 +142,8 @@ export default function RestaurantDashboardPage() {
     isLoading: isStatusLoading,
     isClosingTimeReached,
     targetClosingTime,
-    canStartOpening,
-    finishOpening,
   } = useRestaurantDayLifecycle();
   const { user } = useUser();
-  const [isQuickOpening, setIsQuickOpening] = useState(false);
   const { activeBrand } = useBrand();
   const brandId: string | null = activeBrand?.id ?? null;
 
@@ -163,7 +154,7 @@ export default function RestaurantDashboardPage() {
       staleTime: 60_000,
       gcTime: 10 * 60_000,
       refetchInterval: 60_000,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
       placeholderData: keepPreviousData,
     });
 
@@ -173,7 +164,7 @@ export default function RestaurantDashboardPage() {
     staleTime: 30_000,
     gcTime: 10 * 60_000,
     refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
 
@@ -183,7 +174,7 @@ export default function RestaurantDashboardPage() {
     staleTime: 30_000,
     gcTime: 10 * 60_000,
     refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     enabled: isOpen,
     placeholderData: keepPreviousData,
   });
@@ -194,7 +185,7 @@ export default function RestaurantDashboardPage() {
     staleTime: 30_000,
     gcTime: 10 * 60_000,
     refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     enabled: isOpen,
     placeholderData: keepPreviousData,
   });
@@ -213,21 +204,6 @@ export default function RestaurantDashboardPage() {
     staleTime: 5 * 60_000,
     gcTime: 10 * 60_000,
   });
-
-  const skipsStockCount = user?.daily_stock_count === false;
-
-  const handleQuickOpen = async () => {
-    if (!canStartOpening) return;
-    setIsQuickOpening(true);
-    try {
-      await restaurantOpsService.submitOpeningChecklist({ counts: {} });
-      await finishOpening();
-    } catch {
-      // finishOpening updates local state even on network failure
-    } finally {
-      setIsQuickOpening(false);
-    }
-  };
 
   // Derived values
   const needReview = stats.low + stats.critical;
@@ -257,53 +233,7 @@ export default function RestaurantDashboardPage() {
   return (
     <AppContainer className="pb-24">
 
-      {/* ── ① Quick action buttons ───────────────────────────────────── */}
-      <div className="flex items-center gap-3 mb-6">
-        {isOpen ? (
-          <>
-            <Button
-              variant="outline"
-              className="h-10 px-4 rounded-xl border-slate-200 text-slate-600 font-semibold text-[13px] gap-2 hover:bg-slate-50"
-              asChild
-            >
-              <Link href="/dashboard/expenses">
-                <Receipt className="h-4 w-4" />
-                Log Expenses
-              </Link>
-            </Button>
-            <Button
-              className="h-10 px-4 rounded-xl bg-[#3B59DA] hover:bg-[#2d4bc8] text-white font-semibold text-[13px] gap-2 shadow-sm"
-              asChild
-            >
-              <Link href="/dashboard/sales">
-                <Plus className="h-4 w-4" />
-                Log Sales
-              </Link>
-            </Button>
-          </>
-        ) : skipsStockCount ? (
-          <Button
-            className="h-10 px-5 rounded-xl bg-[#3B59DA] hover:bg-[#2d4bc8] text-white font-semibold text-[13px] gap-2 shadow-sm"
-            onClick={handleQuickOpen}
-            disabled={isQuickOpening || !canStartOpening}
-          >
-            {isQuickOpening ? "Opening…" : "Open Kitchen"}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        ) : (
-          <Button
-            className="h-10 px-5 rounded-xl bg-[#3B59DA] hover:bg-[#2d4bc8] text-white font-semibold text-[13px] gap-2 shadow-sm"
-            asChild
-          >
-            <Link href="/dashboard/inventory/daily-stock-count">
-              <ClipboardList className="h-4 w-4" />
-              Count Daily Stock
-            </Link>
-          </Button>
-        )}
-      </div>
-
-      {/* ── ② Hero stats banner ──────────────────────────────────────── */}
+      {/* ── ① Hero stats banner ──────────────────────────────────────── */}
       <div
         className="w-full rounded-2xl mb-6 p-3 md:p-4 lg:p-5"
         style={{

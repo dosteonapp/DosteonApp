@@ -48,6 +48,14 @@ export interface StockUsageEvent {
   consumption_reason: string | null;
   waste_reason:       string | null;
   occurred_at:        string;
+  actor_type:         string | null;
+}
+
+export interface StockUsageHistoryPage {
+  events:    StockUsageEvent[];
+  total:     number;
+  page_size: number;
+  offset:    number;
 }
 
 // ---------------------------------------------------------------------------
@@ -70,8 +78,14 @@ export const inventoryApi = {
     return res.data;
   },
 
-  getStockUsageHistory: async (limit = 10): Promise<StockUsageEvent[]> => {
-    const res = await axiosInstance.get("/inventory/stock-usage/history", { params: { limit } });
+  getStockUsageHistory: async (params: {
+    limit?: number;
+    offset?: number;
+    filter_type?: string;
+    start_date?: string;
+    end_date?: string;
+  } = {}): Promise<StockUsageHistoryPage> => {
+    const res = await axiosInstance.get("/inventory/stock-usage/history", { params });
     return res.data;
   },
 
