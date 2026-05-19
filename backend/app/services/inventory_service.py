@@ -182,6 +182,16 @@ class InventoryService:
         organization_id: str,
         brand_id: Optional[str] = None,
     ):
+        if brand_id is None:
+            from app.cache.ops import cache_get, cache_set
+            from app.cache.keys import CacheKeys
+            _key = CacheKeys.usage_stats_today(organization_id)
+            _cached = await cache_get(_key, resource="usage_stats_today")
+            if _cached is not None:
+                return _cached
+            result = await inventory_repo.get_usage_stats_today(organization_id, brand_id=None)
+            await cache_set(_key, result, ttl=60)
+            return result
         return await inventory_repo.get_usage_stats_today(organization_id, brand_id=brand_id)
 
     async def get_stock_usage_history(
@@ -250,6 +260,7 @@ class InventoryService:
             CacheKeys.inventory(organization_id),
             CacheKeys.inventory_stats(organization_id),
             CacheKeys.restaurant_stats(organization_id),
+            CacheKeys.usage_stats_today(organization_id),
         )
         return result
 
@@ -280,6 +291,7 @@ class InventoryService:
             CacheKeys.inventory(organization_id),
             CacheKeys.inventory_stats(organization_id),
             CacheKeys.restaurant_stats(organization_id),
+            CacheKeys.usage_stats_today(organization_id),
         )
         return result
 

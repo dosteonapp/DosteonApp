@@ -55,3 +55,7 @@ class CacheKeys:
     @staticmethod
     def menu_categories(org_id: str) -> str:
         return f"{CACHE_VERSION}:menu_categories:{org_id}"
+
+    @staticmethod
+    def usage_stats_today(org_id: str) -> str:
+        return f"{CACHE_VERSION}:usage_stats_today:{org_id}"

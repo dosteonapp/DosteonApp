@@ -584,10 +584,15 @@ export function TabConsumption() {
   const [usageOpen,   setUsageOpen]   = useState(false);
   const [wastageOpen, setWastageOpen] = useState(false);
 
+  // Load products once on mount — not dependent on filters
+  useEffect(() => {
+    inventoryApi.getProducts().then(setProducts).catch(() => {});
+  }, []);
+
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [s, h, p] = await Promise.all([
+      const [s, h] = await Promise.all([
         inventoryApi.getStockUsageStats(),
         inventoryApi.getStockUsageHistory({
           limit:       PAGE_SIZE,
@@ -596,12 +601,10 @@ export function TabConsumption() {
           start_date:  dateFrom || undefined,
           end_date:    dateTo   || undefined,
         }),
-        inventoryApi.getProducts(),
       ]);
       setStats(s);
       setHistory(h.events);
       setTotal(h.total);
-      setProducts(p);
     } catch {
       // handled by axios interceptor
     } finally {

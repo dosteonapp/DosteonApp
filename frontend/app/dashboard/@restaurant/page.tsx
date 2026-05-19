@@ -163,7 +163,7 @@ export default function RestaurantDashboardPage() {
       staleTime: 60_000,
       gcTime: 10 * 60_000,
       refetchInterval: 60_000,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
       placeholderData: keepPreviousData,
     });
 
@@ -173,7 +173,7 @@ export default function RestaurantDashboardPage() {
     staleTime: 30_000,
     gcTime: 10 * 60_000,
     refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
 
@@ -183,7 +183,7 @@ export default function RestaurantDashboardPage() {
     staleTime: 30_000,
     gcTime: 10 * 60_000,
     refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     enabled: isOpen,
     placeholderData: keepPreviousData,
   });
@@ -194,7 +194,7 @@ export default function RestaurantDashboardPage() {
     staleTime: 30_000,
     gcTime: 10 * 60_000,
     refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     enabled: isOpen,
     placeholderData: keepPreviousData,
   });
