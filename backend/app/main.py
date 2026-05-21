@@ -13,6 +13,7 @@ from app.cache.client import connect_cache, disconnect_cache
 from app.middleware.request_id import RequestIDMiddleware, get_request_id
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.middleware.metrics import MetricsMiddleware, MetricsStore
+from app.middleware.correlation_id import CorrelationIDMiddleware
 from app.core.rate_limit import setup_rate_limiting
 
 # Initialize logging as early as possible
@@ -41,6 +42,7 @@ instrumentator = Instrumentator(
 instrumentator.add(prom_metrics.default())
 
 # Core Middleware
+app.add_middleware(CorrelationIDMiddleware)
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(MetricsMiddleware, store=metrics_store)
