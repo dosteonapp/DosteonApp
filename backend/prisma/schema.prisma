@@ -196,7 +196,7 @@ enum WasteReason {
 model InventoryEvent {
   id                      String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contextual_product_id   String             @db.Uuid
-  organization_id         String?            @db.Uuid
+  organization_id         String             @db.Uuid  // Phase 4: NOT NULL for tenant scoping
   event_type              InventoryEventType 
   quantity                Float              // quantity_delta
   unit                    String    
@@ -224,6 +224,7 @@ model InventoryEvent {
   @@index([organization_id])
   @@index([created_at])
   @@index([organization_id, created_at])
+  @@index([organization_id, contextual_product_id, created_at])  // Phase 4: Brand-scoped queries
 }
 
 // ---------------------------------------------------------
@@ -377,6 +378,7 @@ model SaleOrder {
   @@index([organization_id])
   @@index([brand_id])
   @@index([organization_id, business_date])
+  @@index([organization_id, brand_id, business_date])  // Phase 4: Brand-scoped reporting
 }
 
 model SaleOrderItem {
@@ -431,7 +433,7 @@ model Expense {
   business_date         DateTime    @db.Date
   occurred_at           DateTime    @default(now()) @db.Timestamptz(6)
   logged_by             String?     @db.Uuid
-  idempotency_key       String?
+  idempotency_key       String  // Phase 4: NOT NULL for deduplication
   created_at            DateTime    @default(now()) @db.Timestamptz(6)
 
   organization          Organization       @relation(fields: [organization_id], references: [id], onDelete: Cascade)
