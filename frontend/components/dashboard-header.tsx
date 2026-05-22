@@ -150,9 +150,6 @@ export function DashboardHeader() {
     }
     if (dashPath.startsWith("/dashboard/sales")) return ["Sales"];
 
-    // Expenses
-    if (dashPath.startsWith("/dashboard/expenses")) return ["Expenses"];
-
     // Expenditure
     if (dashPath === "/dashboard/expenditure/history") return ["Expenditure", "History"];
     if (dashPath.startsWith("/dashboard/expenditure")) return ["Expenditure"];
@@ -431,7 +428,7 @@ export function DashboardHeader() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push("/dashboard/expenses")}
+                    onClick={() => router.push("/dashboard/expenditure")}
                     className="h-9 gap-1.5 text-[13px] font-bold rounded-xl border-slate-200 text-slate-600 hidden lg:flex"
                   >
                     <Receipt className="h-3.5 w-3.5" />
