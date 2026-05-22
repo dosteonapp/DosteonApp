@@ -10,10 +10,10 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://www.googletagmanager.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
-      `connect-src 'self' ${backendUrl} https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://us.i.posthog.com`,
+      `connect-src 'self' ${backendUrl} https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://us.i.posthog.com https://*.googleapis.com https://*.google-analytics.com`,
       "font-src 'self' https://fonts.gstatic.com",
       "frame-src https://*.supabase.co",
       "object-src 'none'",

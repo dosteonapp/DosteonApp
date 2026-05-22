@@ -18,6 +18,7 @@ export function EnvironmentBanner() {
 
   return (
     <div
+      suppressHydrationWarning={true}
       style={{
         position: "fixed",
         top: 0,
