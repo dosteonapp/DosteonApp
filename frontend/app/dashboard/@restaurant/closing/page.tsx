@@ -900,7 +900,7 @@ export default function ClosingPage() {
                 <div className="border-t border-slate-100 pt-4 space-y-2">
                   <p className="text-[12px] text-slate-500">Forgot something? Log it now before closing today.</p>
                   <Button
-                    onClick={() => router.push("/dashboard/expenses")}
+                    onClick={() => router.push("/dashboard/expenditure")}
                     className="w-full h-10 bg-[#3B59DA] hover:bg-[#2d4bc8] text-white font-bold rounded-xl text-[13px]"
                   >
                     + Log Expenses
