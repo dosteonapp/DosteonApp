@@ -5,7 +5,8 @@ from enum import Enum
 
 class ExpenseTypeEnum(str, Enum):
     INGREDIENT = "INGREDIENT"
-    OVERHEAD = "OVERHEAD"
+    OPERATIONAL_COST = "OPERATIONAL_COST"
+    OTHER = "OTHER"
 
 
 class ExpenseCreate(BaseModel):
@@ -15,6 +16,9 @@ class ExpenseCreate(BaseModel):
     amount: float
     quantity: Optional[float] = None
     unit: Optional[str] = None
+    supplier: Optional[str] = None
+    unit_cost: Optional[float] = None
+    transport_cost: Optional[float] = None
     idempotency_key: Optional[str] = None
 
     @field_validator("item_name")
@@ -49,6 +53,9 @@ class ExpenseOut(BaseModel):
     amount: float
     quantity: Optional[float]
     unit: Optional[str]
+    supplier: Optional[str] = None
+    unit_cost: Optional[float] = None
+    transport_cost: Optional[float] = None
     contextual_product_id: Optional[str]
     business_date: Optional[str]
     occurred_at: Optional[str]
@@ -82,6 +89,9 @@ class ExpenseHistoryItem(BaseModel):
     amount: float
     quantity: Optional[float]
     unit: Optional[str]
+    supplier: Optional[str] = None
+    unit_cost: Optional[float] = None
+    transport_cost: Optional[float] = None
     brand_id: Optional[str]
     business_date: Optional[str]
     occurred_at: Optional[str]
@@ -101,3 +111,6 @@ class ExpenseUpdate(BaseModel):
     quantity: Optional[str] = None
     unit: Optional[str] = None
     expense_type: Optional[str] = None
+    supplier: Optional[str] = None
+    unit_cost: Optional[float] = None
+    transport_cost: Optional[float] = None

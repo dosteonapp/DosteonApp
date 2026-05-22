@@ -11,7 +11,8 @@ import { cn } from "@/lib/utils";
 
 const TYPE_META: Record<ExpenseType, { label: string; color: string; bg: string; icon: React.ComponentType<{ className?: string }> }> = {
   INGREDIENT: { label: "Ingredient",      color: "text-emerald-700", bg: "bg-emerald-50",  icon: ShoppingBasket },
-  OVERHEAD:   { label: "Operational",     color: "text-amber-700",   bg: "bg-amber-50",    icon: Wrench },
+  OPERATIONAL_COST: { label: "Operational",     color: "text-amber-700",   bg: "bg-amber-50",    icon: Wrench },
+  OTHER: { label: "Other",                color: "text-slate-700",   bg: "bg-slate-100",   icon: MoreHorizontal },
 };
 
 interface Props {

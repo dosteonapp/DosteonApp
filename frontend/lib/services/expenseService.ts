@@ -1,6 +1,6 @@
 import axiosInstance from "@/lib/axios";
 
-export type ExpenseType = "INGREDIENT" | "OVERHEAD";
+export type ExpenseType = "INGREDIENT" | "OPERATIONAL_COST" | "OTHER";
 
 export interface ExpenseCreatePayload {
   item_name: string;
@@ -9,6 +9,9 @@ export interface ExpenseCreatePayload {
   amount: number;
   quantity?: number;
   unit?: string;
+  supplier?: string;
+  unit_cost?: number;
+  transport_cost?: number;
   idempotency_key?: string;
 }
 
@@ -22,6 +25,9 @@ export interface ExpenseOut {
   amount: number;
   quantity: number | null;
   unit: string | null;
+  supplier: string | null;
+  unit_cost: number | null;
+  transport_cost: number | null;
   contextual_product_id: string | null;
   business_date: string | null;
   occurred_at: string | null;
@@ -55,6 +61,9 @@ export interface ExpenseHistoryItem {
   amount: number;
   quantity: number | null;
   unit: string | null;
+  supplier: string | null;
+  unit_cost: number | null;
+  transport_cost: number | null;
   brand_id: string | null;
   business_date: string | null;
   occurred_at: string | null;

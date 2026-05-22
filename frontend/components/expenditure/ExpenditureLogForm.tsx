@@ -258,7 +258,7 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
 
-    const apiType: ExpenseType = form.uiType === "ingredient" ? "INGREDIENT" : "OVERHEAD";
+    const apiType: ExpenseType = form.uiType === "ingredient" ? "INGREDIENT" : "OPERATIONAL_COST";
 
     const payload = {
       item_name: form.itemName.trim(),

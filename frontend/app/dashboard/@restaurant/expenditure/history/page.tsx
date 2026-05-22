@@ -287,7 +287,7 @@ export default function ExpenditureHistoryPage() {
   const computedStats = useMemo(() => {
     const total       = filteredItems.reduce((s, i) => s + i.amount, 0);
     const cogs        = filteredItems.filter((i) => i.expense_type === "INGREDIENT").reduce((s, i) => s + i.amount, 0);
-    const overhead    = filteredItems.filter((i) => i.expense_type === "OVERHEAD").reduce((s, i) => s + i.amount, 0);
+    const overhead    = filteredItems.filter((i) => i.expense_type === "OPERATIONAL_COST").reduce((s, i) => s + i.amount, 0);
     const cogsP       = total > 0 ? Math.round((cogs    / total) * 100) : 0;
     const overheadP   = total > 0 ? Math.round((overhead / total) * 100) : 0;
     return { total, cogs, overhead, cogsP, overheadP };
