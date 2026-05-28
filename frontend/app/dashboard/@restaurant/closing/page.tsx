@@ -1348,6 +1348,7 @@ function EditSalesModal({
                 <Input
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                   type="number"
                   className="h-12 rounded-xl"
                   placeholder="45 plates"
@@ -1364,6 +1365,7 @@ function EditSalesModal({
                   <Input
                     value={unitPrice}
                     onChange={(e) => setUnitPrice(e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     type="number"
                     className="h-12 rounded-l-none rounded-r-xl"
                   />
@@ -1487,6 +1489,7 @@ function EditExpenseModal({
                   <Input
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     className="h-12 rounded-xl"
                     placeholder="25 kg"
                   />
@@ -1502,6 +1505,7 @@ function EditExpenseModal({
                     <Input
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
+                      onFocus={(e) => e.target.select()}
                       type="number"
                       className="h-12 rounded-l-none rounded-r-xl"
                     />
