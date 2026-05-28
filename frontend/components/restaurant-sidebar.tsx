@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,10 +13,6 @@ import {
   ChevronRight,
   TrendingUp,
   Moon,
-  Users,
-  ShoppingCart,
-  BarChart3,
-  Wallet,
   Lock as LockIcon,
   ReceiptText,
 } from "lucide-react";
@@ -42,12 +38,16 @@ import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 
 export function RestaurantSidebar() {
   const pathname = usePathname();
-  const { isSidebarOpen, isSidebarCollapsed, toggleCollapse } = useSidebar();
+  const { isSidebarCollapsed, toggleCollapse } = useSidebar();
   const { status, isUserUnlocked } = useRestaurantDayLifecycle();
   const { user } = useUser();
   const queryClient = useQueryClient();
   const { activeBrand } = useBrand();
   const brandId = activeBrand?.id ?? null;
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--sidebar-width', isSidebarCollapsed ? '90px' : '300px');
+  }, [isSidebarCollapsed]);
 
   const workspaceSlug = user?.workspace_slug;
   const base = workspaceSlug ? `/${workspaceSlug}` : '';
@@ -69,9 +69,6 @@ export function RestaurantSidebar() {
   };
 
 
-  useEffect(() => {
-    document.documentElement.style.setProperty('--sidebar-width', isSidebarCollapsed ? '90px' : '300px');
-  }, [isSidebarCollapsed]);
 
   const operationsRoutes = [
     {
@@ -122,10 +119,12 @@ export function RestaurantSidebar() {
   return (
     <div
       className={cn(
-        "h-full flex-col border-r border-slate-100 bg-white transition-all duration-500 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-[120] flex shrink-0 relative",
-        isSidebarCollapsed ? "w-[90px]" : "w-[280px]",
-        "fixed inset-y-0 left-0 md:relative md:translate-x-0 transition-transform",
-        isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        "bg-white transition-all duration-500 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-[120] flex shrink-0 relative",
+        // Mobile: bottom navigation
+        "fixed bottom-0 left-0 right-0 h-20 border-t flex flex-row items-center justify-around",
+        // Desktop: left sidebar (fixed below navbar)
+        "md:fixed md:top-[86px] md:bottom-0 md:left-0 md:h-auto md:flex-col md:border-r md:border-slate-100 md:border-t-0 md:w-auto",
+        isSidebarCollapsed ? "md:w-[90px]" : "md:w-[280px]"
       )}
     >
       <Button
@@ -141,15 +140,15 @@ export function RestaurantSidebar() {
         )}
       </Button>
 
-      <div className="flex-1 flex flex-col justify-between overflow-y-auto no-scrollbar py-6 px-6">
+<div className="flex-1 flex flex-row md:flex-col items-center md:items-stretch justify-around md:justify-start md:overflow-y-auto overflow-x-hidden md:overflow-x-visible no-scrollbar py-1 md:py-6 px-2 md:px-6 gap-0 md:gap-0">
         {/* Tier 1: Operations Section */}
-        <div className="space-y-4">
+        <div className="space-y-2 md:space-y-4 flex-1 md:flex-none">
           {!isSidebarCollapsed && (
-            <h3 className="px-5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-4 font-figtree">
+            <h3 className="hidden md:block px-5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-4 font-figtree">
               Operations
             </h3>
           )}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-row md:flex-col gap-1 md:gap-2 flex-1">
               {operationsRoutes.map((route) => (
                 <SidebarLink
                   key={route.href}
@@ -165,13 +164,13 @@ export function RestaurantSidebar() {
         </div>
 
         {/* Tier 2: Administrative Section (Space shared equally) */}
-        <div className="space-y-4">
+        <div className="space-y-2 md:space-y-4 flex-1 md:flex-none">
           {!isSidebarCollapsed && (
-            <h3 className="px-5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 font-figtree">
+            <h3 className="hidden md:block px-5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 font-figtree">
               Systems
             </h3>
           )}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-row md:flex-col gap-1 md:gap-2 flex-1">
               {systemsRoutes.map((route) => (
 
               <SidebarLink 
@@ -264,11 +263,11 @@ function SidebarLink({ route, pathname, collapsed, isLocked, shouldBlock, onPref
             onClick={handleClick}
             onMouseEnter={onPrefetch}
             className={cn(
-                "flex items-center gap-4 rounded-2xl px-5 py-4 transition-all text-[15px] group relative font-semibold",
-                isActive 
-                    ? "bg-indigo-50 text-[#3B59DA]" 
+                "flex flex-col md:flex-row items-center justify-center md:justify-start gap-2 md:gap-4 rounded-lg md:rounded-2xl px-3 md:px-5 py-3 md:py-4 transition-all text-[10px] md:text-[15px] group relative font-semibold flex-1 md:flex-none",
+                isActive
+                    ? "bg-indigo-50 text-[#3B59DA]"
                     : "text-slate-500 hover:text-[#3B59DA] hover:bg-indigo-50/50",
-                collapsed && "justify-center px-0 mx-2",
+                collapsed && "md:justify-center md:px-0 md:mx-2",
                 isLocked && "opacity-40 cursor-not-allowed grayscale-[0.5]"
             )}
             title={collapsed ? route.title : undefined}

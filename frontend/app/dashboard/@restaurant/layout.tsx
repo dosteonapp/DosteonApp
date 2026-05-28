@@ -34,7 +34,7 @@ export default async function RestaurantLayout({
             </Suspense>
             <div className="flex flex-1 min-h-0 overflow-hidden">
               <RestaurantSidebar />
-              <main className="flex-1 min-w-0 relative flex flex-col overflow-hidden">
+              <main className="flex-1 min-w-0 relative flex flex-col overflow-hidden pb-20 md:pb-0 md:ml-[var(--sidebar-width)]">
                 <div className="flex-1 overflow-y-auto overflow-x-hidden">
                   <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
                     <RestaurantDayLifecycleOverlay />
