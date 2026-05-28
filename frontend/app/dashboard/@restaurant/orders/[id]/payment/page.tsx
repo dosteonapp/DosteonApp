@@ -177,6 +177,7 @@ export default function OrderPaymentPage({ params }: PageProps) {
                         type="number"
                         value={firstPaymentAmount}
                         onChange={(e) => setFirstPaymentAmount(e.target.value)}
+                        onFocus={(e) => e.target.select()}
                         className="mt-1"
                       />
                       <p className="text-sm text-muted-foreground mt-1">
