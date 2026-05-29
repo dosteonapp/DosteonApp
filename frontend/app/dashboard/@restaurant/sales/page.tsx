@@ -140,13 +140,28 @@ export default function SalesPage() {
 
     setIsSubmitting(true);
     try {
+      // Filter out items with empty IDs before submitting
+      const validItems = pendingCart.filter((ci) => ci.id && ci.id.trim() !== "");
+      const invalidItems = pendingCart.filter((ci) => !ci.id || ci.id.trim() === "");
+
+      if (invalidItems.length > 0) {
+        console.warn(`Filtered out ${invalidItems.length} item(s) with invalid IDs:`, invalidItems);
+      }
+
+      if (validItems.length === 0) {
+        setConfirmationError("Cart contains no valid items. Please refresh the menu and try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const payload = {
         channel: pendingChannel,
-        items: pendingCart.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
+        items: validItems.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
       };
 
       // Log the payload for debugging
       console.log("Submitting sale payload:", payload);
+      console.log("Filtered out invalid items:", invalidItems.length > 0 ? invalidItems : "none");
 
       const order = await salesService.logSale(payload);
       toast.success("Sale logged!", {
