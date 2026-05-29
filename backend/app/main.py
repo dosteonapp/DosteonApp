@@ -433,12 +433,17 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         "HTTPException raised",
         extra={"extra_context": {"status_code": exc.status_code, "detail": exc.detail}},
     )
+    response_data = {
+        "detail": exc.detail,
+        "request_id": get_request_id(),
+    }
+    logger.warning(
+        "Returning HTTP exception response",
+        extra={"extra_context": {"response_data": response_data}},
+    )
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "detail": exc.detail,
-            "request_id": get_request_id(),
-        },
+        content=response_data,
     )
 
 
