@@ -211,12 +211,20 @@ function ItemNameField({
 // Main component
 // ---------------------------------------------------------------------------
 
+interface SuccessExpense {
+  itemName: string;
+  amount: number;
+  type: UIExpenseType;
+}
+
 export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
   const [form, setFormRaw] = useState<FormState>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingForm, setPendingForm] = useState<FormState | null>(null);
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successExpense, setSuccessExpense] = useState<SuccessExpense | null>(null);
   const { activeBrand } = useBrand();
   const queryClient = useQueryClient();
   const idKey = useId();
@@ -292,14 +300,19 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
       };
 
       await expenseService.createExpense(payload);
-      toast({ title: "Expense logged", description: `${pendingForm.itemName} — RWF ${displayAmount.toLocaleString()}` });
-      setForm(EMPTY_FORM);
       setShowConfirmation(false);
       setPendingForm(null);
-      onSuccess?.();
+      setSuccessExpense({
+        itemName: pendingForm.itemName,
+        amount: displayAmount,
+        type: pendingForm.uiType,
+      });
+      setShowSuccess(true);
+      setForm(EMPTY_FORM);
       queryClient.invalidateQueries({ queryKey: QK.expenseWeekStats(activeBrand?.id ?? null) });
       queryClient.invalidateQueries({ queryKey: QK.expenseHistory(activeBrand?.id ?? null) });
       queryClient.invalidateQueries({ queryKey: QK.expenseStats(activeBrand?.id ?? null) });
+      onSuccess?.();
     } catch (error) {
       let errorMsg = "Could not log expense. Please try again.";
       if (error instanceof Error) {
@@ -588,6 +601,58 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
           isLoading={submitting}
           error={confirmationError}
         />
+      )}
+
+      {/* Success Dialog */}
+      {successExpense && (
+        <div
+          className={cn(
+            "fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-200",
+            showSuccess ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+          onClick={() => setShowSuccess(false)}
+        >
+          <div
+            className="fixed inset-0 bg-black/30"
+            onClick={() => setShowSuccess(false)}
+          />
+          <div
+            className="relative bg-white rounded-[16px] shadow-lg p-6 md:p-8 max-w-sm w-[90%] text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                <Check className="w-8 h-8 text-green-600" />
+              </div>
+            </div>
+
+            <h2 className="text-xl font-black text-slate-900 mb-2 font-figtree">Expense Logged!</h2>
+            <p className="text-sm text-slate-500 mb-6 font-figtree">
+              Your expense has been recorded successfully
+            </p>
+
+            <div className="bg-slate-50 rounded-[12px] p-4 mb-6 text-left space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600 font-figtree">{successExpense.itemName}</span>
+              </div>
+              <div className="border-t border-slate-200 pt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-700 font-figtree">Amount</span>
+                  <span className="text-lg font-black text-[#3B59DA] font-figtree">
+                    RWF {successExpense.amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => setShowSuccess(false)}
+              className="w-full h-11 bg-[#3B59DA] hover:bg-[#2D46B2] text-white rounded-[10px] font-black text-[14px] font-figtree transition-all active:scale-[0.98]"
+            >
+              Done
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );
