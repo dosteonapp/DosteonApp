@@ -122,7 +122,7 @@ export function RestaurantSidebar() {
         "bg-white transition-all duration-500 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-[120] flex shrink-0 relative",
         // Mobile: bottom navigation
         "fixed bottom-0 left-0 right-0 h-20 border-t flex flex-row items-center justify-around",
-        // Desktop: left sidebar (fixed below navbar)
+        // Desktop: left sidebar (touches navbar, no overlap)
         "md:fixed md:top-[86px] md:bottom-0 md:left-0 md:h-auto md:flex-col md:border-r md:border-slate-100 md:border-t-0 md:w-auto",
         isSidebarCollapsed ? "md:w-[90px]" : "md:w-[280px]"
       )}

@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cleanFloatInput } from "@/lib/numberInputUtils";
 // import { Calendar } from "@/components/ui/calendar";
 // import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 // import { CalendarIcon } from "lucide-react";
@@ -89,7 +90,7 @@ export function LogUsageModal({
             <Input
               type="number"
               value={openingStock}
-              onChange={(e) => setOpeningStock(Number(e.target.value))}
+              onChange={(e) => setOpeningStock(cleanFloatInput(e.target.value))}
               onFocus={(e) => e.target.select()}
               min={0}
             />
@@ -99,7 +100,7 @@ export function LogUsageModal({
             <Input
               type="number"
               value={usedStock}
-              onChange={(e) => handleUsedStockChange(Number(e.target.value))}
+              onChange={(e) => handleUsedStockChange(cleanFloatInput(e.target.value))}
               onFocus={(e) => e.target.select()}
               min={0}
             />

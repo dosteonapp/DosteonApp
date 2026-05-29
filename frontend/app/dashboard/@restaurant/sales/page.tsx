@@ -20,6 +20,7 @@ import {
   FigtreeText,
   InriaHeading,
 } from "@/components/ui/dosteon-ui";
+import { ActionConfirmationDialog } from "@/components/ui/action-confirmation-dialog";
 import { TabLogSales } from "@/components/sales/TabLogSales";
 import { TabSalesHistory } from "@/components/sales/TabSalesHistory";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
@@ -77,6 +78,16 @@ export default function SalesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [salesRefreshKey, setSalesRefreshKey] = useState(0);
 
+  // ── Confirmation state ────────────────────────────────────────────────────
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingCart, setPendingCart] = useState<CartItem[] | null>(null);
+  const [pendingChannel, setPendingChannel] = useState<SaleChannel | null>(null);
+  const [confirmationError, setConfirmationError] = useState<string | null>(null);
+
+  // ── Success state ──────────────────────────────────────────────────────────
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successOrder, setSuccessOrder] = useState<any>(null);
+
   // Reset channel selection when cart is cleared
   useEffect(() => { if (cart.length === 0) setChannel(null); }, [cart.length]);
 
@@ -85,12 +96,19 @@ export default function SalesPage() {
   const cartCogs    = cart.reduce((s, ci) => s + (ci.cost || 0) * ci.quantity, 0);
   const cartProfit  = cartRevenue - cartCogs;
 
-  const addToCart = (item: MenuItem) =>
+  const addToCart = (item: MenuItem) => {
+    // Validate item has a valid ID before adding to cart
+    if (!item.id || item.id.trim() === "") {
+      toast.error("Cannot add item", { description: "Item has invalid ID. Please refresh the menu." });
+      console.error("Attempted to add item with invalid ID:", item);
+      return;
+    }
     setCart((prev) => {
       const ex = prev.find((ci) => ci.id === item.id);
       if (ex) return prev.map((ci) => ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci);
       return [...prev, { ...item, quantity: 1 }];
     });
+  };
 
   const setQty = (itemId: string, qty: number) => {
     if (qty < 1) { setCart((prev) => prev.filter((ci) => ci.id !== itemId)); return; }
@@ -100,26 +118,110 @@ export default function SalesPage() {
   const removeFromCart = (itemId: string) => setCart((prev) => prev.filter((ci) => ci.id !== itemId));
   const clearCart = () => setCart([]);
 
-  const handleLogSale = async () => {
+  const handleLogSale = () => {
     if (!cart.length || !channel) return;
-    const currentCart = [...cart];
-    clearCart();
+    setPendingCart([...cart]);
+    setPendingChannel(channel);
+    setShowConfirmation(true);
+    setConfirmationError(null);
+  };
+
+  const handleConfirmSale = async () => {
+    if (!pendingCart || !pendingChannel) return;
+
+    // Validate cart before submitting
+    if (pendingCart.length === 0) {
+      setConfirmationError("Cart is empty. Please add items before confirming.");
+      return;
+    }
+
+    // Validate all items have valid IDs
+    const invalidItems = pendingCart.filter((ci) => !ci.id || ci.id.trim() === "");
+    if (invalidItems.length > 0) {
+      setConfirmationError(`${invalidItems.length} item(s) have invalid IDs. Please refresh and try again.`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const order = await salesService.logSale({
-        channel,
-        items: currentCart.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
+      // Debug: Log cart state before filtering
+      console.log("=== SALE SUBMISSION DEBUG ===");
+      console.log("pendingCart items:", pendingCart.length);
+      pendingCart.forEach((item, idx) => {
+        console.log(`  Item ${idx}: id="${item.id}", name="${item.name}", qty=${item.quantity}`);
       });
-      toast.success("Sale logged!", {
-        description: `Revenue: RWF ${fmt(order.total_revenue)} · Profit: RWF ${fmt(order.gross_profit)}`,
-      });
-      setSalesRefreshKey((k) => k + 1);
-    } catch {
-      setCart(currentCart);
-      toast.error("Could not log sale. Please try again.");
+
+      // Filter out items with empty IDs before submitting
+      const validItems = pendingCart.filter((ci) => ci.id && ci.id.trim() !== "");
+      const invalidItems = pendingCart.filter((ci) => !ci.id || ci.id.trim() === "");
+
+      console.log(`Valid items: ${validItems.length}, Invalid items: ${invalidItems.length}`);
+
+      if (invalidItems.length > 0) {
+        console.warn(`⚠️ Filtered out ${invalidItems.length} item(s) with invalid IDs:`);
+        invalidItems.forEach((item, idx) => {
+          console.warn(`  Invalid Item ${idx}: id="${item.id}", name="${item.name}"`);
+        });
+      }
+
+      if (validItems.length === 0) {
+        setConfirmationError("Cart contains no valid items. Please refresh the menu and try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const payload = {
+        channel: pendingChannel,
+        items: validItems.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
+      };
+
+      // Log the final payload
+      console.log("✅ Final payload being submitted:");
+      console.log(JSON.stringify(payload, null, 2));
+
+      const order = await salesService.logSale(payload);
+
+      // Show success dialog instead of toast
+      setSuccessOrder(order);
+      setShowSuccess(true);
+
+      // Reset states after short delay to allow user to see success
+      setTimeout(() => {
+        setSalesRefreshKey((k) => k + 1);
+        setShowConfirmation(false);
+        clearCart();
+        setPendingCart(null);
+        setPendingChannel(null);
+      }, 500);
+    } catch (error) {
+      // Extract detailed error message from API response
+      let errorMsg = "Could not log sale. Please try again.";
+      if (error instanceof Error) {
+        // Try to extract API error detail from axios error
+        const axiosError = error as any;
+        if (axiosError.response?.data?.detail) {
+          errorMsg = axiosError.response.data.detail;
+        } else if (axiosError.response?.status === 400) {
+          // 400 error with no detail - likely validation error
+          errorMsg = "Invalid request data. Please check that all items exist and quantities are correct.";
+        } else {
+          errorMsg = error.message;
+        }
+      }
+      setConfirmationError(errorMsg);
+      console.error("Sale confirmation error - Full error object:", error);
+      console.error("Response status:", (error as any)?.response?.status);
+      console.error("Response data:", (error as any)?.response?.data);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCancelConfirmation = () => {
+    setShowConfirmation(false);
+    setPendingCart(null);
+    setPendingChannel(null);
+    setConfirmationError(null);
   };
 
   // ── Navigation ───────────────────────────────────────────────────────────
@@ -216,7 +318,118 @@ export default function SalesPage() {
         )}
 
       </div>
+
+      {/* Sales Confirmation Dialog */}
+      <ActionConfirmationDialog
+        isOpen={showConfirmation}
+        onClose={handleCancelConfirmation}
+        onConfirm={handleConfirmSale}
+        title="Confirm Sale"
+        description="Review your sale before logging"
+        summaryItems={
+          pendingCart && pendingChannel
+            ? [
+                { label: "Items", value: pendingCart.length },
+                {
+                  label: "Revenue",
+                  value: fmt(pendingCart.reduce((s, ci) => s + ci.price * ci.quantity, 0)),
+                  variant: "positive",
+                },
+                {
+                  label: "Est. COGS",
+                  value: fmt(
+                    pendingCart.reduce((s, ci) => s + (ci.cost || 0) * ci.quantity, 0)
+                  ),
+                },
+                {
+                  label: "Gross Profit",
+                  value: fmt(
+                    pendingCart.reduce((s, ci) => s + (ci.price - (ci.cost || 0)) * ci.quantity, 0)
+                  ),
+                  variant: "positive",
+                },
+                {
+                  label: "Channel",
+                  value: CHANNELS.find((ch) => ch.id === pendingChannel)?.label || pendingChannel,
+                },
+              ]
+            : []
+        }
+        itemNames={pendingCart?.map((ci) => ci.name) || []}
+        isLoading={isSubmitting}
+        error={confirmationError}
+        confirmText="Log Sale"
+        cancelText="Cancel"
+      />
+
+      {/* Success Dialog */}
+      {showSuccess && successOrder && (
+        <SaleSuccessDialog
+          order={successOrder}
+          onClose={() => setShowSuccess(false)}
+        />
+      )}
     </AppContainer>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sale Success Dialog
+// ---------------------------------------------------------------------------
+
+function SaleSuccessDialog({ order, onClose }: { order: any; onClose: () => void }) {
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("en", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 animate-in fade-in">
+      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 space-y-6 animate-in zoom-in-95 slide-in-from-bottom-4">
+        {/* Success Icon */}
+        <div className="flex justify-center">
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Title and Message */}
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-slate-900">Sale Logged!</h2>
+          <p className="text-sm text-slate-600">Transaction completed successfully</p>
+        </div>
+
+        {/* Order Summary */}
+        <div className="bg-slate-50 rounded-lg p-4 space-y-3 border border-slate-200">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-slate-600 font-medium">Items Sold</span>
+            <span className="text-lg font-semibold text-slate-900">{order.items_count}</span>
+          </div>
+          <div className="h-px bg-slate-200" />
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-slate-600 font-medium">Revenue</span>
+            <span className="text-lg font-semibold text-slate-900">RWF {fmt(order.total_revenue)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-slate-600 font-medium">COGS</span>
+            <span className="text-sm text-slate-600">RWF {fmt(order.total_cogs)}</span>
+          </div>
+          <div className="h-px bg-slate-200" />
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-semibold text-slate-700">Profit</span>
+            <span className="text-lg font-bold text-emerald-600">RWF {fmt(order.gross_profit)}</span>
+          </div>
+        </div>
+
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition-colors"
+        >
+          Done
+        </button>
+      </div>
+    </div>
   );
 }
 

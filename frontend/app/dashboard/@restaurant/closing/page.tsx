@@ -29,6 +29,7 @@ import { useBrand } from "@/context/BrandContext";
 import { useToast } from "@/hooks/use-toast";
 import { restaurantOpsService } from "@/lib/services/restaurantOpsService";
 import axiosInstance from "@/lib/axios";
+import { cleanFloatInput } from "@/lib/numberInputUtils";
 import {
   salesService,
   TodayOrderItem,
@@ -1347,7 +1348,7 @@ function EditSalesModal({
                 </label>
                 <Input
                   value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
+                  onChange={(e) => setQuantity(cleanFloatInput(e.target.value).toString())}
                   onFocus={(e) => e.target.select()}
                   type="number"
                   className="h-12 rounded-xl"
@@ -1364,7 +1365,7 @@ function EditSalesModal({
                   </span>
                   <Input
                     value={unitPrice}
-                    onChange={(e) => setUnitPrice(e.target.value)}
+                    onChange={(e) => setUnitPrice(cleanFloatInput(e.target.value).toString())}
                     onFocus={(e) => e.target.select()}
                     type="number"
                     className="h-12 rounded-l-none rounded-r-xl"
@@ -1488,7 +1489,7 @@ function EditExpenseModal({
                   </label>
                   <Input
                     value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
+                    onChange={(e) => setQuantity(cleanFloatInput(e.target.value).toString())}
                     onFocus={(e) => e.target.select()}
                     className="h-12 rounded-xl"
                     placeholder="25 kg"
@@ -1504,7 +1505,7 @@ function EditExpenseModal({
                     </span>
                     <Input
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      onChange={(e) => setAmount(cleanFloatInput(e.target.value).toString())}
                       onFocus={(e) => e.target.select()}
                       type="number"
                       className="h-12 rounded-l-none rounded-r-xl"

@@ -3,6 +3,7 @@ import React, { useCallback } from "react";
 import { Trash2 } from "lucide-react";
 import { useOnboarding } from "@/context/OnboardingContext";
 import OnboardingBottomBar from "./OnboardingBottomBar";
+import { cleanIntegerInput } from "@/lib/numberInputUtils";
 import { toast } from "sonner";
 
 // Category emoji (re-used from 4a — keep in sync or extract to shared constants)
@@ -107,7 +108,7 @@ export default function Step4bQuantities() {
                         onChange={(e) =>
                           setInventoryQuantity(
                             item.canonical_product_id,
-                            parseFloat(e.target.value) || 0
+                            cleanIntegerInput(e.target.value)
                           )
                         }
                         className="flex-1 sm:flex-none w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"

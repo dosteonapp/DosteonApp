@@ -2,6 +2,7 @@
 import React from "react";
 import { Check } from "lucide-react";
 import { useOnboarding } from "@/context/OnboardingContext";
+import { cn } from "@/lib/utils";
 
 const STEPS = [
   { number: 1, label: "Your Business", sublabel: "Business details and structure" },
@@ -11,8 +12,14 @@ const STEPS = [
 ] as const;
 
 export default function OnboardingSidebar() {
-  const { state } = useOnboarding();
+  const { state, goToStep } = useOnboarding();
   const { currentStep } = state;
+
+  const handleStepClick = (stepNumber: number) => {
+    if (stepNumber <= currentStep) {
+      goToStep(stepNumber as 1 | 2 | 3 | 4);
+    }
+  };
 
   return (
     <aside
@@ -33,13 +40,19 @@ export default function OnboardingSidebar() {
             const isActive = currentStep === step.number;
             const isInactive = currentStep < step.number;
 
+            const isClickable = step.number <= currentStep;
+
             return (
               <li key={step.number}>
-                <div
-                  className={[
-                    "flex items-start gap-3 rounded-xl px-3 py-3 transition-colors",
-                    isActive ? "bg-white/10" : "",
-                  ].join(" ")}
+                <button
+                  onClick={() => handleStepClick(step.number)}
+                  disabled={!isClickable}
+                  className={cn(
+                    "w-full flex items-start gap-3 rounded-xl px-3 py-3 transition-colors text-left",
+                    isActive && "bg-white/10",
+                    isClickable && "hover:bg-white/5 cursor-pointer",
+                    !isClickable && "cursor-not-allowed"
+                  )}
                 >
                   {/* Step indicator */}
                   <div className="mt-0.5 flex-shrink-0">
@@ -80,7 +93,7 @@ export default function OnboardingSidebar() {
                       {step.sublabel}
                     </p>
                   </div>
-                </div>
+                </button>
 
                 {/* Connector line (not after last step) */}
                 {idx < STEPS.length - 1 && (

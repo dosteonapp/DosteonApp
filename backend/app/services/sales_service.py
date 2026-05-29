@@ -88,7 +88,7 @@ class SalesService:
 
         where: dict = {
             "organization_id": organization_id,
-            "NOT": {"status": "archived"},
+            "status": "active",  # Only show active items that can be sold
             **self._brand_where(brand_id),
         }
         if search:
@@ -609,6 +609,30 @@ class SalesService:
         channel: str,
         items: List[dict],
     ) -> dict:
+        logger = get_logger("sales_service.log_sale")
+
+        # Validate items have valid menu_item_ids
+        for idx, item in enumerate(items):
+            menu_item_id = item.get("menu_item_id", "").strip()
+            if not menu_item_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Item {idx + 1} has invalid or missing menu_item_id",
+                )
+
+        logger.info(
+            "log_sale called",
+            extra={
+                "extra_context": {
+                    "organization_id": organization_id,
+                    "brand_id": brand_id,
+                    "channel": channel,
+                    "item_count": len(items),
+                    "items": items,
+                }
+            },
+        )
+
         item_ids = [i["menu_item_id"] for i in items]
         menu_items = await db.menuitem.find_many(
             where={
@@ -619,11 +643,27 @@ class SalesService:
         )
         menu_map = {m.id: m for m in menu_items}
 
+        logger.info(
+            "Menu items lookup",
+            extra={
+                "extra_context": {
+                    "requested_ids": item_ids,
+                    "found_count": len(menu_items),
+                    "found_ids": [m.id for m in menu_items],
+                }
+            },
+        )
+
         missing = [mid for mid in item_ids if mid not in menu_map]
         if missing:
+            error_msg = f"Menu item(s) not found or inactive: {', '.join(missing)}"
+            logger.warning(
+                "Missing menu items",
+                extra={"extra_context": {"missing_ids": missing}},
+            )
             raise HTTPException(
                 status_code=400,
-                detail=f"Menu item(s) not found or inactive: {', '.join(missing)}",
+                detail=error_msg,
             )
 
         order_items: List[dict] = []

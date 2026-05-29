@@ -96,12 +96,7 @@ export default function Step4aSelect() {
   };
 
   const handleContinue = () => {
-    if (state.step4.selected_items.length === 0) {
-      // No items selected — skip 4b and go straight to complete via parent
-      setStep4SubScreen("set_quantities");
-    } else {
-      setStep4SubScreen("set_quantities");
-    }
+    setStep4SubScreen("set_quantities");
   };
 
   return (

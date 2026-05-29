@@ -170,13 +170,40 @@ async def log_sale(
     ctx: SecurityContext = Depends(get_brand_mutation_context),
 ):
     """Log a completed sale. Computes totals from current menu item prices/costs."""
-    return await sales_service.log_sale(
-        organization_id=ctx.organization_id,
-        brand_id=ctx.brand_id,
-        user_id=ctx.user_id,
-        channel=payload.channel.value,
-        items=[{"menu_item_id": i.menu_item_id, "quantity": i.quantity} for i in payload.items],
-    )
+    from app.core.logging import get_logger
+    logger = get_logger("sales_endpoint.log_sale")
+
+    try:
+        logger.info(
+            "log_sale endpoint called",
+            extra={
+                "extra_context": {
+                    "channel": payload.channel,
+                    "channel_value": payload.channel.value,
+                    "items_count": len(payload.items),
+                    "items": [
+                        {"menu_item_id": i.menu_item_id, "quantity": i.quantity}
+                        for i in payload.items
+                    ],
+                }
+            },
+        )
+
+        result = await sales_service.log_sale(
+            organization_id=ctx.organization_id,
+            brand_id=ctx.brand_id,
+            user_id=ctx.user_id,
+            channel=payload.channel.value,
+            items=[{"menu_item_id": i.menu_item_id, "quantity": i.quantity} for i in payload.items],
+        )
+        logger.info("log_sale completed successfully")
+        return result
+    except Exception as e:
+        logger.error(
+            f"log_sale endpoint error: {type(e).__name__}: {e}",
+            exc_info=e,
+        )
+        raise
 
 
 @router.get("/history")

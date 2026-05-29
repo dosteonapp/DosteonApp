@@ -7,6 +7,8 @@ import { Loader2, ShoppingCart, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cleanFloatInput } from "@/lib/numberInputUtils";
+import { ActionConfirmationDialog } from "@/components/ui/action-confirmation-dialog";
 import {
   Select,
   SelectContent,
@@ -51,6 +53,9 @@ export function ExpenseForm() {
 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingForm, setPendingForm] = useState<FormState | null>(null);
+  const [confirmationError, setConfirmationError] = useState<string | null>(null);
 
   const set = (field: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -71,14 +76,14 @@ export function ExpenseForm() {
   };
 
   const mutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (data: FormState) =>
       expenseService.createExpense({
-        item_name: form.item_name.trim(),
-        expense_type: form.expense_type,
-        amount: parseFloat(form.amount),
-        quantity: form.quantity ? parseFloat(form.quantity) : undefined,
-        unit: form.unit || undefined,
-        source: form.source || undefined,
+        item_name: data.item_name.trim(),
+        expense_type: data.expense_type,
+        amount: parseFloat(data.amount),
+        quantity: data.quantity ? parseFloat(data.quantity) : undefined,
+        unit: data.unit || undefined,
+        source: data.source || undefined,
         idempotency_key: idempotencyKey.current,
       }),
     onSuccess: (data) => {
@@ -103,21 +108,39 @@ export function ExpenseForm() {
       // Reset form + generate fresh idempotency key
       setForm(EMPTY);
       setErrors({});
+      setShowConfirmation(false);
+      setPendingForm(null);
       idempotencyKey.current = crypto.randomUUID();
-    },
-    onError: (err: any) => {
-      if (err?.response?.status === 409) {
-        toast.error("Duplicate expense — already recorded");
-        idempotencyKey.current = crypto.randomUUID();
-        return;
-      }
-      toast.error(err?.response?.data?.detail ?? "Failed to log expense. Please try again.");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) mutation.mutate();
+    if (validate()) {
+      setPendingForm({ ...form });
+      setShowConfirmation(true);
+      setConfirmationError(null);
+    }
+  };
+
+  const handleConfirmExpense = async () => {
+    if (!pendingForm) return;
+    try {
+      await mutation.mutateAsync(pendingForm);
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        setConfirmationError("Duplicate expense — already recorded");
+        idempotencyKey.current = crypto.randomUUID();
+      } else {
+        setConfirmationError(error?.response?.data?.detail ?? "Failed to log expense. Please try again.");
+      }
+    }
+  };
+
+  const handleCancelConfirmation = () => {
+    setShowConfirmation(false);
+    setPendingForm(null);
+    setConfirmationError(null);
   };
 
   return (
@@ -221,7 +244,7 @@ export function ExpenseForm() {
                 min="0.01"
                 step="any"
                 value={form.amount}
-                onChange={(e) => set("amount", e.target.value)}
+                onChange={(e) => set("amount", cleanFloatInput(e.target.value).toString())}
                 placeholder="0"
                 className={cn(
                   "h-11 rounded-l-none font-figtree text-sm",
@@ -245,7 +268,7 @@ export function ExpenseForm() {
               min="0.01"
               step="any"
               value={form.quantity}
-              onChange={(e) => set("quantity", e.target.value)}
+              onChange={(e) => set("quantity", cleanFloatInput(e.target.value).toString())}
               placeholder="e.g. 6"
               className={cn(
                 "h-11 font-figtree text-sm",
@@ -293,6 +316,41 @@ export function ExpenseForm() {
           )}
         </Button>
       </form>
+
+      {/* Expense Confirmation Dialog */}
+      <ActionConfirmationDialog
+        isOpen={showConfirmation}
+        onClose={handleCancelConfirmation}
+        onConfirm={handleConfirmExpense}
+        title="Confirm Expense Entry"
+        description="Review the expense details before logging"
+        summaryItems={
+          pendingForm
+            ? [
+                { label: "Item Name", value: pendingForm.item_name },
+                {
+                  label: "Amount",
+                  value: `RWF ${parseFloat(pendingForm.amount).toLocaleString()}`,
+                  variant: "positive",
+                },
+                {
+                  label: "Expense Type",
+                  value: pendingForm.expense_type === "INGREDIENT" ? "Ingredient (COGS)" : "Overhead",
+                },
+                ...(pendingForm.source
+                  ? [{ label: "Source", value: pendingForm.source }]
+                  : []),
+                ...(pendingForm.quantity
+                  ? [{ label: "Quantity", value: pendingForm.quantity }]
+                  : []),
+              ]
+            : []
+        }
+        isLoading={mutation.isPending}
+        error={confirmationError}
+        confirmText="Log Expense"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

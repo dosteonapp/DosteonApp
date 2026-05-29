@@ -3,6 +3,7 @@ import React, { useCallback } from "react";
 import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { useOnboarding, Dish } from "@/context/OnboardingContext";
 import OnboardingBottomBar from "./OnboardingBottomBar";
+import { cleanFloatInput } from "@/lib/numberInputUtils";
 import { toast } from "sonner";
 
 const CATEGORIES = [
@@ -57,8 +58,8 @@ export default function Step3Menu() {
         </p>
         <h2 className="text-2xl font-bold text-gray-900 mb-1">Add your dishes</h2>
         <p className="text-sm text-gray-500 mb-6">
-          Sales logging works by selecting dishes from your menu. Add at least 3 dishes now.
-          You can add costs later to unlock margin calculations.
+          Sales logging works by selecting dishes from your menu. Add at least 1 dish to get started.
+          You can add more dishes and costs later to unlock margin calculations.
         </p>
 
         {isMultiBrand ? (
@@ -84,8 +85,8 @@ export default function Step3Menu() {
       <OnboardingBottomBar
         hint={
           isMultiBrand
-            ? "Each brand needs at least 1 dish, and 3 total minimum"
-            : "You need at least 3 dishes to enable sales logging"
+            ? "Each brand needs at least 1 dish"
+            : "Add at least 1 dish to continue"
         }
         onBack={handleBack}
         onContinue={handleContinue}
@@ -107,7 +108,7 @@ interface SingleBrandMenuEditorProps {
 
 function SingleBrandMenuEditor({ dishes, onChangeDish, onAddDish, onRemoveDish }: SingleBrandMenuEditorProps) {
   const namedCount = dishes.filter((d) => d.name.trim()).length;
-  const remaining = Math.max(0, 3 - namedCount);
+  const isSatisfied = namedCount >= 1;
 
   return (
     <div className="w-full">
@@ -124,7 +125,7 @@ function SingleBrandMenuEditor({ dishes, onChangeDish, onAddDish, onRemoveDish }
             index={idx}
             dish={dish}
             onChange={onChangeDish}
-            onRemove={dishes.length > 3 ? () => onRemoveDish(idx) : undefined}
+            onRemove={namedCount > 1 ? () => onRemoveDish(idx) : undefined}
           />
         ))}
       </div>
@@ -138,9 +139,9 @@ function SingleBrandMenuEditor({ dishes, onChangeDish, onAddDish, onRemoveDish }
         Add another dish
       </button>
 
-      {remaining > 0 && (
+      {!isSatisfied && (
         <p className="mt-4 text-sm font-medium text-amber-500">
-          {namedCount} of 3 required dishes added
+          Add at least 1 dish to continue
         </p>
       )}
     </div>
@@ -297,7 +298,7 @@ function DishRow({ index, dish, onChange, onRemove }: DishRowProps) {
             type="number"
             min={0}
             value={dish.price}
-            onChange={(e) => onChange(index, "price", parseFloat(e.target.value) || 0)}
+            onChange={(e) => onChange(index, "price", cleanFloatInput(e.target.value))}
             onFocus={(e) => e.target.select()}
             className="w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-8 text-sm text-gray-900 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
