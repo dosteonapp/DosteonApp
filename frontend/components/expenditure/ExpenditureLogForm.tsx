@@ -57,7 +57,8 @@ interface Props {
 const SUPPLIER_CHIPS = ["Local Market", "Wholesale", "Direct Farm", "Importer"];
 const UNIT_OPTIONS = ["kg", "g", "Liter (L)", "ml", "Bundle", "Crate", "meter (m)", "Carton (ct)", "units"];
 const UNIT_VALUES  = ["kg", "g", "L",         "ml", "Bundle", "Crate", "m",         "ct",           "units"];
-const CATEGORY_CHIPS = ["Packaging", "Utilities", "Rent", "Salaries", "Equipment", "Marketing", "Licenses"];
+const INGREDIENT_CATEGORY_CHIPS = ["Packaging", "Spices", "Oils", "Grains", "Dairy"];
+const CATEGORY_CHIPS = ["Utilities", "Rent", "Salaries", "Equipment", "Marketing", "Licenses"];
 
 // ---------------------------------------------------------------------------
 // Type selector card config
@@ -384,6 +385,11 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
                 </span>
               </div>
             )}
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {INGREDIENT_CATEGORY_CHIPS.map((c) => (
+                <Chip key={c} label={c} active={form.category === c} onClick={() => setForm({ category: c })} />
+              ))}
+            </div>
           </Field>
 
           <Field label="Supplier (optional)">
