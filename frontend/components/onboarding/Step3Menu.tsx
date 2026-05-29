@@ -57,8 +57,8 @@ export default function Step3Menu() {
         </p>
         <h2 className="text-2xl font-bold text-gray-900 mb-1">Add your dishes</h2>
         <p className="text-sm text-gray-500 mb-6">
-          Sales logging works by selecting dishes from your menu. Add at least 3 dishes now.
-          You can add costs later to unlock margin calculations.
+          Sales logging works by selecting dishes from your menu. Add at least 1 dish to get started.
+          You can add more dishes and costs later to unlock margin calculations.
         </p>
 
         {isMultiBrand ? (
@@ -84,8 +84,8 @@ export default function Step3Menu() {
       <OnboardingBottomBar
         hint={
           isMultiBrand
-            ? "Each brand needs at least 1 dish, and 3 total minimum"
-            : "You need at least 3 dishes to enable sales logging"
+            ? "Each brand needs at least 1 dish"
+            : "Add at least 1 dish to continue"
         }
         onBack={handleBack}
         onContinue={handleContinue}
@@ -107,7 +107,7 @@ interface SingleBrandMenuEditorProps {
 
 function SingleBrandMenuEditor({ dishes, onChangeDish, onAddDish, onRemoveDish }: SingleBrandMenuEditorProps) {
   const namedCount = dishes.filter((d) => d.name.trim()).length;
-  const remaining = Math.max(0, 3 - namedCount);
+  const isSatisfied = namedCount >= 1;
 
   return (
     <div className="w-full">
@@ -124,7 +124,7 @@ function SingleBrandMenuEditor({ dishes, onChangeDish, onAddDish, onRemoveDish }
             index={idx}
             dish={dish}
             onChange={onChangeDish}
-            onRemove={dishes.length > 3 ? () => onRemoveDish(idx) : undefined}
+            onRemove={namedCount > 1 ? () => onRemoveDish(idx) : undefined}
           />
         ))}
       </div>
@@ -138,9 +138,9 @@ function SingleBrandMenuEditor({ dishes, onChangeDish, onAddDish, onRemoveDish }
         Add another dish
       </button>
 
-      {remaining > 0 && (
+      {!isSatisfied && (
         <p className="mt-4 text-sm font-medium text-amber-500">
-          {namedCount} of 3 required dishes added
+          Add at least 1 dish to continue
         </p>
       )}
     </div>

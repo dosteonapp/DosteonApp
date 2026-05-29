@@ -268,16 +268,8 @@ axiosInstance.interceptors.response.use(
     // 4. Handle specific status codes
     switch (errorStatus) {
       case 401:
-        if (!isAuthLoginRequest && typeof window !== "undefined") {
-          const currentPath = window.location.pathname;
-          const redirectPath = currentPath.includes("/supplier")
-            ? "/auth/supplier/signin"
-            : "/auth/restaurant/signin";
-
-          if (currentPath !== redirectPath) {
-            toast.warning("Session Expired", { description: "Please sign in again to continue." });
-          }
-        }
+        // Silent logout — user will be redirected by AuthContext/middleware
+        // No toast popup shown
         break;
       case 404:
         // Silent — expected for unauthenticated state checks

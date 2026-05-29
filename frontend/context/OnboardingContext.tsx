@@ -164,7 +164,7 @@ function buildDefaultStep1(): Step1State {
     phone: "",
     city: "",
     business_type: "Restaurant",
-    daily_stock_count: null,
+    daily_stock_count: false,
     has_multiple_brands: null,
     brands: ["", ""],
   };
@@ -536,7 +536,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const step3Valid = (() => {
     const { savedBrands, step3 } = state;
     if (savedBrands.length > 1) {
-      // Multi-brand: each brand needs at least 1 named dish, and 3 total minimum
+      // Multi-brand: each brand needs at least 1 named dish
       let total = 0;
       for (const brand of savedBrands) {
         const dishes = step3.brandDishes[brand.id] ?? [];
@@ -544,9 +544,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         if (named.length === 0) return false;
         total += named.length;
       }
-      return total >= 3;
+      return total >= 1;
     }
-    return step3.dishes.filter((d) => d.name.trim()).length >= 3;
+    return step3.dishes.filter((d) => d.name.trim()).length >= 1;
   })();
 
   // -------------------------------------------------------------------------

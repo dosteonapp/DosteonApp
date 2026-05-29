@@ -258,29 +258,6 @@ export default function Step1Business() {
           </div>
         </section>
 
-        {/* ── DAILY INVENTORY STOCK COUNT ── */}
-        <section className="mb-8">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
-            Daily Inventory Stock Count
-          </p>
-          <p className="text-xs text-gray-500 mb-4">
-            Do you currently count your opening and closing stock? Select Yes or No
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <CheckCard
-              checked={step1.daily_stock_count === true}
-              onClick={() => setStep1Field("daily_stock_count", true)}
-              title="Yes, I count my inventory stock daily"
-            />
-            <CheckCard
-              checked={step1.daily_stock_count === false}
-              onClick={() => setStep1Field("daily_stock_count", false)}
-              title="No, I don't"
-              subHint="You can enable this anytime in settings as your team grows"
-            />
-          </div>
-        </section>
-
         {/* ── BUSINESS STRUCTURE ── */}
         <section className="mb-8">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
