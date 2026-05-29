@@ -117,12 +117,24 @@ export default function SalesPage() {
 
   const handleConfirmSale = async () => {
     if (!pendingCart || !pendingChannel) return;
+
+    // Validate cart before submitting
+    if (pendingCart.length === 0) {
+      setConfirmationError("Cart is empty. Please add items before confirming.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const order = await salesService.logSale({
+      const payload = {
         channel: pendingChannel,
         items: pendingCart.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
-      });
+      };
+
+      // Log the payload for debugging
+      console.log("Submitting sale payload:", payload);
+
+      const order = await salesService.logSale(payload);
       toast.success("Sale logged!", {
         description: `Revenue: RWF ${fmt(order.total_revenue)} · Profit: RWF ${fmt(order.gross_profit)}`,
       });
@@ -139,12 +151,17 @@ export default function SalesPage() {
         const axiosError = error as any;
         if (axiosError.response?.data?.detail) {
           errorMsg = axiosError.response.data.detail;
+        } else if (axiosError.response?.status === 400) {
+          // 400 error with no detail - likely validation error
+          errorMsg = "Invalid request data. Please check that all items exist and quantities are correct.";
         } else {
           errorMsg = error.message;
         }
       }
       setConfirmationError(errorMsg);
-      console.error("Sale confirmation error:", error);
+      console.error("Sale confirmation error - Full error object:", error);
+      console.error("Response status:", (error as any)?.response?.status);
+      console.error("Response data:", (error as any)?.response?.data);
     } finally {
       setIsSubmitting(false);
     }
