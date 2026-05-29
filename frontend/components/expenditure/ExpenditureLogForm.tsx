@@ -79,7 +79,7 @@ const TYPE_CARDS: {
 // Chip
 // ---------------------------------------------------------------------------
 
-function Chip({ label, active, onClick }: { label: string; active?: boolean; onClick: () => void }) {
+function Chip({ label, active, onClick, className }: { label: string; active?: boolean; onClick: () => void; className?: string }) {
   return (
     <button
       type="button"
@@ -88,7 +88,8 @@ function Chip({ label, active, onClick }: { label: string; active?: boolean; onC
         "px-3 py-1.5 rounded-full text-[12px] font-bold transition-all border font-figtree whitespace-nowrap",
         active
           ? "bg-[#3B59DA] text-white border-[#3B59DA]"
-          : "bg-white text-slate-500 border-slate-200 hover:border-[#3B59DA] hover:text-[#3B59DA]"
+          : "bg-white text-slate-500 border-slate-200 hover:border-[#3B59DA] hover:text-[#3B59DA]",
+        className
       )}
     >
       {label}
@@ -104,10 +105,12 @@ function ItemNameField({
   value,
   onChange,
   inventoryItems,
+  onInventoryItemSelected,
 }: {
   value: string;
   onChange: (name: string, unit?: string, category?: string) => void;
   inventoryItems: InventoryProduct[];
+  onInventoryItemSelected?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -138,6 +141,7 @@ function ItemNameField({
 
   const selectItem = (item: InventoryProduct) => {
     onChange(item.name, item.unit, item.category);
+    onInventoryItemSelected?.();
     setOpen(false);
     setFocused(false);
   };
@@ -225,6 +229,7 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successExpense, setSuccessExpense] = useState<SuccessExpense | null>(null);
+  const [isUnitFromInventory, setIsUnitFromInventory] = useState(false);
   const { activeBrand } = useBrand();
   const queryClient = useQueryClient();
   const idKey = useId();
@@ -381,14 +386,20 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
             <ItemNameField
               value={form.itemName}
               inventoryItems={inventoryItems}
-              onChange={(name, unit, category) =>
+              onInventoryItemSelected={() => setIsUnitFromInventory(true)}
+              onChange={(name, unit, category) => {
+                if (!name.trim()) {
+                  setIsUnitFromInventory(false);
+                } else if (!unit) {
+                  setIsUnitFromInventory(false);
+                }
                 setForm((prev) => ({
                   ...prev,
                   itemName: name,
                   category: category ?? (name !== prev.itemName ? "" : prev.category),
                   ...(unit && !prev.unit ? { unit } : {}),
-                }))
-              }
+                }));
+              }}
             />
             {form.category && (
               <div className="flex items-center gap-1.5 mt-1">
@@ -419,14 +430,23 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
             </div>
           </Field>
 
-          <Field label="Unit of Measure">
+          <Field label={isUnitFromInventory ? "Unit of Measure (from inventory)" : "Unit of Measure"}>
+            {isUnitFromInventory && form.unit && (
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
+                <div className="px-2.5 py-1 bg-green-50 border border-green-200 rounded-full">
+                  <span className="text-[11px] font-bold text-green-700 font-figtree">From inventory</span>
+                </div>
+                <span className="text-[13px] font-bold text-slate-700 font-figtree">{form.unit}</span>
+              </div>
+            )}
             <div className="flex flex-wrap gap-1.5">
               {UNIT_OPTIONS.map((label, i) => (
                 <Chip
                   key={label}
                   label={label}
                   active={form.unit === UNIT_VALUES[i]}
-                  onClick={() => setForm({ unit: UNIT_VALUES[i] })}
+                  onClick={() => !isUnitFromInventory && setForm({ unit: UNIT_VALUES[i] })}
+                  className={isUnitFromInventory ? "opacity-50 cursor-not-allowed" : ""}
                 />
               ))}
             </div>
