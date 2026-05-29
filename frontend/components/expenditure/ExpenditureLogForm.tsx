@@ -71,7 +71,7 @@ const TYPE_CARDS: {
   icon: React.ComponentType<{ className?: string }>;
 }[] = [
   { id: "ingredient",  label: "Ingredient",      description: "Raw food items purchased",   icon: ShoppingBasket },
-  { id: "operational", label: "Operational Cost", description: "Utilities, packaging, etc.", icon: Wrench },
+  { id: "operational", label: "Operational Cost", description: "Utilities, rent, salaries", icon: Wrench },
   { id: "other",       label: "Other",            description: "Any other expense",          icon: MoreHorizontal },
 ];
 
