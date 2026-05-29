@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { UnifiedModal, UnifiedErrorBanner } from "@/components/ui/dosteon-ui";
+import { cleanFloatInput } from "@/lib/numberInputUtils";
 import {
   salesService, MenuItem, MenuCategory, MenuStats, RecipeIngredient, OrgMenuCategory,
 } from "@/lib/services/salesService";
@@ -804,7 +805,7 @@ export function TabMenuManagement() {
                       type="number"
                       min={0}
                       value={form.price}
-                      onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                      onChange={(e) => setForm((f) => ({ ...f, price: cleanFloatInput(e.target.value).toString() }))}
                       placeholder="0"
                       className="flex-1 px-2.5 text-[13px] font-figtree focus:outline-none bg-transparent h-full"
                       onFocus={(e) => { if (e.target.value === "0") e.target.select(); }}
@@ -1011,7 +1012,7 @@ export function TabMenuManagement() {
                                 min={0}
                                 step={0.01}
                                 value={ing.quantity_per_unit}
-                                onChange={(e) => updateRecipeRow(idx, "quantity_per_unit", parseFloat(e.target.value) || 0)}
+                                onChange={(e) => updateRecipeRow(idx, "quantity_per_unit", cleanFloatInput(e.target.value))}
                                 className="w-full border border-slate-200 rounded px-2 h-8 text-[12px] focus:outline-none focus:ring-1 focus:ring-slate-300"
                               />
                             </td>
@@ -1044,7 +1045,7 @@ export function TabMenuManagement() {
                                   min={0}
                                   step={0.01}
                                   value={ing.unit_cost ?? 0}
-                                  onChange={(e) => updateRecipeRow(idx, "unit_cost", parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => updateRecipeRow(idx, "unit_cost", cleanFloatInput(e.target.value))}
                                   className="flex-1 px-2 text-[12px] focus:outline-none bg-transparent h-full min-w-0"
                                 />
                               </div>

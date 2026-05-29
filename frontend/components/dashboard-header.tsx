@@ -283,7 +283,7 @@ export function DashboardHeader() {
   );
 
   return (
-    <div className="bg-white border-b border-slate-100 h-[86px] sticky top-0 z-40 font-figtree w-full flex">
+    <div className="bg-white border-b border-slate-100/50 h-[86px] fixed top-0 left-0 right-0 z-40 font-figtree w-full flex shadow-sm">
 
       {/* ── LEFT PANEL: fixed width matching sidebar ── */}
       <div className={cn(

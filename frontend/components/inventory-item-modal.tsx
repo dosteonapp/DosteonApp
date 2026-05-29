@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useProductCategories } from "@/hooks/product-categories";
 import { useToast } from "@/hooks/use-toast";
 import { Check, AlertTriangle } from "lucide-react";
+import { cleanFloatInput } from "@/lib/numberInputUtils";
 import {
   Dialog,
   DialogContent,
@@ -272,7 +273,7 @@ export function InventoryItemModal({
                       step="1.0"
                       value={formData.currentStock}
                       onChange={(e) =>
-                        handleChange("currentStock", e.target.value)
+                        handleChange("currentStock", cleanFloatInput(e.target.value).toString())
                       }
                       onFocus={(e) => e.target.select()}
                       required
@@ -317,7 +318,7 @@ export function InventoryItemModal({
                       step="1.0"
                       value={formData.minimumLevel}
                       onChange={(e) =>
-                        handleChange("minimumLevel", e.target.value)
+                        handleChange("minimumLevel", cleanFloatInput(e.target.value).toString())
                       }
                       onFocus={(e) => e.target.select()}
                       required

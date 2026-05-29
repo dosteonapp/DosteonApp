@@ -154,10 +154,10 @@ class OnboardingService:
         - brand_id = <uuid> → scoped to that brand only
         """
         named_dishes = [d for d in data.dishes if d.name]
-        if len(named_dishes) < 3:
+        if len(named_dishes) < 1:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="At least 3 dishes are required to enable sales logging",
+                detail="At least 1 dish is required to enable sales logging",
             )
 
         # Delete previous onboarding dishes and recreate (idempotent)

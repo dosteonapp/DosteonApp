@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cleanFloatInput } from "@/lib/numberInputUtils";
 
 type OrderItem = {
   name?: string;
@@ -198,7 +199,7 @@ export function OrderItemModal({
                       type="number"
                       step="1.0"
                       value={formData.quantity}
-                      onChange={(e) => handleChange("quantity", e.target.value)}
+                      onChange={(e) => handleChange("quantity", cleanFloatInput(e.target.value).toString())}
                       required
                     />
                     {warnings.quantity && (

@@ -32,7 +32,7 @@ export default async function RestaurantLayout({
             <Suspense fallback={<div className="h-[86px] bg-white border-b border-slate-100 shrink-0" />}>
               <DashboardHeader />
             </Suspense>
-            <div className="flex flex-1 min-h-0 overflow-hidden">
+            <div className="flex flex-1 min-h-0 overflow-hidden pt-[86px]">
               <RestaurantSidebar />
               <main className="flex-1 min-w-0 relative flex flex-col overflow-hidden pb-20 md:pb-0 md:ml-[var(--sidebar-width)]">
                 <div className="flex-1 overflow-y-auto overflow-x-hidden">

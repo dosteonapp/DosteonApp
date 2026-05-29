@@ -3,6 +3,7 @@ import React, { useCallback } from "react";
 import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { useOnboarding, Dish } from "@/context/OnboardingContext";
 import OnboardingBottomBar from "./OnboardingBottomBar";
+import { cleanFloatInput } from "@/lib/numberInputUtils";
 import { toast } from "sonner";
 
 const CATEGORIES = [
@@ -297,7 +298,7 @@ function DishRow({ index, dish, onChange, onRemove }: DishRowProps) {
             type="number"
             min={0}
             value={dish.price}
-            onChange={(e) => onChange(index, "price", parseFloat(e.target.value) || 0)}
+            onChange={(e) => onChange(index, "price", cleanFloatInput(e.target.value))}
             onFocus={(e) => e.target.select()}
             className="w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-8 text-sm text-gray-900 focus:border-[#3B4EFF] focus:outline-none focus:ring-1 focus:ring-[#3B4EFF] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />

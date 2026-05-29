@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { AlertCircle, Check, Edit2, X, AlertTriangle, ShieldCheck, TrendingUp, TrendingDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
+import { cleanFloatInput } from "@/lib/numberInputUtils"
 
 export type StockItem = {
   id: string
@@ -200,7 +201,7 @@ export function StockConfirmationModal({
                                     <Input
                                     type="number"
                                     value={editValue}
-                                    onChange={(e) => setEditValue(Number(e.target.value))}
+                                    onChange={(e) => setEditValue(cleanFloatInput(e.target.value))}
                                     onFocus={(e) => e.target.select()}
                                     className="w-24 h-11 border-blue-200 bg-white rounded-xl font-bold text-[#3B59DA] shadow-sm animate-in zoom-in-95 duration-200"
                                     autoFocus

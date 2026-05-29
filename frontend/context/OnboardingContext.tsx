@@ -153,9 +153,9 @@ function buildDefaultDays(): OperatingDay[] {
 }
 
 const BLANK_DISHES: Dish[] = [
-  { name: "", price: 0, category: "Signature" },
-  { name: "", price: 0, category: "Signature" },
-  { name: "", price: 0, category: "Signature" },
+  { name: "", price: "" as unknown as number, category: "Signature" },
+  { name: "", price: "" as unknown as number, category: "Signature" },
+  { name: "", price: "" as unknown as number, category: "Signature" },
 ];
 
 function buildDefaultStep1(): Step1State {
