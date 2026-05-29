@@ -131,7 +131,12 @@ export function InventoryUpdateItemModal({
                     {/* Inputs Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                         <div className="space-y-3">
-                            <label className="text-[13px] font-bold text-slate-400 font-figtree ml-1">Incoming Quantity</label>
+                            <div className="flex items-center gap-2 ml-1">
+                                <label className="text-[13px] font-bold text-slate-400 font-figtree">Incoming Quantity</label>
+                                <span className="px-2 py-0.5 bg-green-50 border border-green-200 rounded text-[10px] font-bold text-green-700 font-figtree">
+                                  {item.unit} (from inventory)
+                                </span>
+                            </div>
                             <Input
                                 type="number"
                                 placeholder={`${item.currentStock} ${item.unit}`}

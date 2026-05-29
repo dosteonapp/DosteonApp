@@ -87,6 +87,7 @@ export function TabMenuManagement() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [recipe, setRecipe] = useState<RecipeIngredient[]>([]);
+  const [recipeUnitsFromInventory, setRecipeUnitsFromInventory] = useState<Set<number>>(new Set());
   const [recipeLoading, setRecipeLoading] = useState(false);
   const [recipeError, setRecipeError] = useState<string | null>(null);
   const [pickerError, setPickerError] = useState<string | null>(null);
@@ -369,17 +370,27 @@ export function TabMenuManagement() {
   }
 
   function confirmPickerSelection() {
-    setRecipe((prev) => [
-      ...prev,
-      ...pickerSelected.map((p) => ({
-        id: "",
-        contextual_product_id: p.id,
-        product_name: p.name,
-        quantity_per_unit: 1,
-        unit: p.unit,
-        unit_cost: p.latest_unit_cost ?? 0,
-      })),
-    ]);
+    setRecipe((prev) => {
+      const newLength = prev.length + pickerSelected.length;
+      setRecipeUnitsFromInventory((oldSet) => {
+        const newSet = new Set(oldSet);
+        for (let i = prev.length; i < newLength; i++) {
+          newSet.add(i);
+        }
+        return newSet;
+      });
+      return [
+        ...prev,
+        ...pickerSelected.map((p) => ({
+          id: "",
+          contextual_product_id: p.id,
+          product_name: p.name,
+          quantity_per_unit: 1,
+          unit: p.unit,
+          unit_cost: p.latest_unit_cost ?? 0,
+        })),
+      ];
+    });
     setPickerSelected([]);
     setPickerSearch("");
     setPickerOpen(false);
@@ -391,10 +402,22 @@ export function TabMenuManagement() {
 
   function updateRecipeRow(idx: number, field: keyof RecipeIngredient, value: string | number) {
     setRecipe((prev) => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
+    if (field === "unit") {
+      setRecipeUnitsFromInventory((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(idx);
+        return newSet;
+      });
+    }
   }
 
   function removeRecipeRow(idx: number) {
     setRecipe((prev) => prev.filter((_, i) => i !== idx));
+    setRecipeUnitsFromInventory((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(idx);
+      return newSet;
+    });
   }
 
   // Unit conversion helpers (mirrors backend _convert_unit)
@@ -1018,12 +1041,23 @@ export function TabMenuManagement() {
                             </td>
                             <td className="py-3 pr-3">
                               <div className="flex flex-col gap-0.5">
+                                {recipeUnitsFromInventory.has(idx) && ing.unit && (
+                                  <div className="flex items-center gap-1 mb-1">
+                                    <div className="px-1.5 py-0.5 bg-green-50 border border-green-200 rounded text-[10px] font-bold text-green-700">
+                                      From inventory
+                                    </div>
+                                  </div>
+                                )}
                                 <input
                                   type="text"
                                   value={ing.unit ?? ""}
                                   onChange={(e) => updateRecipeRow(idx, "unit", e.target.value)}
                                   placeholder={ing.base_unit ?? "unit"}
-                                  className="w-20 border border-slate-200 rounded px-2 h-8 text-[12px] focus:outline-none focus:ring-1 focus:ring-slate-300"
+                                  disabled={recipeUnitsFromInventory.has(idx)}
+                                  className={cn(
+                                    "w-20 border border-slate-200 rounded px-2 h-8 text-[12px] focus:outline-none focus:ring-1 focus:ring-slate-300",
+                                    recipeUnitsFromInventory.has(idx) && "bg-slate-50 opacity-60 cursor-not-allowed"
+                                  )}
                                 />
                                 {conversionHint && conversionHint.compatible && (
                                   <span className="text-[10px] text-slate-400 whitespace-nowrap">
