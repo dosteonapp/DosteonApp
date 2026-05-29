@@ -88,7 +88,7 @@ class SalesService:
 
         where: dict = {
             "organization_id": organization_id,
-            "NOT": {"status": "archived"},
+            "status": "active",  # Only show active items that can be sold
             **self._brand_where(brand_id),
         }
         if search:
