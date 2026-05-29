@@ -20,6 +20,7 @@ import {
   FigtreeText,
   InriaHeading,
 } from "@/components/ui/dosteon-ui";
+import { ActionConfirmationDialog } from "@/components/ui/action-confirmation-dialog";
 import { TabLogSales } from "@/components/sales/TabLogSales";
 import { TabSalesHistory } from "@/components/sales/TabSalesHistory";
 import { useRestaurantDayLifecycle } from "@/components/day/RestaurantDayLifecycleProvider";
@@ -77,6 +78,12 @@ export default function SalesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [salesRefreshKey, setSalesRefreshKey] = useState(0);
 
+  // ── Confirmation state ────────────────────────────────────────────────────
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingCart, setPendingCart] = useState<CartItem[] | null>(null);
+  const [pendingChannel, setPendingChannel] = useState<SaleChannel | null>(null);
+  const [confirmationError, setConfirmationError] = useState<string | null>(null);
+
   // Reset channel selection when cart is cleared
   useEffect(() => { if (cart.length === 0) setChannel(null); }, [cart.length]);
 
@@ -100,26 +107,54 @@ export default function SalesPage() {
   const removeFromCart = (itemId: string) => setCart((prev) => prev.filter((ci) => ci.id !== itemId));
   const clearCart = () => setCart([]);
 
-  const handleLogSale = async () => {
+  const handleLogSale = () => {
     if (!cart.length || !channel) return;
-    const currentCart = [...cart];
-    clearCart();
+    setPendingCart([...cart]);
+    setPendingChannel(channel);
+    setShowConfirmation(true);
+    setConfirmationError(null);
+  };
+
+  const handleConfirmSale = async () => {
+    if (!pendingCart || !pendingChannel) return;
     setIsSubmitting(true);
     try {
       const order = await salesService.logSale({
-        channel,
-        items: currentCart.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
+        channel: pendingChannel,
+        items: pendingCart.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
       });
       toast.success("Sale logged!", {
         description: `Revenue: RWF ${fmt(order.total_revenue)} · Profit: RWF ${fmt(order.gross_profit)}`,
       });
       setSalesRefreshKey((k) => k + 1);
-    } catch {
-      setCart(currentCart);
-      toast.error("Could not log sale. Please try again.");
+      setShowConfirmation(false);
+      clearCart();
+      setPendingCart(null);
+      setPendingChannel(null);
+    } catch (error) {
+      // Extract detailed error message from API response
+      let errorMsg = "Could not log sale. Please try again.";
+      if (error instanceof Error) {
+        // Try to extract API error detail from axios error
+        const axiosError = error as any;
+        if (axiosError.response?.data?.detail) {
+          errorMsg = axiosError.response.data.detail;
+        } else {
+          errorMsg = error.message;
+        }
+      }
+      setConfirmationError(errorMsg);
+      console.error("Sale confirmation error:", error);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCancelConfirmation = () => {
+    setShowConfirmation(false);
+    setPendingCart(null);
+    setPendingChannel(null);
+    setConfirmationError(null);
   };
 
   // ── Navigation ───────────────────────────────────────────────────────────
@@ -216,6 +251,49 @@ export default function SalesPage() {
         )}
 
       </div>
+
+      {/* Sales Confirmation Dialog */}
+      <ActionConfirmationDialog
+        isOpen={showConfirmation}
+        onClose={handleCancelConfirmation}
+        onConfirm={handleConfirmSale}
+        title="Confirm Sale"
+        description="Review your sale before logging"
+        summaryItems={
+          pendingCart && pendingChannel
+            ? [
+                { label: "Items", value: pendingCart.length },
+                {
+                  label: "Revenue",
+                  value: fmt(pendingCart.reduce((s, ci) => s + ci.price * ci.quantity, 0)),
+                  variant: "positive",
+                },
+                {
+                  label: "Est. COGS",
+                  value: fmt(
+                    pendingCart.reduce((s, ci) => s + (ci.cost || 0) * ci.quantity, 0)
+                  ),
+                },
+                {
+                  label: "Gross Profit",
+                  value: fmt(
+                    pendingCart.reduce((s, ci) => s + (ci.price - (ci.cost || 0)) * ci.quantity, 0)
+                  ),
+                  variant: "positive",
+                },
+                {
+                  label: "Channel",
+                  value: CHANNELS.find((ch) => ch.id === pendingChannel)?.label || pendingChannel,
+                },
+              ]
+            : []
+        }
+        itemNames={pendingCart?.map((ci) => ci.name) || []}
+        isLoading={isSubmitting}
+        error={confirmationError}
+        confirmText="Log Sale"
+        cancelText="Cancel"
+      />
     </AppContainer>
   );
 }
