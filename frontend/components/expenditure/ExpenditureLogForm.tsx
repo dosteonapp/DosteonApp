@@ -12,6 +12,8 @@ import { inventoryApi, InventoryProduct } from "@/lib/services/inventoryService"
 import { useBrand } from "@/context/BrandContext";
 import { QK } from "@/lib/queryKeys";
 import { toast } from "@/hooks/use-toast";
+import { cleanFloatInput } from "@/lib/numberInputUtils";
+import { ActionConfirmationDialog } from "@/components/ui/action-confirmation-dialog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -211,6 +213,9 @@ function ItemNameField({
 export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
   const [form, setFormRaw] = useState<FormState>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingForm, setPendingForm] = useState<FormState | null>(null);
+  const [confirmationError, setConfirmationError] = useState<string | null>(null);
   const { activeBrand } = useBrand();
   const queryClient = useQueryClient();
   const idKey = useId();
@@ -254,40 +259,67 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
     return parseFloat(form.amount) > 0;
   })();
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!canSubmit || submitting) return;
+    setPendingForm(form);
+    setShowConfirmation(true);
+    setConfirmationError(null);
+  };
+
+  const handleConfirmExpense = async () => {
+    if (!pendingForm) return;
     setSubmitting(true);
-
-    const apiType: ExpenseType = form.uiType === "ingredient" ? "INGREDIENT" : "OVERHEAD";
-
-    const payload = {
-      item_name: form.itemName.trim(),
-      expense_type: apiType,
-      source:
-        form.uiType === "ingredient"
-          ? form.supplier || undefined
-          : form.uiType === "operational"
-          ? form.category || undefined
-          : undefined,
-      amount: displayAmount,
-      quantity: form.uiType === "ingredient" ? parseFloat(form.quantity) || undefined : undefined,
-      unit: form.uiType === "ingredient" ? (form.unit || undefined) : undefined,
-      idempotency_key: `${idKey}-${Date.now()}`,
-    };
-
     try {
+      const apiType: ExpenseType = pendingForm.uiType === "ingredient" ? "INGREDIENT" : "OVERHEAD";
+      const displayAmount = pendingForm.uiType === "ingredient"
+        ? (parseFloat(pendingForm.quantity) || 0) * (parseFloat(pendingForm.unitCost) || 0) + (parseFloat(pendingForm.transportCost) || 0)
+        : parseFloat(pendingForm.amount) || 0;
+
+      const payload = {
+        item_name: pendingForm.itemName.trim(),
+        expense_type: apiType,
+        source:
+          pendingForm.uiType === "ingredient"
+            ? pendingForm.supplier || undefined
+            : pendingForm.uiType === "operational"
+            ? pendingForm.category || undefined
+            : undefined,
+        amount: displayAmount,
+        quantity: pendingForm.uiType === "ingredient" ? parseFloat(pendingForm.quantity) || undefined : undefined,
+        unit: pendingForm.uiType === "ingredient" ? (pendingForm.unit || undefined) : undefined,
+        idempotency_key: `${idKey}-${Date.now()}`,
+      };
+
       await expenseService.createExpense(payload);
-      toast({ title: "Expense logged", description: `${form.itemName} — RWF ${displayAmount.toLocaleString()}` });
+      toast({ title: "Expense logged", description: `${pendingForm.itemName} — RWF ${displayAmount.toLocaleString()}` });
       setForm(EMPTY_FORM);
+      setShowConfirmation(false);
+      setPendingForm(null);
       onSuccess?.();
       queryClient.invalidateQueries({ queryKey: QK.expenseWeekStats(activeBrand?.id ?? null) });
       queryClient.invalidateQueries({ queryKey: QK.expenseHistory(activeBrand?.id ?? null) });
       queryClient.invalidateQueries({ queryKey: QK.expenseStats(activeBrand?.id ?? null) });
-    } catch {
-      toast({ variant: "destructive", title: "Failed to log expense", description: "Please try again." });
+    } catch (error) {
+      let errorMsg = "Could not log expense. Please try again.";
+      if (error instanceof Error) {
+        const axiosError = error as any;
+        if (axiosError.response?.data?.detail) {
+          errorMsg = axiosError.response.data.detail;
+        } else {
+          errorMsg = error.message;
+        }
+      }
+      setConfirmationError(errorMsg);
+      console.error("Expense confirmation error:", error);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCancelConfirmation = () => {
+    setShowConfirmation(false);
+    setPendingForm(null);
+    setConfirmationError(null);
   };
 
   return (
@@ -387,7 +419,7 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
                 type="number" min="0" step="1.0" placeholder="0"
                 value={form.quantity}
                 onFocus={(e) => e.target.value === "0" && setForm({ quantity: "" })}
-                onChange={(e) => setForm({ quantity: e.target.value })}
+                onChange={(e) => setForm({ quantity: cleanFloatInput(e.target.value).toString() })}
                 className="h-11 rounded-[10px] border-slate-200 font-figtree text-[13px]"
               />
             </Field>
@@ -396,7 +428,7 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
                 type="number" min="0" step="1.0" placeholder="0"
                 value={form.unitCost}
                 onFocus={(e) => e.target.value === "0" && setForm({ unitCost: "" })}
-                onChange={(e) => setForm({ unitCost: e.target.value })}
+                onChange={(e) => setForm({ unitCost: cleanFloatInput(e.target.value).toString() })}
                 className="h-11 rounded-[10px] border-slate-200 font-figtree text-[13px]"
               />
             </Field>
@@ -407,7 +439,7 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
               type="number" min="0" step="1.0" placeholder="0"
               value={form.transportCost}
               onFocus={(e) => e.target.value === "0" && setForm({ transportCost: "" })}
-              onChange={(e) => setForm({ transportCost: e.target.value })}
+              onChange={(e) => setForm({ transportCost: cleanFloatInput(e.target.value).toString() })}
               className="h-11 rounded-[10px] border-slate-200 font-figtree text-[13px]"
             />
           </Field>
@@ -439,7 +471,7 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
               type="number" min="0" step="1.0" placeholder="0"
               value={form.amount}
               onFocus={(e) => e.target.value === "0" && setForm({ amount: "" })}
-              onChange={(e) => setForm({ amount: e.target.value })}
+              onChange={(e) => setForm({ amount: cleanFloatInput(e.target.value).toString() })}
               className="h-11 rounded-[10px] border-slate-200 font-figtree text-[13px]"
             />
           </Field>
@@ -463,7 +495,7 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
               type="number" min="0" step="1.0" placeholder="0"
               value={form.amount}
               onFocus={(e) => e.target.value === "0" && setForm({ amount: "" })}
-              onChange={(e) => setForm({ amount: e.target.value })}
+              onChange={(e) => setForm({ amount: cleanFloatInput(e.target.value).toString() })}
               className="h-11 rounded-[10px] border-slate-200 font-figtree text-[13px]"
             />
           </Field>
@@ -490,6 +522,67 @@ export function ExpenditureLogForm({ onFormChange, onSuccess }: Props) {
       >
         {submitting ? "Logging…" : "Log Expense"}
       </Button>
+
+      {/* Confirmation Dialog */}
+      {pendingForm && (
+        <ActionConfirmationDialog
+          isOpen={showConfirmation}
+          onClose={handleCancelConfirmation}
+          onConfirm={handleConfirmExpense}
+          title="Confirm Expense"
+          description="Please review the expense details before logging"
+          summaryItems={(() => {
+            const items: import("@/components/ui/action-confirmation-dialog").SummaryItem[] = [
+              { label: "Item Name", value: pendingForm.itemName },
+            ];
+
+            if (pendingForm.uiType === "ingredient") {
+              items.push(
+                { label: "Quantity", value: `${pendingForm.quantity} ${pendingForm.unit || "units"}` },
+                { label: "Unit Cost", value: `RWF ${parseFloat(pendingForm.unitCost || "0").toLocaleString()}` }
+              );
+
+              if (parseFloat(pendingForm.transportCost || "0") > 0) {
+                items.push({
+                  label: "Transport Cost",
+                  value: `RWF ${parseFloat(pendingForm.transportCost).toLocaleString()}`,
+                });
+              }
+
+              const total =
+                (parseFloat(pendingForm.quantity) || 0) * (parseFloat(pendingForm.unitCost) || 0) +
+                (parseFloat(pendingForm.transportCost) || 0);
+              items.push({
+                label: "Total",
+                value: `RWF ${total.toLocaleString()}`,
+                variant: "positive",
+              });
+
+              if (pendingForm.supplier) {
+                items.push({ label: "Supplier", value: pendingForm.supplier });
+              }
+            } else {
+              const amount = parseFloat(pendingForm.amount || "0");
+              items.push({
+                label: "Amount",
+                value: `RWF ${amount.toLocaleString()}`,
+                variant: "positive",
+              });
+
+              if (pendingForm.uiType === "operational" && pendingForm.category) {
+                items.push({ label: "Category", value: pendingForm.category });
+              }
+            }
+
+            return items;
+          })()}
+          confirmText="Log Expense"
+          cancelText="Cancel"
+          variant="default"
+          isLoading={submitting}
+          error={confirmationError}
+        />
+      )}
     </div>
   );
 }
