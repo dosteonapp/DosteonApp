@@ -84,6 +84,10 @@ export default function SalesPage() {
   const [pendingChannel, setPendingChannel] = useState<SaleChannel | null>(null);
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
 
+  // ── Success state ──────────────────────────────────────────────────────────
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successOrder, setSuccessOrder] = useState<any>(null);
+
   // Reset channel selection when cart is cleared
   useEffect(() => { if (cart.length === 0) setChannel(null); }, [cart.length]);
 
@@ -176,14 +180,19 @@ export default function SalesPage() {
       console.log(JSON.stringify(payload, null, 2));
 
       const order = await salesService.logSale(payload);
-      toast.success("Sale logged!", {
-        description: `Revenue: RWF ${fmt(order.total_revenue)} · Profit: RWF ${fmt(order.gross_profit)}`,
-      });
-      setSalesRefreshKey((k) => k + 1);
-      setShowConfirmation(false);
-      clearCart();
-      setPendingCart(null);
-      setPendingChannel(null);
+
+      // Show success dialog instead of toast
+      setSuccessOrder(order);
+      setShowSuccess(true);
+
+      // Reset states after short delay to allow user to see success
+      setTimeout(() => {
+        setSalesRefreshKey((k) => k + 1);
+        setShowConfirmation(false);
+        clearCart();
+        setPendingCart(null);
+        setPendingChannel(null);
+      }, 500);
     } catch (error) {
       // Extract detailed error message from API response
       let errorMsg = "Could not log sale. Please try again.";
@@ -352,7 +361,75 @@ export default function SalesPage() {
         confirmText="Log Sale"
         cancelText="Cancel"
       />
+
+      {/* Success Dialog */}
+      {showSuccess && successOrder && (
+        <SaleSuccessDialog
+          order={successOrder}
+          onClose={() => setShowSuccess(false)}
+        />
+      )}
     </AppContainer>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sale Success Dialog
+// ---------------------------------------------------------------------------
+
+function SaleSuccessDialog({ order, onClose }: { order: any; onClose: () => void }) {
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("en", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 animate-in fade-in">
+      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 space-y-6 animate-in zoom-in-95 slide-in-from-bottom-4">
+        {/* Success Icon */}
+        <div className="flex justify-center">
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Title and Message */}
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-slate-900">Sale Logged!</h2>
+          <p className="text-sm text-slate-600">Transaction completed successfully</p>
+        </div>
+
+        {/* Order Summary */}
+        <div className="bg-slate-50 rounded-lg p-4 space-y-3 border border-slate-200">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-slate-600 font-medium">Items Sold</span>
+            <span className="text-lg font-semibold text-slate-900">{order.items_count}</span>
+          </div>
+          <div className="h-px bg-slate-200" />
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-slate-600 font-medium">Revenue</span>
+            <span className="text-lg font-semibold text-slate-900">RWF {fmt(order.total_revenue)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-slate-600 font-medium">COGS</span>
+            <span className="text-sm text-slate-600">RWF {fmt(order.total_cogs)}</span>
+          </div>
+          <div className="h-px bg-slate-200" />
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-semibold text-slate-700">Profit</span>
+            <span className="text-lg font-bold text-emerald-600">RWF {fmt(order.gross_profit)}</span>
+          </div>
+        </div>
+
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition-colors"
+        >
+          Done
+        </button>
+      </div>
+    </div>
   );
 }
 
