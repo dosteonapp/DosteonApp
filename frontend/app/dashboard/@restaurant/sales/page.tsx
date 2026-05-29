@@ -92,12 +92,19 @@ export default function SalesPage() {
   const cartCogs    = cart.reduce((s, ci) => s + (ci.cost || 0) * ci.quantity, 0);
   const cartProfit  = cartRevenue - cartCogs;
 
-  const addToCart = (item: MenuItem) =>
+  const addToCart = (item: MenuItem) => {
+    // Validate item has a valid ID before adding to cart
+    if (!item.id || item.id.trim() === "") {
+      toast.error("Cannot add item", { description: "Item has invalid ID. Please refresh the menu." });
+      console.error("Attempted to add item with invalid ID:", item);
+      return;
+    }
     setCart((prev) => {
       const ex = prev.find((ci) => ci.id === item.id);
       if (ex) return prev.map((ci) => ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci);
       return [...prev, { ...item, quantity: 1 }];
     });
+  };
 
   const setQty = (itemId: string, qty: number) => {
     if (qty < 1) { setCart((prev) => prev.filter((ci) => ci.id !== itemId)); return; }

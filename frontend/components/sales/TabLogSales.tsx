@@ -60,7 +60,22 @@ export function TabLogSales({ cartMap, onAddToCart, refreshKey }: TabLogSalesPro
         salesService.getMenu(),
         salesService.getTodayStats(),
       ]);
-      setCategories(menuData.categories);
+
+      // Filter out items with invalid IDs and warn if found
+      const filteredCategories = menuData.categories
+        .map((cat: MenuCategory) => ({
+          ...cat,
+          items: cat.items.filter((item: MenuItem) => {
+            if (!item.id || item.id.trim() === "") {
+              console.warn("Filtered out menu item with invalid ID:", item);
+              return false;
+            }
+            return true;
+          }),
+        }))
+        .filter((cat: MenuCategory) => cat.items.length > 0);
+
+      setCategories(filteredCategories);
       setTodayStats(stats);
     } catch {
       setError("Could not load menu. Please refresh the page.");
