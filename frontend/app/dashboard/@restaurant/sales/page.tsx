@@ -140,12 +140,24 @@ export default function SalesPage() {
 
     setIsSubmitting(true);
     try {
+      // Debug: Log cart state before filtering
+      console.log("=== SALE SUBMISSION DEBUG ===");
+      console.log("pendingCart items:", pendingCart.length);
+      pendingCart.forEach((item, idx) => {
+        console.log(`  Item ${idx}: id="${item.id}", name="${item.name}", qty=${item.quantity}`);
+      });
+
       // Filter out items with empty IDs before submitting
       const validItems = pendingCart.filter((ci) => ci.id && ci.id.trim() !== "");
       const invalidItems = pendingCart.filter((ci) => !ci.id || ci.id.trim() === "");
 
+      console.log(`Valid items: ${validItems.length}, Invalid items: ${invalidItems.length}`);
+
       if (invalidItems.length > 0) {
-        console.warn(`Filtered out ${invalidItems.length} item(s) with invalid IDs:`, invalidItems);
+        console.warn(`⚠️ Filtered out ${invalidItems.length} item(s) with invalid IDs:`);
+        invalidItems.forEach((item, idx) => {
+          console.warn(`  Invalid Item ${idx}: id="${item.id}", name="${item.name}"`);
+        });
       }
 
       if (validItems.length === 0) {
@@ -159,9 +171,9 @@ export default function SalesPage() {
         items: validItems.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
       };
 
-      // Log the payload for debugging
-      console.log("Submitting sale payload:", payload);
-      console.log("Filtered out invalid items:", invalidItems.length > 0 ? invalidItems : "none");
+      // Log the final payload
+      console.log("✅ Final payload being submitted:");
+      console.log(JSON.stringify(payload, null, 2));
 
       const order = await salesService.logSale(payload);
       toast.success("Sale logged!", {
