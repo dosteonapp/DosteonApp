@@ -124,6 +124,13 @@ export default function SalesPage() {
       return;
     }
 
+    // Validate all items have valid IDs
+    const invalidItems = pendingCart.filter((ci) => !ci.id || ci.id.trim() === "");
+    if (invalidItems.length > 0) {
+      setConfirmationError(`${invalidItems.length} item(s) have invalid IDs. Please refresh and try again.`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {

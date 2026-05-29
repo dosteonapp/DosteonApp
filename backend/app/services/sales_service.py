@@ -610,6 +610,16 @@ class SalesService:
         items: List[dict],
     ) -> dict:
         logger = get_logger("sales_service.log_sale")
+
+        # Validate items have valid menu_item_ids
+        for idx, item in enumerate(items):
+            menu_item_id = item.get("menu_item_id", "").strip()
+            if not menu_item_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Item {idx + 1} has invalid or missing menu_item_id",
+                )
+
         logger.info(
             "log_sale called",
             extra={
