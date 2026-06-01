@@ -494,7 +494,7 @@ function SalesLogPanel({
       </div>
 
       {/* Cart items */}
-      <div className="flex-1 overflow-y-auto px-5 py-3 min-h-[160px]">
+      <div className="overflow-hidden px-5 py-3 min-h-[160px] max-h-[280px]">
         {cart.length === 0 ? (
           <div className="h-full min-h-[120px] flex flex-col items-center justify-center gap-2 py-8 text-center">
             <div className="h-10 w-10 rounded-[10px] bg-slate-50 border border-slate-100 flex items-center justify-center">
