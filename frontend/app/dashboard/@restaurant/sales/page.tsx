@@ -74,7 +74,6 @@ export default function SalesPage() {
 
   // ── Cart state (lifted so Sales Log panel persists across tabs) ──────────
   const [cart, setCart]           = useState<CartItem[]>([]);
-  const [channel, setChannel]     = useState<SaleChannel | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [salesRefreshKey, setSalesRefreshKey] = useState(0);
 
@@ -82,19 +81,38 @@ export default function SalesPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingCart, setPendingCart] = useState<CartItem[] | null>(null);
   const [pendingChannel, setPendingChannel] = useState<SaleChannel | null>(null);
+  const [pendingPaymentMethod, setPendingPaymentMethod] = useState<string | null>(null);
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
 
   // ── Success state ──────────────────────────────────────────────────────────
   const [showSuccess, setShowSuccess] = useState(false);
   const [successOrder, setSuccessOrder] = useState<any>(null);
 
-  // Reset channel selection when cart is cleared
-  useEffect(() => { if (cart.length === 0) setChannel(null); }, [cart.length]);
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem("sales_cart");
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
+      }
+    } catch (e) {
+      console.error("Failed to load cart from localStorage:", e);
+    }
+  }, []);
 
   const cartMap     = useMemo(() => new Map(cart.map((ci) => [ci.id, ci.quantity])), [cart]);
   const cartRevenue = cart.reduce((s, ci) => s + ci.price * ci.quantity, 0);
   const cartCogs    = cart.reduce((s, ci) => s + (ci.cost || 0) * ci.quantity, 0);
   const cartProfit  = cartRevenue - cartCogs;
+
+  // Persist cart to localStorage
+  const saveCartToStorage = (cartData: CartItem[]) => {
+    try {
+      localStorage.setItem("sales_cart", JSON.stringify(cartData));
+    } catch (e) {
+      console.error("Failed to save cart to localStorage:", e);
+    }
+  };
 
   const addToCart = (item: MenuItem) => {
     // Validate item has a valid ID before adding to cart
@@ -104,26 +122,56 @@ export default function SalesPage() {
       return;
     }
     setCart((prev) => {
-      const ex = prev.find((ci) => ci.id === item.id);
-      if (ex) return prev.map((ci) => ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci);
-      return [...prev, { ...item, quantity: 1 }];
+      const updated = (() => {
+        const ex = prev.find((ci) => ci.id === item.id);
+        if (ex) return prev.map((ci) => ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci);
+        return [...prev, { ...item, quantity: 1 }];
+      })();
+      saveCartToStorage(updated);
+      return updated;
     });
   };
 
   const setQty = (itemId: string, qty: number) => {
-    if (qty < 1) { setCart((prev) => prev.filter((ci) => ci.id !== itemId)); return; }
-    setCart((prev) => prev.map((ci) => ci.id === itemId ? { ...ci, quantity: qty } : ci));
+    if (qty < 1) {
+      setCart((prev) => {
+        const updated = prev.filter((ci) => ci.id !== itemId);
+        saveCartToStorage(updated);
+        return updated;
+      });
+      return;
+    }
+    setCart((prev) => {
+      const updated = prev.map((ci) => ci.id === itemId ? { ...ci, quantity: qty } : ci);
+      saveCartToStorage(updated);
+      return updated;
+    });
   };
 
-  const removeFromCart = (itemId: string) => setCart((prev) => prev.filter((ci) => ci.id !== itemId));
-  const clearCart = () => setCart([]);
+  const removeFromCart = (itemId: string) => {
+    setCart((prev) => {
+      const updated = prev.filter((ci) => ci.id !== itemId);
+      saveCartToStorage(updated);
+      return updated;
+    });
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    try {
+      localStorage.removeItem("sales_cart");
+    } catch (e) {
+      console.error("Failed to clear cart from localStorage:", e);
+    }
+  };
 
   const handleLogSale = () => {
-    if (!cart.length || !channel) return;
+    if (!cart.length) return;
+    // Store cart items in state before navigating
     setPendingCart([...cart]);
-    setPendingChannel(channel);
-    setShowConfirmation(true);
-    setConfirmationError(null);
+    // Navigate to review page with cart data in query params
+    const itemsParam = encodeURIComponent(JSON.stringify(cart));
+    router.push(`/dashboard/sales/review?items=${itemsParam}`);
   };
 
   const handleConfirmSale = async () => {
@@ -173,6 +221,7 @@ export default function SalesPage() {
       const payload = {
         channel: pendingChannel,
         items: validItems.map((ci) => ({ menu_item_id: ci.id, quantity: ci.quantity })),
+        ...(pendingPaymentMethod && { payment_method: pendingPaymentMethod }),
       };
 
       // Log the final payload
@@ -302,12 +351,10 @@ export default function SalesPage() {
             <div className="sticky top-0 bg-white border border-slate-100 rounded-[12px] overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex flex-col">
               <SalesLogPanel
                 cart={cart}
-                channel={channel}
                 cartRevenue={cartRevenue}
                 cartCogs={cartCogs}
                 cartProfit={cartProfit}
                 isSubmitting={isSubmitting}
-                onChannelChange={setChannel}
                 onQtyChange={setQty}
                 onRemove={removeFromCart}
                 onClear={clearCart}
@@ -378,56 +425,134 @@ export default function SalesPage() {
 // ---------------------------------------------------------------------------
 
 function SaleSuccessDialog({ order, onClose }: { order: any; onClose: () => void }) {
+  const { user } = useUser();
+  const router = useRouter();
   const fmt = (n: number) =>
     new Intl.NumberFormat("en", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
 
+  const itemsSoldText = order.items?.length ?
+    order.items.map((item: any) => `${item.quantity}x ${item.menu_item_name}`).join(", ") :
+    "Items sold";
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleLogAnother = () => {
+    onClose();
+    // Reset cart and return to sales entry
+  };
+
+  const handleViewHistory = () => {
+    router.push('/dashboard/sales?tab=history');
+    onClose();
+  };
+
+  const handlePrintReceipt = () => {
+    window.print();
+  };
+
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 animate-in fade-in">
-      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 space-y-6 animate-in zoom-in-95 slide-in-from-bottom-4">
-        {/* Success Icon */}
-        <div className="flex justify-center">
-          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+      <div className="bg-white rounded-[16px] shadow-[0_32px_120px_rgba(15,23,42,0.15)] w-full max-w-lg mx-4 overflow-y-auto max-h-[90vh] animate-in zoom-in-95 slide-in-from-bottom-4">
+        {/* Header */}
+        <div className="px-8 py-8 border-b border-slate-100 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
+              <svg className="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
           </div>
+          <h2 className="text-[28px] font-bold text-slate-900 mb-2">Sale Logged Successfully</h2>
+          <p className="text-sm text-slate-600">Transaction has been recorded successfully</p>
         </div>
 
-        {/* Title and Message */}
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-slate-900">Sale Logged!</h2>
-          <p className="text-sm text-slate-600">Transaction completed successfully</p>
+        {/* Content */}
+        <div className="px-8 py-8 space-y-8">
+          {/* Sales ID and Revenue Section */}
+          <div className="space-y-4">
+            <div className="flex items-baseline justify-between">
+              <div>
+                <p className="text-[13px] font-bold text-slate-400 uppercase tracking-widest mb-1">Sales ID</p>
+                <p className="text-sm text-slate-700 font-semibold">#{order.id?.slice(0, 8).toUpperCase() || 'N/A'}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[13px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Revenue</p>
+                <p className="text-[36px] font-black text-slate-900 tabular-nums">RWF {fmt(order.total_revenue)}</p>
+              </div>
+            </div>
+            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-[8px] px-4 py-2">
+              <span className="text-sm font-bold text-emerald-700">+RWF {fmt(order.gross_profit)} Gross Profit</span>
+            </div>
+          </div>
+
+          {/* Items Sold */}
+          <div>
+            <p className="text-[13px] font-bold text-slate-600 mb-2">{order.items?.length || 0} {order.items?.length === 1 ? 'Item' : 'Items'} Sold</p>
+            <p className="text-sm text-slate-700">{itemsSoldText}</p>
+          </div>
+
+          {/* Metadata Grid */}
+          <div className="grid grid-cols-2 gap-4 border-t border-b border-slate-100 py-6">
+            <div>
+              <p className="text-[13px] font-semibold text-slate-600 mb-1">Channel</p>
+              <p className="text-sm font-bold text-slate-900">{CHANNELS.find(ch => ch.id === order.channel)?.label || order.channel}</p>
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold text-slate-600 mb-1">Logged At</p>
+              <p className="text-sm font-bold text-slate-900">{formatTime(order.created_at || order.occurred_at)}</p>
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold text-slate-600 mb-1">Payment Method</p>
+              <p className="text-sm font-bold text-slate-900">{order.payment_method ? order.payment_method.charAt(0).toUpperCase() + order.payment_method.slice(1).replace('_', ' ') : '—'}</p>
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold text-slate-600 mb-1">Logged By</p>
+              <p className="text-sm font-bold text-slate-900">{user?.first_name || 'Kitchen Staff'}</p>
+            </div>
+          </div>
+
+          {/* Inventory Depletion */}
+          {order.depleted_items && order.depleted_items.length > 0 && (
+            <div>
+              <p className="text-[13px] font-bold text-slate-400 uppercase tracking-widest mb-4">Inventory Automatically Depleted:</p>
+              <div className="flex flex-wrap gap-2">
+                {order.depleted_items.map((item: any, idx: number) => (
+                  <span key={idx} className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-[6px] px-3 py-2 text-sm font-semibold text-slate-700">
+                    {item.product_name}: {item.quantity} {item.unit}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Order Summary */}
-        <div className="bg-slate-50 rounded-lg p-4 space-y-3 border border-slate-200">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-slate-600 font-medium">Items Sold</span>
-            <span className="text-lg font-semibold text-slate-900">{order.items_count}</span>
-          </div>
-          <div className="h-px bg-slate-200" />
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-slate-600 font-medium">Revenue</span>
-            <span className="text-lg font-semibold text-slate-900">RWF {fmt(order.total_revenue)}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-slate-600 font-medium">COGS</span>
-            <span className="text-sm text-slate-600">RWF {fmt(order.total_cogs)}</span>
-          </div>
-          <div className="h-px bg-slate-200" />
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-semibold text-slate-700">Profit</span>
-            <span className="text-lg font-bold text-emerald-600">RWF {fmt(order.gross_profit)}</span>
+        {/* Footer */}
+        <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 space-y-3">
+          <button
+            onClick={handleLogAnother}
+            className="w-full h-14 bg-[#3B59DA] hover:bg-[#2D46B2] text-white font-black text-[15px] rounded-[10px] transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Log Another Sale
+          </button>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={handlePrintReceipt}
+              className="h-12 bg-white border border-slate-200 text-slate-700 font-bold rounded-[10px] hover:bg-slate-50 transition-all active:scale-95 text-sm"
+            >
+              Print Receipt
+            </button>
+            <button
+              onClick={handleViewHistory}
+              className="h-12 bg-white border border-slate-200 text-slate-700 font-bold rounded-[10px] hover:bg-slate-50 transition-all active:scale-95 text-sm"
+            >
+              View Sales History
+            </button>
           </div>
         </div>
-
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition-colors"
-        >
-          Done
-        </button>
       </div>
     </div>
   );
@@ -438,16 +563,14 @@ function SaleSuccessDialog({ order, onClose }: { order: any; onClose: () => void
 // ---------------------------------------------------------------------------
 
 function SalesLogPanel({
-  cart, channel, cartRevenue, cartCogs, cartProfit, isSubmitting,
-  onChannelChange, onQtyChange, onRemove, onClear, onLogSale,
+  cart, cartRevenue, cartCogs, cartProfit, isSubmitting,
+  onQtyChange, onRemove, onClear, onLogSale,
 }: {
   cart: CartItem[];
-  channel: SaleChannel | null;
   cartRevenue: number;
   cartCogs: number;
   cartProfit: number;
   isSubmitting: boolean;
-  onChannelChange: (ch: SaleChannel) => void;
   onQtyChange: (id: string, qty: number) => void;
   onRemove: (id: string) => void;
   onClear: () => void;
@@ -465,31 +588,6 @@ function SalesLogPanel({
               Clear
             </button>
           )}
-        </div>
-      </div>
-
-      {/* Channel selector */}
-      <div className="px-5 py-3 border-b border-slate-100 shrink-0">
-        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] font-figtree mb-2">
-          Select sales category
-        </div>
-        <div className="flex gap-2">
-          {CHANNELS.map((ch) => (
-            <button
-              key={ch.id}
-              onClick={() => cart.length > 0 && onChannelChange(ch.id)}
-              className={cn(
-                "flex-1 py-2 rounded-full text-[12px] font-bold transition-all font-figtree border",
-                cart.length === 0
-                  ? "bg-white text-slate-400 border-slate-200 hover:border-slate-300 cursor-default"
-                  : channel === ch.id
-                    ? "bg-[#1E293B] text-white border-[#1E293B]"
-                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 cursor-pointer"
-              )}
-            >
-              {ch.label}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -534,16 +632,16 @@ function SalesLogPanel({
         </div>
 
         <button
-          disabled={!cart.length || !channel || isSubmitting}
+          disabled={!cart.length || isSubmitting}
           onClick={onLogSale}
           className={cn(
             "w-full h-12 rounded-[10px] font-black text-[15px] font-figtree transition-all flex items-center justify-center gap-2",
-            cart.length > 0 && channel
+            cart.length > 0
               ? "bg-[#3B59DA] hover:bg-[#2D46B2] text-white shadow-[0_4px_16px_rgba(59,89,218,0.3)] active:scale-[0.98]"
               : "bg-slate-100 text-slate-300 cursor-not-allowed"
           )}
         >
-          {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Logging…</> : "Log Sales"}
+          {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Reviewing…</> : "Review Order"}
         </button>
       </div>
     </>

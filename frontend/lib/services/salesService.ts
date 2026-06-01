@@ -187,6 +187,7 @@ export const salesService = {
   async logSale(payload: {
     channel: string;
     items: { menu_item_id: string; quantity: number }[];
+    payment_method?: string;
   }): Promise<SaleOrder> {
     const { data } = await axiosInstance.post("/sales/log", payload);
     return data;
