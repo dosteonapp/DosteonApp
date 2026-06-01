@@ -299,7 +299,7 @@ export default function SalesPage() {
             "w-full lg:w-[340px] xl:w-[380px] shrink-0",
             !isOpen && "blur-[5px] grayscale-[0.15] opacity-75 pointer-events-none select-none"
           )}>
-            <div className="bg-white border border-slate-100 rounded-[12px] overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex flex-col">
+            <div className="sticky top-0 bg-white border border-slate-100 rounded-[12px] overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.02)] flex flex-col">
               <SalesLogPanel
                 cart={cart}
                 channel={channel}
@@ -457,7 +457,7 @@ function SalesLogPanel({
     <>
       {/* Header */}
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-        <span className="text-[16px] font-black text-[#1E293B] font-figtree">Sales Log</span>
+        <span className="text-[16px] font-black text-[#1E293B] font-figtree">Cart Summary</span>
         <div className="flex items-center gap-3">
           <span className="text-[12px] font-semibold text-slate-400 font-figtree">{todayLabel()}</span>
           {cart.length > 0 && (
