@@ -946,12 +946,12 @@ export function TabMenuManagement() {
               </div>
             </div>
 
-            {/* Bill of Materials Card */}
+            {/* Recipe Card */}
             <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
               <div className="flex items-start justify-between mb-1">
                 <div>
                   <div className="flex items-center gap-2 mb-0.5">
-                    <h3 className="text-[15px] font-bold text-[#1E293B] font-figtree">Bill of Materials</h3>
+                    <h3 className="text-[15px] font-bold text-[#1E293B] font-figtree">Recipe</h3>
                     {recipe.length > 0 && (
                       <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 font-figtree">
                         {recipe.length} ingredients
